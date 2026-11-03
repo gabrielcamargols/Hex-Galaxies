@@ -151,11 +151,11 @@
    "atk": 7,
    "int": 8,
    "mov": 2,
-   "alc": 3,
+   "alc": 4,
    "src": "pdf",
    "ab": {
     "name": "Alcance Dominante",
-    "text": "Pode atacar a até 3 casas. Precisa de linha de visão; esse alcance já consta em ALC."
+    "text": "Pode atacar a até 4 casas. Precisa de linha de visão; esse alcance já consta em ALC."
    },
    "k": {}
   },
@@ -735,11 +735,11 @@
    "atk": 5,
    "int": 6,
    "mov": 2,
-   "alc": 3,
+   "alc": 4,
    "src": "pdf",
    "ab": {
     "name": "Tiro Sônico",
-    "text": "Pode atacar a até 3 casas. Precisa de linha de visão; esse alcance já consta em ALC."
+    "text": "Pode atacar a até 4 casas. Precisa de linha de visão; esse alcance já consta em ALC."
    },
    "k": {}
   },
@@ -885,11 +885,11 @@
    "atk": 4,
    "int": 2,
    "mov": 2,
-   "alc": 3,
+   "alc": 6,
    "src": "cat",
    "ab": {
     "name": "Tiro de Precisão",
-    "text": "Pode atacar a até 3 casas. Precisa de linha de visão."
+    "text": "Pode atacar a até 6 casas. Precisa de linha de visão."
    },
    "k": {}
   },
@@ -1240,11 +1240,11 @@
    "atk": 5,
    "int": 5,
    "mov": 2,
-   "alc": 3,
+   "alc": 4,
    "src": "cat",
    "ab": {
     "name": "Linha de Tiro",
-    "text": "Pode atacar a até 3 casas. Precisa de linha de visão."
+    "text": "Pode atacar a até 4 casas. Precisa de linha de visão."
    },
    "k": {}
   },
@@ -1316,11 +1316,11 @@
    "atk": 5,
    "int": 5,
    "mov": 2,
-   "alc": 3,
+   "alc": 4,
    "src": "novo",
    "ab": {
     "name": "Mira de Precisão",
-    "text": "Pode atacar a até 3 casas. Precisa de linha de visão."
+    "text": "Pode atacar a até 4 casas. Precisa de linha de visão."
    },
    "k": {}
   },
@@ -1633,7 +1633,7 @@
    "atk": 4,
    "int": 5,
    "mov": 2,
-   "alc": 3,
+   "alc": 4,
    "src": "novo",
    "ab": {
     "name": "Chuva de Cristais",
@@ -1731,11 +1731,11 @@
    "atk": 5,
    "int": 4,
    "mov": 2,
-   "alc": 3,
+   "alc": 6,
    "src": "novo",
    "ab": {
     "name": "Fragmento Perfurante",
-    "text": "Pode atacar a até 3 casas. Precisa de linha de visão."
+    "text": "Pode atacar a até 6 casas. Precisa de linha de visão."
    },
    "k": {}
   },
@@ -2001,11 +2001,11 @@
    "atk": 5,
    "int": 5,
    "mov": 2,
-   "alc": 3,
+   "alc": 4,
    "src": "novo",
    "ab": {
     "name": "Estaca Perfurante",
-    "text": "Pode atacar a até 3 casas. Precisa de linha de visão."
+    "text": "Pode atacar a até 4 casas. Precisa de linha de visão."
    },
    "k": {}
   },

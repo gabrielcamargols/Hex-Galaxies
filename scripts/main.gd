@@ -1030,7 +1030,7 @@ func _army_detail_build() -> void:
 	# barras de atributos
 	var names = ["VIDA", "ATAQUE", "MOVIMENTO", "ALCANCE"]
 	var vals = [int(c["int"]), int(c["atk"]), int(c["mov"]), int(c["alc"])]
-	var maxs = [14.0, 6.0, 4.0, 5.0]
+	var maxs = [14.0, 6.0, 4.0, 6.0]
 	for i in range(4):
 		var h = _hbox(v, 8)
 		var nl = _label(h, names[i], 11, C_DIM)
