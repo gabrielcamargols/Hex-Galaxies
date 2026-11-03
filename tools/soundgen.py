@@ -358,7 +358,9 @@ PERFIS = {
     "z_drone": ("robot", "N", 0, ""),
     "t_dinamite": ("human", "M", 1, "young"), "t_basalto": ("golem", "N", 3, ""), "t_lanterna": ("human", "F", 1, ""),
     "t_carrinho": ("robot", "N", 2, ""), "t_britadeira": ("human", "M", 3, "deep"), "t_fundidor": ("human", "F", 2, "deep"),
-    "t_sentinela": ("golem", "N", 2, "core"), "z_escudo": ("human", "F", 1, "calm"),
+    "t_sentinela": ("golem", "N", 2, "core"),
+    "a_lumina": ("aqua", "F", 1, ""), "a_medusa": ("aqua", "F", 1, "calm"), "a_garra": ("insect", "M", 3, "crab"),
+    "a_vespertina": ("aqua", "F", 1, ""), "z_escudo": ("human", "F", 1, "calm"),
     # Lithari (seres de cristal)
     "l_general": ("crystal", "M", 2, ""), "l_lider": ("crystal", "M", 1, ""), "l_tank": ("crystal", "N", 3, ""),
     "l_atirador": ("crystal", "N", 1, ""), "l_scout": ("crystal", "N", 0, ""), "l_healer": ("crystal", "F", 1, ""),

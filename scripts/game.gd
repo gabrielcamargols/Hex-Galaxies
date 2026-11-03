@@ -1525,6 +1525,12 @@ func resolve_attack(a, t) -> void:
 	if (red > 0 or react_red > 0) and not target.barrier:
 		emitfx({"t": "passive", "kind": "shield", "uid": target.uid})
 	damage(target, dealt, a, true)
+	# espinhos: quem ataca corpo a corpo sofre dano de volta (Medusa)
+	if K(target).has("thorns") and DB.dist(a.pos(), target.pos()) == 1 and a.st == "field":
+		var nt = int(K(target)["thorns"])
+		abfx("zap", a.pos(), target.uid)
+		log_msg(target.owner, "%s: %s sofre %d ao tocá-la." % [DB.cards[target.cid]["ab"]["name"], nm(a), nt])
+		damage(a, nt, target)
 	await pace()
 	var k = K(a)
 	var after = k.get("after", "")

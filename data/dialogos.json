@@ -64,6 +64,10 @@
   "TER": ["Desabou um dos nossos!", "Segura a mina, pessoal!", "Isso vai ter troco!"]
  },
  "personagem": {
+  "a_lumina": {"entrada": ["Sigam a luzinha... isso, mais perto.", "No escuro do abismo, eu sou o farol. E a armadilha."], "provoca": ["{nome}, olha pra luz. Só um pouquinho.", "Que sorriso lindo o seu, {nome}. O meu é maior."], "aliado": ["{nome}, eu ofusco, você morde."]},
+  "a_medusa": {"entrada": ["Toquem em mim. Eu insisto.", "A corrente me trouxe até aqui."], "provoca": ["{nome}, vem me abraçar. Você vai sentir o choque.", "Pode bater, {nome}. Só não reclama do formigamento."]},
+  "a_garra": {"entrada": ["As correntes do fundo vieram comigo.", "Minha carapaça já quebrou âncoras."], "provoca": ["{nome}, minhas pinças estão com fome.", "Tente me furar, {nome}. Os outros tentaram."]},
+  "a_vespertina": {"entrada": ["Ninguém vê a lula da meia-noite chegar.", "Entre a sombra e a lâmina, eu escolho as duas."], "provoca": ["{nome}, você nem vai ver de onde veio.", "Shh, {nome}. Já estou atrás de você."], "aliado": ["{nome}, distrai eles. Eu cuido do resto."]},
   "t_dinamite": {"entrada": ["Quem pediu fogos? Eu trouxe fogos!", "Pavio aceso, sorriso no rosto!"], "provoca": ["{nome}, chega mais perto. Eu prometo que é rapidinho.", "Ei, {nome}! Sabe o que faz BUM?"], "aliado": ["{nome}, se eu cair, corre. Sério."]},
   "t_basalto": {"entrada": ["GRRRMMM...", "...PEDRA. FIRME."], "provoca": ["{nome}... PEQUENO."]},
   "t_lanterna": {"entrada": ["Luz acesa! Ninguém se esconde no escuro hoje.", "Deixa que eu ilumino o caminho."], "provoca": ["Achei você, {nome}. Pode parar de se esconder.", "{nome}, sorria: você está na luz."], "aliado": ["{nome}, ataca quem eu iluminar!"]},

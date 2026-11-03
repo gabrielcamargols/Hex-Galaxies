@@ -802,6 +802,86 @@
     "killGrow": 3
    }
   },
+ {
+  "id": "a_lumina",
+  "f": "ABY",
+  "clan": "ABY",
+  "name": "Lumina",
+  "role": "Atiradora",
+  "atk": 3,
+  "int": 5,
+  "mov": 2,
+  "alc": 4,
+  "src": "novo",
+  "ab": {
+   "name": "Isca Ofuscante",
+   "text": "Ao entrar, ofusque 1 inimigo a até 3 casas: −2 ATQ até o fim do round."
+  },
+  "k": {
+   "entry": {
+    "t": "debuff",
+    "r": 3,
+    "n": 2
+   }
+  }
+ },
+ {
+  "id": "a_medusa",
+  "f": "ABY",
+  "clan": "ABY",
+  "name": "Medusa",
+  "role": "Controle",
+  "atk": 2,
+  "int": 6,
+  "mov": 2,
+  "alc": 1,
+  "src": "novo",
+  "ab": {
+   "name": "Toque Elétrico",
+   "text": "Quem a atacar corpo a corpo sofre 2 de dano depois do ataque."
+  },
+  "k": {
+   "thorns": 2
+  }
+ },
+ {
+  "id": "a_garra",
+  "f": "ABY",
+  "clan": "ABY",
+  "name": "Garra-Funda",
+  "role": "Tanque",
+  "atk": 3,
+  "int": 10,
+  "mov": 1,
+  "alc": 1,
+  "src": "novo",
+  "ab": {
+   "name": "Carapaça de Cracas",
+   "text": "Sofre 1 a menos de dano de cada ataque."
+  },
+  "k": {
+   "selfRed": 1
+  }
+ },
+ {
+  "id": "a_vespertina",
+  "f": "ABY",
+  "clan": "ABY",
+  "name": "Vespertina",
+  "role": "Assassina",
+  "atk": 4,
+  "int": 5,
+  "mov": 3,
+  "alc": 1,
+  "src": "novo",
+  "ab": {
+   "name": "Manto da Penumbra",
+   "text": "Após atacar, pode mover 1 casa livre sem gastar ação."
+  },
+  "k": {
+   "after": "freeMove"
+  }
+ },
   {
    "id": "k_cmd",
    "f": "KRI",
