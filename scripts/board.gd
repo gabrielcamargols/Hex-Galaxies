@@ -48,6 +48,7 @@ var heart_tex: ImageTexture
 var scenery_root: Node3D
 var ground: MeshInstance3D
 var env: Environment
+var sun_light: DirectionalLight3D
 
 var drag: Variant = null                  # {uid, start, on}
 var pan: Variant = null
@@ -85,6 +86,7 @@ func _ready() -> void:
 	we.environment = env
 	add_child(we)
 	var sun = DirectionalLight3D.new()
+	sun_light = sun
 	sun.rotation_degrees = Vector3(-52, -35, 0)
 	sun.light_energy = 0.55
 	sun.shadow_enabled = true
@@ -164,18 +166,95 @@ func build(game: Game) -> void:
 
 # ================= céu de galáxias e planeta =================
 func _setup_sky() -> void:
-	var path = "res://sky/galaxias.jpg"
+	# mesmo céu do menu: espaço escuro com nebulosas e galáxias distantes
+	var path = "res://sky/espaco.jpg"
 	if not ResourceLoader.exists(path):
 		env.background_mode = Environment.BG_COLOR
-		env.background_color = Color("#1a1030")
+		env.background_color = Color("#070b18")
 		return
-	var sm = PanoramaSkyMaterial.new()
-	sm.panorama = load(path)
-	var sky = Sky.new()
-	sky.sky_material = sm
-	env.sky = sky
+	if sky_cache == null:
+		var sm = PanoramaSkyMaterial.new()
+		sm.panorama = load(path)
+		sky_cache = Sky.new()
+		sky_cache.sky_material = sm
+	env.sky = sky_cache
 	env.background_mode = Environment.BG_SKY
 	env.sky_rotation = Vector3(0, 0.6, 0)
+	_build_backdrop()
+
+
+var sky_cache: Sky = null
+var backdrop: Node3D = null
+
+
+# ao fundo: o sol da galáxia (na direção da luz) e os outros planetas, bem longe
+func _build_backdrop() -> void:
+	if backdrop != null:
+		backdrop.queue_free()
+	backdrop = Node3D.new()
+	add_child(backdrop)
+	cam.far = 3000.0
+	var sun_dir = -sun_light.global_transform.basis.z
+	var to_sun = -sun_dir
+	var glow_tex = load("res://planets/estrela.png") if ResourceLoader.exists("res://planets/estrela.png") else null
+	for gl in [[420.0, Color(1.0, 0.72, 0.35, 0.9)], [170.0, Color(1.0, 0.96, 0.85, 1.0)]]:
+		var q = MeshInstance3D.new()
+		var qm = QuadMesh.new()
+		qm.size = Vector2(gl[0], gl[0])
+		q.mesh = qm
+		var m = StandardMaterial3D.new()
+		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		m.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+		m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		m.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+		m.albedo_texture = glow_tex
+		m.albedo_color = gl[1]
+		q.material_override = m
+		q.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		q.position = to_sun * 1800.0
+		backdrop.add_child(q)
+	# planetas vizinhos (os mesmos do menu)
+	var other = "valak" if (g != null and g.map_id == "tarhut") else "tarhut"
+	var list = [[other, 70.0, 0.9, 0.18], ["gigante", 160.0, 2.4, 0.12], ["gelo", 40.0, -1.9, 0.3], ["lava", 55.0, 3.6, 0.05]]
+	for pl in list:
+		var tpath = "res://planets/%s.png" % pl[0]
+		if not ResourceLoader.exists(tpath):
+			continue
+		var mi = MeshInstance3D.new()
+		var sp = SphereMesh.new()
+		sp.radius = pl[1]
+		sp.height = pl[1] * 2.0
+		sp.radial_segments = 48
+		sp.rings = 24
+		mi.mesh = sp
+		var pm = StandardMaterial3D.new()
+		pm.albedo_texture = load(tpath)
+		pm.diffuse_mode = BaseMaterial3D.DIFFUSE_TOON
+		pm.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
+		mi.material_override = pm
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		var ang = pl[2]
+		var dir = Vector3(cos(ang), pl[3], sin(ang)).normalized()
+		mi.position = dir * 1500.0
+		mi.rotation = Vector3(0.3, ang, 0.2)
+		backdrop.add_child(mi)
+		if pl[0] == "gigante":
+			var ring = MeshInstance3D.new()
+			var tm = TorusMesh.new()
+			tm.inner_radius = pl[1] * 1.5
+			tm.outer_radius = pl[1] * 2.1
+			tm.rings = 64
+			tm.ring_segments = 3
+			ring.mesh = tm
+			ring.scale = Vector3(1, 0.04, 1)
+			var rm = StandardMaterial3D.new()
+			rm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+			rm.albedo_color = Color(0.85, 0.75, 1.0, 0.45)
+			rm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+			ring.material_override = rm
+			ring.position = mi.position
+			ring.rotation = Vector3(0.35, 0, 0.25)
+			backdrop.add_child(ring)
 
 
 # altura do chão do planetoide: plano no meio, borda arredondada (raio RIM) com dunas
