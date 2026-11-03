@@ -378,7 +378,7 @@ func _leave_battle() -> void:
 	board.visible = false
 	bubbles.clear()
 	_stop_battle_loops()
-	sfx.loop("musica_espaco", -9.0, 2.5)
+	sfx.loop("musica_galaxia", -9.0, 2.5)
 	galaxy.activate()
 
 
@@ -1180,7 +1180,7 @@ func _army_go() -> void:
 	await _ui_fade(0.0, 0.4)
 	sfx.play("vfx_portal", -6.0)
 	sfx.play("vfx_dash", -8.0)
-	sfx.stop_loop("musica_espaco", 2.5)
+	sfx.stop_loop("musica_galaxia", 2.5)
 	galaxy.set_mode("dive")
 	await get_tree().create_timer(1.15).timeout
 	await _fade(1.0, 0.55, galaxy.data(planet_id).get("dive", Color("#e0b070")))

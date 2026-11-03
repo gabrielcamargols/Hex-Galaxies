@@ -3,7 +3,7 @@ extends Node
 
 const NAMES = ["golpe", "impacto", "tiro_laser", "tiro_cristal", "tiro_energia", "projetil", "cura", "escudo", "poder",
 	"maldicao", "fenix", "armadilha", "invocar", "derrota", "passo", "explosao", "verme_rumor", "verme_ataque", "dunas",
-	"round", "clique", "confirmar", "carta", "vento_loop", "tempestade_loop", "ilha_loop", "musica_deserto", "musica_espaco"]
+	"round", "clique", "confirmar", "carta", "vento_loop", "tempestade_loop", "ilha_loop", "musica_deserto", "musica_galaxia"]
 
 var streams: Dictionary = {}
 var pool: Array = []
