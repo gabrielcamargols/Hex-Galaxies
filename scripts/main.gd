@@ -399,6 +399,23 @@ func _planet_of_map(m: String) -> String:
 func _stop_battle_loops() -> void:
 	for n in ["vento_loop", "musica_deserto", "ilha_loop", "tempestade_loop", "musica_valak"]:
 		sfx.stop_loop(n, 0.8)
+	_fac_music("")
+
+
+# trilha de cada facção (tools/musica_faccoes.py): toca na montagem do exército
+const FAC_MUSIC = {"FAU": ["musica_fau", -9.0], "ABY": ["musica_aby", -8.0], "KRI": ["musica_kri", -9.0], "WAC": ["musica_wac", -9.0],
+	"ZUK": ["musica_zuk", -9.5], "LIT": ["musica_lit", -6.0], "TER": ["musica_ter", -6.5]}
+var fac_music_on: String = ""
+
+
+func _fac_music(fac: String) -> void:
+	if fac == fac_music_on:
+		return
+	if fac_music_on != "" and FAC_MUSIC.has(fac_music_on):
+		sfx.stop_loop(FAC_MUSIC[fac_music_on][0], 1.2)
+	fac_music_on = fac
+	if fac != "" and FAC_MUSIC.has(fac):
+		sfx.loop(FAC_MUSIC[fac][0], FAC_MUSIC[fac][1], 1.5)
 
 
 # sai da batalha (se houver) e volta para a galáxia
@@ -708,6 +725,8 @@ func _impact(c: Dictionary) -> Dictionary:
 
 func _show_army() -> void:
 	stage = "army"
+	sfx.stop_loop("musica_galaxia", 1.5)
+	_fac_music(setup_cfg["fac"])
 	if army_fac != setup_cfg["fac"]:
 		army_fac = setup_cfg["fac"]
 		army_picks = []
@@ -1162,6 +1181,7 @@ func _army_fac_pick(f: String) -> void:
 	army_start = []
 	army_detail = DB.factions[f]["cmd"]
 	sfx.play("clique", -8.0)
+	_fac_music(f)
 	_army_refresh()
 
 
@@ -1174,6 +1194,8 @@ func _army_back() -> void:
 		return
 	stage = "to_select"
 	sfx.play("clique", -8.0)
+	_fac_music("")
+	sfx.loop("musica_galaxia", -9.0, 2.0)
 	await _ui_fade(0.0, 0.35)
 	_show_select()
 
@@ -1250,6 +1272,7 @@ func _army_go() -> void:
 	sfx.play("vfx_portal", -6.0)
 	sfx.play("vfx_dash", -8.0)
 	sfx.stop_loop("musica_galaxia", 2.5)
+	_fac_music("")
 	galaxy.set_mode("dive")
 	await get_tree().create_timer(1.15).timeout
 	await _fade(1.0, 0.55, galaxy.data(planet_id).get("dive", Color("#e0b070")))
