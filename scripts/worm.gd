@@ -30,6 +30,7 @@ func setup(scene: PackedScene, hole_pos: Vector3, toward: Vector3, outline: Mate
 	add_child(inst)
 	var mat = StandardMaterial3D.new()
 	mat.vertex_color_use_as_albedo = true
+	mat.vertex_color_is_srgb = true
 	mat.diffuse_mode = BaseMaterial3D.DIFFUSE_TOON
 	mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
 	mat.roughness = 1.0

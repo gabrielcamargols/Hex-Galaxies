@@ -664,6 +664,50 @@ func _ribs(parent: Node3D, pos: Vector3, s: float, n: int) -> void:
 
 
 func _add_props(root: Node3D, h: Vector2i, t: Dictionary) -> void:
+	if _cen_tile(root, h, t["k"]):
+		pass
+	else:
+		_add_props_old(root, h, t)
+	_add_marks(root, h)
+
+
+# peças das casas feitas pela ferramenta de cenário (tools/cenario.py), cada mapa com as suas
+func _cen_tile(root: Node3D, h: Vector2i, k: String) -> bool:
+	var desert = g.map_id == "tarhut"
+	var v = int(_rnd(h, 21) * 3) % 3
+	var yaw = _rnd(h, 2) * TAU
+	if desert:
+		match k:
+			"rocha":
+				return _model(root, "cen_tarhut_rocha_%d" % v, Vector3.ZERO, 1.45, yaw, true)
+			"ossada":
+				return _model(root, "cen_tarhut_ossada_%d" % v, Vector3.ZERO, 1.7, yaw, true)
+			"ossada_c":
+				return _model(root, "cen_tarhut_ossada_%d" % v, Vector3(0, 0, -0.05), 1.95, yaw, true)
+			"buraco":
+				return _model(root, "cen_tarhut_buraco_%d" % v, Vector3(0, -0.05, 0), 1.55, yaw, true)
+		return false
+	match k:
+		"rocha":
+			return _model(root, "cen_valak_rocha_%d" % v, Vector3.ZERO, 1.45, yaw, true)
+		"floresta":
+			var ok = false
+			for sp in [Vector3(-0.32, 0, -0.2), Vector3(0.32, 0, -0.25), Vector3(0.02, 0, 0.28)]:
+				ok = _model(root, "cen_valak_pinheiro_%d" % int(_rnd(h, int(sp.x * 10) + 30) * 3), sp, 0.72 + _rnd(h, int(sp.z * 10) + 5) * 0.15, _rnd(h, 7) * TAU, true) or ok
+			return ok
+		"galpao":
+			return _model(root, "cen_valak_domo_%d" % v, Vector3.ZERO, 1.65, yaw, true)
+		"ruina":
+			var a = _model(root, "cen_valak_caixa_%d" % v, Vector3(-0.15, 0, 0.1), 0.85, yaw, true)
+			_model(root, "cen_valak_barril_%d" % v, Vector3(0.38, 0, -0.25), 0.5, yaw, true)
+			return a
+		"escombros":
+			_model(root, "cen_valak_barril_%d" % v, Vector3(-0.3, 0, 0.0), 0.45, yaw, true)
+			return _model(root, "cen_valak_vagonete_%d" % v, Vector3(0.2, 0, 0.2), 0.9, yaw, true)
+	return false
+
+
+func _add_props_old(root: Node3D, h: Vector2i, t: Dictionary) -> void:
 	match t["k"]:
 		"rocha":
 			if _model(root, "rocha", Vector3.ZERO, 1.55, _rnd(h, 2) * TAU):
@@ -729,6 +773,9 @@ func _add_props(root: Node3D, h: Vector2i, t: Dictionary) -> void:
 		"plano", "colina":
 			for i in range(3):
 				_mesh(root, _cyl(0.0, 0.05, 0.14, 4), Color("#4f8a22"), Vector3((_rnd(h, i) - 0.5) * 1.0, 0.07, (_rnd(h, i + 9) - 0.5) * 0.9))
+
+
+func _add_marks(root: Node3D, h: Vector2i) -> void:
 	var o = DB.obj_at(h)
 	if o != null:
 		_mesh(root, _cyl(0.04, 0.04, 0.9, 6), Color("#3a2508"), Vector3(0, 0.45, 0))
@@ -766,35 +813,55 @@ func _add_props(root: Node3D, h: Vector2i, t: Dictionary) -> void:
 # ---------- modelos 3D da Meshy (res://models/<nome>.glb) ----------
 # cenário gerado por tools/propgen.py (models/<planeta>_<peça>_<n>.glb)
 const PROPS = {
-	"tarhut": [["arenito", 3.0], ["cristal", 1.6], ["cacto", 1.4], ["ossos", 2.0], ["destroco", 1.0]],
-	"valak": [["pinheiro", 3.0], ["rocha", 2.2], ["tanque", 1.0], ["torre", 0.8], ["guindaste", 0.6]],
+	# [modelo (sem _n), peso, diâmetro, pode ficar colado no tabuleiro]
+	"tarhut": [["cen_tarhut_rocha", 3.0, 1.6, true], ["cen_tarhut_cacto_bola", 1.6, 0.9, true], ["cen_tarhut_cacto", 1.6, 1.0, true],
+		["cen_tarhut_ossada", 1.4, 2.0, true], ["cen_tarhut_cristal", 1.2, 1.0, true], ["tarhut_arenito", 1.5, 1.6, false], ["tarhut_destroco", 0.8, 2.0, false]],
+	"valak": [["cen_valak_pinheiro", 3.2, 1.2, true], ["cen_valak_rocha", 2.0, 1.3, true], ["cen_valak_barril", 1.2, 0.55, true], ["cen_valak_caixa", 1.0, 0.8, true],
+		["cen_valak_vagonete", 0.6, 1.0, false], ["cen_valak_domo", 0.8, 2.2, false], ["valak_torre", 0.6, 1.6, false], ["valak_guindaste", 0.4, 2.4, false]],
 }
 var prop_mat: StandardMaterial3D = null
+var paint_mat: ShaderMaterial = null
+var outline_cache: Dictionary = {}
+
+
+func _paint_mat() -> ShaderMaterial:
+	if paint_mat == null:
+		paint_mat = ShaderMaterial.new()
+		paint_mat.shader = load("res://shaders/pintado.gdshader")
+	return paint_mat
+
+
+func _outline_thick(grow: float) -> StandardMaterial3D:
+	var key = snappedf(grow, 0.005)
+	if not outline_cache.has(key):
+		var m = StandardMaterial3D.new()
+		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		m.albedo_color = Color("#1a0e08")
+		m.cull_mode = BaseMaterial3D.CULL_FRONT
+		m.grow = true
+		m.grow_amount = key
+		outline_cache[key] = m
+	return outline_cache[key]
 
 
 func _prop(parent: Node3D, desert: bool, h: Vector2i, pos: Vector3, size: float, ring: int) -> bool:
-	var planet = "tarhut" if desert else "valak"
-	var list = PROPS[planet]
+	var list = PROPS["tarhut" if desert else "valak"]
 	var tot = 0.0
 	for e in list:
-		# peças grandes (torres, guindastes) só longe do tabuleiro
-		if ring >= 2 or e[0] in ["rocha", "cacto", "cristal", "pinheiro", "ossos"]:
+		if ring >= 2 or e[3]:
 			tot += e[1]
 	var roll = _rnd(h, 11) * tot
-	var kind = ""
+	var pick: Variant = null
 	for e in list:
-		if ring >= 2 or e[0] in ["rocha", "cacto", "cristal", "pinheiro", "ossos"]:
+		if ring >= 2 or e[3]:
 			roll -= e[1]
 			if roll <= 0.0:
-				kind = e[0]
+				pick = e
 				break
-	if kind == "":
+	if pick == null:
 		return false
-	var mname = "%s_%s_%d" % [planet, kind, int(_rnd(h, 12) * 3) % 3]
-	var foot = {"arenito": 1.6, "cristal": 1.1, "cacto": 0.9, "ossos": 2.2, "destroco": 2.0, "torre": 1.6, "tanque": 1.6, "pinheiro": 1.3, "rocha": 1.4, "guindaste": 2.4}[kind]
-	if not _model(parent, mname, pos, foot * size, _rnd(h, 13) * TAU, true):
-		return false
-	return true
+	var mname = "%s_%d" % [pick[0], int(_rnd(h, 12) * 3) % 3]
+	return _model(parent, mname, pos, pick[2] * size, _rnd(h, 13) * TAU, true)
 
 
 func _scene_of(mname: String) -> Variant:
@@ -815,12 +882,16 @@ func _model(parent: Node3D, mname: String, pos: Vector3, footprint: float, yaw: 
 		if prop_mat == null:
 			prop_mat = StandardMaterial3D.new()
 			prop_mat.vertex_color_use_as_albedo = true
+			prop_mat.vertex_color_is_srgb = true
 			prop_mat.diffuse_mode = BaseMaterial3D.DIFFUSE_TOON
 			prop_mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
 			prop_mat.roughness = 1.0
 			prop_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+		var pm: Material = prop_mat
+		if mname.begins_with("cen_"):
+			pm = _paint_mat()
 		for mi in meshes:
-			mi.material_override = prop_mat
+			mi.material_override = pm
 	var box = AABB()
 	var first = true
 	for mi in meshes:
@@ -834,6 +905,11 @@ func _model(parent: Node3D, mname: String, pos: Vector3, footprint: float, yaw: 
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	var wide = max(box.size.x, box.size.z)
 	var k = footprint / wide if wide > 0.0001 else 1.0
+	if mname.begins_with("cen_"):
+		# contorno grosso de desenho: a espessura acompanha o tamanho final da peça
+		var om = _outline_thick(0.035 / max(k, 0.05))
+		for mi2 in meshes:
+			mi2.material_overlay = om
 	var holder = Node3D.new()
 	holder.position = pos
 	holder.rotation = Vector3(0, yaw, 0)

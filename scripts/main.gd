@@ -133,6 +133,17 @@ func _ready() -> void:
 			_shots(a.substr(8))
 			return
 	for a in args:
+		if a.begins_with("--cenario="):
+			board.visible = true
+			galaxy.deactivate()
+			fader.visible = false
+			ui.visible = false
+			var pv = Node3D.new()
+			pv.set_script(load("res://scripts/cenario_preview.gd"))
+			add_child(pv)
+			await pv.run(a.substr(10), board)
+			get_tree().quit()
+			return
 		if a.begins_with("--balance="):
 			var n = int(a.substr(10))
 			var outp = "user://balance.json"

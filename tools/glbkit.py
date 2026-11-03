@@ -139,8 +139,92 @@ class Mesh:
         tip = Mesh().cylinder(r, 0, h * 0.3, sides, col, cap=False)
         return self.merge(tip, at=tuple(at + R @ np.array([0, h * 0.7, 0])), rot=rot)
 
+    def lathe(self, profile, seg, col, rmod=None, ymod=None, cap_top=True, cap_bot=True, **kw):
+        """superfície de revolução: profile = [(raio, y), ...] de baixo para cima.
+        rmod(theta, k) multiplica o raio no anel k; ymod(theta, k) soma na altura (bordas onduladas)"""
+        v, f = [], []
+        nring = len(profile)
+        for k, (r, y) in enumerate(profile):
+            for i in range(seg):
+                a = 2 * math.pi * i / seg
+                rr = r * (rmod(a, k) if rmod else 1.0)
+                yy = y + (ymod(a, k) if ymod else 0.0)
+                v.append((math.cos(a) * rr, yy, math.sin(a) * rr))
+        for k in range(nring - 1):
+            for i in range(seg):
+                i2 = (i + 1) % seg
+                f.append((k * seg + i, k * seg + i2, (k + 1) * seg + i2, (k + 1) * seg + i))
+        if cap_bot and profile[0][0] > 1e-6:
+            v.append((0, profile[0][1], 0))
+            c = len(v) - 1
+            for i in range(seg):
+                f.append((c, (i + 1) % seg, i))
+        if cap_top and profile[-1][0] > 1e-6:
+            v.append((0, profile[-1][1] + (ymod(0, nring - 1) * 0 if ymod else 0), 0))
+            c = len(v) - 1
+            base = (nring - 1) * seg
+            for i in range(seg):
+                f.append((c, base + i, base + (i + 1) % seg))
+        ymid = sum(y for _, y in profile) / len(profile)
+        return self._add(v, f, col, ref_fn=lambda p: np.array([0.0, ymid, 0.0]), **kw)
+
+    def blob(self, r, col, seg=14, rings=9, bump=0.18, seed=0, flat_bottom=True, **kw):
+        """pedra/arbusto arredondado e irregular"""
+        rng = np.random.default_rng(seed)
+        ph = rng.uniform(0, 6.28, 6)
+        v, f = [], []
+        for j in range(rings + 1):
+            t = math.pi * j / rings
+            for i in range(seg):
+                a = 2 * math.pi * i / seg
+                d = 1 + bump * (math.sin(3 * a + ph[0]) * math.sin(2 * t + ph[1]) * 0.6 + math.sin(5 * a + ph[2]) * 0.25 + math.cos(4 * t + ph[3]) * 0.3)
+                y = math.cos(t) * r * d
+                if flat_bottom and y < -r * 0.25:
+                    y = -r * 0.25
+                v.append((math.sin(t) * math.cos(a) * r * d, y, math.sin(t) * math.sin(a) * r * d))
+        for j in range(rings):
+            for i in range(seg):
+                i2 = (i + 1) % seg
+                f.append((j * seg + i, j * seg + i2, (j + 1) * seg + i2, (j + 1) * seg + i))
+        return self._add(v, f, col, **kw)
+
     def is_empty(self):
         return not self.tris
+
+
+def _smooth_normals(P, N, limit_deg=55.0):
+    """média das normais das faces que dividem o mesmo ponto, sem arredondar quinas vivas"""
+    keys = np.round(P / 1e-4).astype(np.int64)
+    acc = {}
+    for i, k in enumerate(map(tuple, keys)):
+        acc.setdefault(k, []).append(i)
+    out = N.copy()
+    cos_lim = math.cos(math.radians(limit_deg))
+    for idxs in acc.values():
+        if len(idxs) < 2:
+            continue
+        ns = N[idxs]
+        for j, i in enumerate(idxs):
+            near = ns[(ns @ N[i]) > cos_lim]
+            v = near.sum(axis=0)
+            ln = np.linalg.norm(v)
+            if ln > 1e-9:
+                out[i] = v / ln
+    return out
+
+
+def _paint(P, C):
+    """topo claro e quente, base escura e fria, pinceladas diagonais (estilo pintado)"""
+    y = P[:, 1]
+    t = (y - y.min()) / max(1e-6, y.max() - y.min())
+    k = 0.7 + 0.34 * t
+    streak = np.sin(P[:, 0] * 7.0 + P[:, 1] * 11.0) * np.sin(P[:, 2] * 9.0 - P[:, 1] * 5.0)
+    k = k * (1.0 + 0.07 * streak)
+    out = C.copy()
+    out[:, 0] = np.clip(C[:, 0] * k + 0.04 * t, 0, 1)
+    out[:, 1] = np.clip(C[:, 1] * k + 0.03 * t, 0, 1)
+    out[:, 2] = np.clip(C[:, 2] * (k * 0.95), 0, 1)
+    return out
 
 
 class Scene:
@@ -150,9 +234,11 @@ class Scene:
         self.nodes = []
         self.roots = []
 
-    def add(self, name, mesh=None, at=(0, 0, 0), rot=(0, 0, 0), parent=None):
+    def add(self, name, mesh=None, at=(0, 0, 0), rot=(0, 0, 0), parent=None, smooth=False, paint=False):
+        """smooth: normais suavizadas (formas arredondadas, quinas vivas acima de ~55 graus continuam)
+        paint: cor pintada à mão (topo mais claro e quente, base mais escura, pinceladas leves)"""
         idx = len(self.nodes)
-        self.nodes.append({"name": name, "mesh": mesh, "at": at, "rot": rot, "children": []})
+        self.nodes.append({"name": name, "mesh": mesh, "at": at, "rot": rot, "children": [], "smooth": smooth, "paint": paint})
         if parent is None:
             self.roots.append(idx)
         else:
@@ -203,7 +289,11 @@ class Scene:
                     nrm = nrm / ln if ln > 1e-12 else np.array([0, 1, 0])
                     N += [nrm, nrm, nrm]
                 N = np.array(N, dtype=np.float32)
+                if n.get("smooth"):
+                    N = _smooth_normals(P, N)
                 C = np.array([c + [1.0] for c in m.cols for _ in range(3)], dtype=np.float32)
+                if n.get("paint"):
+                    C = _paint(P, C)
                 pv = push(P, 34962)
                 nv = push(N, 34962)
                 cv = push(C, 34962)
