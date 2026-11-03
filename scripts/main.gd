@@ -48,6 +48,7 @@ var card_hover: String = ""      # carta com o mouse em cima (destaca o que ela 
 var last_st: Dictionary = {}       # destaques atuais do tabuleiro (sem a carta)
 var dlg: Dictionary = {}           # falas (data/dialogos.json)
 var bubbles: Array = []            # balões de fala ativos
+var plates: Dictionary = {}        # uid -> placa de vida 2D (estilo da HUD)
 var last_banter_ms: int = -100000
 var autotest: bool = false   # godot --headless -- --autotest fac=ABY cpu=FAU map=tarhut
 var last_sides: Variant = null
@@ -1271,6 +1272,12 @@ func _start_match(sides) -> void:
 # ================= HUD da batalha =================
 func _build_hud() -> void:
 	_clear_ui()
+	plates.clear()
+	var plr = Control.new()
+	plr.set_anchors_preset(Control.PRESET_FULL_RECT)
+	plr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui.add_child(plr)
+	w["plates"] = plr
 	# coluna do alto: título, avisos de ação e perguntas
 	var topcol = _vbox(ui, 4)
 	_place(topcol, Control.PRESET_CENTER_TOP, 6)
@@ -2604,20 +2611,20 @@ func _fx_dmg(h: Vector2i, amt: int, uid: int) -> void:
 	var k = _fx_scale()
 	if amt > 0:
 		vfx.impact(p, Color("#ff9a5a"), clamp(amt / 4.0, 0.6, 1.8) * k)
-		vfx.flip("hit", p - Vector3(0, 0.75, 0), clamp(2.1 + amt * 0.22, 2.3, 3.8) * k, 0.6)
-		vfx.flip("ring", _hex_pos(h, 0.0), 2.4 * k, 0.5, Color("#ff8a3a"), true)
+		vfx.flip("hit", p - Vector3(0, 0.75, 0), clamp(2.1 + amt * 0.22, 2.3, 3.8), 0.6)
+		vfx.flip("ring", _hex_pos(h, 0.0), 2.4, 0.5, Color("#ff8a3a"), true)
 		if amt >= 4:
-			vfx.flip("boom", _hex_pos(h, 0.0), 2.0 * k, 0.6, Color(1, 0.85, 0.7))
+			vfx.flip("boom", _hex_pos(h, 0.0), 2.0, 0.6, Color(1, 0.85, 0.7))
 		board.shake = max(board.shake, clamp(amt * 0.08, 0.15, 0.5))
 		_voice(uid, "dor", -1.0, 0.06)
 	else:
 		vfx.block(p)
-		vfx.flip("shield", p - Vector3(0, 0.9, 0), 1.9 * k, 0.55, Color("#bfe8ff"))
+		vfx.flip("shield", p - Vector3(0, 0.9, 0), 1.9, 0.55, Color("#bfe8ff"))
 
 
 # efeitos maiores quando a câmera está longe (tabuleiro grande)
 func _fx_scale() -> float:
-	return clamp(board.cam_dist / 24.0, 1.0, 2.0)
+	return clamp(board.cam_dist / 26.0, 1.0, 2.0)
 
 
 # voz do personagem: v_<id>_atk (atacar) ou v_<id>_dor (sofrer dano)
@@ -2742,7 +2749,7 @@ func _on_fx(e: Dictionary) -> void:
 				var style = _shot_style(e["from"])
 				# disparo: clarão na arma do atacante
 				var muzzle = {"cristal": "crystal", "laser": "beam", "energia": "bolt"}.get(style, "hit")
-				vfx.flip(muzzle, a - Vector3(0, 0.8, 0), 2.0 * k, 0.5, col.lightened(0.3))
+				vfx.flip(muzzle, a - Vector3(0, 0.8, 0), 2.0, 0.5, col.lightened(0.3))
 				impact_delay = vfx.projectile(a, tgt, col, style, k)
 				impact_until = now + 120
 				var snd = "projetil"
@@ -2756,9 +2763,9 @@ func _on_fx(e: Dictionary) -> void:
 			else:
 				impact_delay = 0.16
 				impact_until = now + 160
-				vfx.flip("dash", a - Vector3(0, 0.8, 0), 2.0 * k, 0.5, col.lightened(0.2))
+				vfx.flip("dash", a - Vector3(0, 0.8, 0), 2.0, 0.5, col.lightened(0.2))
 				vfx.slash(tgt, a, col, k)
-				vfx.flip("slash", tgt - Vector3(0, 0.9, 0), 3.4 * k, 0.65, col.lightened(0.25), false, 0.06)
+				vfx.flip("slash", tgt - Vector3(0, 0.9, 0), 3.4, 0.65, col.lightened(0.25), false, 0.06)
 		"dmg":
 			var amt = e["amt"]
 			var uid = e["uid"]
@@ -2998,6 +3005,9 @@ func _say(uid: int, text: String, delay: float = 0.0, mood: String = "fala") -> 
 func _process(_delta: float) -> void:
 	if stage == "select":
 		_update_tags()
+	if game != null and board.visible:
+		_update_plates(_delta)
+		vfx.cam_k = _fx_scale()
 	if bubbles.is_empty():
 		return
 	var keep = []
@@ -3008,7 +3018,7 @@ func _process(_delta: float) -> void:
 		if not board.unit_nodes.has(b["uid"]):
 			p.queue_free()
 			continue
-		var wp = board.unit_nodes[b["uid"]]["node"].position + Vector3(0, 2.7, 0)
+		var wp = board.unit_nodes[b["uid"]]["node"].position + Vector3(0, board.unit_nodes[b["uid"]].get("top", 1.75) + 2.0, 0)
 		if board.cam.is_position_behind(wp):
 			p.visible = false
 		else:
@@ -3121,3 +3131,145 @@ func _talk_voice(u, text: String, mood: String) -> void:
 	# frases longas: o personagem continua falando
 	if text.length() > 55:
 		sfx.play_later(n, 0.78 / pitch, vol - 2.0, pitch * 0.94)
+
+
+# ================= placas de vida (estilo da HUD) =================
+func _make_plate(u) -> Dictionary:
+	var col = C_YOU if u.owner == 0 else C_CPU
+	var border = C_GOLD if u.is_cmd else col
+	var W = 128.0
+	var H = 40.0
+	# placa com layout fixo (sem contêineres): fundo, nome, número e barra segmentada
+	var p = Panel.new()
+	p.size = Vector2(W, H)
+	p.add_theme_stylebox_override("panel", _flat(Color(0.025, 0.045, 0.1, 0.92), border, 2, 5, 0))
+	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	w["plates"].add_child(p)
+	var strip = ColorRect.new()
+	strip.color = border
+	strip.position = Vector2(0, 0)
+	strip.size = Vector2(5, H)
+	strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	p.add_child(strip)
+	var nl = Label.new()
+	nl.text = "Barreira" if u.barrier else (("★ " if u.is_cmd else "") + _short(u.cid))
+	nl.add_theme_font_size_override("font_size", 12)
+	if font_btn != null:
+		nl.add_theme_font_override("font", font_btn)
+	nl.add_theme_color_override("font_color", border.lightened(0.5))
+	nl.position = Vector2(10, 1)
+	nl.size = Vector2(W - 44, 18)
+	nl.clip_text = true
+	nl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	p.add_child(nl)
+	var hl = Label.new()
+	hl.add_theme_font_size_override("font_size", 18)
+	if font_title != null:
+		hl.add_theme_font_override("font", font_title)
+	hl.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+	hl.add_theme_constant_override("outline_size", 4)
+	hl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	hl.position = Vector2(W - 40, -2)
+	hl.size = Vector2(34, 22)
+	hl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	p.add_child(hl)
+	var bar = Control.new()
+	bar.position = Vector2(10, 23)
+	bar.size = Vector2(W - 16, 11)
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	p.add_child(bar)
+	var bg = ColorRect.new()
+	bg.color = Color(1, 1, 1, 0.12)
+	bg.size = bar.size
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bar.add_child(bg)
+	var ghost = ColorRect.new()
+	ghost.color = Color(1, 0.95, 0.85, 0.95)
+	ghost.size = Vector2(bar.size.x, bar.size.y)
+	ghost.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bar.add_child(ghost)
+	var fill = ColorRect.new()
+	fill.size = Vector2(bar.size.x, bar.size.y)
+	fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bar.add_child(fill)
+	for i in range(1, u.maxhp):
+		var t = ColorRect.new()
+		t.color = Color(0.02, 0.03, 0.07, 0.9)
+		t.position = Vector2(bar.size.x * i / u.maxhp - 1.0, 0)
+		t.size = Vector2(2, bar.size.y)
+		t.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		bar.add_child(t)
+	var fl = Label.new()
+	fl.add_theme_font_size_override("font_size", 11)
+	fl.add_theme_color_override("font_color", Color("#ffcf6a"))
+	fl.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+	fl.add_theme_constant_override("outline_size", 4)
+	fl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	fl.position = Vector2(0, -18)
+	fl.size = Vector2(W, 16)
+	fl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	fl.visible = false
+	p.add_child(fl)
+	return {"panel": p, "hp": hl, "fill": fill, "ghost": ghost, "flags": fl, "bw": bar.size.x, "shown": float(u.hp), "ghost_v": float(u.hp), "last": u.hp, "flash": 0.0}
+
+
+func _update_plates(delta: float) -> void:
+	if not w.has("plates") or not is_instance_valid(w["plates"]):
+		return
+	var seen = {}
+	var sc = clamp(40.0 / max(board.cam_dist, 1.0), 0.85, 1.35)
+	for uid in board.unit_nodes.keys():
+		var u: Variant = game.by_uid(uid)
+		if u == null:
+			continue
+		seen[uid] = true
+		if not plates.has(uid) or not is_instance_valid(plates[uid]["panel"]):
+			plates[uid] = _make_plate(u)
+		var pl = plates[uid]
+		var d = board.unit_nodes[uid]
+		var wp = d["node"].position + Vector3(0, d.get("top", 1.75) * d["node"].scale.y + 0.25, 0)
+		var p: Panel = pl["panel"]
+		if board.cam.is_position_behind(wp) or d["node"].scale.y < 0.3:
+			p.visible = false
+			continue
+		p.visible = true
+		# vida: a barra desce suave e um rastro claro mostra o dano levado
+		if u.hp < pl["last"]:
+			pl["flash"] = 1.0
+		pl["last"] = u.hp
+		pl["shown"] = lerp(pl["shown"], float(u.hp), min(1.0, delta * 10.0))
+		if pl["ghost_v"] > pl["shown"]:
+			pl["ghost_v"] = max(pl["shown"], pl["ghost_v"] - delta * 2.5)
+		else:
+			pl["ghost_v"] = pl["shown"]
+		var frac = clamp(pl["shown"] / max(1.0, float(u.maxhp)), 0.0, 1.0)
+		pl["fill"].size.x = pl["bw"] * frac
+		pl["ghost"].size.x = pl["bw"] * clamp(pl["ghost_v"] / max(1.0, float(u.maxhp)), 0.0, 1.0)
+		var hc = Color("#4cd964") if frac > 0.6 else (Color("#ffcf3a") if frac > 0.34 else Color("#ff3b3b"))
+		pl["flash"] = max(0.0, pl["flash"] - delta * 3.0)
+		pl["fill"].color = hc.lerp(Color.WHITE, pl["flash"] * 0.8)
+		pl["hp"].text = str(u.hp)
+		pl["hp"].add_theme_color_override("font_color", hc.lightened(0.25))
+		var fl = []
+		if u.eq != "":
+			fl.append(u.eq.to_upper())
+		if game.rooted(u):
+			fl.append("PRESO")
+		if game.silenced(u):
+			fl.append("SEM HAB.")
+		if game.has_fx(u, "mark"):
+			fl.append("ALVO")
+		pl["flags"].text = " · ".join(fl)
+		pl["flags"].visible = not fl.is_empty()
+		var shake = Vector2(sin(Time.get_ticks_msec() * 0.09) * 3.0 * pl["flash"], 0)
+		p.scale = Vector2.ONE * sc * (1.0 + pl["flash"] * 0.12)
+		p.pivot_offset = Vector2(p.size.x * 0.5, p.size.y)
+		var spos = board.cam.unproject_position(wp)
+		p.position = spos - Vector2(p.size.x * 0.5, p.size.y) + shake
+		# quem está agindo fica por cima
+		p.modulate = Color(1, 1, 1, 1.0)
+	for uid in plates.keys():
+		if not seen.has(uid):
+			if is_instance_valid(plates[uid]["panel"]):
+				plates[uid]["panel"].queue_free()
+			plates.erase(uid)

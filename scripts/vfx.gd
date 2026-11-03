@@ -430,7 +430,14 @@ func _flip_tex(fname: String) -> Variant:
 
 
 # toca um efeito pintado: billboard de frente para a câmera, ou deitado no chão (ground)
+var cam_k: float = 1.0          # câmera longe = efeitos maiores (main.gd atualiza)
+const SIZE_MUL = 1.35           # todos os desenhos de efeito um pouco maiores
+const DUR_MUL = 1.2             # e um pouco mais lentos, para dar tempo de ver
+
+
 func flip(fname: String, pos: Vector3, size: float = 1.8, dur: float = 0.55, tint: Color = Color.WHITE, ground: bool = false, delay: float = 0.0) -> void:
+	size *= SIZE_MUL * cam_k
+	dur *= DUR_MUL
 	var tex = _flip_tex(fname)
 	if tex == null:
 		return

@@ -866,6 +866,7 @@ func _make_unit(u) -> void:
 	heart.render_priority = 5
 	heart.modulate = Color("#3d8bff") if u.owner == 0 else Color("#ff7a2f")
 	heart.position = Vector3(0, body_h + 0.25, 0)
+	heart.visible = false   # a vida agora é a placa 2D da HUD (main.gd)
 	node.add_child(heart)
 	var hp = Label3D.new()
 	hp.font_size = 56
@@ -875,6 +876,7 @@ func _make_unit(u) -> void:
 	hp.no_depth_test = true
 	hp.render_priority = 6
 	hp.position = Vector3(0, body_h + 0.27, 0)
+	hp.visible = false
 	node.add_child(hp)
 	var tag = Label3D.new()
 	tag.font_size = 40
@@ -893,13 +895,14 @@ func _make_unit(u) -> void:
 	flags.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	flags.no_depth_test = true
 	flags.position = Vector3(0, body_h + 0.62, 0)
+	flags.visible = false
 	node.add_child(flags)
 	var wp = world_xz(u.pos())
 	var start = Vector3(wp.x, top_y(u.pos()), wp.y)
 	node.position = start
 	node.scale = Vector3(0.01, 0.01, 0.01)
 	unit_nodes[u.uid] = {"node": node, "sprite": sprite, "hp": hp, "heart": heart, "tag": tag, "flags": flags, "ring": ring,
-		"hex": u.pos(), "path": [], "seg_t": 0.0, "from": start, "pop": 0.0, "flip": u.owner == 1, "bob": randf() * TAU, "hurt": 0.0, "lunge": 0.0}
+		"top": body_h, "hex": u.pos(), "path": [], "seg_t": 0.0, "from": start, "pop": 0.0, "flip": u.owner == 1, "bob": randf() * TAU, "hurt": 0.0, "lunge": 0.0}
 
 
 # caminho casa a casa só pelo terreno (para a animação)
