@@ -967,7 +967,7 @@ func _army_slot(id: String) -> Control:
 	var v = _vbox(p, 2)
 	var tex = DB.portraits.get(id, null)
 	v.add_child(_tex_rect(tex, Vector2(0, 50)))
-	var nl = _label(v, DB.cards[id]["name"], 11, C_TXT)
+	var nl = _label(v, _short(id), 11, C_TXT)
 	nl.clip_text = true
 	nl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var h = _hbox(v, 3)
