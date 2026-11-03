@@ -60,6 +60,7 @@ var multi: bool = false
 var gest: Variant = null
 var hover: Variant = null
 var picking_enabled: bool = true
+var hidden_uids: Dictionary = {}      # peças ainda não mostradas (cena de entrada)
 var outline_mat: StandardMaterial3D
 var model_cache: Dictionary = {}   # nome -> PackedScene (ou null se não existir)
 
@@ -1201,6 +1202,13 @@ func _update_units(delta: float) -> void:
 			continue
 		var d = unit_nodes[u.uid]
 		var node: Node3D = d["node"]
+		# escondido até a cena de entrada mostrar a chegada
+		if hidden_uids.has(u.uid):
+			node.visible = false
+			d["pop"] = 0.0
+			node.scale = Vector3.ONE * 0.01
+			continue
+		node.visible = true
 		var goal = _unit_goal(u)
 		if goal != d["hex"]:
 			var path = walk_path(d["hex"], goal)

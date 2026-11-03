@@ -4,7 +4,8 @@ extends Node
 const NAMES = ["golpe", "impacto", "tiro_laser", "tiro_cristal", "tiro_energia", "projetil", "cura", "escudo", "poder",
 	"maldicao", "fenix", "armadilha", "invocar", "derrota", "passo", "explosao", "verme_rumor", "verme_ataque", "dunas",
 	"round", "clique", "confirmar", "carta", "vento_loop", "tempestade_loop", "ilha_loop", "musica_deserto", "musica_galaxia", "musica_valak",
-	"musica_fau", "musica_aby", "musica_kri", "musica_wac", "musica_zuk", "musica_lit", "musica_ter"]
+	"musica_fau", "musica_aby", "musica_kri", "musica_wac", "musica_zuk", "musica_lit", "musica_ter",
+	"entrada_fau", "entrada_aby", "entrada_kri", "entrada_wac", "entrada_zuk", "entrada_lit", "entrada_ter"]
 
 var streams: Dictionary = {}
 var pool: Array = []
@@ -21,7 +22,7 @@ func _ready() -> void:
 				continue
 		var s = load(path)
 		if s is AudioStreamOggVorbis:
-			s.loop = true
+			s.loop = n.begins_with("musica") or n.ends_with("_loop")
 		if n.ends_with("_loop") and s is AudioStreamWAV:
 			s.loop_mode = AudioStreamWAV.LOOP_FORWARD
 			s.loop_begin = 0

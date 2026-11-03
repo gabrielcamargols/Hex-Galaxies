@@ -12,7 +12,8 @@ Cada facção tem instrumentos, ritmo e personalidade próprios:
   ter  Terramorfos  sobrevivência subterrânea: picaretas, broca, cordas graves e violoncelo humano
 
 Uso: python tools/musica_faccoes.py [pasta_sounds] [fau,aby,...]   (precisa de ffmpeg)
-Gera sounds/musica_<id>.ogg
+Gera sounds/musica_<id>.ogg (tema em loop) e sounds/entrada_<id>.ogg (música de entrada, ~8 s)
+     python tools/musica_faccoes.py sounds fau,aby --entradas   (só as entradas)
 """
 import os, sys, wave, subprocess
 import numpy as np
@@ -604,9 +605,169 @@ def terramorfos(dst):
 
 TRACKS = {"fau": faurianos, "aby": abyssais, "kri": krieg, "wac": wachter, "zuk": zukunft, "lit": lithari, "ter": terramorfos}
 
+
+
+# =====================================================================
+# Músicas de ENTRADA (cerca de 8 s): o exército chegando ao campo
+# viradas de tambor + tema da facção + golpe final que segura
+# =====================================================================
+def _ending_hit(tr, bar, root, chord, brassy=True):
+    t = tr.T(bar)
+    tr.boom(t, 0.18)
+    tr.taiko(t, 0.4, True, 0)
+    tr.kick(t, 0.6)
+    tr.pad([n - 12 for n in chord] + [root], t, tr.bar * 1.5, 0.08, cut=2500, att=0.02, rev=0.9)
+    if brassy:
+        for m in chord:
+            tr.brass(m, t, tr.bar * 1.2, 0.05)
+
+
+def _entry_render(tr, dst):
+    # sem emenda de loop: a cauda fica no fim
+    tr.length = tr.N / SR - 0.01
+    return tr.render(dst, 2.5, 0.45, 1.5)
+
+
+def e_faurianos(dst):
+    tr = Track(112, 4, seed=111, tail=4)
+    for bar in range(3):
+        for b, p, sl in ((0, 1.0, False), (0.75, 1.3, False), (1.5, 1.0, True), (2.0, 0.9, False), (2.75, 1.3, True), (3.5, 1.0, False)):
+            tr.conga(tr.T(bar, b), 0.17, p, -0.3 if p > 1 else 0.3, sl)
+        tr.kick(tr.T(bar, 0), 0.45)
+        for b, o in ((0, 0), (0.75, 12), (1.5, 0), (2.5, 7)):
+            tr.bass(tr.T(bar, b), 43 + o, 0.4 * tr.beat, 0.22, cut=700)
+    for i in range(8):
+        tr.conga(tr.T(2, 2 + i * 0.25), 0.1 + i * 0.015, 1.0 + i * 0.05, 0, i % 2 == 0)
+    t = tr.T(0, 1)
+    for m, d in [(67, 0.5), (None, 0.25), (67, 0.25), (69, 0.5), (71, 0.5), (74, 1.0), (71, 0.5), (69, 0.5), (67, 0.5), (71, 0.5), (74, 0.5), (79, 2.0)]:
+        if m is not None:
+            tr.brass(m, t, d * tr.beat * 0.9, 0.08)
+            tr.brass(m - 12, t, d * tr.beat * 0.9, 0.04)
+        t += d * tr.beat
+    _ending_hit(tr, 3, 43, [67, 71, 74])
+    return _entry_render(tr, dst)
+
+
+def e_abyssais(dst):
+    tr = Track(100, 4, beats=3.5, seed=222, tail=4)
+    for bar in range(3):
+        tr.heart(tr.T(bar, 0), 0.32)
+        for b, d in ((0, 0.9), (1.0, 0.9), (2.0, 1.4)):
+            tr.bass(tr.T(bar, b), 38, d * tr.beat, 0.26, cut=500, dist=0.6)
+        tr.sonar(tr.T(bar, 0.5), 0.07, 1200 + 200 * bar)
+        tr.bubbles(tr.T(bar), tr.bar, 0.05, 10)
+        for i in range(7):
+            tr.click(tr.T(bar, i * 0.5), 0.08, tr.rng.uniform(-0.7, 0.7))
+    tr.lead([(62, 1.0), (69, 1.0), (70, 0.5), (69, 1.0), (74, 3.5)], tr.T(0, 1), 0.09, "sine", vib=0.025, glide=0.2, cut=2500, rev=0.9)
+    tr.riser(tr.T(2), tr.bar, 0.06)
+    _ending_hit(tr, 3, 38, [62, 65, 69], brassy=False)
+    tr.lead([(74, 3.0)], tr.T(3), 0.06, "sine", vib=0.03, glide=0.3, cut=2000, rev=1.0)
+    return _entry_render(tr, dst)
+
+
+def e_krieg(dst):
+    tr = Track(104, 4, seed=333, tail=4)
+    for bar in range(3):
+        for b, g in ((0, 0.13), (0.5, 0.07), (0.75, 0.06), (1, 0.13), (2, 0.13), (2.5, 0.07), (2.75, 0.06), (3, 0.13)):
+            tr.snare(tr.T(bar, b), g, 0.15, tight=22)
+        tr.kick(tr.T(bar, 0), 0.55, 40); tr.kick(tr.T(bar, 2), 0.5, 40)
+        for i in range(8):
+            tr.guitar(40, tr.T(bar, i * 0.5), tr.beat * 0.45, 0.05, palm=(i != 0))
+    for i in range(16):
+        tr.snare(tr.T(2, i * 0.25), 0.04 + i * 0.008, 0.1, tight=30)
+    t = tr.T(0, 0)
+    for m, d in [(64, 1.0), (64, 0.5), (67, 0.5), (71, 1.5), (69, 0.5), (67, 1.0), (66, 1.0), (64, 1.0), (67, 1.0), (71, 2.0)]:
+        tr.brass(m, t, d * tr.beat * 0.92, 0.08, 2600)
+        tr.brass(m - 12, t, d * tr.beat * 0.92, 0.05, 2000)
+        t += d * tr.beat
+    tr.boom(tr.T(1, 2), 0.12)
+    _ending_hit(tr, 3, 40, [64, 67, 71])
+    tr.guitar(40, tr.T(3), tr.bar, 0.08)
+    return _entry_render(tr, dst)
+
+
+def e_wachter(dst):
+    tr = Track(96, 4, beats=3, seed=444, tail=4)
+    for bar in range(3):
+        for i in range(6):
+            tr.taiko(tr.T(bar, i * 0.5), 0.28 if i in (0, 3) else 0.15, i in (0, 3))
+        tr.stone(tr.T(bar, 1.0), 0.2, -0.4); tr.stone(tr.T(bar, 2.5), 0.16, 0.4)
+        tr.bass(tr.T(bar, 0), 33, tr.beat * 1.4, 0.26, cut=300)
+    t = tr.T(0, 0)
+    for m, d in [(57, 1.5), (64, 1.0), (62, 0.5), (60, 1.5), (59, 1.5), (64, 1.5), (69, 1.5)]:
+        tr.horn(m, t, d * tr.beat * 0.95, 0.1)
+        tr.horn(m - 12, t, d * tr.beat * 0.95, 0.05)
+        t += d * tr.beat
+    _ending_hit(tr, 3, 45, [57, 60, 64])
+    tr.horn(69, tr.T(3), tr.bar * 1.2, 0.1)
+    return _entry_render(tr, dst)
+
+
+def e_zukunft(dst):
+    tr = Track(122, 4, seed=555, tail=4)
+    ch = [69, 72, 76]
+    for bar in range(3):
+        for i in range(4):
+            tr.kick(tr.T(bar, i), 0.45)
+        for i in range(16):
+            tr.arp([ch[0], ch[1], ch[2], ch[0] + 12][i % 4] - 12, tr.T(bar, i * 0.25), 0.04, -0.5 if i % 2 else 0.5, cut=1500 + 900 * bar + 60 * i, dec=12, echo=False)
+            if bar == 2:
+                tr.hat(tr.T(bar, i * 0.25), 0.04 + i * 0.004)
+        tr.bass(tr.T(bar, 0), 45, tr.bar * 0.9, 0.2, cut=600)
+    tr.glitch(tr.T(1, 3.5), 88, 0.06)
+    tr.glitch(tr.T(2, 3.5), 91, 0.07)
+    tr.lead([(76, 0.75), (79, 0.75), (81, 0.5), (84, 2.0), (83, 0.5), (81, 0.5), (84, 1.0), (88, 2.0)], tr.T(1, 0), 0.07, "square", vib=0.005, glide=0.03, cut=5000)
+    tr.riser(tr.T(2), tr.bar, 0.06)
+    _ending_hit(tr, 3, 45, [69, 72, 76], brassy=False)
+    tr.lead([(81, 3.0)], tr.T(3), 0.06, "square", cut=4000)
+    return _entry_render(tr, dst)
+
+
+def e_lithari(dst):
+    tr = Track(90, 4, seed=666, tail=4)
+    ch = [62, 66, 69]
+    for bar in range(3):
+        for i in range(5):
+            tr.glass(tr.T(bar, i * 4 / 5), ch[i % 3] + 24 + (12 if i == 4 else 0), 0.07, -0.6 + 0.3 * i, 4.0)
+        for i in range(4):
+            tr.bass(tr.T(bar, i), 38, tr.beat * 0.4, 0.18, cut=350)
+        tr.grains(tr.T(bar), tr.bar, 74, 0.02 + 0.01 * bar, 40 + 20 * bar)
+        tr.click(tr.T(bar, 1.25), 0.1); tr.click(tr.T(bar, 2.75), 0.1)
+    tr.lead([(74, 1.0), (75, 0.5), (78, 1.5), (81, 1.0), (82, 0.5), (78, 1.5), (86, 2.0)], tr.T(0, 2), 0.06, "sine", vib=0.0, glide=0.01, cut=6000, rev=0.9)
+    tr.riser(tr.T(2), tr.bar, 0.05)
+    t = tr.T(3)
+    tr.boom(t, 0.15)
+    for k, m in enumerate([86, 81, 78, 74, 69]):
+        tr.glass(t + k * 0.05, m, 0.08, -0.6 + 0.3 * k, 1.5)
+    tr.pad([50, 54, 57, 62], t, tr.bar * 1.5, 0.06, cut=900, att=0.02, det=0.25, rev=1.0)
+    return _entry_render(tr, dst)
+
+
+def e_terramorfos(dst):
+    tr = Track(88, 4, seed=777, tail=4)
+    for bar in range(3):
+        tr.anvil(tr.T(bar, 0), 0.08, 0.75, -0.5); tr.anvil(tr.T(bar, 1.5), 0.06, 0.9, 0.5); tr.anvil(tr.T(bar, 2.5), 0.07, 0.75, -0.3)
+        tr.taiko(tr.T(bar, 0), 0.25, True); tr.taiko(tr.T(bar, 2), 0.2)
+        tr.bass(tr.T(bar, 0), 36, tr.beat * 2.4, 0.26, cut=320, dist=0.2)
+    tr.drill(tr.T(1, 2), tr.beat * 4, 0.05)
+    tr.cello([(55, 1.5), (58, 0.5), (60, 1.0), (63, 1.0), (62, 2.0), (63, 1.0), (65, 1.0), (67, 4.0)], tr.T(0, 0), 0.12)
+    _ending_hit(tr, 3, 36, [55, 60, 63])
+    tr.cello([(67, 3.5)], tr.T(3), 0.1)
+    return _entry_render(tr, dst)
+
+
+ENTRIES = {"fau": e_faurianos, "aby": e_abyssais, "kri": e_krieg, "wac": e_wachter, "zuk": e_zukunft, "lit": e_lithari, "ter": e_terramorfos}
+
+
 if __name__ == "__main__":
     out = sys.argv[1] if len(sys.argv) > 1 else "sounds"
     only = sys.argv[2].split(",") if len(sys.argv) > 2 else list(TRACKS)
+    entries = "--entradas" in sys.argv or len(sys.argv) <= 2
+    themes = "--entradas" not in sys.argv
     for k in only:
-        L = TRACKS[k](os.path.join(out, "musica_%s.ogg" % k))
-        print(k, "ok", round(L, 1), "s")
+        if themes and k in TRACKS:
+            L = TRACKS[k](os.path.join(out, "musica_%s.ogg" % k))
+            print(k, "tema ok", round(L, 1), "s")
+        if entries and k in ENTRIES:
+            L = ENTRIES[k](os.path.join(out, "entrada_%s.ogg" % k))
+            print(k, "entrada ok", round(L, 1), "s")

@@ -1349,11 +1349,13 @@ func _start_match(sides) -> void:
 	sfx.stop_all_loops()
 	if game.map_id == "tarhut":
 		sfx.loop("vento_loop", -15.0, 2.0)
-		sfx.loop("musica_deserto", -9.0, 4.0)
 	else:
 		sfx.loop("ilha_loop", -14.0, 2.0)
-		sfx.loop("musica_valak", -7.0, 4.0)
+	if autotest:
+		_map_music()
 	refresh()
+	if not autotest:
+		await _entrance()
 	await game.begin_game()
 	busy = false
 	await after()
@@ -3607,3 +3609,120 @@ func _flash_screen(col: Color, dur: float) -> void:
 	var tw = r.create_tween()
 	tw.tween_property(r, "color:a", 0.0, dur)
 	tw.tween_callback(r.queue_free)
+
+
+# ================= entrada dos exércitos =================
+const FAC_ENTRY = {"FAU": "entrada_fau", "ABY": "entrada_aby", "KRI": "entrada_kri", "WAC": "entrada_wac", "ZUK": "entrada_zuk", "LIT": "entrada_lit", "TER": "entrada_ter"}
+var skip_entry: bool = false
+
+
+func _map_music() -> void:
+	if game == null:
+		return
+	if game.map_id == "tarhut":
+		sfx.loop("musica_deserto", -9.0, 3.0)
+	else:
+		sfx.loop("musica_valak", -7.0, 3.0)
+
+
+func _wait(sec: float) -> void:
+	var t = 0.0
+	while t < sec and not skip_entry:
+		await get_tree().process_frame
+		t += get_process_delta_time()
+
+
+# cada exército chega ao campo com a sua música-tema: primeiro o seu, depois o da CPU
+func _entrance() -> void:
+	skip_entry = false
+	busy = true
+	for u in game.field():
+		board.hidden_uids[u.uid] = true
+	# esconde a HUD (fica só a camada da cena)
+	for c in ui.get_children():
+		if c == w.get("bubbles") or c == w.get("plates"):
+			continue
+		c.set_meta("was_vis", c.visible)
+		c.visible = false
+	var layer = Control.new()
+	layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui.add_child(layer)
+	var skip = _cbtn(layer, "Pular  ▶", C_HUD, func(): skip_entry = true)
+	skip.custom_minimum_size = Vector2(150, 44)
+	_place(skip, Control.PRESET_BOTTOM_RIGHT, 18)
+	if ui.modulate.a < 1.0:
+		_ui_fade(1.0, 0.6)
+	await _wait(1.6)
+	for p in [0, 1]:
+		if skip_entry:
+			break
+		await _entrance_side(p, layer)
+	for uid in board.hidden_uids.keys():
+		var u: Variant = game.by_uid(uid)
+		if u != null:
+			vfx.summon_fx(_hex_pos(u.pos(), 0.0), _unit_color(uid))
+	board.hidden_uids.clear()
+	layer.queue_free()
+	for c in ui.get_children():
+		if c.has_meta("was_vis"):
+			c.visible = c.get_meta("was_vis")
+			c.remove_meta("was_vis")
+	board.cam_speed = 3.0
+	board.fit_camera(false)
+	_later(2.0, func(): board.cam_speed = 8.0)
+	_map_music()
+	refresh()
+
+
+func _entrance_side(p: int, layer: Control) -> void:
+	var fac = game.P[p]["fac"]
+	var fcol = Color(DB.factions[fac]["color"])
+	var ec = DB.entry_c[p]
+	var ew = board.world_xz(ec)
+	var tgt = Vector3(ew.x, 0.6, ew.y)
+	var to_c = Vector2(-ew.x, -ew.y).normalized()
+	board.cam_speed = 2.2
+	board.cam_goal = {"yaw": atan2(to_c.x, to_c.y), "pitch": 0.45, "dist": 10.5, "target": tgt}
+	sfx.play(FAC_ENTRY.get(fac, ""), -1.0, 1.0, 0.0)
+	# cartão da facção: retrato do comandante, nome e quem é
+	var card = PanelContainer.new()
+	card.add_theme_stylebox_override("panel", _flat(Color(0.02, 0.04, 0.09, 0.9), fcol, 3, 12, 14))
+	layer.add_child(card)
+	var h = _hbox(card, 14)
+	var cid = DB.factions[fac]["cmd"]
+	if DB.portraits.has(cid):
+		h.add_child(_tex_rect(DB.portraits[cid], Vector2(110, 110)))
+	var v = _vbox(h, 2)
+	_label(v, "VOCÊ" if p == 0 else "ADVERSÁRIO", 13, C_YOU if p == 0 else C_CPU)
+	_label(v, DB.factions[fac]["name"].to_upper(), 34, fcol.lightened(0.35))
+	_label(v, "Comandante: %s · chega no round 6" % DB.cards[cid]["name"], 15, C_DIM)
+	card.position = Vector2(-700, 70) if p == 0 else Vector2(get_viewport().get_visible_rect().size.x + 100, 70)
+	var goal_x = 40.0 if p == 0 else get_viewport().get_visible_rect().size.x - 40.0
+	await get_tree().process_frame
+	if p == 1:
+		goal_x -= card.size.x
+	var tw = card.create_tween()
+	tw.tween_property(card, "position:x", goal_x, 0.5).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	await _wait(1.6)
+	# as peças chegam uma a uma (portal + queda) e falam ao entrar
+	var units = game.field().filter(func(x): return x.owner == p and not x.barrier)
+	for u in units:
+		if skip_entry:
+			break
+		board.hidden_uids.erase(u.uid)
+		var hp = _hex_pos(u.pos(), 0.0)
+		vfx.flip("portal", hp, 2.6, 0.7, fcol.lightened(0.4), true)
+		vfx.summon_fx(hp, fcol)
+		vfx.dust_burst(hp, true)
+		board.shake = max(board.shake, 0.3)
+		sfx.play("invocar", -4.0)
+		_voice(u.uid, "atk", -1.0, 0.2)
+		var line = _line("entrada", u)
+		if line != "":
+			_say(u.uid, line, 0.5, "fala")
+		await _wait(1.7)
+	await _wait(1.3)
+	var tw2 = card.create_tween()
+	tw2.tween_property(card, "modulate:a", 0.0, 0.4)
+	tw2.tween_callback(card.queue_free)
