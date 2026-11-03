@@ -1113,8 +1113,7 @@ func _make_unit(u) -> void:
 		"top": body_h, "hex": u.pos(), "path": [], "seg_t": 0.0, "from": start, "pop": 0.0, "flip": u.owner == 1, "bob": randf() * TAU, "hurt": 0.0, "lunge": 0.0}
 
 
-# personagem "2.5D": a arte num cartão que encara a câmera, com relevo (normal map)
-# iluminado pelo sol, brilho próprio para manter as cores, contorno de luz e sombra no chão
+# personagem: a arte num cartão que encara a câmera, com as cores originais e sombra no chão
 func _figure(cid: String, body_h: float) -> MeshInstance3D:
 	var tex: Texture2D = DB.art[cid]
 	var mi = MeshInstance3D.new()
@@ -1130,98 +1129,12 @@ func _figure(cid: String, body_h: float) -> MeshInstance3D:
 	m.billboard_mode = BaseMaterial3D.BILLBOARD_FIXED_Y
 	m.billboard_keep_scale = true
 	m.cull_mode = BaseMaterial3D.CULL_DISABLED
-	m.diffuse_mode = BaseMaterial3D.DIFFUSE_TOON
-	m.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
-	m.roughness = 1.0
-	var npath = "res://art/n_%s.webp" % cid
-	if ResourceLoader.exists(npath):
-		m.normal_enabled = true
-		m.normal_texture = load(npath)
-		m.normal_scale = 1.0
-	# brilho próprio: as cores continuam vivas no lado da sombra
-	m.emission_enabled = true
-	m.emission_texture = tex
-	m.emission = Color.WHITE
-	# artes muito claras (branco, rosa pastel) estouram para branco com a luz: menos brilho próprio
-	var lum = _art_lum(cid, tex)
-	var bright = clamp((lum - 0.5) / 0.25, 0.0, 1.0)
-	m.emission_energy_multiplier = lerp(0.32, 0.06, bright)
-	mi.set_meta("tone", lerp(1.0, 0.8, bright))
-	m.rim_enabled = true
-	m.rim = lerp(0.22, 0.08, bright)
-	m.rim_tint = 0.75
+	# a arte aparece com as cores originais: sem luz, relevo, brilho ou bordas extras
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	mi.material_override = m
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
-	# espessura: camadas escuras da mesma silhueta logo atrás (efeito de peça recortada grossa)
-	for i in range(3):
-		var e = MeshInstance3D.new()
-		e.mesh = q
-		var sm = ShaderMaterial.new()
-		sm.shader = _edge_shader()
-		sm.set_shader_parameter("tex", tex)
-		var k = float(i + 1) / 3.0
-		sm.set_shader_parameter("shift", Vector3(0.045 * k, -0.03 * k, -0.02 * k) * body_h / 1.75)
-		sm.set_shader_parameter("col", Color(0.16, 0.11, 0.09).darkened(0.25 * k))
-		e.material_override = sm
-		e.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		mi.add_child(e)
 	return mi
-
-
-var _edge_sh: Shader = null
-var _lum_cache := {}
-
-
-# brilho médio da parte visível da arte (0..1)
-func _art_lum(cid: String, tex: Texture2D) -> float:
-	if _lum_cache.has(cid):
-		return _lum_cache[cid]
-	var img = tex.get_image()
-	var v = 0.45
-	if img != null:
-		if img.is_compressed():
-			img.decompress()
-		img = img.duplicate()
-		img.resize(32, 32, Image.INTERPOLATE_BILINEAR)
-		var tot = 0.0
-		var n = 0.0
-		for y in range(32):
-			for x in range(32):
-				var c = img.get_pixel(x, y)
-				if c.a > 0.5:
-					tot += c.r * 0.3 + c.g * 0.55 + c.b * 0.15
-					n += 1.0
-		if n > 0:
-			v = tot / n
-	_lum_cache[cid] = v
-	return v
-
-
-func _edge_shader() -> Shader:
-	if _edge_sh != null:
-		return _edge_sh
-	_edge_sh = Shader.new()
-	_edge_sh.code = """
-shader_type spatial;
-render_mode unshaded, cull_disabled;
-uniform sampler2D tex : source_color, filter_linear_mipmap;
-uniform vec4 col : source_color = vec4(0.12, 0.08, 0.06, 1.0);
-uniform float flip = 0.0;
-uniform vec3 shift = vec3(0.04, -0.03, -0.02);
-void vertex() {
-	MODELVIEW_MATRIX = VIEW_MATRIX * mat4(vec4(normalize(cross(vec3(0.0, 1.0, 0.0), INV_VIEW_MATRIX[2].xyz)), 0.0), vec4(0.0, 1.0, 0.0, 0.0), vec4(normalize(cross(INV_VIEW_MATRIX[0].xyz, vec3(0.0, 1.0, 0.0))), 0.0), MODEL_MATRIX[3]);
-	MODELVIEW_MATRIX = MODELVIEW_MATRIX * mat4(vec4(length(MODEL_MATRIX[0].xyz), 0.0, 0.0, 0.0), vec4(0.0, length(MODEL_MATRIX[1].xyz), 0.0, 0.0), vec4(0.0, 0.0, length(MODEL_MATRIX[2].xyz), 0.0), vec4(0.0, 0.0, 0.0, 1.0));
-	VERTEX += shift;
-}
-void fragment() {
-	vec2 uv = UV;
-	if (flip > 0.5) { uv.x = 1.0 - uv.x; }
-	if (texture(tex, uv).a < 0.5) { discard; }
-	ALBEDO = col.rgb;
-}
-"""
-	return _edge_sh
 
 
 func _figure_look(fig: MeshInstance3D, flip: bool, mod: Color) -> void:
@@ -1230,11 +1143,7 @@ func _figure_look(fig: MeshInstance3D, flip: bool, mod: Color) -> void:
 	if m.uv1_scale.x != sx:
 		m.uv1_scale = Vector3(sx, 1, 1)
 		m.uv1_offset = Vector3(1.0 if flip else 0.0, 0, 0)
-		for e in fig.get_children():
-			(e.material_override as ShaderMaterial).set_shader_parameter("flip", 1.0 if flip else 0.0)
-	var tone = float(fig.get_meta("tone", 1.0))
-	m.albedo_color = Color(mod.r * tone, mod.g * tone, mod.b * tone, mod.a)
-	m.emission = mod
+	m.albedo_color = mod
 
 
 # caminho casa a casa só pelo terreno (para a animação)

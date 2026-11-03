@@ -3,7 +3,6 @@
 Recebe a arte de corpo inteiro (PNG com fundo transparente) e gera:
   art/<id>.webp    corpo inteiro, recortado e reduzido para caber em 480x440
   art/p_<id>.webp  retrato 160x160 (centro e tamanho do recorte ajustáveis)
-  art/n_<id>.webp  mapa de relevo (tools/normalgen.py)
 
 Uso: python tools/arteprep.py <imagem.png> <id> [cx cy lado [voo]]
   cx, cy = centro do retrato na imagem original (0..1); lado = fração da largura
@@ -12,7 +11,6 @@ Uso: python tools/arteprep.py <imagem.png> <id> [cx cy lado [voo]]
 import os, sys
 from PIL import Image
 sys.path.insert(0, os.path.dirname(__file__))
-from normalgen import normal_map
 
 ART = os.path.join(os.path.dirname(__file__), "..", "art")
 
@@ -39,7 +37,6 @@ def prep(src, cid, cx=0.5, cy=0.25, side=0.4, hover=0.0):
         body = full
     body.save(os.path.join(ART, "%s.webp" % cid), quality=92)
     por.save(os.path.join(ART, "p_%s.webp" % cid), quality=92)
-    normal_map(body).save(os.path.join(ART, "n_%s.webp" % cid), quality=95)
     print(cid, body.size)
 
 
