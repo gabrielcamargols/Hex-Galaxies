@@ -84,6 +84,8 @@
   "z_hacker": {"entrada": ["Já invadi o sistema de vocês. Brincadeira. Ou não."], "provoca": ["{nome}, sua senha é 1234, né?"]},
   "z_naves": {"entrada": ["Piloto de Naves pronto! Alguém precisa de carona?"]},
   "z_diplo": {"entrada": ["Proponho uma solução diplomática: vocês perdem."]},
+  "z_drone": {"entrada": ["Sentinela on-line. Varredura do perímetro iniciada.", "Alvo detectado. Canhão de plasma carregado."], "provoca": ["{nome}, você foi marcado como alvo prioritário.", "Bip. {nome} tem 97% de chance de cair. Arredondando: 100."], "aliado": ["{nome}, cubro você do alto."]},
+  "z_escudo": {"entrada": ["Matriz hexagonal estável. Fiquem perto de mim, pessoal.", "Escudos a cem por cento. Podem avançar."], "provoca": ["{nome}, pode bater. Eu já calculei esse golpe.", "Seu ataque, {nome}? Absorvido e catalogado."], "aliado": ["{nome}, fica a duas casas de mim que eu seguro o resto."]},
   "z_real": {"entrada": ["Em nome da coroa Zukunft, protegerei a todos."]},
   "z_fenix": {"entrada": ["Das cinzas, sempre."], "provoca": ["{nome}, pode me derrubar. Eu volto."]},
   "w_coruja": {"entrada": ["Hu-hu. Estudei o terreno a noite toda."]},

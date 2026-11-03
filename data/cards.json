@@ -1559,6 +1559,48 @@
     "after": "pending"
    }
   },
+ {
+  "id": "z_drone",
+  "f": "ZUK",
+  "clan": "ZUK",
+  "name": "Zukunft Drone-Sentinela",
+  "role": "Atirador",
+  "atk": 3,
+  "int": 5,
+  "mov": 2,
+  "alc": 4,
+  "src": "novo",
+  "ab": {
+   "name": "Voo",
+   "text": "Voa: sobe em qualquer superfície, de qualquer altura. Pode atacar a até 4 casas com linha de visão."
+  },
+  "k": {
+   "climbAll": true
+  }
+ },
+ {
+  "id": "z_escudo",
+  "f": "ZUK",
+  "clan": "ZUK",
+  "name": "Zukunft Engenheira de Escudos",
+  "role": "Suporte",
+  "atk": 2,
+  "int": 8,
+  "mov": 2,
+  "alc": 2,
+  "src": "novo",
+  "ab": {
+   "name": "Matriz Hexagonal",
+   "text": "Outros Zukunft a até 2 casas sofrem 1 a menos de dano de ataques."
+  },
+  "k": {
+   "auraRed": {
+    "r": 2,
+    "n": 1,
+    "who": "ZUK"
+   }
+  }
+ },
   {
    "id": "l_general",
    "f": "LIT",

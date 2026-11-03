@@ -1142,9 +1142,13 @@ func _figure(cid: String, body_h: float) -> MeshInstance3D:
 	m.emission_enabled = true
 	m.emission_texture = tex
 	m.emission = Color.WHITE
-	m.emission_energy_multiplier = 0.32
+	# artes muito claras (branco, rosa pastel) estouram para branco com a luz: menos brilho próprio
+	var lum = _art_lum(cid, tex)
+	var bright = clamp((lum - 0.5) / 0.25, 0.0, 1.0)
+	m.emission_energy_multiplier = lerp(0.32, 0.06, bright)
+	mi.set_meta("tone", lerp(1.0, 0.8, bright))
 	m.rim_enabled = true
-	m.rim = 0.22
+	m.rim = lerp(0.22, 0.08, bright)
 	m.rim_tint = 0.75
 	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	mi.material_override = m
@@ -1166,6 +1170,32 @@ func _figure(cid: String, body_h: float) -> MeshInstance3D:
 
 
 var _edge_sh: Shader = null
+var _lum_cache := {}
+
+
+# brilho médio da parte visível da arte (0..1)
+func _art_lum(cid: String, tex: Texture2D) -> float:
+	if _lum_cache.has(cid):
+		return _lum_cache[cid]
+	var img = tex.get_image()
+	var v = 0.45
+	if img != null:
+		if img.is_compressed():
+			img.decompress()
+		img = img.duplicate()
+		img.resize(32, 32, Image.INTERPOLATE_BILINEAR)
+		var tot = 0.0
+		var n = 0.0
+		for y in range(32):
+			for x in range(32):
+				var c = img.get_pixel(x, y)
+				if c.a > 0.5:
+					tot += c.r * 0.3 + c.g * 0.55 + c.b * 0.15
+					n += 1.0
+		if n > 0:
+			v = tot / n
+	_lum_cache[cid] = v
+	return v
 
 
 func _edge_shader() -> Shader:
@@ -1202,7 +1232,8 @@ func _figure_look(fig: MeshInstance3D, flip: bool, mod: Color) -> void:
 		m.uv1_offset = Vector3(1.0 if flip else 0.0, 0, 0)
 		for e in fig.get_children():
 			(e.material_override as ShaderMaterial).set_shader_parameter("flip", 1.0 if flip else 0.0)
-	m.albedo_color = mod
+	var tone = float(fig.get_meta("tone", 1.0))
+	m.albedo_color = Color(mod.r * tone, mod.g * tone, mod.b * tone, mod.a)
 	m.emission = mod
 
 
