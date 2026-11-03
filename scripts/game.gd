@@ -76,6 +76,7 @@ var pace_time: float = 0.28
 func setup(sides: Array, mid: String) -> void:
 	# sides: [{fac, picks:[5 ids], start:[{id, h:Vector2i}]}, x2]
 	map_id = mid
+	DB.set_map(map_id)
 	var def = DB.maps[map_id]
 	if def.has("dunes"):
 		dune = randi() % def["dunes"].size()

@@ -43,30 +43,11 @@ func _ready() -> void:
 		tactic_ids.append(t["id"])
 	var m = _ints(JSON.parse_string(FileAccess.get_file_as_string("res://data/maps.json")))
 	R = int(m["radius"])
-	if m.has("shape"):
-		SQ = int(m["shape"]["q"])
-		SR_ = int(m["shape"]["r"])
-		SS = int(m["shape"]["s"])
-	else:
-		SQ = R
-		SR_ = R
-		SS = R
 	maps = m["maps"]
 	tt = m["terrain"]
 	res = m["resources"]
 	objs = m["objectives"]
-	for ec in m["entry_centers"]:
-		entry_c.append(Vector2i(int(ec["q"]), int(ec["r"])))
-	for q in range(-R, R + 1):
-		for r in range(-R, R + 1):
-			if in_board(Vector2i(q, r)):
-				hexes.append(Vector2i(q, r))
-	for p in [0, 1]:
-		var e = []
-		for h in hexes:
-			if dist(h, entry_c[p]) <= 1:
-				e.append(h)
-		entry.append(e)
+	set_map("tarhut" if maps.has("tarhut") else maps.keys()[0])
 	for id in cards.keys():
 		var path = "res://art/%s.webp" % id
 		if ResourceLoader.exists(path):
@@ -91,6 +72,36 @@ func _ints(v) -> Variant:
 			d[k] = _ints(v[k])
 		return d
 	return v
+
+
+# cada mapa tem o seu tamanho/formato e suas entradas
+var cur_map: String = ""
+
+
+func set_map(id: String) -> void:
+	if id == cur_map or not maps.has(id):
+		return
+	cur_map = id
+	var d = maps[id]
+	var sh = d.get("shape", {"q": 6, "r": 6, "s": 6})
+	SQ = int(sh["q"])
+	SR_ = int(sh["r"])
+	SS = int(sh["s"])
+	entry_c = []
+	for ec in d.get("entry_centers", [{"q": 3, "r": -6}, {"q": -3, "r": 6}]):
+		entry_c.append(Vector2i(int(ec["q"]), int(ec["r"])))
+	hexes = []
+	for q in range(-R, R + 1):
+		for r in range(-R, R + 1):
+			if in_board(Vector2i(q, r)):
+				hexes.append(Vector2i(q, r))
+	entry = []
+	for p in [0, 1]:
+		var e = []
+		for h in hexes:
+			if dist(h, entry_c[p]) <= 1:
+				e.append(h)
+		entry.append(e)
 
 
 func in_board(h: Vector2i) -> bool:

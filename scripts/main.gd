@@ -1174,6 +1174,7 @@ func _army_go() -> void:
 		return
 	stage = "dive"
 	sfx.play("confirmar", -6.0)
+	DB.set_map(setup_cfg["map"])
 	var spots = DB.entry[0]
 	var mine = {"fac": setup_cfg["fac"], "picks": army_picks.duplicate(), "start": [{"id": army_start[0], "h": spots[0]}, {"id": army_start[1], "h": spots[spots.size() - 1]}]}
 	var sides = [mine, _cpu_side(1, _cpu_fac())]
@@ -1189,6 +1190,7 @@ func _army_go() -> void:
 
 
 func _cpu_side(p: int, fac: String) -> Dictionary:
+	DB.set_map(setup_cfg["map"])
 	var s = AI.setup(fac)
 	var tough = s["picks"].duplicate()
 	tough.sort_custom(func(a, b): return int(DB.cards[a]["int"]) > int(DB.cards[b]["int"]))
@@ -1198,6 +1200,7 @@ func _cpu_side(p: int, fac: String) -> Dictionary:
 
 
 func _start_match(sides) -> void:
+	DB.set_map(setup_cfg["map"])
 	if sides == null:
 		sides = []
 		for p in range(2):

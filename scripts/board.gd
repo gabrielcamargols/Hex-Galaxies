@@ -22,9 +22,9 @@ const PAL = {
 }
 const ELEV = {"tarhut": "#c0583a", "posto": "#e0c060"}  # tom que as casas altas puxam
 # planeta: o tabuleiro fica num platô e o chão se curva em volta (deserto contínuo)
-const PLAT = 18.5     # raio plano em volta do tabuleiro
-const RIM = 12.0       # raio da borda arredondada (onde o deserto se curva)
-const UNDER = 34.0    # altura da base rochosa por baixo do planetoide
+var PLAT = 18.5       # raio plano em volta do tabuleiro (ajustado ao tamanho do mapa)
+var RIM = 12.0         # raio da borda arredondada (onde o deserto se curva)
+var UNDER = 34.0       # altura da base rochosa por baixo do planetoide
 const ZOOM_MIN = 4.0
 const ZOOM_MAX = 140.0
 const BIG = ["moby", "balu", "banker", "l_behemot", "l_leviathan", "z_dragao", "golk", "w_mamute", "k_tank", "z_tank", "l_tank", "l_colosso", "sismico", "rhombo", "tork", "w_tric", "z_meca", "t_fendas", "t_raiz"]
@@ -114,6 +114,13 @@ func build(game: Game) -> void:
 	for c in scenery_root.get_children():
 		c.queue_free()
 	var desert = g.map_id == "tarhut"
+	# planetoide do tamanho do tabuleiro
+	var far = 0.0
+	for h in DB.hexes:
+		far = max(far, world_xz(h).length())
+	PLAT = far + 2.0
+	RIM = PLAT * 0.68
+	UNDER = PLAT * 1.85
 	_setup_sky()
 	ground.mesh = _planet_mesh(desert)
 	ground.position = Vector3.ZERO
@@ -1177,11 +1184,11 @@ func quake() -> void:
 
 # ================= câmera =================
 func fit_camera(snap: bool) -> void:
-	var goal = {"yaw": 0.0, "pitch": 0.85, "dist": 45.0, "target": Vector3(0, 0, 1.5)}
+	var goal = {"yaw": 0.0, "pitch": 0.85, "dist": PLAT * 2.45, "target": Vector3(0, 0, 1.5)}
 	var vp = get_viewport().get_visible_rect().size
 	if vp.y > vp.x * 1.1:
 		goal["yaw"] = PI / 2.0
-		goal["dist"] = 60.0
+		goal["dist"] = PLAT * 3.25
 		goal["target"] = Vector3(-1.5, 0, 0)
 	if snap:
 		cam_yaw = goal["yaw"]
