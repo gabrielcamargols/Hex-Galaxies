@@ -2133,7 +2133,148 @@
    "k": {
     "selfRedHome": 1
    }
+  },
+ {
+  "id": "t_dinamite",
+  "f": "TER",
+  "clan": "TER",
+  "name": "Dinamitador",
+  "role": "Demolidor",
+  "atk": 4,
+  "int": 6,
+  "mov": 2,
+  "alc": 2,
+  "src": "novo",
+  "ab": {
+   "name": "Pavio Curto",
+   "text": "Quando é derrotado, explode: 2 de dano em cada peça adjacente, inclusive aliados."
+  },
+  "k": {
+   "deathBlast": 2
   }
+ },
+ {
+  "id": "t_basalto",
+  "f": "TER",
+  "clan": "TER",
+  "name": "Golem de Basalto",
+  "role": "Tanque",
+  "atk": 3,
+  "int": 13,
+  "mov": 1,
+  "alc": 1,
+  "src": "novo",
+  "ab": {
+   "name": "Pele de Basalto",
+   "text": "Sofre 1 a menos de dano de cada ataque."
+  },
+  "k": {
+   "selfRed": 1
+  }
+ },
+ {
+  "id": "t_lanterna",
+  "f": "TER",
+  "clan": "TER",
+  "name": "Lanterneira",
+  "role": "Suporte",
+  "atk": 2,
+  "int": 7,
+  "mov": 2,
+  "alc": 2,
+  "src": "novo",
+  "ab": {
+   "name": "Facho de Carbureto",
+   "text": "Ao entrar, ilumine 1 inimigo a até 3 casas: ataques contra ele causam +1 dano até o fim do round."
+  },
+  "k": {
+   "entry": {
+    "t": "mark",
+    "r": 3,
+    "n": 1
+   }
+  }
+ },
+ {
+  "id": "t_carrinho",
+  "f": "TER",
+  "clan": "TER",
+  "name": "Carrinho de Minério",
+  "role": "Transporte",
+  "atk": 2,
+  "int": 10,
+  "mov": 2,
+  "alc": 1,
+  "src": "novo",
+  "ab": {
+   "name": "Carona na Caçamba",
+   "text": "Ao entrar, traga 1 aliado a até 3 casas para uma casa livre ao lado do carrinho."
+  },
+  "k": {
+   "entry": {
+    "t": "pullAlly",
+    "r": 3
+   }
+  }
+ },
+ {
+  "id": "t_britadeira",
+  "f": "TER",
+  "clan": "TER",
+  "name": "Britadeira",
+  "role": "Lutador",
+  "atk": 5,
+  "int": 8,
+  "mov": 2,
+  "alc": 1,
+  "src": "novo",
+  "ab": {
+   "name": "Quebra-Rocha",
+   "text": "+2 ATQ contra Barreiras e contra peças com 10 ou mais de Vida inicial."
+  },
+  "k": {
+   "atkBig": 2
+  }
+ },
+ {
+  "id": "t_fundidor",
+  "f": "TER",
+  "clan": "TER",
+  "name": "Fundidora",
+  "role": "Atirador",
+  "atk": 4,
+  "int": 7,
+  "mov": 2,
+  "alc": 3,
+  "src": "novo",
+  "ab": {
+   "name": "Metal Derretido",
+   "text": "Ao atacar, cause 1 dano a cada outro inimigo adjacente ao alvo."
+  },
+  "k": {
+   "after": "splash"
+  }
+ },
+ {
+  "id": "t_sentinela",
+  "f": "TER",
+  "clan": "TER",
+  "name": "Sentinela de Pedra",
+  "role": "Guardião",
+  "atk": 3,
+  "int": 9,
+  "mov": 2,
+  "alc": 1,
+  "src": "novo",
+  "ab": {
+   "name": "Guarda de Cristal",
+   "text": "1 vez por round, pode receber o ataque destinado a um aliado adjacente."
+  },
+  "k": {
+   "guard": true,
+   "guardOnce": true
+  }
+ }
  ],
  "tactics": [
   {

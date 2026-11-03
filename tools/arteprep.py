@@ -27,14 +27,14 @@ def prep(src, cid, cx=0.5, cy=0.25, side=0.4, hover=0.0):
     por.alpha_composite(im, (-box[0], -box[1]))
     por = por.resize((160, 160), Image.LANCZOS)
     body = im.crop(im.getbbox())
-    # voo: a figura ocupa só a parte de cima do quadro e fica pairando acima da casa
+    # o quadro tem sempre 440 de altura: figuras largas ou baixas ficam no chão (espaço vazio em cima)
+    # e as que voam ficam pairando (espaço vazio embaixo)
     room = 440 * (1.0 - hover)
     k = min(480 / body.width, room / body.height)
     body = body.resize((max(1, round(body.width * k)), max(1, round(body.height * k))), Image.LANCZOS)
-    if hover > 0:
-        full = Image.new("RGBA", (body.width, 440))
-        full.alpha_composite(body, (0, 0))
-        body = full
+    full = Image.new("RGBA", (body.width, 440))
+    full.alpha_composite(body, (0, 0 if hover > 0 else 440 - body.height))
+    body = full
     body.save(os.path.join(ART, "%s.webp" % cid), quality=92)
     por.save(os.path.join(ART, "p_%s.webp" % cid), quality=92)
     print(cid, body.size)

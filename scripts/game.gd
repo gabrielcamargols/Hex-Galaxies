@@ -70,6 +70,7 @@ var terr_ver: int = 0
 var earth: Dictionary = {}  # Vector2i -> ajuste de altura (Erguer a Terra)
 var tree: SceneTree = null
 var pace_time: float = 0.28
+var guard_round: Dictionary = {}  # uid -> round em que já protegeu (guardOnce)
 
 
 # ================= montagem =================
@@ -403,6 +404,8 @@ func atk_of(a, t) -> int:
 			v += int(k["atkTwin"])
 		if k.has("atkIsolated") and not allies_of(t).any(func(x): return DB.dist(x.pos(), t.pos()) == 1):
 			v += int(k["atkIsolated"])
+		if k.has("atkBig") and (t.barrier or int(DB.cards[t.cid]["int"]) >= 10):
+			v += int(k["atkBig"])
 	if k.has("atkAllyAdj"):
 		var aa = k["atkAllyAdj"]
 		if allies_of(a).any(func(x): return DB.dist(x.pos(), a.pos()) == 1 and match_who(x, aa.get("who", ""))):
@@ -664,6 +667,7 @@ func damage(t, n: int, src, is_attack: bool = false) -> int:
 
 
 func settle() -> void:
+	var blast = false
 	for t in units:
 		if t.dying == null or t.st != "field":
 			continue
@@ -685,6 +689,17 @@ func settle() -> void:
 		var killer = by_uid(by) if by > 0 else null
 		if killer != null and killer.owner != t.owner and K(killer).has("killGrow") and not t.barrier:
 			killer.kills += 1
+		if K(t).has("deathBlast") and not t.barrier:
+			blast = true
+			var nb = int(K(t)["deathBlast"])
+			abfx("blast", t.pos(), t.uid)
+			log_msg(t.owner, "%s explode: %d de dano em tudo ao redor." % [nm(t), nb])
+			for o in units.duplicate():
+				if o != t and o.st == "field" and DB.dist(o.pos(), t.pos()) == 1:
+					damage(o, nb, t)
+	if blast:
+		settle()
+		return
 	check_win()
 
 
@@ -1484,10 +1499,11 @@ func resolve_attack(a, t) -> void:
 	var target = t
 	var react_red = 0
 	if not t.barrier:
-		for b in allies_of(t).filter(func(x): return K(x).has("guard") and DB.dist(x.pos(), t.pos()) == 1):
+		for b in allies_of(t).filter(func(x): return K(x).has("guard") and DB.dist(x.pos(), t.pos()) == 1 and not (K(x).has("guardOnce") and guard_round.get(x.uid, -1) == round_no)):
 			var yes = await ask(d, {"t": "yesno", "text": "Guarda Silencioso: %s recebe o ataque de %d no lugar de %s?" % [nm(b), packet, nm(t)], "kind": "balu", "packet": packet, "target": t.uid, "guard": b.uid})
 			if yes:
 				target = b
+				guard_round[b.uid] = round_no
 				log_msg(d, "%s protege %s." % [nm(b), nm(t)])
 				break
 		var pl = P[d]
