@@ -49,6 +49,9 @@ var last_st: Dictionary = {}       # destaques atuais do tabuleiro (sem a carta)
 var dlg: Dictionary = {}           # falas (data/dialogos.json)
 var bubbles: Array = []            # balões de fala ativos
 var plates: Dictionary = {}        # uid -> placa de vida 2D (estilo da HUD)
+var ui_pref: String = "auto"       # tamanho da interface: auto, 100, 125, 150, 175
+var compact: bool = false          # tela pequena (celular): HUD enxuta e letras maiores
+var cpu_open: bool = false         # painel da CPU aberto no modo compacto
 var last_banter_ms: int = -100000
 var autotest: bool = false   # godot --headless -- --autotest fac=ABY cpu=FAU map=tarhut
 var last_sides: Variant = null
@@ -115,6 +118,12 @@ func _ready() -> void:
 		var parsed = JSON.parse_string(FileAccess.get_file_as_string("res://data/dialogos.json"))
 		if parsed is Dictionary:
 			dlg = parsed
+	_load_prefs()
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--uiscale="):
+			ui_pref = a.substr(10)
+	_apply_ui_scale()
+	get_window().size_changed.connect(_apply_ui_scale)
 	_show_menu()
 	var args = OS.get_cmdline_user_args()
 	for a in args:
@@ -225,6 +234,8 @@ func _hbox(parent: Control, sep: int = 6) -> HBoxContainer:
 func _label(parent: Control, text: String = "", size: int = 0, col = null) -> Label:
 	var l = Label.new()
 	l.text = text
+	if compact and size > 0 and size < 13:
+		size = 13
 	if size > 0:
 		l.add_theme_font_size_override("font_size", size)
 	if size >= 22 and font_title != null:
@@ -400,11 +411,11 @@ func _show_menu() -> void:
 	col.add_theme_constant_override("separation", 6)
 	ui.add_child(col)
 	col.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	col.offset_top = 380
+	col.offset_top = get_viewport().get_visible_rect().size.y * 0.42
 	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var k = _label(col, "U M A   G A L Á X I A   E M   G U E R R A", 13, C_HUD)
 	k.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	var t = _label(col, "HEX GALAXIES", 86, C_GOLD)
+	var t = _label(col, "HEX GALAXIES", 62 if compact else 86, C_GOLD)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	t.add_theme_color_override("font_shadow_color", Color(1.0, 0.45, 0.1, 0.45))
 	t.add_theme_constant_override("shadow_offset_x", 0)
@@ -425,6 +436,8 @@ func _show_menu() -> void:
 	row2.alignment = BoxContainer.ALIGNMENT_CENTER
 	var rb = _cbtn(row2, "Como jogar", C_HUD, _rules_popup)
 	rb.custom_minimum_size = Vector2(180, 40)
+	var sb = _cbtn(row2, _ui_scale_label(), C_HUD, _cycle_ui_scale)
+	sb.custom_minimum_size = Vector2(240, 40)
 	var ver = _label(ui, "protótipo · Godot 4.7", 12, C_DIM)
 	_place(ver, Control.PRESET_BOTTOM_RIGHT, 12)
 	_ui_fade(1.0, 0.9)
@@ -487,10 +500,11 @@ func _show_select() -> void:
 		var dl = _label(v, d["desc"], 13, C_DIM)
 		dl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		dl.custom_minimum_size = Vector2(250, 0)
+		dl.visible = not compact
 		var b = _cbtn(v, "BATALHAR AQUI", C_GOLD, _choose_planet.bind(id))
 		_primary(b)
 		b.custom_minimum_size = Vector2(0, 40)
-		tag.custom_minimum_size = Vector2(286, 0)
+		tag.custom_minimum_size = Vector2(230 if compact else 286, 0)
 		tag.position = Vector2(-1000, -1000)
 		w["tags"][id] = tag
 	await get_tree().create_timer(0.55).timeout
@@ -522,6 +536,7 @@ func _update_tags() -> void:
 	if not w.has("tags"):
 		return
 	var vp = get_viewport().get_visible_rect().size
+	var placed = []
 	for id in w["tags"].keys():
 		var tg: Control = w["tags"][id]
 		if not is_instance_valid(tg):
@@ -536,6 +551,12 @@ func _update_tags() -> void:
 		if pos.x + tg.size.x > vp.x - 12.0:
 			pos.x = sp.x - r * 1.5 - 18.0 - tg.size.x
 		pos.y = clamp(pos.y, 90.0, vp.y - tg.size.y - 80.0)
+		# não deixa uma etiqueta cobrir a outra
+		for other in placed:
+			var ra = Rect2(pos, tg.size)
+			if ra.intersects(other):
+				pos.y = other.position.y + other.size.y + 8.0 if pos.y >= other.position.y else other.position.y - tg.size.y - 8.0
+		placed.append(Rect2(pos, tg.size))
 		tg.position = tg.position.lerp(pos, 0.35) if tg.position.x > -900.0 else pos
 
 
@@ -722,7 +743,7 @@ func _show_army() -> void:
 	ui.add_child(mid)
 	mid.anchor_left = 0.305
 	mid.anchor_right = 0.655
-	mid.anchor_top = 0.125
+	mid.anchor_top = 0.15 if compact else 0.125
 	mid.anchor_bottom = 0.785
 	var mh = _hbox(mid, 8)
 	_label(mh, "TROPAS", 22, C_TXT)
@@ -766,17 +787,29 @@ func _show_army() -> void:
 	var hint = _label(bv, "", 13, C_DIM)
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	w["army_hint"] = hint
+	if compact:
+		hint.add_theme_font_size_override("font_size", 12)
 	var br = _hbox(bv, 6)
-	var b1 = _cbtn(br, "◀ Planetas", C_HUD, _army_back)
-	b1.custom_minimum_size = Vector2(0, 38)
+	if compact:
+		# celular: "voltar" vai para o alto, embaixo de nome do planeta
+		var b1c = _cbtn(pv, "◀ Planetas", C_HUD, _army_back)
+		b1c.custom_minimum_size = Vector2(0, 34)
+		b1c.add_theme_font_size_override("font_size", 12)
+		b1c.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	else:
+		var b1 = _cbtn(br, "◀ Planetas", C_HUD, _army_back)
+		b1.custom_minimum_size = Vector2(0, 38)
 	var b2 = _cbtn(br, "Sortear", C_HUD, _army_random)
 	b2.custom_minimum_size = Vector2(0, 38)
 	var b3 = _cbtn(br, "Limpar", C_HUD, _army_clear)
 	b3.custom_minimum_size = Vector2(0, 38)
+	if compact:
+		for bb in [b2, b3]:
+			bb.add_theme_font_size_override("font_size", 12)
 	var go = _cbtn(bh, "BATALHAR", C_GOLD, _army_go, true)
 	_primary(go)
-	go.custom_minimum_size = Vector2(190, 0)
-	go.add_theme_font_size_override("font_size", 22)
+	go.custom_minimum_size = Vector2(130 if compact else 190, 0)
+	go.add_theme_font_size_override("font_size", 17 if compact else 22)
 	w["go"] = go
 	if army_detail == "" or not DB.cards.has(army_detail) or DB.cards[army_detail]["f"] != setup_cfg["fac"]:
 		army_detail = DB.factions[setup_cfg["fac"]]["cmd"]
@@ -794,7 +827,8 @@ func _army_refresh() -> void:
 	for f in DB.factions.keys():
 		var on = f == fac
 		var b = Button.new()
-		b.custom_minimum_size = Vector2(52 + DB.factions[f]["short"].length() * 9, 54)
+		b.custom_minimum_size = Vector2(56, 54) if compact else Vector2(52 + DB.factions[f]["short"].length() * 9, 54)
+		b.tooltip_text = DB.factions[f]["short"]
 		var col = _fac_col(f)
 		b.add_theme_stylebox_override("normal", _flat(Color(col.darkened(0.55), 0.92) if on else Color(0.03, 0.05, 0.1, 0.85), col if on else col.darkened(0.35), 2 if on else 1, 8, 4))
 		b.add_theme_stylebox_override("hover", _flat(Color(col.darkened(0.5), 0.95), col.lightened(0.2), 2, 8, 4))
@@ -810,6 +844,7 @@ func _army_refresh() -> void:
 		if DB.portraits.has(cid):
 			hb.add_child(_tex_rect(DB.portraits[cid], Vector2(38, 42)))
 		var tl = _label(hb, DB.factions[f]["short"], 11, Color.WHITE if on else col.lightened(0.45))
+		tl.visible = not compact
 		tl.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		tl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		if not on:
@@ -835,10 +870,17 @@ func _army_refresh() -> void:
 	cb.add_theme_font_size_override("font_size", 11)
 	cb.pressed.connect(_army_show.bind(cid2))
 	cnv.add_child(cb)
+	if compact:
+		_army_refresh_rest()
+		return
 	_ab_box(cv, "PASSIVA", C_CARD, cc["ab"]["name"], cc["ab"]["text"], 380)
 	if cc.has("ab2"):
 		var k2 = cc["ab2"].get("kind", "ativa")
 		_ab_box(cv, "ATIVA · 1 VEZ POR PARTIDA" if k2 != "passiva" else "PASSIVA", C_GOLD if k2 != "passiva" else C_CARD, cc["ab2"]["name"], cc["ab2"]["text"], 380)
+	_army_refresh_rest()
+
+
+func _army_refresh_rest() -> void:
 	# grade
 	for c in w["grid"].get_children():
 		c.queue_free()
@@ -856,6 +898,8 @@ func _army_refresh() -> void:
 		hint = "Escolha mais %d tropa(s). ★ = começa em campo (%d/2)." % [5 - army_picks.size(), army_start.size()]
 	elif army_start.size() < 2:
 		hint = "Marque mais %d tropa(s) com ★ para começar em campo." % (2 - army_start.size())
+	if compact:
+		hint = "%d/5 tropas · ★ em campo %d/2" % [army_picks.size(), army_start.size()]
 	w["army_hint"].text = hint
 	w["army_hint"].add_theme_color_override("font_color", C_DIM if ready_ok else Color("#ffb070"))
 	_army_detail_build()
@@ -910,7 +954,7 @@ func _army_card(c: Dictionary) -> Control:
 	var chosen = army_picks.has(id)
 	var fc = _fac_col(c["f"])
 	var b = Button.new()
-	b.custom_minimum_size = Vector2(0, 196)
+	b.custom_minimum_size = Vector2(0, 168 if compact else 196)
 	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var border = C_GOLD if chosen else (C_HUD if id == army_detail else fc.darkened(0.15))
 	b.add_theme_stylebox_override("normal", _flat(Color(0.035, 0.06, 0.12, 0.97), border, 3 if chosen else 2, 10, 6))
@@ -931,7 +975,7 @@ func _army_card(c: Dictionary) -> Control:
 	pic.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	v.add_child(pic)
 	var tex = DB.portraits.get(id, DB.art.get(id, null))
-	pic.add_child(_tex_rect(tex, Vector2(0, 92)))
+	pic.add_child(_tex_rect(tex, Vector2(0, 70 if compact else 92)))
 	if chosen:
 		var badge = _label(pic, "★ EM CAMPO" if army_start.has(id) else "✓ NO EXÉRCITO", 10, C_GOLD)
 		badge.size_flags_horizontal = Control.SIZE_SHRINK_END
@@ -956,7 +1000,7 @@ func _army_card(c: Dictionary) -> Control:
 
 func _army_slot(id: String) -> Control:
 	var p = PanelContainer.new()
-	p.custom_minimum_size = Vector2(104, 0)
+	p.custom_minimum_size = Vector2(76 if compact else 104, 0)
 	if id == "":
 		p.add_theme_stylebox_override("panel", _flat(Color(0.03, 0.05, 0.1, 0.6), Color(0.3, 0.42, 0.55, 0.6), 1, 8, 6))
 		var l = _label(p, "vaga\nlivre", 12, Color(0.4, 0.5, 0.6))
@@ -967,7 +1011,7 @@ func _army_slot(id: String) -> Control:
 	p.add_theme_stylebox_override("panel", _flat(Color(0.05, 0.08, 0.16, 0.92), C_GOLD if on else _fac_col(setup_cfg["fac"]), 2, 8, 5))
 	var v = _vbox(p, 2)
 	var tex = DB.portraits.get(id, null)
-	v.add_child(_tex_rect(tex, Vector2(0, 50)))
+	v.add_child(_tex_rect(tex, Vector2(0, 36 if compact else 50)))
 	var nl = _label(v, _short(id), 11, C_TXT)
 	nl.clip_text = true
 	nl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -975,16 +1019,17 @@ func _army_slot(id: String) -> Control:
 	var sb = Button.new()
 	sb.text = "★" if on else "☆"
 	sb.tooltip_text = "Começa em campo" if on else "Fica na reserva (toque para começar em campo)"
-	sb.custom_minimum_size = Vector2(46, 28)
+	sb.custom_minimum_size = Vector2(36, 26) if compact else Vector2(46, 28)
 	_style_btn(sb, C_GOLD, on)
 	sb.pressed.connect(_army_star.bind(id))
 	h.add_child(sb)
 	var xb = Button.new()
 	xb.text = "×"
-	xb.custom_minimum_size = Vector2(40, 28)
+	xb.custom_minimum_size = Vector2(30, 26) if compact else Vector2(40, 28)
 	_style_btn(xb, C_ATK)
 	xb.pressed.connect(_army_toggle.bind(id))
 	h.add_child(xb)
+	xb.visible = not compact   # no celular: toque na carta da tropa para tirar
 	return p
 
 
@@ -1056,10 +1101,11 @@ func _army_detail_build() -> void:
 	var kd = _ab_kind(c)
 	if c.get("cmd", false):
 		kd = ["PASSIVA", C_CARD]
-	_ab_box(v, kd[0], kd[1], c["ab"]["name"], c["ab"]["text"], 420)
+	var dw = int(clamp(get_viewport().get_visible_rect().size.x * 0.335 - 60.0, 220.0, 420.0))
+	_ab_box(v, kd[0], kd[1], c["ab"]["name"], c["ab"]["text"], dw)
 	if c.has("ab2"):
 		var k2 = c["ab2"].get("kind", "ativa")
-		_ab_box(v, "ATIVA · 1 VEZ POR PARTIDA" if k2 != "passiva" else "PASSIVA", C_GOLD if k2 != "passiva" else C_CARD, c["ab2"]["name"], c["ab2"]["text"], 420)
+		_ab_box(v, "ATIVA · 1 VEZ POR PARTIDA" if k2 != "passiva" else "PASSIVA", C_GOLD if k2 != "passiva" else C_CARD, c["ab2"]["name"], c["ab2"]["text"], dw)
 	# impacto no jogo
 	var im = _impact(c)
 	_label(v, "IMPACTO NO JOGO", 12, C_HUD)
@@ -1075,7 +1121,7 @@ func _army_detail_build() -> void:
 		tl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var rs = _label(v, im["resumo"], 13, C_TXT)
 	rs.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	rs.custom_minimum_size = Vector2(420, 0)
+	rs.custom_minimum_size = Vector2(dw, 0)
 	if not c.get("cmd", false):
 		var chosen = army_picks.has(id)
 		var h2 = _hbox(v, 8)
@@ -1291,8 +1337,11 @@ func _build_hud() -> void:
 	# botões do canto
 	var topr = _hbox(ui, 6)
 	_place(topr, Control.PRESET_TOP_RIGHT, 8)
+	if compact:
+		_button(topr, "CPU", _toggle_cpu)
 	_button(topr, "Cartas", func(): _toggle_panel("cards"))
-	_button(topr, "Registro", func(): _toggle_panel("log"))
+	if not compact:
+		_button(topr, "Registro", func(): _toggle_panel("log"))
 	_button(topr, "Regras", func(): _toggle_panel("rules"))
 	_button(topr, "Menu", _show_menu)
 	# câmera: linha compacta acima do painel de fim de turno
@@ -1320,7 +1369,8 @@ func _build_hud() -> void:
 	w["why"] = _label(av, "", 13, Color("#ffcf9a"))
 	w["why"].horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	w["why"].autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	w["why"].custom_minimum_size = Vector2(560, 0)
+	var vw = get_viewport().get_visible_rect().size
+	w["why"].custom_minimum_size = Vector2(min(560.0, vw.x * 0.45), 0)
 	var lg = _hbox(av, 14)
 	lg.alignment = BoxContainer.ALIGNMENT_CENTER
 	_chip(lg, C_MOVE, "Andar (nº = custo)")
@@ -1329,18 +1379,20 @@ func _build_hud() -> void:
 	_chip(lg, C_DEPLOY, "Entrar em campo")
 	_chip(lg, Color(0.12, 0.1, 0.08), "Fora de alcance (clique: por quê?)")
 	w["legend"] = lg
+	if compact:
+		lg.visible = false
 	# perguntas e prévias (logo abaixo dos avisos)
 	var pr = _panel(topcol)
-	pr.custom_minimum_size = Vector2(560, 0)
+	pr.custom_minimum_size = Vector2(min(560.0, vw.x * 0.48), 0)
 	var pv = _vbox(pr, 8)
-	w["prompt_text"] = _rich(pv, 540)
+	w["prompt_text"] = _rich(pv, int(min(540.0, vw.x * 0.46)))
 	w["prompt_btns"] = _hbox(pv, 8)
 	w["prompt_btns"].alignment = BoxContainer.ALIGNMENT_END
 	w["prompt"] = pr
 	# ficha da peça
 	var uc = _panel(ui)
 	_place(uc, Control.PRESET_BOTTOM_LEFT, 8)
-	w["ucard_text"] = _rich(uc, 320)
+	w["ucard_text"] = _rich(uc, 260 if compact else 320)
 	w["ucard"] = uc
 	# embaixo: mão de cartas + botões de ação
 	var botcol = _vbox(ui, 6)
@@ -1371,20 +1423,24 @@ func _build_hud() -> void:
 	w["turn"] = _label(ev, "", 14)
 	w["turn"].horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	w["end"] = _button(ev, "Passar", _on_end_pressed)
-	w["end"].custom_minimum_size = Vector2(170, 52)
+	w["end"].custom_minimum_size = Vector2(150 if compact else 170, 52)
+	if compact:
+		w["round"].add_theme_font_size_override("font_size", 22)
 	# coluna da CPU (à direita, acima do fim de turno)
 	var right = _panel(ui)
 	_place(right, Control.PRESET_TOP_RIGHT, 8)
 	right.offset_top = 64
 	w["party1"] = _vbox(right, 4)
+	w["party1_panel"] = right
+	right.visible = cpu_open or not compact
 	# painel lateral (cartas / registro / regras)
 	var side = _panel(ui)
 	_place(side, Control.PRESET_CENTER, 0)
-	side.custom_minimum_size = Vector2(620, 0)
+	side.custom_minimum_size = Vector2(min(620.0, vw.x - 40.0), 0)
 	var sv = _vbox(side, 10)
 	w["side_title"] = _label(sv, "", 26, C_GOLD)
 	var scroll = ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(600, 420)
+	scroll.custom_minimum_size = Vector2(min(600.0, vw.x - 60.0), min(420.0, vw.y - 190.0))
 	sv.add_child(scroll)
 	w["side_body"] = _vbox(scroll, 8)
 	w["side_body"].size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -1688,8 +1744,10 @@ func _refresh_party() -> void:
 				box.add_child(hd)
 				var hl = Label.new()
 				hl.autowrap_mode = TextServer.AUTOWRAP_WORD
-				hl.custom_minimum_size = Vector2(190, 0)
+				hl.custom_minimum_size = Vector2(176 if compact else 190, 0)
 				hl.add_theme_font_size_override("font_size", 12)
+				if compact:
+					hl.add_theme_font_size_override("font_size", 12)
 				if dep_ok:
 					hl.text = "PODE COLOCAR EM CAMPO\nClique ou arraste um retrato até uma casa CIANO \"+ ENTRAR\" (1 ação)."
 					hl.add_theme_color_override("font_color", Color("#06201e"))
@@ -1709,6 +1767,10 @@ func _refresh_party() -> void:
 			b.add_theme_font_size_override("font_size", 12)
 			b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 			b.custom_minimum_size = Vector2(190, 52)
+			if compact:
+				b.text = "%s  %d/%d\n%s" % [_short(u.cid), max(0, u.hp), u.maxhp, stx]
+				b.add_theme_font_size_override("font_size", 13)
+				b.custom_minimum_size = Vector2(176, 44)
 			if DB.portraits.has(u.cid):
 				b.icon = DB.portraits[u.cid]
 				b.expand_icon = true
@@ -2117,17 +2179,19 @@ func _make_card(id: String) -> Control:
 	var ok = _card_playable(id)
 	var react = t["type"] == "Reação" or id == "retirada" or id == "reforco"
 	var card = PanelContainer.new()
-	card.custom_minimum_size = Vector2(128, 172)
+	card.custom_minimum_size = Vector2(118, 150) if compact else Vector2(128, 172)
 	card.add_theme_stylebox_override("panel", _tex_box("res://ui/card.png", 20, col if (ok or react) else col.darkened(0.55), 9, 7))
 	var v = VBoxContainer.new()
 	v.add_theme_constant_override("separation", 2)
 	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card.add_child(v)
 	var cost = _label(v, "%s · %s" % [t["type"].to_upper(), ("%d AÇÃO" % int(t["cost"])) if int(t["cost"]) > 0 else "GRÁTIS"], 9, col.lightened(0.4))
+	if compact:
+		cost.add_theme_font_size_override("font_size", 10)
 	cost.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	cost.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var ic = TextureRect.new()
-	ic.custom_minimum_size = Vector2(0, 40)
+	ic.custom_minimum_size = Vector2(0, 30 if compact else 40)
 	ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -2136,7 +2200,7 @@ func _make_card(id: String) -> Control:
 		ic.texture = load(ipath)
 	ic.modulate = col
 	v.add_child(ic)
-	var nm = _label(v, t["name"], 11, Color.WHITE)
+	var nm = _label(v, t["name"], 13 if compact else 11, Color.WHITE)
 	nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	nm.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	nm.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -2144,6 +2208,8 @@ func _make_card(id: String) -> Control:
 		nm.add_theme_font_override("font", font_btn)
 	var tg = _card_targets(id)
 	var af = _label(v, tg["txt"], 9, col.lightened(0.35))
+	if compact:
+		af.add_theme_font_size_override("font_size", 11)
 	af.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	af.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	af.custom_minimum_size = Vector2(104, 0)
@@ -3273,3 +3339,54 @@ func _update_plates(delta: float) -> void:
 			if is_instance_valid(plates[uid]["panel"]):
 				plates[uid]["panel"].queue_free()
 			plates.erase(uid)
+
+
+# ================= tamanho da interface (celular / tablet / PC) =================
+func _load_prefs() -> void:
+	var cf = ConfigFile.new()
+	if cf.load("user://prefs.cfg") == OK:
+		ui_pref = str(cf.get_value("ui", "scale", "auto"))
+
+
+func _save_prefs() -> void:
+	var cf = ConfigFile.new()
+	cf.set_value("ui", "scale", ui_pref)
+	cf.save("user://prefs.cfg")
+
+
+func _auto_scale() -> float:
+	# tamanho real da tela em "pixels de navegador": celular deitado tem ~360-430 de altura
+	var win = get_window()
+	var dpr = max(1.0, DisplayServer.screen_get_scale())
+	var short = min(float(win.size.x), float(win.size.y)) / dpr
+	var want_h = clamp(short * 1.45, 560.0, 900.0)
+	return clamp(900.0 / want_h, 1.0, 1.75)
+
+
+func _apply_ui_scale() -> void:
+	var f = _auto_scale() if ui_pref == "auto" else float(ui_pref) / 100.0
+	if abs(get_tree().root.content_scale_factor - f) > 0.01:
+		get_tree().root.content_scale_factor = f
+	var was = compact
+	compact = get_viewport().get_visible_rect().size.y < 720.0
+	if was != compact and stage == "battle" and game != null:
+		_build_hud()
+		refresh()
+
+
+func _cycle_ui_scale() -> void:
+	var opts = ["auto", "100", "125", "150", "175"]
+	ui_pref = opts[(opts.find(ui_pref) + 1) % opts.size()]
+	_save_prefs()
+	_apply_ui_scale()
+	_show_menu()
+
+
+func _ui_scale_label() -> String:
+	return "Interface: " + ("automática" if ui_pref == "auto" else ui_pref + "%")
+
+
+func _toggle_cpu() -> void:
+	cpu_open = not cpu_open
+	if w.has("party1_panel"):
+		w["party1_panel"].visible = cpu_open or not compact
