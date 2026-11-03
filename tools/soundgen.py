@@ -344,11 +344,11 @@ PERFIS = {
     "k_sniper": ("radio", "M", 1, ""), "k_brawler": ("radio", "M", 2, ""), "k_demol": ("radio", "M", 1, ""),
     "k_medico": ("radio", "M", 1, ""), "k_eng": ("radio", "M", 1, ""), "k_incend": ("radio", "M", 1, ""),
     "k_assalt": ("radio", "M", 1, ""),
-    # Wächter (feras em armadura)
-    "w_lobo": ("beast", "M", 1, "wolf"), "w_tric": ("beast", "M", 3, "dino"), "w_mamute": ("beast", "M", 3, "mammoth"),
-    "w_croc": ("reptile", "M", 2, "croc"), "w_sabre": ("beast", "M", 2, "cat"), "w_axolote": ("small", "F", 0, "axolotl"),
-    "w_coruja": ("bird", "M", 1, "owl"), "w_raposa": ("beast", "F", 1, "fox"), "w_castor": ("beast", "M", 1, "beaver"),
-    "w_aguia": ("bird", "M", 1, "eagle"),
+    # Wächter (guerreiros humanos com armaduras inspiradas em animais: voz humana + metal)
+    "w_lobo": ("human", "M", 1, "armor"), "w_tric": ("human", "M", 2, "armor"), "w_mamute": ("human", "M", 2, "armor"),
+    "w_croc": ("human", "M", 2, "armor"), "w_sabre": ("human", "M", 1, "armor"), "w_axolote": ("human", "F", 1, "armor"),
+    "w_coruja": ("human", "M", 1, "armor"), "w_raposa": ("human", "F", 1, "armor"), "w_castor": ("human", "M", 1, "armor"),
+    "w_aguia": ("human", "M", 1, "armor"),
     # Zukunft (humanos tecnológicos, mechas e criaturas cibernéticas)
     "z_vang": ("human", "M", 1, ""), "z_tank": ("robot", "N", 2, ""), "z_brawler": ("human", "M", 1, "holo"),
     "z_piloto": ("human", "M", 1, ""), "z_naves": ("human", "M", 0, "young"), "z_diplo": ("human", "M", 1, "calm"),
@@ -501,6 +501,8 @@ def char_sound(cid, hurt):
         y = mix(y, robot(y, 40) * 0.5)
     if extra == "drill" and not hurt:
         y = mix(y * 0.8, drill(0.45))
+    if extra == "armor":
+        y = mix(lp(y, 3200), metal_clank(0.25) * (0.9 if hurt else 0.45))
     return y
 
 
@@ -608,6 +610,8 @@ def char_talk(cid, mood):
         y = mix(y, at(y * 0.4, 0.035))
     if extra == "corrupt":
         y = mix(y, robot(y, 40) * 0.5)
+    if extra == "armor":
+        y = lp(y, 3400)
     return y
 
 
