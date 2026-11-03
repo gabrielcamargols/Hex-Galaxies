@@ -364,7 +364,7 @@ func _planet_of_map(m: String) -> String:
 
 
 func _stop_battle_loops() -> void:
-	for n in ["vento_loop", "musica_deserto", "ilha_loop", "tempestade_loop"]:
+	for n in ["vento_loop", "musica_deserto", "ilha_loop", "tempestade_loop", "musica_valak"]:
 		sfx.stop_loop(n, 0.8)
 
 
@@ -1257,7 +1257,8 @@ func _start_match(sides) -> void:
 		sfx.loop("vento_loop", -15.0, 2.0)
 		sfx.loop("musica_deserto", -9.0, 4.0)
 	else:
-		sfx.loop("ilha_loop", -10.0, 2.0)
+		sfx.loop("ilha_loop", -14.0, 2.0)
+		sfx.loop("musica_valak", -7.0, 4.0)
 	refresh()
 	await game.begin_game()
 	busy = false
