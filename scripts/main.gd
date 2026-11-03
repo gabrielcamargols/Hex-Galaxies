@@ -2601,13 +2601,23 @@ func _fx_dmg(h: Vector2i, amt: int, uid: int) -> void:
 	var p: Variant = _unit_pos(uid, 0.9)
 	if p == null:
 		p = _hex_pos(h)
+	var k = _fx_scale()
 	if amt > 0:
-		vfx.impact(p, Color("#ff9a5a"), clamp(amt / 4.0, 0.6, 1.8))
-		vfx.flip("hit", p - Vector3(0, 0.75, 0), clamp(1.2 + amt * 0.12, 1.3, 2.4), 0.3)
+		vfx.impact(p, Color("#ff9a5a"), clamp(amt / 4.0, 0.6, 1.8) * k)
+		vfx.flip("hit", p - Vector3(0, 0.75, 0), clamp(2.1 + amt * 0.22, 2.3, 3.8) * k, 0.6)
+		vfx.flip("ring", _hex_pos(h, 0.0), 2.4 * k, 0.5, Color("#ff8a3a"), true)
+		if amt >= 4:
+			vfx.flip("boom", _hex_pos(h, 0.0), 2.0 * k, 0.6, Color(1, 0.85, 0.7))
+		board.shake = max(board.shake, clamp(amt * 0.08, 0.15, 0.5))
 		_voice(uid, "dor", -1.0, 0.06)
 	else:
 		vfx.block(p)
-		vfx.flip("shield", p - Vector3(0, 0.9, 0), 1.6, 0.4, Color("#bfe8ff"))
+		vfx.flip("shield", p - Vector3(0, 0.9, 0), 1.9 * k, 0.55, Color("#bfe8ff"))
+
+
+# efeitos maiores quando a câmera está longe (tabuleiro grande)
+func _fx_scale() -> float:
+	return clamp(board.cam_dist / 24.0, 1.0, 2.0)
 
 
 # voz do personagem: v_<id>_atk (atacar) ou v_<id>_dor (sofrer dano)
@@ -2726,10 +2736,14 @@ func _on_fx(e: Dictionary) -> void:
 			var col = _unit_color(e["from"])
 			if a == null or tgt == null:
 				return
+			var k = _fx_scale()
 			_voice(e["from"], "atk", -2.0)
 			if e["ranged"]:
 				var style = _shot_style(e["from"])
-				impact_delay = vfx.projectile(a, tgt, col, "cristal" if style == "cristal" else "bola")
+				# disparo: clarão na arma do atacante
+				var muzzle = {"cristal": "crystal", "laser": "beam", "energia": "bolt"}.get(style, "hit")
+				vfx.flip(muzzle, a - Vector3(0, 0.8, 0), 2.0 * k, 0.5, col.lightened(0.3))
+				impact_delay = vfx.projectile(a, tgt, col, style, k)
 				impact_until = now + 120
 				var snd = "projetil"
 				if style == "cristal":
@@ -2740,10 +2754,11 @@ func _on_fx(e: Dictionary) -> void:
 					snd = "tiro_energia"
 				sfx.play(snd, -3.0)
 			else:
-				impact_delay = 0.08
-				impact_until = now + 120
-				vfx.slash(tgt, a, col)
-				vfx.flip("slash", tgt - Vector3(0, 0.9, 0), 2.2, 0.32, col.lightened(0.45))
+				impact_delay = 0.16
+				impact_until = now + 160
+				vfx.flip("dash", a - Vector3(0, 0.8, 0), 2.0 * k, 0.5, col.lightened(0.2))
+				vfx.slash(tgt, a, col, k)
+				vfx.flip("slash", tgt - Vector3(0, 0.9, 0), 3.4 * k, 0.65, col.lightened(0.25), false, 0.06)
 		"dmg":
 			var amt = e["amt"]
 			var uid = e["uid"]

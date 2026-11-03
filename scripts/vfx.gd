@@ -29,6 +29,9 @@ func _make_soft() -> ImageTexture:
 	return ImageTexture.create_from_image(img)
 
 
+var dark_bg: bool = false
+
+
 func _pmat(additive: bool) -> StandardMaterial3D:
 	var m = StandardMaterial3D.new()
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -36,7 +39,8 @@ func _pmat(additive: bool) -> StandardMaterial3D:
 	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	m.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
 	m.albedo_texture = soft_tex
-	if additive:
+	# soma de luz some em cima da areia/grama clara: só usa em fundo escuro
+	if additive and dark_bg:
 		m.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
 	m.no_depth_test = false
 	return m
@@ -130,29 +134,58 @@ func _ring(pos: Vector3, col: Color, r0: float, r1: float, dur: float, rise: flo
 
 # ---------------- ataques ----------------
 # projétil em arco do atacante até o alvo; devolve quanto tempo leva
-func projectile(src: Vector3, to: Vector3, col: Color, style: String) -> float:
+func projectile(src: Vector3, to: Vector3, col: Color, style: String, k: float = 1.0) -> float:
 	var dist = src.distance_to(to)
-	var dur = clamp(dist * 0.06, 0.18, 0.45)
+	var dur = clamp(dist * 0.1, 0.35, 0.9)
+	if style == "laser" or style == "bala":
+		dur *= 0.6
 	var ball = Node3D.new()
 	ball.position = src
 	add_child(ball)
 	var core = MeshInstance3D.new()
 	var sm = SphereMesh.new()
-	sm.radius = 0.13 if style != "cristal" else 0.1
+	sm.radius = (0.2 if style != "cristal" else 0.15) * (1.0 + (k - 1.0) * 0.8) * (0.7 if style == "bala" else 1.0)
 	sm.height = sm.radius * 2.0
 	core.mesh = sm
 	var m = StandardMaterial3D.new()
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	m.albedo_color = col.lightened(0.5)
+	m.albedo_color = col.lightened(0.15)
 	core.material_override = m
-	if style == "cristal":
-		core.scale = Vector3(0.7, 0.7, 2.4)
+	if style == "cristal" or style == "laser":
+		core.scale = Vector3(0.7, 0.7, 2.4 if style == "cristal" else 4.0)
 	ball.add_child(core)
+	# brilho em volta do projétil
+	var glow = MeshInstance3D.new()
+	var gq = QuadMesh.new()
+	gq.size = Vector2(1.2, 1.2) * k
+	glow.mesh = gq
+	var gm = _pmat(true)
+	gm.vertex_color_use_as_albedo = false
+	gm.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	gm.albedo_color = Color(col.lightened(0.35), 0.75)
+	glow.material_override = gm
+	ball.add_child(glow)
+	# desenho animado do disparo (mesmo estilo dos outros VFX) viajando junto
+	var ftex = _flip_tex({"cristal": "crystal", "laser": "beam", "energia": "bolt", "bala": "bolt"}.get(style, "bolt"))
+	if ftex != null:
+		var sp = Sprite3D.new()
+		sp.texture = ftex
+		sp.hframes = FLIP_FRAMES
+		sp.pixel_size = 2.0 * k / 256.0
+		sp.modulate = Color("#ffb040") if style == "bala" else col.lightened(0.2)
+		sp.shaded = false
+		sp.no_depth_test = true
+		sp.render_priority = 21
+		sp.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		sp.position = Vector3(0, -0.2 * k, 0)
+		ball.add_child(sp)
+		var ft = sp.create_tween().set_loops(int(ceil(dur / 0.3)) + 1)
+		ft.tween_property(sp, "frame", 5, 0.3).from(2)
 	var trail = CPUParticles3D.new()
-	trail.amount = 40
-	trail.lifetime = 0.35
+	trail.amount = 60
+	trail.lifetime = 0.45
 	trail.local_coords = false
-	trail.mesh = _quad(0.22, true)
+	trail.mesh = _quad(0.42 * k, true)
 	trail.gravity = Vector3.ZERO
 	trail.initial_velocity_min = 0.0
 	trail.initial_velocity_max = 0.2
@@ -162,6 +195,8 @@ func projectile(src: Vector3, to: Vector3, col: Color, style: String) -> float:
 	ball.add_child(trail)
 	trail.emitting = true
 	var h = 0.4 + dist * 0.06
+	if style == "laser" or style == "bala":
+		h = 0.05
 	var tw = create_tween()
 	tw.tween_method(func(v): _arc_step(ball, src, to, h, v), 0.0, 1.0, dur)
 	tw.tween_callback(func(): core.visible = false)
@@ -182,7 +217,7 @@ func _arc_step(ball: Node3D, src: Vector3, to: Vector3, h: float, v: float) -> v
 
 
 # corte em arco na frente do alvo
-func slash(at: Vector3, src: Vector3, col: Color) -> void:
+func slash(at: Vector3, src: Vector3, col: Color, k: float = 1.0) -> void:
 	var st = SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var seg = 16
@@ -206,9 +241,8 @@ func slash(at: Vector3, src: Vector3, col: Color) -> void:
 	var m = StandardMaterial3D.new()
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	m.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
 	m.cull_mode = BaseMaterial3D.CULL_DISABLED
-	m.albedo_color = Color(col.lightened(0.6), 1.0)
+	m.albedo_color = Color(col.lightened(0.25), 0.95)
 	mi.material_override = m
 	mi.position = at
 	add_child(mi)
@@ -216,12 +250,12 @@ func slash(at: Vector3, src: Vector3, col: Color) -> void:
 	if flat.distance_to(at) > 0.01:
 		mi.look_at(flat, Vector3.UP)
 	mi.rotate_object_local(Vector3.FORWARD, randf_range(-0.6, 0.6))
-	mi.scale = Vector3.ONE * 0.6
+	mi.scale = Vector3.ONE * 0.7 * k
 	var tw = create_tween()
 	tw.set_parallel(true)
-	tw.tween_property(mi, "scale", Vector3.ONE * 1.25, 0.22)
-	tw.tween_property(mi, "rotation:z", mi.rotation.z + 1.2, 0.22)
-	tw.tween_property(m, "albedo_color:a", 0.0, 0.28).set_delay(0.06)
+	tw.tween_property(mi, "scale", Vector3.ONE * 1.6 * k, 0.3)
+	tw.tween_property(mi, "rotation:z", mi.rotation.z + 1.4, 0.3)
+	tw.tween_property(m, "albedo_color:a", 0.0, 0.38).set_delay(0.12)
 	tw.chain().tween_callback(mi.queue_free)
 
 
