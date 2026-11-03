@@ -12,7 +12,7 @@ const TDESC = {
 	"ossada": "Ossada baixa. Intransponível, abriga quem está ao lado (-2).", "ossada_c": "Ossada central. Dá para entrar; quem está dentro sofre -1 de tiros.",
 	"buraco": "Buraco de verme. Intransponível enquanto estiver aberto (2 rounds).",
 }
-const RULES = "[b]Objetivo:[/b] derrotar o Comandante inimigo (ele entra no round 6). No fim do round 10 vence quem tiver mais Vida no Comandante; empate: soma da Vida dos aliados.\n\n[b]Turno:[/b] os lados se alternam ativando 1 peça por vez. Cada peça ativada tem [b]2 ações[/b], e cada tipo só pode ser usado [b]1 vez por turno[/b]: mover 1 vez, atacar 1 vez, usar habilidade ativa ou jogar uma carta (ex.: mover + atacar, mover + carta, atacar + carta). Habilidades passivas não gastam ação. Colocar uma reserva em campo gasta 1 ação.\n\n[b]Altura:[/b] atacar de cima +1 de dano, de baixo -1. Tiros (alcance 2+) de cima ganham +1 de alcance. Corpo a corpo só com até 1 nível de diferença.\n\n[b]Linha de tiro:[/b] uma casa no caminho bloqueia se o topo dela for mais alto que o atacante e o alvo.\n\n[b]Abrigo:[/b] -2 de dano se uma rocha/ruína/ossada vizinha ao alvo estiver do lado do atacante.\n\n[b]Tarhut:[/b] as dunas mudam a cada 5 rounds (aviso 1 round antes); vermes abrem buracos a cada 3 rounds (o \"!\" avisa antes).\n\n[b]Controles:[/b] clique numa peça sua e depois numa casa verde (mover) ou num inimigo vermelho (atacar), ou arraste a peça e solte. Confirme a prévia. Botão direito gira a câmera, arrastar o fundo move o mapa, a roda aproxima. Q/E giram. Enter confirma, Esc cancela.\n\n[b]Toque (tablet/celular):[/b] toque numa peça e numa casa para agir. 1 dedo arrasta o mapa; pinça com 2 dedos aproxima/afasta; girar os 2 dedos gira a câmera; arrastar os 2 dedos para cima/baixo inclina a visão. \"Tudo\" recentraliza."
+const RULES = "[b]Objetivo:[/b] derrotar o Comandante inimigo (ele entra no round 6). No fim do round 10 vence quem tiver mais Vida no Comandante; empate: soma da Vida dos aliados.\n\n[b]Turno:[/b] os lados se alternam ativando 1 peça por vez. Cada peça ativada tem [b]2 ações[/b], e cada tipo só pode ser usado [b]1 vez por turno[/b]: mover 1 vez, atacar 1 vez, usar habilidade ativa ou jogar uma carta (ex.: mover + atacar, mover + carta, atacar + carta). Habilidades passivas não gastam ação. Colocar uma reserva em campo gasta 1 ação.\n\n[b]Altura:[/b] atacar de cima +1 de dano, de baixo -1. Tiros (alcance 2+) de cima ganham +1 de alcance. Corpo a corpo só com até 1 nível de diferença.\n\n[b]Linha de tiro:[/b] uma casa no caminho bloqueia se o topo dela for mais alto que o atacante e o alvo.\n\n[b]Abrigo:[/b] -2 de dano se uma rocha/ruína/ossada vizinha ao alvo estiver do lado do atacante.\n\n[b]Tarhut:[/b] as dunas mudam a cada 5 rounds (aviso 1 round antes); a cada 3 rounds o [color=#ff6a4a]Verme Gigante[/color] sai da areia (o \"!\" avisa 1 round antes): quem estiver no buraco sofre 4 de dano e quem estiver ao lado, 1. Fuja das casas marcadas!\n\n[b]Controles:[/b] clique numa peça sua e depois numa casa verde (mover) ou num inimigo vermelho (atacar), ou arraste a peça e solte. Confirme a prévia. Botão direito gira a câmera, arrastar o fundo move o mapa, a roda aproxima. Q/E giram. Enter confirma, Esc cancela.\n\n[b]Toque (tablet/celular):[/b] toque numa peça e numa casa para agir. 1 dedo arrasta o mapa; pinça com 2 dedos aproxima/afasta; girar os 2 dedos gira a câmera; arrastar os 2 dedos para cima/baixo inclina a visão. \"Tudo\" recentraliza."
 
 var board
 var game: Game = null
@@ -83,6 +83,8 @@ func _ready() -> void:
 	board.hex_tapped.connect(_on_hex_tapped)
 	board.unit_dropped.connect(_on_unit_dropped)
 	board.unit_drag_started.connect(_on_unit_drag_started)
+	board.worm_roar.connect(_on_worm_roar)
+	board.worm_bite.connect(_on_worm_bite)
 	vfx = Node3D.new()
 	vfx.set_script(load("res://scripts/vfx.gd"))
 	board.add_child(vfx)
@@ -1477,6 +1479,7 @@ func banner(big: String, small: String = "") -> void:
 	if bn == null:
 		return
 	bn.text = big + ("\n" + small if small != "" else "")
+	bn.remove_theme_color_override("font_color")
 	bn.modulate.a = 1.0
 	var tw = create_tween()
 	tw.tween_interval(1.0)
@@ -1936,7 +1939,12 @@ func _refresh_prompt() -> void:
 	for c in box.get_children():
 		c.queue_free()
 	var text = ""
-	if asking != null:
+	var is_mull = asking != null and asking["q"].get("kind", "") == "mulligan"
+	if is_mull:
+		_show_mull(asking["q"]["show"])
+	else:
+		_hide_mull()
+	if asking != null and not is_mull:
 		var q = asking["q"]
 		text = "[b]%s[/b]" % q.get("text", "")
 		match q["t"]:
@@ -2132,7 +2140,48 @@ func _card_targets(id: String) -> Dictionary:
 				for x in game.enemies_of(u):
 					if x.eq != "" and DB.dist(x.pos(), u.pos()) <= 2:
 						hs.append(x.pos())
-	if hs.is_empty() and u != null and ["propulsor", "placas", "lente", "reparo", "fogo"].has(id):
+		"granada":
+			txt = "Inimigos numa área: 1 de dano cada"
+			if u != null:
+				hs = game.granada_opts(u)
+		"sinalizador":
+			txt = "Inimigo marcado: +1 dano contra ele"
+			if u != null:
+				for x in game.enemies_of(u):
+					if DB.dist(x.pos(), u.pos()) <= 4 and game.los(u.pos(), x.pos()):
+						hs.append(x.pos())
+		"adrenalina":
+			txt = "Ativo: -1 Vida, +1 ação"
+		"barreira":
+			txt = "Casa ao lado: barreira de 3 Vida"
+			if u != null:
+				hs = game.adj_free(u.pos())
+		"gancho":
+			txt = "Inimigo a até 3: puxado 1 casa"
+			if u != null:
+				for x in game.gancho_targets(u):
+					hs.append(x.pos())
+		"camuflagem":
+			txt = "Ativo: não pode ser atacado no round"
+		"onda":
+			txt = "Inimigos ao lado: empurrados 1 casa"
+			if u != null:
+				for x in game.enemies_of(u):
+					if DB.dist(x.pos(), u.pos()) == 1:
+						hs.append(x.pos())
+		"orbital":
+			txt = "Inimigo a até 5: 3 de dano"
+			if u != null:
+				for x in game.enemies_of(u):
+					if DB.dist(x.pos(), u.pos()) <= 5:
+						hs.append(x.pos())
+		"kit":
+			txt = "Ativo e aliados a até 2: +2 Vida"
+			if u != null:
+				for x in game.allies_of(u, true):
+					if DB.dist(x.pos(), u.pos()) <= 2:
+						hs.append(x.pos())
+	if hs.is_empty() and u != null and ["propulsor", "placas", "lente", "reparo", "fogo", "adrenalina", "camuflagem"].has(id):
 		hs = [u.pos()]
 	return {"txt": txt, "hexes": hs}
 
@@ -2894,14 +2943,20 @@ func _on_fx(e: Dictionary) -> void:
 			sfx.play("dunas", 0.0)
 			get_tree().create_timer(4.0).timeout.connect(_storm_end)
 		"tremor":
-			sfx.play("verme_rumor", -4.0)
+			sfx.play("verme_rumor", -2.0, 0.7)
+			board.shake = max(board.shake, 0.35)
+			banner("A AREIA TREME", "saia das casas marcadas: o verme vem no próximo round")
+			if w.has("banner"):
+				w["banner"].add_theme_color_override("font_color", Color("#ff9a5a"))
 			for th in e["hexes"]:
 				vfx.dust_burst(_hex_pos(th, 0.0), false)
 		"worm":
-			banner("Vermes!", "buracos se abriram na areia")
+			banner("VERME GIGANTE!", "quem estiver nos buracos é devorado")
+			if w.has("banner"):
+				w["banner"].add_theme_color_override("font_color", Color("#ff4a3a"))
 			board.quake()
-			sfx.play("verme_rumor", -2.0, 0.8)
-			sfx.play_later("verme_ataque", 0.35, 0.0)
+			sfx.play("verme_rumor", 2.0, 0.6)
+			sfx.play_later("verme_rumor", 0.5, 0.0, 0.5)
 			var hs = []
 			for b in game.holes:
 				hs.append(b["h"])
@@ -3073,6 +3128,7 @@ func _process(_delta: float) -> void:
 		_update_tags()
 	if game != null and board.visible:
 		_update_plates(_delta)
+		_tremor_omen(_delta)
 		vfx.cam_k = _fx_scale()
 	if bubbles.is_empty():
 		return
@@ -3390,3 +3446,122 @@ func _toggle_cpu() -> void:
 	cpu_open = not cpu_open
 	if w.has("party1_panel"):
 		w["party1_panel"].visible = cpu_open or not compact
+
+
+# ================= mão inicial: cartas grandes no centro =================
+func _show_mull(ids: Array) -> void:
+	if w.has("mull") and is_instance_valid(w["mull"]):
+		return
+	if w.has("hand"):
+		w["hand"].visible = false
+	var root = Control.new()
+	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.mouse_filter = Control.MOUSE_FILTER_STOP
+	ui.add_child(root)
+	w["mull"] = root
+	var dim = ColorRect.new()
+	dim.color = Color(0.01, 0.02, 0.05, 0.6)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(dim)
+	var col = VBoxContainer.new()
+	col.alignment = BoxContainer.ALIGNMENT_CENTER
+	col.add_theme_constant_override("separation", 16)
+	col.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(col)
+	var tl = _label(col, "SUA MÃO INICIAL", 26, C_GOLD)
+	tl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var row = HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 22)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.add_child(row)
+	var vh = get_viewport().get_visible_rect().size.y
+	var k = clamp((vh - 260.0) / 172.0, 1.0, 1.8)
+	for id in ids:
+		var holder = Control.new()
+		var base = Vector2(118, 150) if compact else Vector2(128, 172)
+		holder.custom_minimum_size = base * k
+		holder.tooltip_text = "%s (%s)\n%s" % [DB.tactics[id]["name"], DB.tactics[id]["type"], DB.tactics[id]["text"]]
+		holder.mouse_filter = Control.MOUSE_FILTER_PASS
+		row.add_child(holder)
+		var card = _make_card(id)
+		card.modulate = Color.WHITE
+		card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		for c in card.get_children():
+			c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		card.scale = Vector2(k, k)
+		holder.add_child(card)
+		# entra deslizando de baixo
+		holder.modulate.a = 0.0
+		var tw = holder.create_tween()
+		tw.tween_interval(0.08 * ids.find(id))
+		tw.tween_property(holder, "modulate:a", 1.0, 0.25)
+	var br = HBoxContainer.new()
+	br.alignment = BoxContainer.ALIGNMENT_CENTER
+	br.add_theme_constant_override("separation", 18)
+	br.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.add_child(br)
+	var b1 = _cbtn(br, "MANTER A MÃO", C_HUD, func(): _answer(false))
+	b1.custom_minimum_size = Vector2(230, 54)
+	var b2 = _cbtn(br, "TROCAR A MÃO", C_GOLD, func(): _answer(true))
+	_primary(b2)
+	b2.custom_minimum_size = Vector2(230, 54)
+
+
+func _hide_mull() -> void:
+	if w.has("hand") and is_instance_valid(w["hand"]):
+		w["hand"].visible = true
+	if w.has("mull"):
+		if is_instance_valid(w["mull"]):
+			w["mull"].queue_free()
+		w.erase("mull")
+
+
+# ================= verme gigante =================
+var omen_t: float = 0.0
+
+
+# enquanto há casas marcadas: a areia ronca, levanta poeira e o chão treme de leve
+func _tremor_omen(delta: float) -> void:
+	if game.tremors.is_empty():
+		return
+	omen_t -= delta
+	if omen_t > 0.0:
+		return
+	omen_t = randf_range(2.2, 3.6)
+	sfx.play("verme_rumor", -9.0, randf_range(0.55, 0.75), 0.1)
+	board.shake = max(board.shake, 0.18)
+	for h in game.tremors:
+		vfx.dust_burst(_hex_pos(h, 0.0), false)
+
+
+func _on_worm_roar(pos: Vector3) -> void:
+	board.shake = 1.4
+	sfx.play("verme_ataque", 4.0, 0.62, 0.05)
+	sfx.play_later("verme_ataque", 0.12, 0.0, 0.48)
+	sfx.play("verme_rumor", 2.0, 0.5)
+	vfx.dust_burst(pos, true)
+	vfx.flip("sonic", pos + Vector3(0, 8.0, 0), 6.0, 0.9, Color("#ffcf9a"))
+	vfx.flip("ring", pos, 7.0, 0.8, Color("#ff7a3a"), true)
+	_flash_screen(Color(0.6, 0.02, 0.0, 0.35), 0.6)
+
+
+func _on_worm_bite(pos: Vector3) -> void:
+	board.shake = max(board.shake, 1.0)
+	sfx.play("explosao", 0.0, 0.6)
+	vfx.dust_burst(pos, true)
+	vfx.flip("boom", pos, 5.0, 0.8, Color(1, 0.8, 0.6))
+	vfx.flip("rock", pos, 4.0, 0.7)
+
+
+func _flash_screen(col: Color, dur: float) -> void:
+	var r = ColorRect.new()
+	r.color = col
+	r.set_anchors_preset(Control.PRESET_FULL_RECT)
+	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui.add_child(r)
+	var tw = r.create_tween()
+	tw.tween_property(r, "color:a", 0.0, dur)
+	tw.tween_callback(r.queue_free)

@@ -64,7 +64,9 @@ static func pos_score(g, u, h: Vector2i) -> float:
 	if g.res.has(h):
 		s += 1.2
 	if g.tremors.has(h):
-		s -= 3.0
+		s -= 9.0
+	elif g.tremors.any(func(x): return DB.dist(x, h) == 1):
+		s -= 2.5
 	for c in DB.nbrs(h):
 		if g.tt_of(g.terr(c)["k"]).get("cover", 0):
 			s += 0.6 if ranged else 0.2
@@ -128,6 +130,10 @@ static func run(g, u) -> void:
 			var hand = g.P[p]["hand"]
 			if hand.has("reparo") and u.maxhp - u.hp >= 4 and g.tactic_playable(p, "reparo") and best_attack_from(g, u) == null:
 				await g.play_tactic(p, "reparo")
+				continue
+			var nt = new_tactic(g, u, hand, A)
+			if nt != "":
+				await g.play_tactic(p, nt)
 				continue
 			var ba = best_attack_from(g, u) if g.can_attack_now(u) else null
 			if ba != null and hand.has("fogo") and g.tactic_playable(p, "fogo") and A["actions"] >= 2:
@@ -198,6 +204,52 @@ static func run(g, u) -> void:
 		await g.end_activation()
 
 
+# quando vale a pena usar as táticas novas
+static func new_tactic(g, u, hand: Array, A: Dictionary) -> String:
+	var p = u.owner
+	var en = g.enemies_of(u).filter(func(x): return not x.barrier)
+	for id in hand:
+		if not g.tactic_playable(p, id):
+			continue
+		match id:
+			"orbital":
+				if A["actions"] >= 2:
+					for e in en:
+						if DB.dist(e.pos(), u.pos()) <= 5 and (e.hp <= 3 or e.is_cmd):
+							return id
+			"granada":
+				for h in g.granada_opts(u):
+					var n = en.filter(func(x): return DB.dist(x.pos(), h) <= 1).size()
+					if n >= 2 or en.any(func(x): return DB.dist(x.pos(), h) <= 1 and x.hp == 1):
+						return id
+			"kit":
+				var miss = 0
+				for x in g.allies_of(u, true):
+					if not x.barrier and DB.dist(x.pos(), u.pos()) <= 2:
+						miss += min(2, x.maxhp - x.hp)
+				if miss >= 4:
+					return id
+			"camuflagem":
+				if u.hp <= u.maxhp / 2 and en.any(func(x): return DB.dist(x.pos(), u.pos()) <= 3):
+					return id
+			"onda":
+				if en.filter(func(x): return DB.dist(x.pos(), u.pos()) == 1).size() >= 2 and g.alc_of(u) >= 2:
+					return id
+			"sinalizador":
+				if g.can_attack_now(u) and best_attack_from(g, u) != null:
+					return id
+			"adrenalina":
+				if u.hp >= 5 and A["actions"] == 1 and g.can_attack_any(u):
+					return id
+			"barreira":
+				if u.hp <= u.maxhp / 2 and en.any(func(x): return DB.dist(x.pos(), u.pos()) <= 2):
+					return id
+			"gancho":
+				if g.alc_of(u) == 1 and A["actions"] >= 2 and not g.gancho_targets(u).is_empty():
+					return id
+	return ""
+
+
 static func answer(g, p: int, q: Dictionary) -> Variant:
 	match q["t"]:
 		"yesno":
@@ -224,7 +276,7 @@ static func answer(g, p: int, q: Dictionary) -> Variant:
 				if q["packet"] >= 3 or (t2 != null and t2.hp <= q["packet"]):
 					return q["opts"][0]
 				return null
-			var pri = ["dados", "avanco", "troca", "pulso", "flanquear", "lente", "propulsor", "retirada", "dispersao", "reforco", "escudo", "cobertura", "reparo", "placas", "fogo"]
+			var pri = ["dados", "avanco", "troca", "pulso", "flanquear", "gancho", "onda", "adrenalina", "sinalizador", "lente", "propulsor", "barreira", "retirada", "dispersao", "reforco", "camuflagem", "escudo", "cobertura", "kit", "granada", "reparo", "placas", "fogo", "orbital"]
 			var best = q["opts"][0]
 			for c in q["opts"]:
 				if pri.find(c) < pri.find(best):
@@ -252,6 +304,10 @@ static func answer(g, p: int, q: Dictionary) -> Variant:
 						s = g.ult_score(cu if cu != null else g.commander(p), h)
 					"enemy":
 						s = ((50.0 if t3.is_cmd else 0.0) + 20.0 - t3.hp) if t3 != null else 0.0
+					"blast":
+						for e in g.field():
+							if DB.dist(e.pos(), h) <= 1 and not e.barrier:
+								s += (3.0 + (2.0 if e.hp == 1 else 0.0)) if e.owner != p else -4.0
 					"ally":
 						s = ((t3.maxhp - t3.hp) + (3.0 if t3.is_cmd else 0.0)) if t3 != null else 0.0
 					"place":

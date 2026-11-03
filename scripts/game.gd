@@ -10,7 +10,7 @@ signal fx_event(e)         # efeitos visuais (dano, cura, dunas, vermes...)
 const DUNE_EVERY = 5
 const WORM_EVERY = 3
 const HOLE_ROUNDS = 2
-const HOLE_DMG = 2
+const HOLE_DMG = 4
 const FALL_DMG = 1
 const NONE = -1
 const DRAW = 2
@@ -827,12 +827,18 @@ func map_events() -> void:
 			load_map()
 			log_msg(-1, "Vermes gigantes abriram buracos na areia!")
 			emitfx({"t": "worm"})
+			# a areia em volta dos buracos desaba: quem está ao lado leva 1 de dano
+			for b in holes:
+				for u2 in field():
+					if not u2.barrier and DB.dist(u2.pos(), b["h"]) == 1 and not holes.any(func(x): return x["h"] == u2.pos()):
+						damage(u2, 1, null)
+						log_msg(-1, "%s foi atingido pela areia que desabou." % nm(u2))
 			for b in holes:
 				var u = unit_at(b["h"])
 				if u == null:
 					continue
 				emitfx({"t": "boom", "h": b["h"]})
-				log_msg(-1, "%s foi pego pelo verme." % nm(u))
+				log_msg(-1, "%s foi abocanhado pelo verme!" % nm(u))
 				damage(u, HOLE_DMG, null)
 				var ops = DB.nbrs(u.pos()).filter(func(n): return is_free(n))
 				if ops.is_empty():
@@ -1752,7 +1758,49 @@ func tactic_playable(p: int, id: String) -> bool:
 			return not A["attacked"] and not A["cant_attack"]
 		"pulso":
 			return enemies_of(u).any(func(x): return x.eq != "" and DB.dist(x.pos(), u.pos()) <= 2 and los(u.pos(), x.pos()))
+		"granada":
+			return not granada_opts(u).is_empty()
+		"sinalizador":
+			return enemies_of(u).any(func(x): return not x.barrier and DB.dist(x.pos(), u.pos()) <= 4 and los(u.pos(), x.pos()))
+		"adrenalina":
+			return u.hp > 1
+		"barreira":
+			return not adj_free(u.pos()).is_empty()
+		"gancho":
+			return not gancho_targets(u).is_empty()
+		"camuflagem":
+			return not has_fx(u, "veil")
+		"onda":
+			return enemies_of(u).any(func(x): return not x.barrier and DB.dist(x.pos(), u.pos()) == 1 and push_dest(x, u.pos()) != null)
+		"orbital":
+			return enemies_of(u).any(func(x): return DB.dist(x.pos(), u.pos()) <= 5)
+		"kit":
+			return allies_of(u, true).any(func(x): return not x.barrier and DB.dist(x.pos(), u.pos()) <= 2 and x.hp < x.maxhp)
 	return false
+
+
+# casas que a Granada pode mirar (com pelo menos 1 inimigo no raio de 1)
+func granada_opts(u) -> Array:
+	var out = []
+	for h in DB.hexes:
+		if DB.dist(h, u.pos()) > 3 or DB.dist(h, u.pos()) < 1 or not los(u.pos(), h):
+			continue
+		if enemies_of(u).any(func(x): return DB.dist(x.pos(), h) <= 1):
+			out.append(h)
+	return out
+
+
+func gancho_dest(u, t) -> Variant:
+	var best: Variant = null
+	for h in step_free(t.pos()):
+		if DB.dist(h, u.pos()) < DB.dist(t.pos(), u.pos()) and can_step(t.pos(), h):
+			if best == null or DB.dist(h, u.pos()) < DB.dist(best, u.pos()):
+				best = h
+	return best
+
+
+func gancho_targets(u) -> Array:
+	return enemies_of(u).filter(func(x): return not x.barrier and DB.dist(x.pos(), u.pos()) >= 2 and DB.dist(x.pos(), u.pos()) <= 3 and los(u.pos(), x.pos()) and gancho_dest(u, x) != null)
 
 
 func play_tactic(p: int, id: String) -> bool:
@@ -1819,6 +1867,66 @@ func play_tactic(p: int, id: String) -> bool:
 				var t3 = unit_at(h4)
 				log_msg(p, "%s perdeu %s." % [nm(t3), DB.tactics[t3.eq]["name"]])
 				t3.eq = ""
+		"granada":
+			var hg = await pick_hex(p, "Granada: escolha a casa do centro da explosão.", granada_opts(u), "blast")
+			if hg != null:
+				abfx("blast", hg, u.uid)
+				await pace()
+				for e in enemies_of(u).filter(func(x): return DB.dist(x.pos(), hg) <= 1):
+					damage(e, 1, u)
+				await settle()
+		"sinalizador":
+			var ts5 = enemies_of(u).filter(func(x): return not x.barrier and DB.dist(x.pos(), u.pos()) <= 4 and los(u.pos(), x.pos()))
+			var hs5 = await pick_hex(p, "Sinalizador: marque o inimigo.", ts5.map(func(x): return x.pos()), "enemy")
+			if hs5 != null:
+				var t5 = unit_at(hs5)
+				t5.fx.append({"k": "mark", "v": 1, "until": "end"})
+				abfx("mark", hs5, u.uid)
+				log_msg(p, "%s foi marcado: +1 de dano contra ele neste round." % nm(t5))
+		"adrenalina":
+			abfx("buff", u.pos(), u.uid)
+			damage(u, 1, null)
+			A["actions"] += 1
+			log_msg(p, "%s ganhou +1 ação." % nm(u))
+			await settle()
+		"barreira":
+			var hb = await pick_hex(p, "Barreira Portátil: escolha a casa.", adj_free(u.pos()), "place")
+			if hb != null:
+				abfx("barrier", hb, u.uid)
+				_make_barrier(p, hb, 3)
+		"gancho":
+			var ts6 = gancho_targets(u)
+			var hh = await pick_hex(p, "Gancho Magnético: escolha o inimigo para puxar.", ts6.map(func(x): return x.pos()), "enemy")
+			if hh != null:
+				var t6 = unit_at(hh)
+				abfx("hook", hh, u.uid)
+				log_msg(p, "%s foi puxado." % nm(t6))
+				await move_unit(t6, gancho_dest(u, t6))
+		"camuflagem":
+			u.fx.append({"k": "veil", "v": 1, "until": "start"})
+			abfx("veil", u.pos(), u.uid)
+			log_msg(p, "%s sumiu de vista até o próximo round." % nm(u))
+		"onda":
+			abfx("quake", u.pos(), u.uid)
+			for t7 in enemies_of(u).filter(func(x): return not x.barrier and DB.dist(x.pos(), u.pos()) == 1):
+				var d7 = push_dest(t7, u.pos())
+				if d7 != null:
+					await move_unit(t7, d7)
+					log_msg(p, "Onda de Choque: %s foi empurrado." % nm(t7))
+					if winner != NONE:
+						break
+		"orbital":
+			var ts8 = enemies_of(u).filter(func(x): return DB.dist(x.pos(), u.pos()) <= 5)
+			var ho = await pick_hex(p, "Bombardeio Orbital: escolha o alvo.", ts8.map(func(x): return x.pos()), "enemy")
+			if ho != null:
+				abfx("orbital", ho, u.uid)
+				await pace()
+				damage(unit_at(ho), 3, u)
+				await settle()
+		"kit":
+			abfx("heal", u.pos(), u.uid)
+			for x in allies_of(u, true).filter(func(y): return not y.barrier and DB.dist(y.pos(), u.pos()) <= 2):
+				heal(x, 2)
 	changed.emit()
 	return true
 

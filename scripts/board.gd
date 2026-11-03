@@ -4,6 +4,8 @@ extends Node3D
 signal hex_tapped(h)                 # clique/toque numa casa (Vector2i)
 signal unit_dropped(uid, h)          # soltou uma peça arrastada (h pode ser null)
 signal unit_drag_started(uid)
+signal worm_roar(pos)                 # o verme rugiu lá do alto (posição do buraco)
+signal worm_bite(pos)                 # o verme mergulhou de volta
 
 const S3 = 1.7320508
 const HS = 0.55          # altura de cada nível
@@ -382,6 +384,15 @@ func _build_far(desert: bool) -> void:
 		_place_on_planet(holder, cos(a) * rr, sin(a) * rr)
 		holder.rotate_object_local(Vector3.UP, _rnd(h, 3) * TAU)
 		var s = 1.6 + _rnd(h, 4) * 2.8
+		if not desert:
+			# ilhas de Valak: o cenário fica em cima de uma ilhota
+			var isl0 = _mesh(holder, _cyl(1.2 * s * 0.6, 1.6 * s * 0.6, 0.6, 9), Color("#e8d29a"), Vector3(0, 0.15, 0))
+			isl0.material_overlay = outline_mat
+			_mesh(holder, _cyl(0.9 * s * 0.6, 1.2 * s * 0.6, 0.4, 9), Color("#7fb54a"), Vector3(0, 0.45, 0))
+			if _prop(holder, desert, h, Vector3(0, 0.6, 0), s * 0.55, 9):
+				continue
+		elif _prop(holder, desert, h, Vector3.ZERO, s * 0.7, 9):
+			continue
 		if desert:
 			var kind = int(_rnd(h, 5) * 5)
 			if kind <= 1:
@@ -752,6 +763,39 @@ func _add_props(root: Node3D, h: Vector2i, t: Dictionary) -> void:
 
 
 # ---------- modelos 3D da Meshy (res://models/<nome>.glb) ----------
+# cenário gerado por tools/propgen.py (models/<planeta>_<peça>_<n>.glb)
+const PROPS = {
+	"tarhut": [["arenito", 3.0], ["cristal", 1.6], ["cacto", 1.4], ["ossos", 2.0], ["destroco", 1.0]],
+	"valak": [["pinheiro", 3.0], ["rocha", 2.2], ["tanque", 1.0], ["torre", 0.8], ["guindaste", 0.6]],
+}
+var prop_mat: StandardMaterial3D = null
+
+
+func _prop(parent: Node3D, desert: bool, h: Vector2i, pos: Vector3, size: float, ring: int) -> bool:
+	var planet = "tarhut" if desert else "valak"
+	var list = PROPS[planet]
+	var tot = 0.0
+	for e in list:
+		# peças grandes (torres, guindastes) só longe do tabuleiro
+		if ring >= 2 or e[0] in ["rocha", "cacto", "cristal", "pinheiro", "ossos"]:
+			tot += e[1]
+	var roll = _rnd(h, 11) * tot
+	var kind = ""
+	for e in list:
+		if ring >= 2 or e[0] in ["rocha", "cacto", "cristal", "pinheiro", "ossos"]:
+			roll -= e[1]
+			if roll <= 0.0:
+				kind = e[0]
+				break
+	if kind == "":
+		return false
+	var mname = "%s_%s_%d" % [planet, kind, int(_rnd(h, 12) * 3) % 3]
+	var foot = {"arenito": 1.6, "cristal": 1.1, "cacto": 0.9, "ossos": 2.2, "destroco": 2.0, "torre": 1.6, "tanque": 1.6, "pinheiro": 1.3, "rocha": 1.4, "guindaste": 2.4}[kind]
+	if not _model(parent, mname, pos, foot * size, _rnd(h, 13) * TAU, true):
+		return false
+	return true
+
+
 func _scene_of(mname: String) -> Variant:
 	if not model_cache.has(mname):
 		var path = "res://models/%s.glb" % mname
@@ -760,12 +804,22 @@ func _scene_of(mname: String) -> Variant:
 
 
 # coloca o modelo com a base no chão, cabendo num círculo de "footprint" de diâmetro
-func _model(parent: Node3D, mname: String, pos: Vector3, footprint: float, yaw: float) -> bool:
+func _model(parent: Node3D, mname: String, pos: Vector3, footprint: float, yaw: float, toon: bool = false) -> bool:
 	var sc = _scene_of(mname)
 	if sc == null:
 		return false
 	var inst: Node3D = sc.instantiate()
 	var meshes = inst.find_children("*", "MeshInstance3D", true, false)
+	if toon:
+		if prop_mat == null:
+			prop_mat = StandardMaterial3D.new()
+			prop_mat.vertex_color_use_as_albedo = true
+			prop_mat.diffuse_mode = BaseMaterial3D.DIFFUSE_TOON
+			prop_mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
+			prop_mat.roughness = 1.0
+			prop_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+		for mi in meshes:
+			mi.material_override = prop_mat
 	var box = AABB()
 	var first = true
 	for mi in meshes:
@@ -809,6 +863,13 @@ func _build_scenery(desert: bool) -> void:
 			var p = Vector3(px, planet_y(px, pz), pz)
 			var s = 0.8 + _rnd(h, 8) * 0.6
 			var k = int(_rnd(h, 7) * 6)
+			if not desert and _rnd(h, 14) < 0.6:
+				var isl = _mesh(scenery_root, _cyl(0.75 * s, 0.95 * s, 0.35, 8), Color("#e8d29a"), p + Vector3(0, 0.05, 0))
+				isl.material_overlay = outline_mat
+				_mesh(scenery_root, _cyl(0.55 * s, 0.75 * s, 0.2, 8), Color("#7fb54a"), p + Vector3(0, 0.3, 0))
+				p += Vector3(0, 0.4, 0)
+			if _prop(scenery_root, desert, h, p, s * (1.0 if d > 1 else 0.8), d):
+				continue
 			if desert:
 				match k:
 					0, 1:
@@ -1324,21 +1385,23 @@ func lunge(uid: int) -> void:
 		unit_nodes[uid]["lunge"] = 1.0
 
 
-# vermes saem dos buracos que acabaram de abrir e voltam para baixo
+# Verme Gigante: sai de cada buraco (um depois do outro), ruge lá do alto e mergulha de volta
+
 func worm_emerge(hexes: Array) -> void:
+	var sc = _scene_of("verme_gigante")
+	if sc == null:
+		return
+	var i = 0
 	for h in hexes:
-		var holder = Node3D.new()
 		var wp = world_xz(h)
-		holder.position = Vector3(wp.x, top_y(h) - 2.2, wp.y)
-		add_child(holder)
-		if not _model(holder, "vermes", Vector3.ZERO, 1.7, randf() * TAU):
-			holder.queue_free()
-			continue
-		var tw = create_tween()
-		tw.tween_property(holder, "position:y", top_y(h) - 0.2, 0.7).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-		tw.tween_property(holder, "rotation:y", holder.rotation.y + 0.6, 1.2)
-		tw.tween_property(holder, "position:y", top_y(h) - 2.4, 0.8).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
-		tw.tween_callback(holder.queue_free)
+		var w = Node3D.new()
+		w.set_script(load("res://scripts/worm.gd"))
+		add_child(w)
+		var hp = Vector3(wp.x, top_y(h) - 0.1, wp.y)
+		w.setup(sc, hp, Vector3(0, 0, 0) if hp.length() > 2.0 else Vector3(3, 0, 0), outline_mat, i * 0.45)
+		w.roared.connect(func(): worm_roar.emit(hp))
+		w.bit.connect(func(): worm_bite.emit(hp))
+		i += 1
 
 
 func quake() -> void:

@@ -2198,6 +2198,69 @@
    "type": "Comando",
    "cost": 1,
    "text": "Escolha um inimigo a até 2 casas do ativo, com linha de visão. Descarte seu equipamento, se houver."
+  },
+  {
+   "id": "granada",
+   "name": "Granada de Fragmentação",
+   "type": "Comando",
+   "cost": 1,
+   "text": "Escolha uma casa a até 3 do ativo, com linha de visão. Cada inimigo nela e nas casas em volta sofre 1 de dano."
+  },
+  {
+   "id": "sinalizador",
+   "name": "Sinalizador de Alvo",
+   "type": "Comando",
+   "cost": 0,
+   "text": "Marque um inimigo a até 4 casas do ativo, com linha de visão: ataques contra ele causam +1 de dano até o fim do round."
+  },
+  {
+   "id": "adrenalina",
+   "name": "Injeção de Adrenalina",
+   "type": "Comando",
+   "cost": 0,
+   "text": "O personagem ativo sofre 1 de dano e ganha +1 ação nesta ativação. Ele continua atacando no máximo 1 vez."
+  },
+  {
+   "id": "barreira",
+   "name": "Barreira Portátil",
+   "type": "Comando",
+   "cost": 1,
+   "text": "Crie uma Barreira com 3 de Vida numa casa livre adjacente ao ativo. Ela bloqueia movimento e linha de visão."
+  },
+  {
+   "id": "gancho",
+   "name": "Gancho Magnético",
+   "type": "Manobra",
+   "cost": 1,
+   "text": "Puxe um inimigo a até 3 casas do ativo, com linha de visão, 1 casa na direção dele."
+  },
+  {
+   "id": "camuflagem",
+   "name": "Camuflagem Óptica",
+   "type": "Comando",
+   "cost": 1,
+   "text": "O personagem ativo não pode ser alvo de ataques até o início do próximo round."
+  },
+  {
+   "id": "onda",
+   "name": "Onda de Choque",
+   "type": "Manobra",
+   "cost": 1,
+   "text": "Empurre cada inimigo adjacente ao ativo 1 casa para longe dele."
+  },
+  {
+   "id": "orbital",
+   "name": "Bombardeio Orbital",
+   "type": "Comando",
+   "cost": 2,
+   "text": "Escolha um inimigo a até 5 casas do ativo, mesmo sem linha de visão: ele sofre 3 de dano."
+  },
+  {
+   "id": "kit",
+   "name": "Kit de Campo",
+   "type": "Comando",
+   "cost": 1,
+   "text": "O ativo e cada aliado a até 2 casas dele recuperam 2 de Vida, até o valor inicial."
   }
  ]
 }

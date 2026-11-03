@@ -214,6 +214,15 @@ ICONS = {
     "fogo": lambda d, S: d.polygon([(S * 0.5, S * 0.1), (S * 0.72, S * 0.45), (S * 0.66, S * 0.38), (S * 0.75, S * 0.7), (S * 0.5, S * 0.9), (S * 0.25, S * 0.7), (S * 0.32, S * 0.42), (S * 0.4, S * 0.5)], fill=Wt),
     "reforco": lambda d, S: (d.ellipse([S * 0.32, S * 0.15, S * 0.56, S * 0.39], fill=Wt), d.pieslice([S * 0.2, S * 0.42, S * 0.68, S * 0.9], 180, 360, fill=Wt), d.rectangle([S * 0.7, S * 0.2, S * 0.78, S * 0.5], fill=Wt), d.rectangle([S * 0.59, S * 0.31, S * 0.89, S * 0.39], fill=Wt)),
     "pulso": lambda d, S: [d.arc([S * (0.5 - r), S * (0.5 - r), S * (0.5 + r), S * (0.5 + r)], -50, 50, fill=Wt, width=int(S * 0.05)) for r in (0.15, 0.27, 0.39)],
+    "granada": lambda d, S: (d.ellipse([S * 0.25, S * 0.32, S * 0.71, S * 0.8], fill=Wt), d.rectangle([S * 0.4, S * 0.2, S * 0.56, S * 0.34], fill=Wt), d.line([S * 0.56, S * 0.24, S * 0.78, S * 0.14], fill=Wt, width=int(S * 0.05))),
+    "sinalizador": lambda d, S: (d.ellipse([S * 0.2, S * 0.2, S * 0.8, S * 0.8], outline=Wt, width=int(S * 0.05)), d.ellipse([S * 0.42, S * 0.42, S * 0.58, S * 0.58], fill=Wt), [d.line(l, fill=Wt, width=int(S * 0.05)) for l in ([S * 0.5, S * 0.06, S * 0.5, S * 0.3], [S * 0.5, S * 0.7, S * 0.5, S * 0.94], [S * 0.06, S * 0.5, S * 0.3, S * 0.5], [S * 0.7, S * 0.5, S * 0.94, S * 0.5])]),
+    "adrenalina": lambda d, S: (d.rectangle([S * 0.42, S * 0.2, S * 0.58, S * 0.66], fill=Wt), d.polygon([(S * 0.42, S * 0.66), (S * 0.58, S * 0.66), (S * 0.5, S * 0.9)], fill=Wt), d.rectangle([S * 0.3, S * 0.16, S * 0.7, S * 0.22], fill=Wt)),
+    "barreira": lambda d, S: [d.rectangle([S * (0.14 + 0.25 * (k % 3) + (0.12 if (k // 3) % 2 else 0)), S * (0.3 + 0.16 * (k // 3)), S * (0.34 + 0.25 * (k % 3) + (0.12 if (k // 3) % 2 else 0)), S * (0.42 + 0.16 * (k // 3))], fill=Wt) for k in range(8)],
+    "gancho": lambda d, S: (d.arc([S * 0.25, S * 0.4, S * 0.65, S * 0.8], 0, 200, fill=Wt, width=int(S * 0.07)), d.line([S * 0.65, S * 0.6, S * 0.65, S * 0.12], fill=Wt, width=int(S * 0.07)), d.polygon([(S * 0.25, S * 0.6), (S * 0.18, S * 0.48), (S * 0.34, S * 0.5)], fill=Wt)),
+    "camuflagem": lambda d, S: (d.ellipse([S * 0.15, S * 0.32, S * 0.85, S * 0.68], outline=Wt, width=int(S * 0.05)), d.ellipse([S * 0.4, S * 0.4, S * 0.6, S * 0.6], fill=Wt), d.line([S * 0.18, S * 0.82, S * 0.82, S * 0.18], fill=Wt, width=int(S * 0.06))),
+    "onda": lambda d, S: [d.arc([S * (0.5 - r), S * (0.5 - r), S * (0.5 + r), S * (0.5 + r)], 0, 360, fill=Wt, width=int(S * 0.045)) for r in (0.12, 0.25, 0.38)],
+    "orbital": lambda d, S: (d.polygon([(S * 0.5, S * 0.9), (S * 0.38, S * 0.55), (S * 0.62, S * 0.55)], fill=Wt), d.rectangle([S * 0.46, S * 0.08, S * 0.54, S * 0.55], fill=Wt), d.arc([S * 0.2, S * 0.7, S * 0.8, S * 0.98], 180, 360, fill=Wt, width=int(S * 0.04))),
+    "kit": lambda d, S: (d.rounded_rectangle([S * 0.15, S * 0.3, S * 0.85, S * 0.82], radius=S * 0.08, outline=Wt, width=int(S * 0.05)), d.rectangle([S * 0.38, S * 0.2, S * 0.62, S * 0.3], outline=Wt, width=int(S * 0.04)), d.rectangle([S * 0.45, S * 0.42, S * 0.55, S * 0.72], fill=Wt), d.rectangle([S * 0.35, S * 0.52, S * 0.65, S * 0.62], fill=Wt)),
 }
 
 
