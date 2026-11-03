@@ -2209,7 +2209,8 @@ func _banter(uid: int) -> void:
 		var t0 = 0.6
 		for i in range(pr["fala"].size()):
 			var who = (u if pr["a"] == u.cid else o) if i % 2 == 0 else (o if pr["a"] == u.cid else u)
-			_say(who.uid, pr["fala"][i], t0)
+			var other = o if who == u else u
+			_say(who.uid, pr["fala"][i], t0, "prov" if other.owner != who.owner else "fala")
 			t0 += 2.2
 		return
 	var enemies = others.filter(func(x): return x.owner != u.owner)
@@ -2231,11 +2232,11 @@ func _banter(uid: int) -> void:
 	var l1 = _line(mode if tgt != null else "entrada", u, tgt)
 	if l1 == "":
 		return
-	_say(u.uid, l1, 0.6)
+	_say(u.uid, l1, 0.6, "prov" if mode == "provoca" else "fala")
 	if tgt != null:
 		var l2 = _pick(dlg.get("resp_inimigo" if mode == "provoca" else "resp_aliado", {}).get(_fac_of(tgt), []))
 		if l2 != "":
-			_say(tgt.uid, l2, 2.6)
+			_say(tgt.uid, l2, 2.6, "prov" if mode == "provoca" else "fala")
 
 
 func _banter_death(uid: int) -> void:
@@ -2248,13 +2249,13 @@ func _banter_death(uid: int) -> void:
 	var friends = game.field().filter(func(x): return x.owner == dead.owner and not x.barrier and x.st == "field" and x != dead)
 	if not foes.is_empty() and randf() < 0.5:
 		var f = foes[randi() % foes.size()]
-		_say(f.uid, _line("vitoria", f), 0.9)
+		_say(f.uid, _line("vitoria", f), 0.9, "prov")
 	elif not friends.is_empty() and randf() < 0.45:
 		var a = friends[randi() % friends.size()]
-		_say(a.uid, _line("lamento", a), 0.9)
+		_say(a.uid, _line("lamento", a), 0.9, "triste")
 
 
-func _say(uid: int, text: String, delay: float = 0.0) -> void:
+func _say(uid: int, text: String, delay: float = 0.0, mood: String = "fala") -> void:
 	if text == "" or not w.has("bubbles"):
 		return
 	if delay > 0.0:
@@ -2264,6 +2265,7 @@ func _say(uid: int, text: String, delay: float = 0.0) -> void:
 	var u: Variant = game.by_uid(uid)
 	if u == null:
 		return
+	_talk_voice(u, text, mood)
 	# um balão por personagem
 	for b in bubbles:
 		if b["uid"] == uid and is_instance_valid(b["node"]):
@@ -2401,3 +2403,16 @@ func _is_touch() -> bool:
 	if OS.has_feature("android") or OS.has_feature("ios") or OS.has_feature("web_android") or OS.has_feature("web_ios"):
 		return true
 	return DisplayServer.is_touchscreen_available() and OS.has_feature("mobile")
+
+
+# voz do personagem junto com o balão: "fala" (amigável), "prov" (provocação), "triste" (lamento)
+func _talk_voice(u, text: String, mood: String) -> void:
+	if sfx == null:
+		return
+	var n = "v_%s_%s" % [u.cid, "prov" if mood == "prov" else "fala"]
+	var pitch = 0.84 if mood == "triste" else randf_range(0.96, 1.05)
+	var vol = 2.0 if mood == "prov" else 0.0
+	sfx.play(n, vol, pitch, 0.0)
+	# frases longas: o personagem continua falando
+	if text.length() > 55:
+		sfx.play_later(n, 0.78 / pitch, vol - 2.0, pitch * 0.94)

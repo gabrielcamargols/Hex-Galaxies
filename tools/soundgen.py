@@ -4,6 +4,8 @@ Gera em sounds/:
   vfx_<efeito>.wav        um som para cada flipbook de tools/vfxgen.py
   v_<id>_atk.wav          grito/rugido do personagem ao atacar
   v_<id>_dor.wav          som do personagem ao sofrer dano
+  v_<id>_fala.wav         fala amigável (balão de diálogo com aliado/entrada)
+  v_<id>_prov.wav         fala de provocação (balão contra inimigo)
 
 As vozes usam síntese de formantes (pulso glotal + ressonâncias de vogal),
 com perfil por personagem: sexo, tamanho e o que ele é (humano, fera, ave,
@@ -191,7 +193,7 @@ def robot(y, f=70):
 def crystal(y, f0, hurt):
     """corpo de cristal: ressonância de sino por cima da voz; dor = estalo de rachadura"""
     n = len(y)
-    t = T(n / SR)
+    t = np.arange(n) / SR
     bell = sum(np.sin(2 * np.pi * f0 * 4 * k * t) * expdecay(n, 6 + k * 3) / k for k, k2 in zip([1, 2.76, 5.4], range(3)))
     out = y * 0.55 + bell * 0.5
     if hurt:
@@ -502,6 +504,113 @@ def char_sound(cid, hurt):
     return y
 
 
+
+# ---------------- falas (balões de diálogo) ----------------
+def syllables(p, mood, count):
+    """frase em 'idioma inventado': sílabas com consoante + vogal e entonação.
+    mood 'fala' = amigável (sobe no fim); 'prov' = provocação (mais alto, rápido, termina em risada)"""
+    f = p["f0"]
+    fs = p["fs"]
+    vows = list(VOW.keys())
+    parts = []
+    t0 = 0.0
+    for i in range(count):
+        k = i / max(1, count - 1)
+        if mood == "prov":
+            fk = f * (1.35 + 0.25 * np.sin(k * 5.0) + rng.random() * 0.15)
+            d = 0.075 + rng.random() * 0.05
+        else:
+            fk = f * (1.12 + 0.12 * np.sin(k * 3.2 + 0.5) + (0.25 * k * k if i >= count - 2 else 0) + rng.random() * 0.08)
+            d = 0.095 + rng.random() * 0.06
+        v1 = vows[int(rng.random() * len(vows))]
+        v2 = vows[int(rng.random() * len(vows))]
+        ons = "k" if rng.random() < 0.55 else "h"
+        syl = voice(d, fk * 0.95, fk * 1.05, fk * 0.92, v1, v2, fs, p["breath"], p["growl"] * 0.8, 0.02, 0.3, ons)
+        parts.append(at(syl, t0))
+        t0 += d * (0.82 + rng.random() * 0.2)
+        if rng.random() < 0.18 and i < count - 2:
+            t0 += 0.06  # pausa entre "palavras"
+    if mood == "prov":  # risadinha no fim: ha-ha
+        for j in range(2):
+            d = 0.08
+            fk = f * (1.6 - 0.15 * j)
+            parts.append(at(voice(d, fk, fk * 1.05, fk * 0.9, "a", "a", fs, p["breath"] + 0.2, p["growl"], 0.02, 0.2, "h") * 0.9, t0 + 0.04))
+            t0 += 0.13
+    return msum(parts)
+
+
+def char_talk(cid, mood):
+    kind, sex, size, extra = PERFIS[cid]
+    p = profile(kind, sex, size, extra)
+    rng.bit_generator.state = np.random.default_rng(__import__("zlib").crc32((cid + mood).encode())).bit_generator.state
+    count = 7 if mood == "fala" else 6
+    if size >= 3:
+        count -= 2  # gigantes falam devagar e pouco
+    if kind == "whale":
+        y = msum([at(hoot(0.22, 110 + 40 * np.sin(i * 1.7)) * 0.8, i * 0.25) for i in range(4)])
+        return mix(y, bubbles(len(y), 10))
+    if kind == "orb":
+        return msum([at(warble(0.12, 480 + 160 * np.sin(i * 2.1)), i * 0.13) for i in range(6)])
+    if kind == "insect":
+        y = syllables(p, mood, count) * 0.45
+        y = mix(y, chitter(len(y) / SR, 55 if mood == "prov" else 40))
+        if extra in ("lobster", "crab"):
+            y = mix(y, bubbles(len(y), 4))
+        return y
+    if kind == "golem":
+        p["f0"] *= 0.9
+        return golem(syllables(p, mood, count), mood == "prov")
+    if kind == "frog":
+        y = syllables(p, mood, count)
+        return mix(y * 0.7, croak(len(y) / SR, 75) * 0.5)
+    if kind == "small":
+        p["f0"] *= 1.35
+        y = syllables(p, mood, count)
+        return mix(y, bubbles(len(y), 6)) if extra in ("puffer", "axolotl") else y
+    if kind == "bird":
+        if extra == "owl":
+            p["vow"] = "u"
+        y = syllables(p, mood, count)
+        if extra == "phoenix":
+            return mix(y * 0.7, crackle(len(y) / SR) * 0.6)
+        return mix(y, screech(0.18, 1500, 2300) * 0.35)
+    if kind == "reptile":
+        y = syllables(p, mood, count)
+        return mix(y, hiss(len(y) / SR) * 0.25)
+    if kind == "robot":
+        if extra == "dog":
+            return robot(msum([at(voice(0.14, 320, 420, 300, "a", "o", 1.2, 0.2, 0.5, 0.02, 0.2, "k"), i * 0.2) for i in range(3)]), 90)
+        if extra == "dragon":
+            y = syllables(p, mood, count)
+            return mix(robot(y, 55), roar(len(y) / SR, 95, 0.75) * 0.35)
+        return robot(syllables(p, mood, count), 60)
+    if kind == "radio":
+        return radio(syllables(p, mood, count))
+    if kind == "crystal":
+        y = syllables(p, mood, count)
+        return crystal(y, p["f0"], False)
+    if kind == "aqua":
+        y = syllables(p, mood, count)
+        if extra == "octopus":
+            y = lp(y, 2500)
+        return mix(y, bubbles(len(y), 7))
+    if kind in ("anthro", "beast"):
+        y = syllables(p, mood, count)
+        if extra == "mammoth":
+            y = mix(y, at(trumpet(0.35, 330), len(y) / SR * 0.6) * 0.5)
+        if extra == "turtle":
+            y = lp(y, 1800)
+        if kind == "beast":
+            y = mix(y, metal_clank(0.12) * 0.3)
+        return y
+    y = syllables(p, mood, count)
+    if extra == "holo":
+        y = mix(y, at(y * 0.4, 0.035))
+    if extra == "corrupt":
+        y = mix(y, robot(y, 40) * 0.5)
+    return y
+
+
 # ---------------- sons dos VFX ----------------
 def vfx_sounds():
     S = {}
@@ -578,4 +687,6 @@ if __name__ == "__main__":
         for cid in PERFIS:
             save(os.path.join(out, "v_%s_atk.wav" % cid), char_sound(cid, False), 0.8)
             save(os.path.join(out, "v_%s_dor.wav" % cid), char_sound(cid, True), 0.75)
+            save(os.path.join(out, "v_%s_fala.wav" % cid), char_talk(cid, "fala"), 0.7)
+            save(os.path.join(out, "v_%s_prov.wav" % cid), char_talk(cid, "prov"), 0.75)
         print("vozes ok:", len(PERFIS))
