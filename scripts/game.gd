@@ -1225,13 +1225,30 @@ func ult_score(u, h: Vector2i) -> float:
 				var e = unit_at(c)
 				if e != null:
 					s2 += 2.0 + (2.0 if e.hp <= 2 else 0.0)
+			# terminar cercado de inimigos é arriscado
+			for e5 in enemies_of(u):
+				if DB.dist(e5.pos(), h) <= 2:
+					s2 -= 1.0 if u.hp > 6 else 2.0
 			return s2
+		"earth":
+			# erguer a casa de um aliado que está perto de inimigos (altura dá +1 de dano e alcance)
+			if t == null or t.owner != u.owner or t.barrier:
+				return 0.0
+			var s4 = 1.5 + (1.5 if alc_of(t) >= 2 else 0.0)
+			for e3 in enemies_of(u):
+				if DB.dist(e3.pos(), h) <= max(2, alc_of(t)):
+					s4 += 1.0
+			return s4
 		"orbital":
 			var s3 = 0.0
 			for n in DB.nbrs(h):
 				var e2 = unit_at(n)
 				if e2 != null and e2.owner != u.owner and not e2.barrier:
 					s3 += 2.0 + (3.0 if e2.hp <= 2 else 0.0) + (2.0 if e2.is_cmd else 0.0)
+			# pousar no meio de inimigos fortes é arriscado para o comandante
+			for e4 in enemies_of(u):
+				if DB.dist(e4.pos(), h) <= 2 and e4.hp > 2:
+					s3 -= 1.0 if u.hp > 6 else 2.0
 			return s3
 	return 0.0
 
@@ -1418,6 +1435,19 @@ func _make_barrier(p: int, h: Vector2i, n: int) -> void:
 
 
 # ================= ataque =================
+# Maré de Rhazur: +1 no 1º ataque de cada Abyssal a até MARE_R casas dele (fora do campo: da entrada)
+const MARE_R = 3
+
+
+func _mare_on(cm, a) -> bool:
+	if cm == null or cm.st == "dead" or silenced(cm) or a.mare_used:
+		return false
+	var mk = DB.cards[cm.cid]["k"].get("mare", null)
+	if mk == null:
+		return false
+	return DB.dist(a.pos(), cmd_point(cm)) <= MARE_R
+
+
 func resolve_attack(a, t) -> void:
 	var A = act
 	var p = a.owner
@@ -1432,10 +1462,10 @@ func resolve_attack(a, t) -> void:
 	var had_first = K(a).has("firstAtk") and not a.first_used
 	a.first_used = true
 	var cm = commander(p)
-	if cm != null and not silenced(cm) and DB.cards[cm.cid]["k"].has("mare") and not a.mare_used and cm.st != "dead":
+	if _mare_on(cm, a):
 		packet += 1
 	var passive_boost = atk_of(a, t) > int(DB.cards[a.cid]["atk"]) + fx_sum(a, "atk")
-	if had_first or (cm != null and not silenced(cm) and DB.cards[cm.cid]["k"].has("mare") and not a.mare_used and cm.st != "dead"):
+	if had_first or _mare_on(cm, a):
 		passive_boost = true
 	a.mare_used = true
 	emitfx({"t": "strike", "from": a.uid, "to": t.uid, "ranged": ranged})

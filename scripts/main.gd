@@ -132,6 +132,25 @@ func _ready() -> void:
 		if a.begins_with("--shots="):
 			_shots(a.substr(8))
 			return
+	for a in args:
+		if a.begins_with("--balance="):
+			var n = int(a.substr(10))
+			var outp = "user://balance.json"
+			var mps = ["tarhut", "posto"]
+			var only = ""
+			for b in args:
+				if b.begins_with("only="):
+					only = b.substr(5)
+				if b.begins_with("out="):
+					outp = b.substr(4)
+				if b.begins_with("maps="):
+					mps = Array(b.substr(5).split(","))
+			var bal = Node.new()
+			bal.set_script(load("res://scripts/balance.gd"))
+			add_child(bal)
+			await bal.run(n, outp, mps, only)
+			get_tree().quit()
+			return
 	if args.has("--autotest"):
 		autotest = true
 		for a in args:
