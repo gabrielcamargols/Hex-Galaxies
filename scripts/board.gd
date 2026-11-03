@@ -50,6 +50,10 @@ var env: Environment
 
 var drag: Variant = null                  # {uid, start, on}
 var pan: Variant = null
+# toque: dedos ativos e gesto de dois dedos (pinça/giro/inclinação)
+var touches: Dictionary = {}
+var multi: bool = false
+var gest: Variant = null
 var hover: Variant = null
 var picking_enabled: bool = true
 var outline_mat: StandardMaterial3D
@@ -1265,8 +1269,67 @@ func ground_point(screen: Vector2, y: float) -> Vector3:
 	return o + dir * t
 
 
+func _touch_pair() -> Array:
+	var ks = touches.keys()
+	ks.sort()
+	return [touches[ks[0]], touches[ks[1]]]
+
+
+func _gest_state() -> Dictionary:
+	var p = _touch_pair()
+	var a: Vector2 = p[0]
+	var b: Vector2 = p[1]
+	return {"d": max(a.distance_to(b), 1.0), "ang": (b - a).angle(), "mid": (a + b) * 0.5}
+
+
+func _touch_event(event: InputEvent) -> bool:
+	# true = evento consumido pelo controle de toque
+	if event is InputEventScreenTouch:
+		var st = event as InputEventScreenTouch
+		if st.pressed:
+			touches[st.index] = st.position
+		else:
+			touches.erase(st.index)
+		if touches.size() >= 2:
+			if drag != null and drag["on"]:
+				return true
+			if not multi:
+				multi = true
+				pan = null
+				drag = null
+			gest = _gest_state()
+		elif touches.size() == 0:
+			multi = false
+			gest = null
+		else:
+			gest = null
+		return true
+	if event is InputEventScreenDrag:
+		var sd = event as InputEventScreenDrag
+		touches[sd.index] = sd.position
+		if multi and touches.size() >= 2:
+			var now = _gest_state()
+			if gest != null:
+				cam_goal = null
+				# pinça = zoom
+				cam_dist = clamp(cam_dist * gest["d"] / now["d"], ZOOM_MIN, ZOOM_MAX)
+				# giro com dois dedos = girar a câmera
+				cam_yaw += wrapf(now["ang"] - gest["ang"], -PI, PI)
+				# arrastar dois dedos para cima/baixo = inclinar
+				var dm: Vector2 = now["mid"] - gest["mid"]
+				cam_pitch = clamp(cam_pitch + dm.y * 0.006, 0.45, 1.4)
+			gest = now
+		return true
+	# mouse emulado pelo 1º dedo fica bloqueado durante gestos de dois dedos
+	if multi and (event is InputEventMouseButton or event is InputEventMouseMotion):
+		return true
+	return false
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if g == null:
+		return
+	if _touch_event(event):
 		return
 	if event is InputEventMouseButton:
 		var mb = event as InputEventMouseButton
