@@ -1,0 +1,54 @@
+# Monta o jogo para navegador e publica no GitHub Pages a cada envio.
+name: Publicar jogo na web
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+env:
+  GODOT_VERSION: 4.7.1
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Baixar Godot e modelos de exportação
+        run: |
+          V=${GODOT_VERSION}
+          wget -q https://github.com/godotengine/godot/releases/download/${V}-stable/Godot_v${V}-stable_linux.x86_64.zip
+          wget -q https://github.com/godotengine/godot/releases/download/${V}-stable/Godot_v${V}-stable_export_templates.tpz
+          unzip -q Godot_v${V}-stable_linux.x86_64.zip
+          mv Godot_v${V}-stable_linux.x86_64 godot
+          mkdir -p ~/.local/share/godot/export_templates/${V}.stable
+          unzip -q Godot_v${V}-stable_export_templates.tpz
+          mv templates/* ~/.local/share/godot/export_templates/${V}.stable/
+      - name: Importar e exportar para a web
+        run: |
+          ./godot --headless --path . --import || true
+          mkdir -p build/web
+          ./godot --headless --path . --export-release "Web" build/web/index.html
+          ls -la build/web
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

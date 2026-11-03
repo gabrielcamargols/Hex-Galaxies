@@ -1,0 +1,99 @@
+extends Node
+## Sons: efeitos curtos (vários ao mesmo tempo) e ambientes em loop com fade.
+
+const NAMES = ["golpe", "impacto", "tiro_laser", "tiro_cristal", "tiro_energia", "projetil", "cura", "escudo", "poder",
+	"maldicao", "fenix", "armadilha", "invocar", "derrota", "passo", "explosao", "verme_rumor", "verme_ataque", "dunas",
+	"round", "clique", "confirmar", "carta", "vento_loop", "tempestade_loop", "ilha_loop", "musica_deserto"]
+
+var streams: Dictionary = {}
+var pool: Array = []
+var loops: Dictionary = {}     # nome -> AudioStreamPlayer
+var master_db: float = 0.0
+
+
+func _ready() -> void:
+	for n in NAMES:
+		var path = "res://sounds/%s.wav" % n
+		if not ResourceLoader.exists(path):
+			path = "res://sounds/%s.ogg" % n
+			if not ResourceLoader.exists(path):
+				continue
+		var s = load(path)
+		if s is AudioStreamOggVorbis:
+			s.loop = true
+		if n.ends_with("_loop") and s is AudioStreamWAV:
+			s.loop_mode = AudioStreamWAV.LOOP_FORWARD
+			s.loop_begin = 0
+			s.loop_end = int(s.get_length() * s.mix_rate)
+		streams[n] = s
+	for i in range(24):
+		var p = AudioStreamPlayer.new()
+		add_child(p)
+		pool.append(p)
+
+
+# carrega um som pelo nome quando ele ainda não foi usado (vozes v_*, efeitos vfx_*)
+func has_sound(n: String) -> bool:
+	if streams.has(n):
+		return streams[n] != null
+	var s = null
+	for ext in ["wav", "ogg"]:
+		var path = "res://sounds/%s.%s" % [n, ext]
+		if ResourceLoader.exists(path):
+			s = load(path)
+			break
+	streams[n] = s
+	return s != null
+
+
+func play(n: String, vol_db: float = 0.0, pitch: float = 1.0, vary: float = 0.08) -> void:
+	if not has_sound(n):
+		return
+	var p: AudioStreamPlayer = null
+	for q in pool:
+		if not q.playing:
+			p = q
+			break
+	if p == null:
+		p = pool[0]
+	p.stream = streams[n]
+	p.volume_db = vol_db + master_db
+	p.pitch_scale = pitch * randf_range(1.0 - vary, 1.0 + vary)
+	p.play()
+
+
+func play_later(n: String, delay: float, vol_db: float = 0.0, pitch: float = 1.0) -> void:
+	if delay <= 0.0:
+		play(n, vol_db, pitch)
+		return
+	get_tree().create_timer(delay).timeout.connect(func(): play(n, vol_db, pitch))
+
+
+func loop(n: String, vol_db: float = -8.0, fade: float = 1.5) -> void:
+	if not streams.has(n):
+		return
+	var p: AudioStreamPlayer = loops.get(n, null)
+	if p == null:
+		p = AudioStreamPlayer.new()
+		add_child(p)
+		p.stream = streams[n]
+		loops[n] = p
+	if not p.playing:
+		p.volume_db = -40.0
+		p.play()
+	var tw = create_tween()
+	tw.tween_property(p, "volume_db", vol_db + master_db, fade)
+
+
+func stop_loop(n: String, fade: float = 2.0) -> void:
+	var p: AudioStreamPlayer = loops.get(n, null)
+	if p == null or not p.playing:
+		return
+	var tw = create_tween()
+	tw.tween_property(p, "volume_db", -40.0, fade)
+	tw.tween_callback(p.stop)
+
+
+func stop_all_loops() -> void:
+	for n in loops.keys():
+		stop_loop(n, 0.5)

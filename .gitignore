@@ -1,0 +1,9 @@
+# Godot
+.godot/
+*.tmp
+build/
+export/
+# ferramentas
+tools/__pycache__/
+tools/sons_novos.zip
+*.zip

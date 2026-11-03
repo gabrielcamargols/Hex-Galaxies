@@ -1,0 +1,23 @@
+HEX GALAXIES — projeto Godot 4
+
+Como abrir:
+1. Abra o Godot 4 (4.3 ou mais novo).
+2. No Gerenciador de Projetos, clique em "Importar" e escolha o arquivo project.godot desta pasta.
+3. Espere o Godot importar as imagens (na primeira vez demora alguns segundos).
+4. Aperte F5 (ou o botão de "play" no canto superior direito) para jogar.
+
+Estrutura:
+- scripts/db.gd     dados (cartas, táticas, mapas) carregados de data/*.json
+- scripts/game.gd   regras (o "motor"): turnos, 2 ações, ataque, relevo, dunas, vermes, cartas, habilidades
+- scripts/ai.gd     a CPU
+- scripts/board.gd  tabuleiro 3D, câmera, peças, arrastar e soltar
+- scripts/main.gd   menu, interface e controle dos turnos
+- data/cards.json   as 98 cartas de personagem e as 15 táticas (pode editar valores aqui)
+- data/maps.json    mapas Tarhut e Posto, terrenos e recursos
+- art/              artes dos personagens
+
+Controles:
+- Clique numa peça sua; verde = pode andar, vermelho = pode atacar. Ou arraste a peça e solte.
+- Confirme a prévia (botão ou Enter). Esc cancela.
+- Arraste a reserva (lista da esquerda) até a sua entrada para colocá-la em campo.
+- Botão direito + arrastar: gira a câmera. Arrastar o fundo: move o mapa. Roda: zoom. Q / E: girar.
