@@ -827,16 +827,7 @@ func _make_unit(u) -> void:
 		_mesh(node, _cyl(0.4, 0.5, 0.7, 6), Color("#6d6250"), Vector3(0, 0.35, 0))
 		body_h = 0.8
 	elif DB.art.has(u.cid):
-		sprite = Sprite3D.new()
-		var tex = DB.art[u.cid]
-		sprite.texture = tex
-		sprite.pixel_size = body_h / float(tex.get_height())
-		sprite.centered = true
-		sprite.offset = Vector2(0, tex.get_height() / 2.0)
-		sprite.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
-		sprite.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
-		sprite.shaded = false
-		sprite.double_sided = true
+		sprite = _figure(u.cid, body_h)
 		node.add_child(sprite)
 	else:
 		var col = Color(DB.factions[DB.cards[u.cid]["f"]]["color"])
@@ -903,6 +894,99 @@ func _make_unit(u) -> void:
 	node.scale = Vector3(0.01, 0.01, 0.01)
 	unit_nodes[u.uid] = {"node": node, "sprite": sprite, "hp": hp, "heart": heart, "tag": tag, "flags": flags, "ring": ring,
 		"top": body_h, "hex": u.pos(), "path": [], "seg_t": 0.0, "from": start, "pop": 0.0, "flip": u.owner == 1, "bob": randf() * TAU, "hurt": 0.0, "lunge": 0.0}
+
+
+# personagem "2.5D": a arte num cartão que encara a câmera, com relevo (normal map)
+# iluminado pelo sol, brilho próprio para manter as cores, contorno de luz e sombra no chão
+func _figure(cid: String, body_h: float) -> MeshInstance3D:
+	var tex: Texture2D = DB.art[cid]
+	var mi = MeshInstance3D.new()
+	var q = QuadMesh.new()
+	var asp = float(tex.get_width()) / float(tex.get_height())
+	q.size = Vector2(body_h * asp, body_h)
+	q.center_offset = Vector3(0, body_h * 0.5, 0)
+	mi.mesh = q
+	var m = StandardMaterial3D.new()
+	m.albedo_texture = tex
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+	m.alpha_scissor_threshold = 0.5
+	m.billboard_mode = BaseMaterial3D.BILLBOARD_FIXED_Y
+	m.billboard_keep_scale = true
+	m.cull_mode = BaseMaterial3D.CULL_DISABLED
+	m.diffuse_mode = BaseMaterial3D.DIFFUSE_TOON
+	m.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
+	m.roughness = 1.0
+	var npath = "res://art/n_%s.webp" % cid
+	if ResourceLoader.exists(npath):
+		m.normal_enabled = true
+		m.normal_texture = load(npath)
+		m.normal_scale = 1.0
+	# brilho próprio: as cores continuam vivas no lado da sombra
+	m.emission_enabled = true
+	m.emission_texture = tex
+	m.emission = Color.WHITE
+	m.emission_energy_multiplier = 0.32
+	m.rim_enabled = true
+	m.rim = 0.22
+	m.rim_tint = 0.75
+	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	mi.material_override = m
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	# espessura: camadas escuras da mesma silhueta logo atrás (efeito de peça recortada grossa)
+	for i in range(3):
+		var e = MeshInstance3D.new()
+		e.mesh = q
+		var sm = ShaderMaterial.new()
+		sm.shader = _edge_shader()
+		sm.set_shader_parameter("tex", tex)
+		var k = float(i + 1) / 3.0
+		sm.set_shader_parameter("shift", Vector3(0.045 * k, -0.03 * k, -0.02 * k) * body_h / 1.75)
+		sm.set_shader_parameter("col", Color(0.16, 0.11, 0.09).darkened(0.25 * k))
+		e.material_override = sm
+		e.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mi.add_child(e)
+	return mi
+
+
+var _edge_sh: Shader = null
+
+
+func _edge_shader() -> Shader:
+	if _edge_sh != null:
+		return _edge_sh
+	_edge_sh = Shader.new()
+	_edge_sh.code = """
+shader_type spatial;
+render_mode unshaded, cull_disabled;
+uniform sampler2D tex : source_color, filter_linear_mipmap;
+uniform vec4 col : source_color = vec4(0.12, 0.08, 0.06, 1.0);
+uniform float flip = 0.0;
+uniform vec3 shift = vec3(0.04, -0.03, -0.02);
+void vertex() {
+	MODELVIEW_MATRIX = VIEW_MATRIX * mat4(vec4(normalize(cross(vec3(0.0, 1.0, 0.0), INV_VIEW_MATRIX[2].xyz)), 0.0), vec4(0.0, 1.0, 0.0, 0.0), vec4(normalize(cross(INV_VIEW_MATRIX[0].xyz, vec3(0.0, 1.0, 0.0))), 0.0), MODEL_MATRIX[3]);
+	MODELVIEW_MATRIX = MODELVIEW_MATRIX * mat4(vec4(length(MODEL_MATRIX[0].xyz), 0.0, 0.0, 0.0), vec4(0.0, length(MODEL_MATRIX[1].xyz), 0.0, 0.0), vec4(0.0, 0.0, length(MODEL_MATRIX[2].xyz), 0.0), vec4(0.0, 0.0, 0.0, 1.0));
+	VERTEX += shift;
+}
+void fragment() {
+	vec2 uv = UV;
+	if (flip > 0.5) { uv.x = 1.0 - uv.x; }
+	if (texture(tex, uv).a < 0.5) { discard; }
+	ALBEDO = col.rgb;
+}
+"""
+	return _edge_sh
+
+
+func _figure_look(fig: MeshInstance3D, flip: bool, mod: Color) -> void:
+	var m: StandardMaterial3D = fig.material_override
+	var sx = -1.0 if flip else 1.0
+	if m.uv1_scale.x != sx:
+		m.uv1_scale = Vector3(sx, 1, 1)
+		m.uv1_offset = Vector3(1.0 if flip else 0.0, 0, 0)
+		for e in fig.get_children():
+			(e.material_override as ShaderMaterial).set_shader_parameter("flip", 1.0 if flip else 0.0)
+	m.albedo_color = mod
+	m.emission = mod
 
 
 # caminho casa a casa só pelo terreno (para a animação)
@@ -1031,22 +1115,19 @@ func _update_units(delta: float) -> void:
 		var sprite = d["sprite"]
 		var selected = state.get("sel_uid", -1) == u.uid
 		if sprite != null:
-			sprite.flip_h = d["flip"]
 			var base_mod = Color(0.55, 0.55, 0.55) if (u.activated and not u.barrier) else Color(1, 1, 1)
 			if d["hurt"] > 0.0:
 				d["hurt"] = max(0.0, d["hurt"] - delta * 2.5)
 				base_mod = base_mod.lerp(Color(1, 0.3, 0.2), d["hurt"])
-			sprite.modulate = base_mod
+			_figure_look(sprite, d["flip"], base_mod)
 			var bob = d["bob"] + t_now * 2.4
 			var sy = 1.0 + 0.025 * sin(bob)
+			var pos = Vector3.ZERO
 			if walking:
-				sprite.rotation = Vector3(0, 0, 0.07 * sin(t_now * 30.0))
-			else:
-				sprite.rotation = Vector3.ZERO
+				pos.y += abs(sin(t_now * 15.0)) * 0.08
 			if selected:
-				sprite.position = Vector3(0, 0.08 + 0.06 * sin(t_now * 6.0), 0)
-			else:
-				sprite.position = Vector3.ZERO
+				pos.y += 0.08 + 0.06 * sin(t_now * 6.0)
+			sprite.position = pos
 			if d["lunge"] > 0.0:
 				d["lunge"] = max(0.0, d["lunge"] - delta * 3.0)
 				sy *= 1.0 + 0.15 * sin(d["lunge"] * PI)

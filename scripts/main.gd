@@ -3217,7 +3217,7 @@ func _update_plates(delta: float) -> void:
 	if not w.has("plates") or not is_instance_valid(w["plates"]):
 		return
 	var seen = {}
-	var sc = clamp(40.0 / max(board.cam_dist, 1.0), 0.85, 1.35)
+	var sc = clamp(40.0 / max(board.cam_dist, 1.0), 0.85, 1.15)
 	for uid in board.unit_nodes.keys():
 		var u: Variant = game.by_uid(uid)
 		if u == null:
