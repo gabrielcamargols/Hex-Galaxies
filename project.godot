@@ -7,6 +7,8 @@ config/name="Hex Galaxies"
 config/description="Estratégia por turnos em hexágonos (2.5D)."
 run/main_scene="res://scenes/main.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
+boot_splash/bg_color=Color(0.012, 0.02, 0.045, 1)
+boot_splash/show_image=false
 
 [autoload]
 

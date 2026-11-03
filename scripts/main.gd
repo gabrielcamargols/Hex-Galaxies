@@ -38,6 +38,12 @@ var setup_cfg: Dictionary = {"map": "tarhut", "fac": "ABY", "cpu": "FAU"}
 var army_picks: Array = []     # 5 ids escolhidos pelo jogador
 var army_start: Array = []     # até 2 ids que começam em campo
 var army_fac: String = ""
+var army_detail: String = ""   # peça mostrada no painel de detalhes
+var galaxy = null              # galáxia do menu (scripts/galaxy.gd)
+var fader: ColorRect           # cortina de transição (cor do planeta / preto)
+var stage: String = ""         # title, select, army, dive, battle
+var planet_id: String = "tarhut"
+var intro: bool = false        # próxima partida começa com o zoom no planeta
 var card_hover: String = ""      # carta com o mouse em cima (destaca o que ela afeta)
 var last_st: Dictionary = {}       # destaques atuais do tabuleiro (sem a carta)
 var dlg: Dictionary = {}           # falas (data/dialogos.json)
@@ -88,6 +94,22 @@ func _ready() -> void:
 	ui.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ui.theme = _make_theme()
 	layer.add_child(ui)
+	board._setup_sky()
+	board.visible = false
+	galaxy = Node3D.new()
+	galaxy.set_script(load("res://scripts/galaxy.gd"))
+	add_child(galaxy)
+	galaxy.env = board.env
+	galaxy.planet_hover.connect(_on_planet_hover)
+	galaxy.planet_click.connect(_choose_planet)
+	var top_layer = CanvasLayer.new()
+	top_layer.layer = 20
+	add_child(top_layer)
+	fader = ColorRect.new()
+	fader.color = Color(0.012, 0.02, 0.045, 1.0)
+	fader.set_anchors_preset(Control.PRESET_FULL_RECT)
+	fader.mouse_filter = Control.MOUSE_FILTER_STOP
+	top_layer.add_child(fader)
 	if FileAccess.file_exists("res://data/dialogos.json"):
 		var parsed = JSON.parse_string(FileAccess.get_file_as_string("res://data/dialogos.json"))
 		if parsed is Dictionary:
@@ -295,51 +317,254 @@ func _clear_ui() -> void:
 	w.clear()
 
 
-# ================= menu =================
-func _show_menu() -> void:
-	if sfx != null:
-		sfx.stop_all_loops()
+# ================= transições (sem tela de loading) =================
+func _fade(to_a: float, dur: float, col = null) -> void:
+	if col != null:
+		fader.color = Color(col.r, col.g, col.b, fader.color.a)
+	fader.mouse_filter = Control.MOUSE_FILTER_STOP
+	var tw = create_tween()
+	tw.tween_property(fader, "color:a", to_a, dur)
+	await tw.finished
+	if to_a < 0.01:
+		fader.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+
+func _ui_fade(to_a: float, dur: float) -> void:
+	var tw = create_tween()
+	tw.tween_property(ui, "modulate:a", to_a, dur)
+	await tw.finished
+
+
+func _vignette() -> void:
+	var tr = TextureRect.new()
+	var gt = GradientTexture2D.new()
+	var gr = Gradient.new()
+	gr.set_color(0, Color(0, 0, 0, 0))
+	gr.set_color(1, Color(0.0, 0.01, 0.04, 0.78))
+	gr.set_offset(0, 0.45)
+	gt.gradient = gr
+	gt.fill = GradientTexture2D.FILL_RADIAL
+	gt.fill_from = Vector2(0.5, 0.5)
+	gt.fill_to = Vector2(1.05, 1.05)
+	gt.width = 256
+	gt.height = 256
+	tr.texture = gt
+	tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tr.stretch_mode = TextureRect.STRETCH_SCALE
+	tr.set_anchors_preset(Control.PRESET_FULL_RECT)
+	tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui.add_child(tr)
+
+
+func _planet_of_map(m: String) -> String:
+	for p in galaxy.PLANETS:
+		if p.get("map", "") == m:
+			return p["id"]
+	return "tarhut"
+
+
+func _stop_battle_loops() -> void:
+	for n in ["vento_loop", "musica_deserto", "ilha_loop", "tempestade_loop"]:
+		sfx.stop_loop(n, 0.8)
+
+
+# sai da batalha (se houver) e volta para a galáxia
+func _leave_battle() -> void:
 	if vfx != null:
 		vfx.setup_ambient("")
 	_clear_ui()
 	game = null
 	board.g = null
 	board.visible = false
-	var bg = ColorRect.new()
-	bg.color = Color("#060a16")
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	ui.add_child(bg)
+	bubbles.clear()
+	_stop_battle_loops()
+	sfx.loop("musica_espaco", -9.0, 2.5)
+	galaxy.activate()
+
+
+# ================= menu: galáxia =================
+func _show_menu() -> void:
+	var from_battle = board.visible
+	if from_battle:
+		await _fade(1.0, 0.35, Color("#03050b"))
+	_leave_battle()
+	stage = "title"
+	galaxy.set_mode("title")
+	if from_battle or fader.color.a > 0.5:
+		galaxy.snap_camera()
+	ui.modulate.a = 0.0
+	_vignette()
+	var col = VBoxContainer.new()
+	col.alignment = BoxContainer.ALIGNMENT_CENTER
+	col.add_theme_constant_override("separation", 6)
+	ui.add_child(col)
+	col.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	col.offset_top = 380
+	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var k = _label(col, "U M A   G A L Á X I A   E M   G U E R R A", 13, C_HUD)
+	k.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var t = _label(col, "HEX GALAXIES", 86, C_GOLD)
+	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	t.add_theme_color_override("font_shadow_color", Color(1.0, 0.45, 0.1, 0.45))
+	t.add_theme_constant_override("shadow_offset_x", 0)
+	t.add_theme_constant_override("shadow_offset_y", 4)
+	t.add_theme_constant_override("shadow_outline_size", 18)
+	var s = _label(col, "Estratégia por turnos em hexágonos", 16, C_DIM)
+	s.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var sp = Control.new()
+	sp.custom_minimum_size = Vector2(0, 26)
+	col.add_child(sp)
+	var row = _hbox(col, 14)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	var play = _cbtn(row, "JOGAR", C_GOLD, _on_play, true)
+	_primary(play)
+	play.custom_minimum_size = Vector2(280, 66)
+	play.add_theme_font_size_override("font_size", 26)
+	var row2 = _hbox(col, 10)
+	row2.alignment = BoxContainer.ALIGNMENT_CENTER
+	var rb = _cbtn(row2, "Como jogar", C_HUD, _rules_popup)
+	rb.custom_minimum_size = Vector2(180, 40)
+	var ver = _label(ui, "protótipo · Godot 4.7", 12, C_DIM)
+	_place(ver, Control.PRESET_BOTTOM_RIGHT, 12)
+	_ui_fade(1.0, 0.9)
+	if fader.color.a > 0.0:
+		_fade(0.0, 0.7)
+
+
+func _rules_popup() -> void:
+	if w.has("rules_pop") and is_instance_valid(w["rules_pop"]):
+		w["rules_pop"].queue_free()
+		w.erase("rules_pop")
+		return
 	var p = _panel(ui)
+	p.custom_minimum_size = Vector2(760, 0)
 	_place(p, Control.PRESET_CENTER)
-	var v = _vbox(p, 12)
-	_label(v, "HEX GALAXIES", 64, C_GOLD)
-	_label(v, "Estratégia por turnos em hexágonos · protótipo Godot", 16, Color("#8fb8cc"))
-	var grid = GridContainer.new()
-	grid.columns = 2
-	grid.add_theme_constant_override("h_separation", 14)
-	grid.add_theme_constant_override("v_separation", 10)
-	v.add_child(grid)
-	_label(grid, "Mapa")
-	var om = OptionButton.new()
-	for id in ["tarhut", "posto"]:
-		om.add_item(DB.maps[id]["name"])
-		om.set_item_metadata(om.item_count - 1, id)
-	om.selected = 0 if setup_cfg["map"] == "tarhut" else 1
-	om.item_selected.connect(func(i): setup_cfg["map"] = om.get_item_metadata(i))
-	grid.add_child(om)
-	var facs = DB.factions.keys()
-	for row in [["Seu exército", "fac"], ["Exército da CPU", "cpu"]]:
-		_label(grid, row[0])
-		var of = OptionButton.new()
-		for f in facs:
-			of.add_item(DB.factions[f]["name"])
-			of.set_item_metadata(of.item_count - 1, f)
-		of.selected = facs.find(setup_cfg[row[1]])
-		var key_name = row[1]
-		of.item_selected.connect(func(i): setup_cfg[key_name] = of.get_item_metadata(i))
-		grid.add_child(of)
-	_label(v, "Você escolhe as 5 peças do seu exército; o Comandante é o da facção.\nO exército da CPU é sorteado.", 14, Color("#8fb8cc"))
-	_button(v, "Montar exército", _show_army)
+	var v = _vbox(p, 10)
+	_label(v, "COMO JOGAR", 24, C_GOLD)
+	var r = _rich(v, 720)
+	r.text = RULES
+	_cbtn(v, "Fechar", C_HUD, _rules_popup)
+	w["rules_pop"] = p
+
+
+func _on_play() -> void:
+	if stage != "title":
+		return
+	stage = "to_select"
+	sfx.play("confirmar", -6.0)
+	sfx.play("vfx_dash", -12.0)
+	await _ui_fade(0.0, 0.45)
+	_show_select()
+
+
+func _show_select() -> void:
+	stage = "select"
+	_clear_ui()
+	galaxy.set_mode("select")
+	ui.modulate.a = 0.0
+	_vignette()
+	var top = VBoxContainer.new()
+	top.add_theme_constant_override("separation", 2)
+	ui.add_child(top)
+	_place(top, Control.PRESET_CENTER_TOP, 26)
+	top.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var l1 = _label(top, "ESCOLHA O PLANETA DA BATALHA", 26, C_GOLD)
+	l1.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var l2 = _label(top, "Toque num planeta para ver as tropas e montar seu exército", 14, C_DIM)
+	l2.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var back = _cbtn(ui, "◀  Voltar", C_HUD, _back_title)
+	_place(back, Control.PRESET_BOTTOM_LEFT, 22)
+	w["tags"] = {}
+	for id in galaxy.pickable():
+		var d = galaxy.data(id)
+		var tag = PanelContainer.new()
+		tag.add_theme_stylebox_override("panel", _tex_box("res://ui/panel.png", 30, d["atm"].lightened(0.1), 18, 12))
+		ui.add_child(tag)
+		var v = _vbox(tag, 3)
+		_label(v, d["name"].to_upper(), 26, C_GOLD)
+		_label(v, d["sub"].to_upper(), 12, d["atm"].lightened(0.2))
+		var dl = _label(v, d["desc"], 13, C_DIM)
+		dl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		dl.custom_minimum_size = Vector2(250, 0)
+		var b = _cbtn(v, "BATALHAR AQUI", C_GOLD, _choose_planet.bind(id))
+		_primary(b)
+		b.custom_minimum_size = Vector2(0, 40)
+		tag.custom_minimum_size = Vector2(286, 0)
+		tag.position = Vector2(-1000, -1000)
+		w["tags"][id] = tag
+	await get_tree().create_timer(0.55).timeout
+	if stage == "select":
+		_ui_fade(1.0, 0.6)
+
+
+func _back_title() -> void:
+	if stage != "select":
+		return
+	stage = "to_title"
+	sfx.play("clique", -8.0)
+	await _ui_fade(0.0, 0.35)
+	_show_menu()
+
+
+func _on_planet_hover(id: String) -> void:
+	if not w.has("tags"):
+		return
+	for k in w["tags"].keys():
+		var tg = w["tags"][k]
+		if is_instance_valid(tg):
+			tg.modulate = Color(1, 1, 1, 1) if (id == "" or id == k) else Color(1, 1, 1, 0.55)
+	if id != "":
+		sfx.play("clique", -14.0, 1.4)
+
+
+func _update_tags() -> void:
+	if not w.has("tags"):
+		return
+	var vp = get_viewport().get_visible_rect().size
+	for id in w["tags"].keys():
+		var tg: Control = w["tags"][id]
+		if not is_instance_valid(tg):
+			continue
+		var sp: Variant = galaxy.screen_pos(id)
+		if sp == null:
+			tg.visible = false
+			continue
+		tg.visible = true
+		var r = galaxy.screen_radius(id)
+		var pos = sp + Vector2(r * 1.5 + 18.0, -tg.size.y * 0.5)
+		if pos.x + tg.size.x > vp.x - 12.0:
+			pos.x = sp.x - r * 1.5 - 18.0 - tg.size.x
+		pos.y = clamp(pos.y, 90.0, vp.y - tg.size.y - 80.0)
+		tg.position = tg.position.lerp(pos, 0.35) if tg.position.x > -900.0 else pos
+
+
+func _choose_planet(id: String) -> void:
+	if stage != "select":
+		return
+	stage = "to_army"
+	planet_id = id
+	setup_cfg["map"] = galaxy.data(id)["map"]
+	sfx.play("confirmar", -6.0)
+	sfx.play("vfx_portal", -12.0)
+	_ui_fade(0.0, 0.35)
+	galaxy.set_mode("focus", id)
+	await get_tree().create_timer(0.75).timeout
+	_show_army()
+	ui.modulate.a = 0.0
+	_ui_fade(1.0, 0.6)
+
+
+# volta da batalha direto para a montagem do exército
+func _to_army() -> void:
+	await _fade(1.0, 0.35, Color("#03050b"))
+	_leave_battle()
+	planet_id = _planet_of_map(setup_cfg["map"])
+	galaxy.set_mode("focus", planet_id)
+	galaxy.snap_camera()
+	_show_army()
+	ui.modulate.a = 0.0
+	_ui_fade(1.0, 0.6)
+	_fade(0.0, 0.6)
 
 
 # ================= montar exército =================
@@ -347,135 +572,546 @@ func _army_pool() -> Array:
 	return DB.card_list.filter(func(c): return c["f"] == setup_cfg["fac"] and not c.get("cmd", false))
 
 
+func _fac_col(f: String) -> Color:
+	return Color(DB.factions[f]["color"])
+
+
+func _flat(bg: Color, border: Color, bw: int = 2, rad: int = 10, pad: int = 10) -> StyleBoxFlat:
+	var s = StyleBoxFlat.new()
+	s.bg_color = bg
+	s.border_color = border
+	s.set_border_width_all(bw)
+	s.set_corner_radius_all(rad)
+	s.set_content_margin_all(pad)
+	return s
+
+
+func _tex_rect(tex: Texture2D, size: Vector2) -> TextureRect:
+	var t = TextureRect.new()
+	t.texture = tex
+	t.custom_minimum_size = size
+	t.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	t.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	t.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return t
+
+
+# tipo da habilidade (como ela é usada)
+func _ab_kind(c: Dictionary) -> Array:
+	var k = c.get("k", {})
+	if k.has("action"):
+		return ["ATIVA · GASTA 1 AÇÃO", C_ABIL]
+	if k.has("entry"):
+		return ["AO ENTRAR EM CAMPO", C_DEPLOY]
+	if k.has("after"):
+		return ["AO ATACAR", C_ATK]
+	return ["PASSIVA · SEMPRE LIGADA", C_CARD]
+
+
+# o que a peça faz no jogo: etiquetas e um resumo
+func _impact(c: Dictionary) -> Dictionary:
+	var tags = []
+	var k = c.get("k", {})
+	var txt = (c["ab"]["text"] + " " + c.get("ab2", {}).get("text", "")).to_lower()
+	var hp = int(c["int"])
+	var atk = int(c["atk"])
+	var mov = int(c["mov"])
+	var alc = int(c["alc"])
+	if alc >= 3:
+		tags.append(["Ataque à distância", C_CARD])
+	else:
+		tags.append(["Corpo a corpo", C_ATK])
+	if hp >= 12:
+		tags.append(["Muito resistente", Color("#ff5a6a")])
+	elif hp <= 5:
+		tags.append(["Frágil", Color("#ff9a5a")])
+	if atk >= 5:
+		tags.append(["Dano alto", C_GOLD])
+	if mov >= 3 or k.has("after") and str(k["after"]) == "freeMove" or k.has("action") and str(k["action"]) in ["moveAttack", "tunnel"]:
+		tags.append(["Mobilidade", C_MOVE])
+	if "restaure" in txt or "cura" in txt or k.has("endHeal"):
+		tags.append(["Cura aliados", Color("#5ee08a")])
+	if "empurr" in txt or "puxa" in txt or "não pode se mover" in txt or "perde sua habilidade" in txt or "atq até" in txt or "mova o alvo" in txt:
+		tags.append(["Controle do inimigo", C_ABIL])
+	if "barreira" in txt or "terreno" in txt or "buraco" in txt or "duna" in txt or "rocha" in txt or "ponte" in txt or "fenda" in txt or "estaca" in txt or "casa livre adjacente" in txt or k.has("terra"):
+		tags.append(["Mexe no terreno", Color("#e0925a")])
+	if k.has("auraAtk") or k.has("auraRed") or k.has("guard") or k.has("guardClan") or k.has("taunt") or "aliado" in txt:
+		tags.append(["Apoia aliados", C_DEPLOY])
+	if k.has("selfRed") or k.has("firstHitRed") or k.has("selfRedHome") or "reduz" in txt or "não pode ser alvo" in txt:
+		tags.append(["Defesa", C_YOU])
+	if "dano a cada" in txt or "dano a todas" in txt or "splash" in str(k.get("after", "")):
+		tags.append(["Dano em área", Color("#ff6a3a")])
+	var parts = []
+	if hp >= 12:
+		parts.append("segura a linha de frente")
+	elif alc >= 3:
+		parts.append("ataca de longe, protegido atrás dos aliados")
+	elif mov >= 3:
+		parts.append("chega rápido onde precisa")
+	else:
+		parts.append("luta de perto")
+	var kd = _ab_kind(c)[0]
+	if kd.begins_with("AO ENTRAR"):
+		parts.append("o efeito acontece no momento em que entra em campo — escolha bem quando colocá-lo")
+	elif kd.begins_with("ATIVA"):
+		parts.append("a habilidade gasta 1 ação da ativação")
+	elif kd.begins_with("AO ATACAR"):
+		parts.append("fica mais forte a cada ataque")
+	else:
+		parts.append("a habilidade funciona sozinha, sem gastar ação")
+	var resumo = parts[0].substr(0, 1).to_upper() + parts[0].substr(1) + "; " + parts[1] + "."
+	return {"tags": tags, "resumo": resumo}
+
+
 func _show_army() -> void:
+	stage = "army"
 	if army_fac != setup_cfg["fac"]:
 		army_fac = setup_cfg["fac"]
 		army_picks = []
 		army_start = []
 	_clear_ui()
-	var bg = ColorRect.new()
-	bg.color = Color("#060a16")
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	ui.add_child(bg)
-	var root = _vbox(ui, 10)
-	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 24)
-	# topo
-	var top = _hbox(root, 14)
-	var fac = DB.factions[setup_cfg["fac"]]
-	var cmd_id = fac["cmd"]
-	if DB.portraits.has(cmd_id):
-		var ci = TextureRect.new()
-		ci.texture = DB.portraits[cmd_id]
-		ci.custom_minimum_size = Vector2(72, 72)
-		ci.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		ci.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		top.add_child(ci)
-	var tv = _vbox(top, 2)
-	_label(tv, "Monte seu exército · %s" % fac["name"], 28, C_GOLD)
-	var cname = DB.cards[cmd_id]["name"] if DB.cards.has(cmd_id) else cmd_id
-	_label(tv, "Comandante: %s (entra no round 6). Escolha 5 peças e marque 2 para começar em campo." % cname, 15, Color("#8fb8cc"))
-	# corpo: grade de peças + coluna do exército
-	var body = _hbox(root, 16)
-	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_vignette()
+	var pd = galaxy.data(planet_id)
+	# --- barra do alto: planeta, facções, adversário ---
+	var topbar = _hbox(ui, 14)
+	topbar.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	topbar.offset_left = 22
+	topbar.offset_right = -22
+	topbar.offset_top = 14
+	var pv = _vbox(topbar, 0)
+	_label(pv, pd.get("name", "").to_upper(), 30, C_GOLD)
+	_label(pv, pd.get("sub", "").to_upper(), 12, pd.get("atm", C_HUD).lightened(0.2))
+	var sp1 = Control.new()
+	sp1.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	topbar.add_child(sp1)
+	var tabs = _hbox(topbar, 6)
+	w["tabs"] = tabs
+	var sp2 = Control.new()
+	sp2.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	topbar.add_child(sp2)
+	var ov = _vbox(topbar, 2)
+	_label(ov, "ADVERSÁRIO (CPU)", 11, C_DIM)
+	var ob = OptionButton.new()
+	ob.add_item("Aleatório")
+	ob.set_item_metadata(0, "RND")
+	for f in DB.factions.keys():
+		ob.add_item(DB.factions[f]["short"])
+		ob.set_item_metadata(ob.item_count - 1, f)
+	for i in range(ob.item_count):
+		if ob.get_item_metadata(i) == setup_cfg["cpu"]:
+			ob.selected = i
+	ob.item_selected.connect(_army_cpu.bind(ob))
+	ob.custom_minimum_size = Vector2(170, 38)
+	ov.add_child(ob)
+	# --- comandante (embaixo à esquerda, o planeta aparece acima) ---
+	var cmdp = PanelContainer.new()
+	ui.add_child(cmdp)
+	cmdp.anchor_left = 0.0
+	cmdp.anchor_right = 0.3
+	cmdp.anchor_top = 1.0
+	cmdp.anchor_bottom = 1.0
+	cmdp.offset_left = 18
+	cmdp.offset_right = -6
+	cmdp.offset_bottom = -16
+	cmdp.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	w["cmdp"] = cmdp
+	# --- grade de tropas (meio) ---
+	var mid = VBoxContainer.new()
+	mid.add_theme_constant_override("separation", 6)
+	ui.add_child(mid)
+	mid.anchor_left = 0.305
+	mid.anchor_right = 0.655
+	mid.anchor_top = 0.125
+	mid.anchor_bottom = 0.785
+	var mh = _hbox(mid, 8)
+	_label(mh, "TROPAS", 22, C_TXT)
+	var mt = _label(mh, "toque para pôr ou tirar do exército", 12, C_DIM)
+	mt.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	var sc = ScrollContainer.new()
-	sc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	sc.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	body.add_child(sc)
+	mid.add_child(sc)
 	var grid = GridContainer.new()
-	grid.columns = 4
-	grid.add_theme_constant_override("h_separation", 10)
-	grid.add_theme_constant_override("v_separation", 10)
+	grid.columns = 3
+	grid.add_theme_constant_override("h_separation", 8)
+	grid.add_theme_constant_override("v_separation", 8)
 	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	sc.add_child(grid)
-	for c in _army_pool():
-		grid.add_child(_army_tile(c))
-	# coluna direita
-	var side = _panel(body)
-	side.custom_minimum_size = Vector2(360, 0)
-	var sv = _vbox(side, 8)
-	_label(sv, "Seu exército  %d/5" % army_picks.size(), 22, C_GOLD)
-	_label(sv, "★ = começa em campo (%d/2)" % army_start.size(), 14, Color("#8fb8cc"))
-	for id in army_picks:
-		var c = DB.cards[id]
-		var row = _hbox(sv, 8)
-		if DB.portraits.has(id):
-			var pi = TextureRect.new()
-			pi.texture = DB.portraits[id]
-			pi.custom_minimum_size = Vector2(44, 44)
-			pi.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-			pi.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-			row.add_child(pi)
-		var nl = _label(row, "%s\n%s" % [c["name"], c["role"]], 14)
-		nl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		var on = army_start.has(id)
-		var sb = _button(row, "★ Em campo" if on else "☆ Reserva", _army_star.bind(id))
-		if on:
-			sb.add_theme_color_override("font_color", C_GOLD)
-		_button(row, "✕", _army_toggle.bind(id))
-	for i in range(5 - army_picks.size()):
-		_label(sv, "— vaga livre —", 14, Color("#6f6458"))
-	var sp = Control.new()
-	sp.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	sv.add_child(sp)
-	var ready_ok = army_picks.size() == 5 and army_start.size() == 2
-	var hint = ""
-	if army_picks.size() < 5:
-		hint = "Escolha mais %d peça(s)." % (5 - army_picks.size())
-	elif army_start.size() < 2:
-		hint = "Marque mais %d peça(s) com ★ para começar em campo." % (2 - army_start.size())
-	if hint != "":
-		_label(sv, hint, 14, Color("#ff9a5a"))
-	var br = _hbox(sv, 8)
-	_button(br, "Voltar", _show_menu)
-	_button(br, "Sortear", _army_random)
-	_button(br, "Limpar", _army_clear)
-	var go = _button(sv, "Começar partida", _army_go)
-	go.disabled = not ready_ok
+	w["grid"] = grid
+	w["grid_sc"] = sc
+	# --- detalhe (direita) ---
+	var det = PanelContainer.new()
+	ui.add_child(det)
+	det.anchor_left = 0.665
+	det.anchor_right = 1.0
+	det.anchor_top = 0.125
+	det.anchor_bottom = 0.785
+	det.offset_right = -18
+	w["det"] = det
+	# --- barra de baixo: exército escolhido ---
+	var bot = PanelContainer.new()
+	ui.add_child(bot)
+	bot.anchor_left = 0.305
+	bot.anchor_right = 1.0
+	bot.anchor_top = 0.8
+	bot.anchor_bottom = 1.0
+	bot.offset_right = -18
+	bot.offset_bottom = -16
+	var bh = _hbox(bot, 10)
+	var slots = _hbox(bh, 6)
+	w["slots"] = slots
+	var bv = _vbox(bh, 6)
+	bv.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var hint = _label(bv, "", 13, C_DIM)
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	w["army_hint"] = hint
+	var br = _hbox(bv, 6)
+	var b1 = _cbtn(br, "◀ Planetas", C_HUD, _army_back)
+	b1.custom_minimum_size = Vector2(0, 38)
+	var b2 = _cbtn(br, "Sortear", C_HUD, _army_random)
+	b2.custom_minimum_size = Vector2(0, 38)
+	var b3 = _cbtn(br, "Limpar", C_HUD, _army_clear)
+	b3.custom_minimum_size = Vector2(0, 38)
+	var go = _cbtn(bh, "BATALHAR", C_GOLD, _army_go, true)
+	_primary(go)
+	go.custom_minimum_size = Vector2(190, 0)
 	go.add_theme_font_size_override("font_size", 22)
+	w["go"] = go
+	if army_detail == "" or not DB.cards.has(army_detail) or DB.cards[army_detail]["f"] != setup_cfg["fac"]:
+		army_detail = DB.factions[setup_cfg["fac"]]["cmd"]
+	_army_refresh()
 
 
-func _army_tile(c: Dictionary) -> Control:
+func _army_refresh() -> void:
+	if stage != "army" or not w.has("grid"):
+		return
+	var fac = setup_cfg["fac"]
+	var fc = _fac_col(fac)
+	# abas de facção
+	for c in w["tabs"].get_children():
+		c.queue_free()
+	for f in DB.factions.keys():
+		var on = f == fac
+		var b = Button.new()
+		b.custom_minimum_size = Vector2(52 + DB.factions[f]["short"].length() * 9, 54)
+		var col = _fac_col(f)
+		b.add_theme_stylebox_override("normal", _flat(Color(col.darkened(0.55), 0.92) if on else Color(0.03, 0.05, 0.1, 0.85), col if on else col.darkened(0.35), 2 if on else 1, 8, 4))
+		b.add_theme_stylebox_override("hover", _flat(Color(col.darkened(0.5), 0.95), col.lightened(0.2), 2, 8, 4))
+		b.add_theme_stylebox_override("pressed", _flat(Color(col.darkened(0.4), 0.95), col.lightened(0.3), 2, 8, 4))
+		b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+		b.pressed.connect(_army_fac_pick.bind(f))
+		var hb = HBoxContainer.new()
+		hb.add_theme_constant_override("separation", 5)
+		hb.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 4)
+		hb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		b.add_child(hb)
+		var cid = DB.factions[f]["cmd"]
+		if DB.portraits.has(cid):
+			hb.add_child(_tex_rect(DB.portraits[cid], Vector2(38, 42)))
+		var tl = _label(hb, DB.factions[f]["short"], 11, Color.WHITE if on else col.lightened(0.45))
+		tl.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		tl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		if not on:
+			b.modulate = Color(1, 1, 1, 0.8)
+		w["tabs"].add_child(b)
+	# comandante
+	for c in w["cmdp"].get_children():
+		c.queue_free()
+	w["cmdp"].add_theme_stylebox_override("panel", _flat(Color(0.03, 0.05, 0.11, 0.86), fc, 2, 12, 12))
+	var cid2 = DB.factions[fac]["cmd"]
+	var cc = DB.cards[cid2]
+	var cv = _vbox(w["cmdp"], 6)
+	var ch = _hbox(cv, 10)
+	if DB.portraits.has(cid2):
+		ch.add_child(_tex_rect(DB.portraits[cid2], Vector2(76, 76)))
+	var cnv = _vbox(ch, 1)
+	_label(cnv, "COMANDANTE · %s" % DB.factions[fac]["short"].to_upper(), 11, fc.lightened(0.35))
+	_label(cnv, cc["name"], 22, C_GOLD)
+	_label(cnv, "Vida %d · Atq %d · Mov %d · entra no round 6" % [int(cc["int"]), int(cc["atk"]), int(cc["mov"])], 12, C_DIM)
+	var cb = Button.new()
+	cb.flat = true
+	cb.text = "ver detalhes ▶"
+	cb.add_theme_font_size_override("font_size", 11)
+	cb.pressed.connect(_army_show.bind(cid2))
+	cnv.add_child(cb)
+	_ab_box(cv, "PASSIVA", C_CARD, cc["ab"]["name"], cc["ab"]["text"], 380)
+	if cc.has("ab2"):
+		var k2 = cc["ab2"].get("kind", "ativa")
+		_ab_box(cv, "ATIVA · 1 VEZ POR PARTIDA" if k2 != "passiva" else "PASSIVA", C_GOLD if k2 != "passiva" else C_CARD, cc["ab2"]["name"], cc["ab2"]["text"], 380)
+	# grade
+	for c in w["grid"].get_children():
+		c.queue_free()
+	for c in _army_pool():
+		w["grid"].add_child(_army_card(c))
+	# vagas
+	for c in w["slots"].get_children():
+		c.queue_free()
+	for i in range(5):
+		w["slots"].add_child(_army_slot(army_picks[i] if i < army_picks.size() else ""))
+	var ready_ok = army_picks.size() == 5 and army_start.size() == 2
+	w["go"].disabled = not ready_ok
+	var hint = "Exército %d/5 · ★ começa em campo (%d/2). Os outros ficam na reserva." % [army_picks.size(), army_start.size()]
+	if army_picks.size() < 5:
+		hint = "Escolha mais %d tropa(s). ★ = começa em campo (%d/2)." % [5 - army_picks.size(), army_start.size()]
+	elif army_start.size() < 2:
+		hint = "Marque mais %d tropa(s) com ★ para começar em campo." % (2 - army_start.size())
+	w["army_hint"].text = hint
+	w["army_hint"].add_theme_color_override("font_color", C_DIM if ready_ok else Color("#ffb070"))
+	_army_detail_build()
+
+
+func _ab_box(parent: Control, kind: String, col: Color, nm: String, text: String, width: int) -> void:
+	var p = PanelContainer.new()
+	var s = _flat(Color(0.06, 0.09, 0.17, 0.92), col.darkened(0.2), 0, 8, 8)
+	s.border_width_left = 3
+	p.add_theme_stylebox_override("panel", s)
+	parent.add_child(p)
+	var v = _vbox(p, 2)
+	var h = _hbox(v, 8)
+	var kl = _label(h, kind, 10, col)
+	kl.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_label(h, nm, 15, C_TXT)
+	var t = _label(v, text, 13, C_DIM)
+	t.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	t.custom_minimum_size = Vector2(width, 0)
+
+
+func _stat_mini(parent: Control, col: Color, v: int) -> void:
+	var h = _hbox(parent, 3)
+	h.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var sw = ColorRect.new()
+	sw.color = col
+	sw.custom_minimum_size = Vector2(7, 7)
+	sw.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	sw.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	h.add_child(sw)
+	var l = _label(h, str(v), 13, C_TXT)
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+
+# botão principal: dourado cheio, texto escuro
+func _primary(b: Button) -> void:
+	b.add_theme_stylebox_override("normal", _flat(Color("#ffab40"), Color("#ffe0a0"), 2, 8, 10))
+	b.add_theme_stylebox_override("hover", _flat(Color("#ffc060"), Color.WHITE, 2, 8, 10))
+	b.add_theme_stylebox_override("pressed", _flat(Color("#e08a20"), Color("#ffe0a0"), 2, 8, 10))
+	b.add_theme_stylebox_override("disabled", _flat(Color(0.2, 0.22, 0.28, 0.9), Color(0.35, 0.4, 0.48), 1, 8, 10))
+	b.add_theme_color_override("font_color", Color("#1c1006"))
+	b.add_theme_color_override("font_hover_color", Color("#1c1006"))
+	b.add_theme_color_override("font_pressed_color", Color("#1c1006"))
+	b.add_theme_color_override("font_disabled_color", Color(0.55, 0.6, 0.66))
+
+
+const ST_COL = [Color("#ff5a6a"), Color("#ffab40"), Color("#4cd964"), Color("#4da3ff")]
+
+
+func _army_card(c: Dictionary) -> Control:
 	var id = c["id"]
 	var chosen = army_picks.has(id)
+	var fc = _fac_col(c["f"])
 	var b = Button.new()
-	b.toggle_mode = true
-	b.button_pressed = chosen
-	b.custom_minimum_size = Vector2(250, 120)
+	b.custom_minimum_size = Vector2(0, 196)
 	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	b.tooltip_text = "%s — %s\n%s" % [c["ab"]["name"], "ativa (1 ação)" if c["k"].has("action") else "passiva", c["ab"]["text"]]
+	var border = C_GOLD if chosen else (C_HUD if id == army_detail else fc.darkened(0.15))
+	b.add_theme_stylebox_override("normal", _flat(Color(0.035, 0.06, 0.12, 0.97), border, 3 if chosen else 2, 10, 6))
+	b.add_theme_stylebox_override("hover", _flat(Color(0.07, 0.11, 0.2, 0.95), C_HUD, 2, 10, 6))
+	b.add_theme_stylebox_override("pressed", _flat(Color(0.07, 0.11, 0.2, 0.95), C_GOLD, 3, 10, 6))
+	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	b.pressed.connect(_army_toggle.bind(id))
+	b.mouse_entered.connect(_army_show.bind(id))
 	if army_picks.size() >= 5 and not chosen:
-		b.modulate = Color(1, 1, 1, 0.45)
-	var hb = HBoxContainer.new()
-	hb.add_theme_constant_override("separation", 8)
-	hb.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 8)
-	hb.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	b.add_child(hb)
-	var pi = TextureRect.new()
-	pi.custom_minimum_size = Vector2(96, 96)
-	pi.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	pi.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	pi.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	if DB.portraits.has(id):
-		pi.texture = DB.portraits[id]
-	hb.add_child(pi)
+		b.modulate = Color(0.5, 0.52, 0.58, 1.0)
 	var v = VBoxContainer.new()
-	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	v.add_theme_constant_override("separation", 2)
-	hb.add_child(v)
-	var l1 = _label(v, ("✔ " if chosen else "") + c["name"], 16, C_GOLD if chosen else C_TXT)
-	l1.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var l2 = _label(v, c["role"], 13, Color("#8fb8cc"))
-	l2.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var l3 = _label(v, "Vida %d  Atq %d\nMov %d  Alc %d" % [int(c["int"]), int(c["atk"]), int(c["mov"]), int(c["alc"])], 13)
-	l3.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var l4 = _label(v, c["ab"]["name"], 12, Color("#9fc6c2"))
-	l4.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	v.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 7)
+	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(v)
+	var pic = PanelContainer.new()
+	pic.add_theme_stylebox_override("panel", _flat(fc.darkened(0.55), fc.darkened(0.3), 0, 8, 2))
+	pic.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	v.add_child(pic)
+	var tex = DB.portraits.get(id, DB.art.get(id, null))
+	pic.add_child(_tex_rect(tex, Vector2(0, 92)))
+	if chosen:
+		var badge = _label(pic, "★ EM CAMPO" if army_start.has(id) else "✓ NO EXÉRCITO", 10, C_GOLD)
+		badge.size_flags_horizontal = Control.SIZE_SHRINK_END
+		badge.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var nl = _label(v, c["name"], 14, C_GOLD if chosen else C_TXT)
+	nl.clip_text = true
+	nl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var rl = _label(v, c["role"], 11, C_DIM)
+	rl.clip_text = true
+	rl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var sr = _hbox(v, 8)
+	sr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var vals = [int(c["int"]), int(c["atk"]), int(c["mov"]), int(c["alc"])]
+	for i in range(4):
+		_stat_mini(sr, ST_COL[i], vals[i])
+	var kd = _ab_kind(c)
+	var al = _label(v, kd[0].split(" ·")[0], 10, kd[1])
+	al.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return b
 
 
+func _army_slot(id: String) -> Control:
+	var p = PanelContainer.new()
+	p.custom_minimum_size = Vector2(104, 0)
+	if id == "":
+		p.add_theme_stylebox_override("panel", _flat(Color(0.03, 0.05, 0.1, 0.6), Color(0.3, 0.42, 0.55, 0.6), 1, 8, 6))
+		var l = _label(p, "vaga\nlivre", 12, Color(0.4, 0.5, 0.6))
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		return p
+	var on = army_start.has(id)
+	p.add_theme_stylebox_override("panel", _flat(Color(0.05, 0.08, 0.16, 0.92), C_GOLD if on else _fac_col(setup_cfg["fac"]), 2, 8, 5))
+	var v = _vbox(p, 2)
+	var tex = DB.portraits.get(id, null)
+	v.add_child(_tex_rect(tex, Vector2(0, 50)))
+	var nl = _label(v, DB.cards[id]["name"], 11, C_TXT)
+	nl.clip_text = true
+	nl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var h = _hbox(v, 3)
+	var sb = Button.new()
+	sb.text = "★" if on else "☆"
+	sb.tooltip_text = "Começa em campo" if on else "Fica na reserva (toque para começar em campo)"
+	sb.custom_minimum_size = Vector2(46, 28)
+	_style_btn(sb, C_GOLD, on)
+	sb.pressed.connect(_army_star.bind(id))
+	h.add_child(sb)
+	var xb = Button.new()
+	xb.text = "×"
+	xb.custom_minimum_size = Vector2(40, 28)
+	_style_btn(xb, C_ATK)
+	xb.pressed.connect(_army_toggle.bind(id))
+	h.add_child(xb)
+	return p
+
+
+func _army_show(id: String) -> void:
+	if army_detail == id:
+		return
+	army_detail = id
+	_army_detail_build()
+
+
+func _army_detail_build() -> void:
+	if not w.has("det") or not is_instance_valid(w["det"]):
+		return
+	var id = army_detail
+	if not DB.cards.has(id):
+		return
+	var c = DB.cards[id]
+	var fc = _fac_col(c["f"])
+	var det: PanelContainer = w["det"]
+	for ch in det.get_children():
+		ch.queue_free()
+	det.add_theme_stylebox_override("panel", _flat(Color(0.03, 0.05, 0.11, 0.9), fc, 2, 12, 12))
+	var sc = ScrollContainer.new()
+	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	det.add_child(sc)
+	var v = _vbox(sc, 7)
+	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# arte com fundo na cor da facção
+	var art = PanelContainer.new()
+	var gs = StyleBoxTexture.new()
+	var gt = GradientTexture2D.new()
+	var gr = Gradient.new()
+	gr.set_color(0, fc.darkened(0.25))
+	gr.set_color(1, Color(fc.darkened(0.7), 0.0))
+	gt.gradient = gr
+	gt.fill_from = Vector2(0.5, 0.0)
+	gt.fill_to = Vector2(0.5, 1.0)
+	gs.texture = gt
+	art.add_theme_stylebox_override("panel", gs)
+	v.add_child(art)
+	art.add_child(_tex_rect(DB.art.get(id, DB.portraits.get(id, null)), Vector2(0, 165)))
+	_label(v, c["name"], 26, C_GOLD)
+	_label(v, "%s · %s" % [c["role"], DB.factions[c["f"]]["short"]], 13, fc.lightened(0.35))
+	# barras de atributos
+	var names = ["VIDA", "ATAQUE", "MOVIMENTO", "ALCANCE"]
+	var vals = [int(c["int"]), int(c["atk"]), int(c["mov"]), int(c["alc"])]
+	var maxs = [14.0, 6.0, 4.0, 5.0]
+	for i in range(4):
+		var h = _hbox(v, 8)
+		var nl = _label(h, names[i], 11, C_DIM)
+		nl.custom_minimum_size = Vector2(88, 0)
+		var bar = Control.new()
+		bar.custom_minimum_size = Vector2(0, 10)
+		bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		h.add_child(bar)
+		var bg = ColorRect.new()
+		bg.color = Color(1, 1, 1, 0.08)
+		bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+		bar.add_child(bg)
+		var fill = ColorRect.new()
+		fill.color = ST_COL[i]
+		fill.anchor_bottom = 1.0
+		fill.anchor_right = clamp(vals[i] / maxs[i], 0.05, 1.0)
+		bar.add_child(fill)
+		var vl = _label(h, str(vals[i]), 14, ST_COL[i].lightened(0.2))
+		vl.custom_minimum_size = Vector2(24, 0)
+	# habilidades
+	var kd = _ab_kind(c)
+	if c.get("cmd", false):
+		kd = ["PASSIVA", C_CARD]
+	_ab_box(v, kd[0], kd[1], c["ab"]["name"], c["ab"]["text"], 420)
+	if c.has("ab2"):
+		var k2 = c["ab2"].get("kind", "ativa")
+		_ab_box(v, "ATIVA · 1 VEZ POR PARTIDA" if k2 != "passiva" else "PASSIVA", C_GOLD if k2 != "passiva" else C_CARD, c["ab2"]["name"], c["ab2"]["text"], 420)
+	# impacto no jogo
+	var im = _impact(c)
+	_label(v, "IMPACTO NO JOGO", 12, C_HUD)
+	var flow = HFlowContainer.new()
+	flow.add_theme_constant_override("h_separation", 6)
+	flow.add_theme_constant_override("v_separation", 6)
+	v.add_child(flow)
+	for t in im["tags"]:
+		var tp = PanelContainer.new()
+		tp.add_theme_stylebox_override("panel", _flat(Color(t[1], 0.16), t[1], 1, 10, 4))
+		flow.add_child(tp)
+		var tl = _label(tp, t[0], 12, t[1].lightened(0.3))
+		tl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var rs = _label(v, im["resumo"], 13, C_TXT)
+	rs.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	rs.custom_minimum_size = Vector2(420, 0)
+	if not c.get("cmd", false):
+		var chosen = army_picks.has(id)
+		var h2 = _hbox(v, 8)
+		var ab = _cbtn(h2, "REMOVER" if chosen else "+ ADICIONAR", C_ATK if chosen else C_MOVE, _army_toggle.bind(id), not chosen)
+		ab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		ab.disabled = not chosen and army_picks.size() >= 5
+		if chosen:
+			_cbtn(h2, "★ EM CAMPO" if army_start.has(id) else "☆ RESERVA", C_GOLD, _army_star.bind(id), army_start.has(id))
+
+
+func _army_fac_pick(f: String) -> void:
+	if f == setup_cfg["fac"]:
+		return
+	setup_cfg["fac"] = f
+	army_fac = f
+	army_picks = []
+	army_start = []
+	army_detail = DB.factions[f]["cmd"]
+	sfx.play("clique", -8.0)
+	_army_refresh()
+
+
+func _army_cpu(i: int, ob: OptionButton) -> void:
+	setup_cfg["cpu"] = ob.get_item_metadata(i)
+
+
+func _army_back() -> void:
+	if stage != "army":
+		return
+	stage = "to_select"
+	sfx.play("clique", -8.0)
+	await _ui_fade(0.0, 0.35)
+	_show_select()
+
+
 func _army_toggle(id: String) -> void:
+	army_detail = id
 	if army_picks.has(id):
 		army_picks.erase(id)
 		army_start.erase(id)
@@ -485,7 +1121,7 @@ func _army_toggle(id: String) -> void:
 			army_start.append(id)
 	if sfx != null:
 		sfx.play("clique", -8.0)
-	_show_army()
+	_army_refresh()
 
 
 func _army_star(id: String) -> void:
@@ -498,7 +1134,7 @@ func _army_star(id: String) -> void:
 		army_start.append(id)
 	if sfx != null:
 		sfx.play("clique", -8.0)
-	_show_army()
+	_army_refresh()
 
 
 func _army_random() -> void:
@@ -517,21 +1153,39 @@ func _army_random() -> void:
 		for i in tough:
 			if army_start.size() < 2:
 				army_start.append(i)
-	_show_army()
+	_army_refresh()
 
 
 func _army_clear() -> void:
 	army_picks = []
 	army_start = []
-	_show_army()
+	_army_refresh()
+
+
+func _cpu_fac() -> String:
+	if setup_cfg["cpu"] != "RND" and DB.factions.has(setup_cfg["cpu"]):
+		return setup_cfg["cpu"]
+	var fs = DB.factions.keys().filter(func(f): return f != setup_cfg["fac"])
+	return fs[randi() % fs.size()]
 
 
 func _army_go() -> void:
-	if sfx != null:
-		sfx.play("confirmar", -6.0)
+	if army_picks.size() != 5 or army_start.size() != 2 or stage != "army":
+		return
+	stage = "dive"
+	sfx.play("confirmar", -6.0)
 	var spots = DB.entry[0]
 	var mine = {"fac": setup_cfg["fac"], "picks": army_picks.duplicate(), "start": [{"id": army_start[0], "h": spots[0]}, {"id": army_start[1], "h": spots[spots.size() - 1]}]}
-	_start_match([mine, _cpu_side(1, setup_cfg["cpu"])])
+	var sides = [mine, _cpu_side(1, _cpu_fac())]
+	await _ui_fade(0.0, 0.4)
+	sfx.play("vfx_portal", -6.0)
+	sfx.play("vfx_dash", -8.0)
+	sfx.stop_loop("musica_espaco", 2.5)
+	galaxy.set_mode("dive")
+	await get_tree().create_timer(1.15).timeout
+	await _fade(1.0, 0.55, galaxy.data(planet_id).get("dive", Color("#e0b070")))
+	intro = true
+	_start_match(sides)
 
 
 func _cpu_side(p: int, fac: String) -> Dictionary:
@@ -574,9 +1228,29 @@ func _start_match(sides) -> void:
 	busy = true
 	running = false
 	panel_open = ""
+	stage = "battle"
 	_build_hud()
+	galaxy.deactivate()
 	board.visible = true
 	board.build(game)
+	board.cam.make_current()
+	if intro:
+		intro = false
+		# chegada: a câmera desce do alto do planeta até o tabuleiro
+		var gy = board.cam_yaw
+		board.cam_dist = 120.0
+		board.cam_pitch = 1.42
+		board.cam_yaw = gy + 0.9
+		board.cam_speed = 1.7
+		board.fit_camera(false)
+		ui.modulate.a = 0.0
+		_fade(0.0, 0.8)
+		_later(1.2, func(): _ui_fade(1.0, 0.7))
+		_later(3.0, func(): board.cam_speed = 8.0)
+	else:
+		ui.modulate.a = 1.0
+		if fader.color.a > 0.0:
+			_fade(0.0, 0.4)
 	vfx.setup_ambient(game.map_id)
 	sfx.stop_all_loops()
 	if game.map_id == "tarhut":
@@ -2303,6 +2977,8 @@ func _say(uid: int, text: String, delay: float = 0.0, mood: String = "fala") -> 
 
 
 func _process(_delta: float) -> void:
+	if stage == "select":
+		_update_tags()
 	if bubbles.is_empty():
 		return
 	var keep = []
@@ -2330,16 +3006,26 @@ func _shots(dir: String) -> void:
 	var shot = func(n: String):
 		await RenderingServer.frame_post_draw
 		get_viewport().get_texture().get_image().save_png(dir + "/" + n + ".png")
-	await get_tree().create_timer(0.5).timeout
+	await get_tree().create_timer(2.0).timeout
 	await shot.call("01_menu")
-	_show_army()
+	_on_play()
+	await get_tree().create_timer(2.6).timeout
+	await shot.call("02a_planetas")
+	_choose_planet("tarhut")
+	await get_tree().create_timer(2.2).timeout
 	_army_random()
-	await get_tree().create_timer(0.4).timeout
+	await get_tree().create_timer(0.6).timeout
 	await shot.call("02_exercito")
 	autotest = false
 	_army_go()
+	await get_tree().create_timer(2.0).timeout
+	await shot.call("02b_mergulho")
+	while game == null:
+		await get_tree().process_frame
 	game.cpu = [false, true]
-	await get_tree().create_timer(2.5).timeout
+	await get_tree().create_timer(0.5).timeout
+	await shot.call("02c_chegada")
+	await get_tree().create_timer(3.0).timeout
 	await shot.call("03_batalha")
 	# cartas: passa o mouse na primeira e conversa entre personagens
 	game.start_activation(game.field().filter(func(x): return x.owner == 0)[0])
@@ -2393,7 +3079,7 @@ func _game_over() -> void:
 	_label(v, reason, 18)
 	var hb = _hbox(v, 10)
 	_button(hb, "Revanche", func(): _start_match(last_sides))
-	_button(hb, "Novos exércitos", _show_army)
+	_button(hb, "Novos exércitos", _to_army)
 	_button(hb, "Menu", _show_menu)
 	_button(hb, "Ver o tabuleiro", func(): p.queue_free())
 	w["over"] = p

@@ -36,6 +36,7 @@ var cam_pitch: float = 0.95
 var cam_dist: float = 26.0
 var cam_target: Vector3 = Vector3(0, 0, 1.0)
 var cam_goal: Variant = null
+var cam_speed: float = 8.0      # mais baixo = câmera mais lenta (chegada no planeta)
 var shake: float = 0.0
 
 var tiles: Dictionary = {}       # Vector2i -> {node, disp_h, props, hl, dim, label, flash}
@@ -1201,7 +1202,7 @@ func zoom_cam(f: float) -> void:
 
 func _update_camera(delta: float) -> void:
 	if cam_goal != null:
-		var k = min(1.0, delta * 8.0)
+		var k = min(1.0, delta * cam_speed)
 		cam_yaw = lerp(cam_yaw, cam_goal["yaw"], k)
 		cam_pitch = lerp(cam_pitch, cam_goal["pitch"], k)
 		cam_dist = lerp(cam_dist, cam_goal["dist"], k)
