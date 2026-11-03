@@ -11,7 +11,10 @@ var maps: Dictionary = {}
 var tt: Dictionary = {}           # tipos de terreno
 var res: Dictionary = {}          # recursos
 var objs: Array = []              # objetivos
-var R: int = 6
+var R: int = 6                    # maior raio (para laços)
+var SQ: int = 6                   # formato do tabuleiro: |q| <= SQ, |r| <= SR_, |q+r| <= SS
+var SR_: int = 6
+var SS: int = 6
 var hexes: Array = []             # Vector2i de todas as casas
 var entry_c: Array = []           # centro das entradas [lado 0, lado 1]
 var entry: Array = []             # casas de entrada por lado
@@ -40,6 +43,14 @@ func _ready() -> void:
 		tactic_ids.append(t["id"])
 	var m = _ints(JSON.parse_string(FileAccess.get_file_as_string("res://data/maps.json")))
 	R = int(m["radius"])
+	if m.has("shape"):
+		SQ = int(m["shape"]["q"])
+		SR_ = int(m["shape"]["r"])
+		SS = int(m["shape"]["s"])
+	else:
+		SQ = R
+		SR_ = R
+		SS = R
 	maps = m["maps"]
 	tt = m["terrain"]
 	res = m["resources"]
@@ -83,7 +94,12 @@ func _ints(v) -> Variant:
 
 
 func in_board(h: Vector2i) -> bool:
-	return abs(h.x) <= R and abs(h.y) <= R and abs(h.x + h.y) <= R
+	return abs(h.x) <= SQ and abs(h.y) <= SR_ and abs(h.x + h.y) <= SS
+
+
+# quantas casas fora do tabuleiro (0 ou menos = dentro)
+func out_dist(h: Vector2i) -> int:
+	return max(abs(h.x) - SQ, max(abs(h.y) - SR_, abs(h.x + h.y) - SS))
 
 
 func dist(a: Vector2i, b: Vector2i) -> int:

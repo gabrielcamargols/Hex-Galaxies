@@ -22,9 +22,9 @@ const PAL = {
 }
 const ELEV = {"tarhut": "#c0583a", "posto": "#e0c060"}  # tom que as casas altas puxam
 # planeta: o tabuleiro fica num platô e o chão se curva em volta (deserto contínuo)
-const PLAT = 12.0     # raio plano em volta do tabuleiro
-const RIM = 9.0       # raio da borda arredondada (onde o deserto se curva)
-const UNDER = 26.0    # altura da base rochosa por baixo do planetoide
+const PLAT = 18.5     # raio plano em volta do tabuleiro
+const RIM = 12.0       # raio da borda arredondada (onde o deserto se curva)
+const UNDER = 34.0    # altura da base rochosa por baixo do planetoide
 const ZOOM_MIN = 4.0
 const ZOOM_MAX = 140.0
 const BIG = ["moby", "balu", "banker", "l_behemot", "l_leviathan", "z_dragao", "golk", "w_mamute", "k_tank", "z_tank", "l_tank", "l_colosso", "sismico", "rhombo", "tork", "w_tric", "z_meca", "t_fendas", "t_raiz"]
@@ -287,10 +287,10 @@ func _place_on_planet(node: Node3D, x: float, z: float) -> void:
 
 
 func _build_far(desert: bool) -> void:
-	for i in range(26):
+	for i in range(40):
 		var h = Vector2i(i * 7 + 3, i * 13 + 5)
 		var a = _rnd(h, 1) * TAU
-		var rr = PLAT + 1.0 + _rnd(h, 2) * 7.0
+		var rr = PLAT + 1.0 + _rnd(h, 2) * 9.0
 		var holder = Node3D.new()
 		scenery_root.add_child(holder)
 		_place_on_planet(holder, cos(a) * rr, sin(a) * rr)
@@ -712,10 +712,10 @@ func _build_scenery(desert: bool) -> void:
 	for q in range(-DB.R - 4, DB.R + 5):
 		for r in range(-DB.R - 4, DB.R + 5):
 			var h = Vector2i(q, r)
-			var d = max(abs(q), max(abs(r), abs(q + r)))
-			if d <= DB.R or d > DB.R + 4:
+			var d = DB.out_dist(h)
+			if d <= 0 or d > 4:
 				continue
-			if _rnd(h, 9) < (0.55 if d == DB.R + 1 else 0.7):
+			if _rnd(h, 9) < (0.55 if d == 1 else 0.7):
 				continue
 			var wp = world_xz(h)
 			var px = wp.x + (_rnd(h, 5) - 0.5) * 0.9
@@ -1177,11 +1177,11 @@ func quake() -> void:
 
 # ================= câmera =================
 func fit_camera(snap: bool) -> void:
-	var goal = {"yaw": 0.0, "pitch": 0.8, "dist": 30.0, "target": Vector3(0, 0, 1.5)}
+	var goal = {"yaw": 0.0, "pitch": 0.85, "dist": 45.0, "target": Vector3(0, 0, 1.5)}
 	var vp = get_viewport().get_visible_rect().size
 	if vp.y > vp.x * 1.1:
 		goal["yaw"] = PI / 2.0
-		goal["dist"] = 40.0
+		goal["dist"] = 60.0
 		goal["target"] = Vector3(-1.5, 0, 0)
 	if snap:
 		cam_yaw = goal["yaw"]
