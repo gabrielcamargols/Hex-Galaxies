@@ -1237,6 +1237,28 @@
    }
   }
  },
+ {
+  "id": "k_granadeiro",
+  "f": "KRI",
+  "clan": "KRI",
+  "name": "Krieg Granadeiro",
+  "role": "Lutador",
+  "atk": 4,
+  "int": 6,
+  "mov": 2,
+  "alc": 2,
+  "src": "novo",
+  "ab": {
+   "name": "Saraivada",
+   "text": "Ao entrar, cause 1 de dano a cada inimigo adjacente."
+  },
+  "k": {
+   "entry": {
+    "t": "dmgAdj",
+    "n": 1
+   }
+  }
+ },
   {
    "id": "w_lobo",
    "f": "WAC",
@@ -1552,6 +1574,44 @@
   "k": {
    "guard": true,
    "guardOnce": true
+  }
+ },
+ {
+  "id": "w_lince",
+  "f": "WAC",
+  "clan": "WAC",
+  "name": "Wächter Lince",
+  "role": "Assassina",
+  "atk": 5,
+  "int": 6,
+  "mov": 3,
+  "alc": 1,
+  "src": "novo",
+  "ab": {
+   "name": "Bote Solitário",
+   "text": "+2 ATQ contra um inimigo sem aliados adjacentes."
+  },
+  "k": {
+   "atkIsolated": 2
+  }
+ },
+ {
+  "id": "w_morcego",
+  "f": "WAC",
+  "clan": "WAC",
+  "name": "Wächter Morcego",
+  "role": "Batedora",
+  "atk": 3,
+  "int": 6,
+  "mov": 3,
+  "alc": 1,
+  "src": "novo",
+  "ab": {
+   "name": "Asas de Varetas",
+   "text": "Voa: sobe em qualquer superfície, de qualquer altura."
+  },
+  "k": {
+   "climbAll": true
   }
  },
   {

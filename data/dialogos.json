@@ -64,6 +64,9 @@
   "TER": ["Desabou um dos nossos!", "Segura a mina, pessoal!", "Isso vai ter troco!"]
  },
  "personagem": {
+  "k_granadeiro": {"entrada": ["Granadeiro em posição. Pinos prontos.", "Fogo no buraco! Câmbio."], "provoca": ["{nome}, pega! Ah, não era pra pegar.", "Contando até três, {nome}. Dois..."]},
+  "w_lince": {"entrada": ["A lince caça sozinha.", "Silêncio. Estou escolhendo."], "provoca": ["{nome}, cadê seus amigos agora?", "Sozinho, {nome}? Perfeito."]},
+  "w_morcego": {"entrada": ["Das alturas, eu vejo tudo.", "Asas abertas. Ninguém se esconde de mim."], "provoca": ["{nome}, olha pra cima. Tarde demais.", "Te vi do alto, {nome}."], "aliado": ["{nome}, eu vigio o céu por você."]},
   "w_urso": {"entrada": ["A armadura do urso não conhece recuo.", "Pelos Guardiões. Fiquem atrás de mim."], "provoca": ["{nome}, você bate como filhote.", "Pode tentar, {nome}. Essa couraça aguenta."]},
   "w_javali": {"entrada": ["Abram caminho! O javali não freia!", "Machado afiado, presas de aço. Vamos!"], "provoca": ["{nome}, sai da frente ou vira tapete.", "Lá vou eu, {nome}! Segura essa investida!"]},
   "w_gorila": {"entrada": ["Punhos de ferro prontos.", "Ninguém passa por mim. Ninguém fica de pé também."], "provoca": ["{nome}, quer voar? Eu ajudo.", "Vou te mandar pra casa ao lado, {nome}."]},

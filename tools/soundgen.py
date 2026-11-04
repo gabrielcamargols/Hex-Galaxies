@@ -347,6 +347,7 @@ PERFIS = {
     "k_estandarte": ("radio", "M", 2, "cmd"), "k_morteiro": ("radio", "M", 2, ""), "k_escudeiro": ("radio", "M", 3, ""),
     "w_urso": ("human", "M", 3, "armor"), "w_javali": ("human", "M", 2, "armor"), "w_gorila": ("human", "M", 3, "armor"),
     "w_serpente": ("human", "F", 1, "armor"), "w_alce": ("human", "M", 2, "armor"),
+    "k_granadeiro": ("radio", "M", 2, ""), "w_lince": ("human", "F", 1, "armor"), "w_morcego": ("human", "F", 0, "armor"),
     "k_batedor": ("radio", "F", 1, ""), "k_radio": ("radio", "M", 1, "cmd"), "k_sapador": ("radio", "F", 1, ""),
     # Wächter (guerreiros humanos com armaduras inspiradas em animais: voz humana + metal)
     "w_lobo": ("human", "M", 1, "armor"), "w_tric": ("human", "M", 2, "armor"), "w_mamute": ("human", "M", 2, "armor"),
