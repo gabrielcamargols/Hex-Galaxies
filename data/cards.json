@@ -1399,12 +1399,12 @@
    "f": "WAC",
    "clan": "WAC",
    "name": "Wächter Coruja",
-   "role": "Estrategista",
+   "role": "Ranger",
    "hg": "HG-017",
    "atk": 2,
    "int": 9,
    "mov": 2,
-   "alc": 2,
+   "alc": 8,
    "src": "cat",
    "ab": {
     "name": "Visão Estratégica",
@@ -1467,16 +1467,16 @@
    "f": "WAC",
    "clan": "WAC",
    "name": "Wächter Águia",
-   "role": "Atirador",
+   "role": "Ranger",
    "hg": "HG-020",
    "atk": 5,
    "int": 6,
    "mov": 2,
-   "alc": 4,
+   "alc": 5,
    "src": "cat",
    "ab": {
     "name": "Linha de Tiro",
-    "text": "Pode atacar a até 4 casas. Precisa de linha de visão."
+    "text": "Pode atacar a até 5 casas. Precisa de linha de visão."
    },
    "k": {}
   },
