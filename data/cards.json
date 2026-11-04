@@ -2810,6 +2810,76 @@
    "type": "Comando",
    "cost": 1,
    "text": "O ativo e cada aliado a até 2 casas dele recuperam 2 de Vida, até o valor inicial."
-  }
+  },
+ {
+  "id": "ultimo",
+  "name": "Último Fôlego",
+  "type": "Comando",
+  "cost": 0,
+  "text": "Só se o personagem ativo estiver com metade da Vida ou menos: +3 de dano no próximo ataque desta ativação."
+ },
+ {
+  "id": "revide",
+  "name": "Revide",
+  "type": "Reação",
+  "cost": 0,
+  "text": "Quando um aliado sobreviver a um ataque corpo a corpo: ele causa 2 de dano no atacante."
+ },
+ {
+  "id": "resgate",
+  "name": "Teletransporte de Resgate",
+  "type": "Manobra",
+  "cost": 1,
+  "text": "Troque de lugar o personagem ativo com um aliado a até 4 casas dele."
+ },
+ {
+  "id": "quantica",
+  "name": "Troca Quântica",
+  "type": "Manobra",
+  "cost": 1,
+  "text": "Troque de lugar um aliado e um inimigo, ambos a até 3 casas do personagem ativo."
+ },
+ {
+  "id": "interceptar",
+  "name": "Interceptar Suprimentos",
+  "type": "Comando",
+  "cost": 1,
+  "text": "Roube 1 carta aleatória da mão do oponente."
+ },
+ {
+  "id": "grito",
+  "name": "Grito de Guerra",
+  "type": "Comando",
+  "cost": 1,
+  "text": "Todos os seus personagens em campo recebem +1 ATQ até o fim do round."
+ },
+ {
+  "id": "evacuacao",
+  "name": "Evacuação Médica",
+  "type": "Comando",
+  "cost": 2,
+  "text": "O último aliado derrotado (exceto o comandante) volta para a sua reserva com metade da Vida."
+ },
+ {
+  "id": "execucao",
+  "name": "Golpe de Misericórdia",
+  "type": "Comando",
+  "cost": 1,
+  "text": "Um inimigo adjacente ao ativo com 3 de Vida ou menos é derrotado na hora. Não funciona em comandantes."
+ },
+ {
+  "id": "contra",
+  "name": "Contraofensiva",
+  "type": "Comando",
+  "cost": 0,
+  "text": "Só se você tiver menos personagens em campo que o oponente: +1 ação nesta ativação e compre 1 carta."
+ },
+ {
+  "id": "rede",
+  "name": "Rede de Contenção",
+  "type": "Comando",
+  "cost": 1,
+  "text": "Um inimigo a até 3 casas do ativo, com linha de visão, não pode se mover até o fim do próximo round."
+ }
  ]
 }

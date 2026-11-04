@@ -70,6 +70,7 @@ var terr_ver: int = 0
 var earth: Dictionary = {}  # Vector2i -> ajuste de altura (Erguer a Terra)
 var tree: SceneTree = null
 var pace_time: float = 0.28
+var fallen: Array = []  # uids dos personagens derrotados, em ordem
 var guard_round: Dictionary = {}  # uid -> round em que já protegeu (guardOnce)
 
 
@@ -691,6 +692,8 @@ func settle() -> void:
 			continue
 		t.st = "dead"
 		t.eq = ""
+		if not t.barrier:
+			fallen.append(t.uid)
 		emitfx({"t": "die", "uid": t.uid, "h": t.pos()})
 		log_msg(1 - t.owner, "%s foi derrotado." % nm(t))
 		var killer = by_uid(by) if by > 0 else null
@@ -1598,6 +1601,17 @@ func resolve_attack(a, t) -> void:
 			await move_unit(target, kd)
 			if winner != NONE:
 				return
+	if target.st == "field" and target.hp > 0 and not target.barrier and not A["reacted"] and a.st == "field" and DB.dist(a.pos(), target.pos()) == 1 and P[d]["hand"].has("revide"):
+		var yr = await ask(d, {"t": "yesno", "text": "Revide: %s causa 2 de dano em %s?" % [nm(target), nm(a)], "kind": "revide", "card": "revide"})
+		if yr:
+			take_card(d, "revide")
+			A["reacted"] = true
+			abfx("blast", a.pos(), target.uid)
+			log_msg(d, "Revide: %s devolve 2 de dano em %s." % [nm(target), nm(a)])
+			damage(a, 2, target)
+			settle()
+			if winner != NONE or a.st != "field":
+				return
 	if target.st == "field" and not target.barrier and not A["reacted"] and P[d]["hand"].has("dispersao") and not step_free(target.pos()).is_empty():
 		var h = await ask(d, {"t": "hex", "text": "Dispersão: mover %s 1 casa livre?" % nm(target), "opts": step_free(target.pos()), "optional": true, "kind": "move", "card": "dispersao"})
 		if h != null:
@@ -1843,7 +1857,66 @@ func tactic_playable(p: int, id: String) -> bool:
 			return enemies_of(u).any(func(x): return DB.dist(x.pos(), u.pos()) <= 5)
 		"kit":
 			return allies_of(u, true).any(func(x): return not x.barrier and DB.dist(x.pos(), u.pos()) <= 2 and x.hp < x.maxhp)
+		"ultimo":
+			return u.hp * 2 <= u.maxhp and not A["attacked"] and not A["cant_attack"]
+		"resgate":
+			return allies_of(u).any(func(x): return not x.barrier and DB.dist(x.pos(), u.pos()) <= 4)
+		"quantica":
+			return not quantica_allies(u).is_empty() and not quantica_enemies(u).is_empty()
+		"interceptar":
+			return not P[1 - p]["hand"].is_empty()
+		"grito":
+			return true
+		"evacuacao":
+			return evac_unit(p) != null
+		"execucao":
+			return not execucao_targets(u).is_empty()
+		"contra":
+			return field_count(p) < field_count(1 - p)
+		"rede":
+			return not rede_targets(u).is_empty()
 	return false
+
+
+func field_count(p: int) -> int:
+	return units.filter(func(x): return x.owner == p and x.st == "field" and not x.barrier).size()
+
+
+func quantica_allies(u) -> Array:
+	return allies_of(u, true).filter(func(x): return not x.barrier and DB.dist(x.pos(), u.pos()) <= 3)
+
+
+func quantica_enemies(u) -> Array:
+	return enemies_of(u).filter(func(x): return not x.barrier and DB.dist(x.pos(), u.pos()) <= 3 and not imprisoned(x))
+
+
+func evac_unit(p: int) -> Variant:
+	for i in range(fallen.size() - 1, -1, -1):
+		var x = by_uid(fallen[i])
+		if x != null and x.owner == p and x.st == "dead" and not x.is_cmd and not x.barrier:
+			return x
+	return null
+
+
+func execucao_targets(u) -> Array:
+	return enemies_of(u).filter(func(x): return not x.barrier and not x.is_cmd and x.hp <= 3 and DB.dist(x.pos(), u.pos()) == 1)
+
+
+func rede_targets(u) -> Array:
+	return enemies_of(u).filter(func(x): return not x.barrier and DB.dist(x.pos(), u.pos()) <= 3 and los(u.pos(), x.pos()))
+
+
+func _swap(a, b) -> void:
+	var pa = a.pos()
+	var pb = b.pos()
+	a.q = pb.x
+	a.r = pb.y
+	b.q = pa.x
+	b.r = pa.y
+	emitfx({"t": "move", "uid": a.uid, "from": pa, "to": pb})
+	emitfx({"t": "move", "uid": b.uid, "from": pb, "to": pa})
+	await arrive(a)
+	await arrive(b)
 
 
 # casas que a Granada pode mirar (com pelo menos 1 inimigo no raio de 1)
@@ -1994,6 +2067,74 @@ func play_tactic(p: int, id: String) -> bool:
 			abfx("heal", u.pos(), u.uid)
 			for x in allies_of(u, true).filter(func(y): return not y.barrier and DB.dist(y.pos(), u.pos()) <= 2):
 				heal(x, 2)
+		"ultimo":
+			A["fogo"] += 3
+			abfx("buff", u.pos(), u.uid)
+			log_msg(p, "%s junta as últimas forças: +3 de dano no próximo ataque." % nm(u))
+		"resgate":
+			var tr = allies_of(u).filter(func(x): return not x.barrier and DB.dist(x.pos(), u.pos()) <= 4)
+			var hr = await pick_hex(p, "Teletransporte de Resgate: escolha o aliado para trocar de lugar.", tr.map(func(x): return x.pos()), "ally")
+			if hr != null:
+				var tx = unit_at(hr)
+				abfx("dash", u.pos(), u.uid)
+				abfx("dash", hr, u.uid)
+				log_msg(p, "%s e %s trocaram de lugar." % [nm(u), nm(tx)])
+				await _swap(u, tx)
+		"quantica":
+			var ha = await pick_hex(p, "Troca Quântica: escolha o aliado.", quantica_allies(u).map(func(x): return x.pos()), "ally")
+			if ha != null:
+				var xa = unit_at(ha)
+				var he = await pick_hex(p, "Troca Quântica: escolha o inimigo que vai para o lugar de %s." % nm(xa), quantica_enemies(u).map(func(x): return x.pos()), "enemy")
+				if he != null:
+					var xe = unit_at(he)
+					abfx("sonic", ha, u.uid)
+					abfx("sonic", he, u.uid)
+					log_msg(p, "Troca Quântica: %s e %s trocaram de lugar." % [nm(xa), nm(xe)])
+					await _swap(xa, xe)
+		"interceptar":
+			var oh = P[1 - p]["hand"]
+			if not oh.is_empty():
+				var cid = oh[randi() % oh.size()]
+				oh.erase(cid)
+				P[p]["hand"].append(cid)
+				log_msg(p, "Interceptar: roubou %s do oponente." % DB.tactics[cid]["name"])
+
+		"grito":
+			for x in allies_of(u, true).filter(func(y): return not y.barrier):
+				x.fx.append({"k": "atk", "v": 1, "until": "end"})
+				abfx("buff", x.pos(), u.uid)
+			log_msg(p, "Grito de Guerra: +1 ATQ para todos até o fim do round.")
+		"evacuacao":
+			var ev = evac_unit(p)
+			if ev != null:
+				ev.st = "reserve"
+				ev.hp = int(ceil(ev.maxhp / 2.0))
+				ev.fx = []
+				ev.eq = ""
+				ev.dying = null
+				fallen.erase(ev.uid)
+				emitfx({"t": "revive", "uid": ev.uid})
+				log_msg(p, "Evacuação Médica: %s voltou para a reserva com %d de Vida." % [nm(ev), ev.hp])
+		"execucao":
+			var hx = await pick_hex(p, "Golpe de Misericórdia: escolha o inimigo.", execucao_targets(u).map(func(x): return x.pos()), "enemy")
+			if hx != null:
+				var tx2 = unit_at(hx)
+				abfx("blast", hx, u.uid)
+				log_msg(p, "Golpe de Misericórdia em %s." % nm(tx2))
+				damage(tx2, tx2.hp, u)
+				settle()
+		"contra":
+			A["actions"] += 1
+			draw_cards(p, 1)
+			abfx("buff", u.pos(), u.uid)
+			log_msg(p, "Contraofensiva: +1 ação e 1 carta.")
+		"rede":
+			var hn = await pick_hex(p, "Rede de Contenção: escolha o inimigo.", rede_targets(u).map(func(x): return x.pos()), "enemy")
+			if hn != null:
+				var tn = unit_at(hn)
+				tn.fx.append({"k": "root", "end": round_no + 1})
+				abfx("glue", hn, u.uid)
+				log_msg(p, "%s está preso na rede até o fim do próximo round." % nm(tn))
 	changed.emit()
 	return true
 

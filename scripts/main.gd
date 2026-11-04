@@ -2236,7 +2236,44 @@ func _card_targets(id: String) -> Dictionary:
 				for x in game.allies_of(u, true):
 					if DB.dist(x.pos(), u.pos()) <= 2:
 						hs.append(x.pos())
-	if hs.is_empty() and u != null and ["propulsor", "placas", "lente", "reparo", "fogo", "adrenalina", "camuflagem"].has(id):
+		"ultimo":
+			txt = "Ativo ferido (metade da Vida): +3 dano no ataque"
+		"revide":
+			txt = "Reação: aliado atacado de perto devolve 2 de dano"
+		"resgate":
+			txt = "Ativo troca de lugar com aliado a até 4"
+			if u != null:
+				for x in game.allies_of(u):
+					if not x.barrier and DB.dist(x.pos(), u.pos()) <= 4:
+						hs.append(x.pos())
+		"quantica":
+			txt = "Um aliado e um inimigo a até 3 trocam de lugar"
+			if u != null:
+				for x in game.quantica_allies(u) + game.quantica_enemies(u):
+					hs.append(x.pos())
+		"interceptar":
+			txt = "Rouba 1 carta aleatória do oponente"
+		"grito":
+			txt = "Todos os seus em campo: +1 ATQ no round"
+			if u != null:
+				for x in game.allies_of(u, true):
+					if not x.barrier:
+						hs.append(x.pos())
+		"evacuacao":
+			txt = "Último aliado derrotado volta à reserva"
+		"execucao":
+			txt = "Inimigo ao lado com até 3 de Vida cai na hora"
+			if u != null:
+				for x in game.execucao_targets(u):
+					hs.append(x.pos())
+		"contra":
+			txt = "Se estiver em desvantagem: +1 ação e 1 carta"
+		"rede":
+			txt = "Inimigo a até 3 não se move até o próximo round"
+			if u != null:
+				for x in game.rede_targets(u):
+					hs.append(x.pos())
+	if hs.is_empty() and u != null and ["propulsor", "placas", "lente", "reparo", "fogo", "adrenalina", "camuflagem", "ultimo", "contra"].has(id):
 		hs = [u.pos()]
 	return {"txt": txt, "hexes": hs}
 

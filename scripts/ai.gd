@@ -247,6 +247,32 @@ static func new_tactic(g, u, hand: Array, A: Dictionary) -> String:
 			"gancho":
 				if g.alc_of(u) == 1 and A["actions"] >= 2 and not g.gancho_targets(u).is_empty():
 					return id
+			"ultimo":
+				if g.can_attack_now(u) and best_attack_from(g, u) != null:
+					return id
+			"execucao":
+				return id
+			"evacuacao":
+				var ev = g.evac_unit(p)
+				if ev != null and int(DB.cards[ev.cid]["int"]) >= 7:
+					return id
+			"contra":
+				return id
+			"interceptar":
+				if A["actions"] >= 2 or not g.can_attack_any(u):
+					return id
+			"grito":
+				if g.field_count(p) >= 3 and g.can_attack_any(u):
+					return id
+			"rede":
+				for e in g.rede_targets(u):
+					if e.is_cmd or (g.alc_of(e) == 1 and DB.dist(e.pos(), u.pos()) <= 3):
+						return id
+			"resgate":
+				if u.hp <= u.maxhp / 3 and en.any(func(x): return DB.dist(x.pos(), u.pos()) <= 2):
+					for x in g.allies_of(u):
+						if not x.barrier and DB.dist(x.pos(), u.pos()) <= 4 and x.hp >= 6:
+							return id
 	return ""
 
 
@@ -264,6 +290,8 @@ static func answer(g, p: int, q: Dictionary) -> Variant:
 				return (q["packet"] >= t.hp and b.hp > q["packet"] + 1) or (t.is_cmd and b.hp > q["packet"])
 			if q.get("kind", "") == "reforco":
 				return true
+			if q.get("kind", "") == "revide":
+				return true
 			if q.get("kind", "") == "earth":
 				var eu = g.unit_at(q["h"])
 				return eu != null and eu.owner == p
@@ -276,7 +304,7 @@ static func answer(g, p: int, q: Dictionary) -> Variant:
 				if q["packet"] >= 3 or (t2 != null and t2.hp <= q["packet"]):
 					return q["opts"][0]
 				return null
-			var pri = ["dados", "avanco", "troca", "pulso", "flanquear", "gancho", "onda", "adrenalina", "sinalizador", "lente", "propulsor", "barreira", "retirada", "dispersao", "reforco", "camuflagem", "escudo", "cobertura", "kit", "granada", "reparo", "placas", "fogo", "orbital"]
+			var pri = ["quantica", "resgate", "dados", "interceptar", "contra", "avanco", "troca", "pulso", "flanquear", "gancho", "onda", "adrenalina", "sinalizador", "lente", "propulsor", "barreira", "retirada", "dispersao", "reforco", "camuflagem", "escudo", "cobertura", "revide", "rede", "grito", "kit", "granada", "ultimo", "execucao", "evacuacao", "reparo", "placas", "fogo", "orbital"]
 			var best = q["opts"][0]
 			for c in q["opts"]:
 				if pri.find(c) < pri.find(best):
