@@ -78,6 +78,7 @@ var remote: Array = [false, false]        # lado controlado pelo outro aparelho
 var ans_buf: Array = []                   # respostas recebidas e ainda não usadas
 var replay: int = 0                       # > 0: repetindo uma jogada que veio do outro aparelho
 var net_depth: int = 0
+var tut: bool = false                     # partida do tutorial
 var pre_hex: Variant = null   # casa onde a carta foi solta (arrastar e soltar)
 var tac_fx: Variant = null    # tática esperando o alvo para mostrar o efeito
 const TAC_SELF = ["propulsor", "placas", "lente", "reparo", "camuflagem"]
@@ -869,6 +870,15 @@ func take_card(p: int, id: String) -> bool:
 
 # ================= rounds =================
 func begin_game() -> void:
+	if tut:
+		# tutorial: mão combinada para os passos, sem troca de mão
+		var pl0 = P[0]
+		pl0["hand"] = ["fogo", "sinalizador", "placas"]
+		for c in pl0["hand"]:
+			pl0["deck"].erase(c)
+		draw_cards(1, 3)
+		await start_round()
+		return
 	for p in range(2):
 		draw_cards(p, 3)
 		var yes = await ask(p, {"t": "yesno", "text": "Trocar a mão inicial (devolve as 3 cartas e compra 3 novas)? Só dá para fazer uma vez.", "show": P[p]["hand"].duplicate(), "kind": "mulligan"})

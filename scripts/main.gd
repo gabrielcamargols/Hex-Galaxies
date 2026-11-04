@@ -81,6 +81,8 @@ var net_queue: Array = []        # jogadas do outro aparelho esperando para sere
 var net_busy: bool = false
 var opp_thinking: bool = false   # o motor espera uma resposta do outro jogador
 var net_seed: int = 0
+var tut: bool = false            # tutorial em andamento: a CPU só passa a vez
+var tut_node: Node = null
 var net_pre_ans: Array = []      # respostas que chegaram antes da partida começar aqui   # carta de tática sendo arrastada: {id, start, on}
 var sfx = null
 var vfx = null
@@ -451,6 +453,9 @@ func _fac_music(fac: String) -> void:
 
 # sai da batalha (se houver) e volta para a galáxia
 func _leave_battle() -> void:
+	if tut_node != null and is_instance_valid(tut_node):
+		tut_node.queue_free()
+	tut_node = null
 	if vfx != null:
 		vfx.setup_ambient("")
 	_clear_ui()
@@ -465,6 +470,7 @@ func _leave_battle() -> void:
 
 # ================= menu: galáxia =================
 func _show_menu() -> void:
+	tut = false
 	if online:
 		online = false
 		net.send({"t": "bye"})
@@ -507,6 +513,8 @@ func _show_menu() -> void:
 	play.add_theme_font_size_override("font_size", 26)
 	var row2 = _hbox(col, 10)
 	row2.alignment = BoxContainer.ALIGNMENT_CENTER
+	var tb = _cbtn(row2, "Tutorial", C_DEPLOY, _start_tutorial)
+	tb.custom_minimum_size = Vector2(150, 40)
 	var rb = _cbtn(row2, "Como jogar", C_HUD, _rules_popup)
 	rb.custom_minimum_size = Vector2(180, 40)
 	var sb = _cbtn(row2, _ui_scale_label(), C_HUD, _cycle_ui_scale)
@@ -516,6 +524,30 @@ func _show_menu() -> void:
 	_ui_fade(1.0, 0.9)
 	if fader.color.a > 0.0:
 		_fade(0.0, 0.7)
+
+
+# ================= tutorial =================
+func _start_tutorial() -> void:
+	sfx.play("confirmar", -6.0)
+	online = false
+	mix = false
+	tut = true
+	setup_cfg["map"] = "posto"
+	setup_cfg["fac"] = "KRI"
+	planet_id = _planet_of_map("posto")
+	DB.set_map("posto")
+	var s0 = DB.entry[0]
+	var s1 = DB.entry[1]
+	var sides = [
+		{"fac": "KRI", "picks": ["k_brawler", "k_sniper", "k_tank", "k_medico", "k_estandarte"], "start": [{"id": "k_brawler", "h": s0[0]}, {"id": "k_sniper", "h": s0[s0.size() - 1]}]},
+		{"fac": "ABY", "picks": ["strahl", "balu", "klang", "kling", "sterina"], "start": [{"id": "strahl", "h": s1[0]}, {"id": "balu", "h": s1[s1.size() - 1]}]},
+	]
+	await _ui_fade(0.0, 0.3)
+	galaxy.set_mode("dive", planet_id)
+	await get_tree().create_timer(0.9).timeout
+	await _fade(1.0, 0.5, galaxy.data(planet_id).get("dive", Color("#e0b070")))
+	intro = true
+	_start_match(sides)
 
 
 func _rules_popup() -> void:
@@ -1423,6 +1455,7 @@ func _start_match(sides) -> void:
 	game = Game.new()
 	game.tree = get_tree()
 	game.cpu = [autotest, true]
+	game.tut = tut
 	if online:
 		game.rng.seed = net_seed
 		game.cpu = [false, false]
@@ -1484,7 +1517,14 @@ func _start_match(sides) -> void:
 	if autotest:
 		_map_music()
 	refresh()
-	if not autotest:
+	if tut:
+		_map_music()
+		var tn = Node.new()
+		tn.set_script(load("res://scripts/tutorial.gd"))
+		add_child(tn)
+		tn.start(self)
+		tut_node = tn
+	elif not autotest:
 		await _entrance()
 	await game.begin_game()
 	busy = false
@@ -2718,6 +2758,10 @@ func after() -> void:
 		busy = true
 		refresh()
 		await get_tree().create_timer(0.5).timeout
+		if tut:
+			# no tutorial o adversário só passa a vez
+			await game.pass_turn(game.cur)
+			continue
 		await AI.activation(game, game.cur)
 	if game == null:
 		return
