@@ -1448,7 +1448,7 @@
    "role": "Atirador",
    "hg": "HG-020",
    "atk": 5,
-   "int": 8,
+   "int": 6,
    "mov": 2,
    "alc": 4,
    "src": "cat",
@@ -1458,6 +1458,102 @@
    },
    "k": {}
   },
+ {
+  "id": "w_urso",
+  "f": "WAC",
+  "clan": "WAC",
+  "name": "Wächter Urso",
+  "role": "Tanque",
+  "atk": 3,
+  "int": 9,
+  "mov": 2,
+  "alc": 1,
+  "src": "novo",
+  "ab": {
+   "name": "Couraça de Urso",
+   "text": "Sofre 1 a menos de dano de cada ataque."
+  },
+  "k": {
+   "selfRed": 1
+  }
+ },
+ {
+  "id": "w_javali",
+  "f": "WAC",
+  "clan": "WAC",
+  "name": "Wächter Javali",
+  "role": "Investida",
+  "atk": 4,
+  "int": 7,
+  "mov": 3,
+  "alc": 1,
+  "src": "novo",
+  "ab": {
+   "name": "Investida",
+   "text": "1 ação: mova até seu MOV e faça 1 ataque normal. Conta no limite de 1 ataque por ativação."
+  },
+  "k": {
+   "action": "moveAttack"
+  }
+ },
+ {
+  "id": "w_gorila",
+  "f": "WAC",
+  "clan": "WAC",
+  "name": "Wächter Gorila",
+  "role": "Brutamontes",
+  "atk": 4,
+  "int": 8,
+  "mov": 2,
+  "alc": 1,
+  "src": "novo",
+  "ab": {
+   "name": "Arremesso",
+   "text": "Após atacar, empurre o alvo 1 casa para longe, se o destino estiver livre."
+  },
+  "k": {
+   "after": "knock"
+  }
+ },
+ {
+  "id": "w_serpente",
+  "f": "WAC",
+  "clan": "WAC",
+  "name": "Wächter Serpente",
+  "role": "Emboscada",
+  "atk": 4,
+  "int": 6,
+  "mov": 2,
+  "alc": 1,
+  "src": "novo",
+  "ab": {
+   "name": "Veneno de Naja",
+   "text": "Se o ataque causar dano, o alvo sofre mais 1 dano no fim do round."
+  },
+  "k": {
+   "after": "pending"
+  }
+ },
+ {
+  "id": "w_alce",
+  "f": "WAC",
+  "clan": "WAC",
+  "name": "Wächter Alce",
+  "role": "Guardião",
+  "atk": 3,
+  "int": 8,
+  "mov": 2,
+  "alc": 1,
+  "src": "novo",
+  "ab": {
+   "name": "Galhada Protetora",
+   "text": "1 vez por round, pode receber o ataque destinado a um aliado adjacente."
+  },
+  "k": {
+   "guard": true,
+   "guardOnce": true
+  }
+ },
   {
    "id": "z_vang",
    "f": "ZUK",

@@ -64,6 +64,11 @@
   "TER": ["Desabou um dos nossos!", "Segura a mina, pessoal!", "Isso vai ter troco!"]
  },
  "personagem": {
+  "w_urso": {"entrada": ["A armadura do urso não conhece recuo.", "Pelos Guardiões. Fiquem atrás de mim."], "provoca": ["{nome}, você bate como filhote.", "Pode tentar, {nome}. Essa couraça aguenta."]},
+  "w_javali": {"entrada": ["Abram caminho! O javali não freia!", "Machado afiado, presas de aço. Vamos!"], "provoca": ["{nome}, sai da frente ou vira tapete.", "Lá vou eu, {nome}! Segura essa investida!"]},
+  "w_gorila": {"entrada": ["Punhos de ferro prontos.", "Ninguém passa por mim. Ninguém fica de pé também."], "provoca": ["{nome}, quer voar? Eu ajudo.", "Vou te mandar pra casa ao lado, {nome}."]},
+  "w_serpente": {"entrada": ["Silêncio... a naja já está aqui.", "Uma picada basta."], "provoca": ["{nome}, sentiu a picada? Vai sentir mais tarde.", "Shhh, {nome}. O veneno trabalha devagar."], "aliado": ["{nome}, eu envenenei. Agora termina."]},
+  "w_alce": {"entrada": ["A galhada protege o bando.", "Alce em guarda. Ninguém toca nos meus."], "provoca": ["{nome}, passe por mim se for capaz.", "Minha alabarda alcança mais que a sua coragem, {nome}."], "aliado": ["{nome}, fica perto. Eu recebo o golpe."]},
   "k_estandarte": {"entrada": ["O estandarte avança. Krieg avança junto!", "Enquanto a bandeira tremular, ninguém recua."], "provoca": ["{nome}, olhe bem para esta bandeira. É a última coisa que vai ver.", "A bandeira de Krieg não cai, {nome}."], "aliado": ["{nome}, fica perto do estandarte. Câmbio."]},
   "k_morteiro": {"entrada": ["Morteiro em posição. Ajustando ângulo.", "Coordenadas recebidas. Fogo quando quiser."], "provoca": ["{nome}, ouviu esse assobio? Corre.", "Distância não te salva, {nome}."]},
   "k_escudeiro": {"entrada": ["Escudo erguido. Atrás de mim, pessoal.", "Muralha viva em posição."], "provoca": ["{nome}, este escudo já levou coisa pior que você.", "Bate, {nome}. Eu espero."], "aliado": ["{nome}, deixa comigo. Eu seguro esse golpe."]},

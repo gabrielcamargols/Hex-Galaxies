@@ -1590,6 +1590,14 @@ func resolve_attack(a, t) -> void:
 				await move_unit(target, h)
 				if winner != NONE:
 					return
+	if after == "knock" and dealt > 0 and target.st == "field" and not target.barrier:
+		var kd = push_dest(target, a.pos())
+		if kd != null:
+			abfx("sonic", target.pos(), a.uid)
+			log_msg(p, "%s: %s foi arremessado 1 casa." % [DB.cards[a.cid]["ab"]["name"], nm(target)])
+			await move_unit(target, kd)
+			if winner != NONE:
+				return
 	if target.st == "field" and not target.barrier and not A["reacted"] and P[d]["hand"].has("dispersao") and not step_free(target.pos()).is_empty():
 		var h = await ask(d, {"t": "hex", "text": "Dispersão: mover %s 1 casa livre?" % nm(target), "opts": step_free(target.pos()), "optional": true, "kind": "move", "card": "dispersao"})
 		if h != null:
