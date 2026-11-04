@@ -64,6 +64,12 @@
   "TER": ["Desabou um dos nossos!", "Segura a mina, pessoal!", "Isso vai ter troco!"]
  },
  "personagem": {
+  "k_estandarte": {"entrada": ["O estandarte avança. Krieg avança junto!", "Enquanto a bandeira tremular, ninguém recua."], "provoca": ["{nome}, olhe bem para esta bandeira. É a última coisa que vai ver.", "A bandeira de Krieg não cai, {nome}."], "aliado": ["{nome}, fica perto do estandarte. Câmbio."]},
+  "k_morteiro": {"entrada": ["Morteiro em posição. Ajustando ângulo.", "Coordenadas recebidas. Fogo quando quiser."], "provoca": ["{nome}, ouviu esse assobio? Corre.", "Distância não te salva, {nome}."]},
+  "k_escudeiro": {"entrada": ["Escudo erguido. Atrás de mim, pessoal.", "Muralha viva em posição."], "provoca": ["{nome}, este escudo já levou coisa pior que você.", "Bate, {nome}. Eu espero."], "aliado": ["{nome}, deixa comigo. Eu seguro esse golpe."]},
+  "k_batedor": {"entrada": ["Batedora no setor. Alvos à vista.", "Reconhecimento concluído. Marcando alvo."], "provoca": ["{nome}, você está no meu binóculo há três rounds.", "Te achei, {nome}. Todo mundo já sabe onde você está."], "aliado": ["{nome}, alvo marcado. Fogo nele!"]},
+  "k_radio": {"entrada": ["Base, aqui é Krieg. Pedindo artilharia. Câmbio.", "Rádio on-line. Coordenadas a caminho."], "provoca": ["{nome}, acabei de passar a sua posição. Câmbio e desligo.", "Alô, {nome}? É do céu. Vai chover chumbo."]},
+  "k_sapador": {"entrada": ["Sapadora no terreno. Cuidado onde pisam.", "Detector ligado. Mina armada."], "provoca": ["{nome}, pise com cuidado. Ou não.", "Sabe o que tem embaixo de você, {nome}? Eu sei."]},
   "a_lumina": {"entrada": ["Sigam a luzinha... isso, mais perto.", "No escuro do abismo, eu sou o farol. E a armadilha."], "provoca": ["{nome}, olha pra luz. Só um pouquinho.", "Que sorriso lindo o seu, {nome}. O meu é maior."], "aliado": ["{nome}, eu ofusco, você morde."]},
   "a_medusa": {"entrada": ["Toquem em mim. Eu insisto.", "A corrente me trouxe até aqui."], "provoca": ["{nome}, vem me abraçar. Você vai sentir o choque.", "Pode bater, {nome}. Só não reclama do formigamento."]},
   "a_garra": {"entrada": ["As correntes do fundo vieram comigo.", "Minha carapaça já quebrou âncoras."], "provoca": ["{nome}, minhas pinças estão com fome.", "Tente me furar, {nome}. Os outros tentaram."]},

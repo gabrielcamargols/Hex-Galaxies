@@ -393,6 +393,13 @@ func atk_of(a, t) -> int:
 		var ka = DB.cards[cm.cid]["k"].get("auraAtk", null)
 		if ka != null and match_who(a, ka.get("who", "")) and DB.dist(a.pos(), cmd_point(cm)) <= int(ka["r"]):
 			v += 1
+	# estandarte: aliados próximos de uma peça com "allyAtk" ganham ataque
+	for s2 in units:
+		if s2 == a or s2.owner != a.owner or s2.st != "field" or s2.barrier:
+			continue
+		var aa2 = K(s2).get("allyAtk", null)
+		if aa2 != null and match_who(a, aa2.get("who", "")) and DB.dist(a.pos(), s2.pos()) <= int(aa2["r"]):
+			v += int(aa2["n"])
 	if t != null:
 		if k.has("atkVsLow") and t.hp <= 5:
 			v += int(k["atkVsLow"])

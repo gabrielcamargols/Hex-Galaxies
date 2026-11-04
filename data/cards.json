@@ -1107,6 +1107,136 @@
     "after": "freeMove"
    }
   },
+ {
+  "id": "k_estandarte",
+  "f": "KRI",
+  "clan": "KRI",
+  "name": "Krieg Porta-Estandarte",
+  "role": "Suporte",
+  "atk": 2,
+  "int": 7,
+  "mov": 2,
+  "alc": 1,
+  "src": "novo",
+  "ab": {
+   "name": "Estandarte do Clã",
+   "text": "Unidades Krieg aliadas adjacentes recebem +1 ATQ."
+  },
+  "k": {
+   "allyAtk": {
+    "r": 1,
+    "n": 1,
+    "who": "KRI"
+   }
+  }
+ },
+ {
+  "id": "k_morteiro",
+  "f": "KRI",
+  "clan": "KRI",
+  "name": "Krieg Morteiro",
+  "role": "Artilheiro",
+  "atk": 3,
+  "int": 5,
+  "mov": 1,
+  "alc": 5,
+  "src": "novo",
+  "ab": {
+   "name": "Barragem",
+   "text": "Pode atacar a até 5 casas. Ao atacar, cause 1 dano a cada outro inimigo adjacente ao alvo."
+  },
+  "k": {
+   "after": "splash"
+  }
+ },
+ {
+  "id": "k_escudeiro",
+  "f": "KRI",
+  "clan": "KRI",
+  "name": "Krieg Escudeiro",
+  "role": "Guardião",
+  "atk": 2,
+  "int": 9,
+  "mov": 2,
+  "alc": 1,
+  "src": "novo",
+  "ab": {
+   "name": "Escudo-Torre",
+   "text": "1 vez por round, pode receber o ataque destinado a um aliado adjacente."
+  },
+  "k": {
+   "guard": true,
+   "guardOnce": true
+  }
+ },
+ {
+  "id": "k_batedor",
+  "f": "KRI",
+  "clan": "KRI",
+  "name": "Krieg Batedora",
+  "role": "Explorador",
+  "atk": 3,
+  "int": 5,
+  "mov": 3,
+  "alc": 2,
+  "src": "novo",
+  "ab": {
+   "name": "Reconhecimento",
+   "text": "Ao entrar, marque 1 inimigo a até 4 casas: ataques contra ele causam +1 dano até o fim do round."
+  },
+  "k": {
+   "entry": {
+    "t": "mark",
+    "r": 4,
+    "n": 1
+   }
+  }
+ },
+ {
+  "id": "k_radio",
+  "f": "KRI",
+  "clan": "KRI",
+  "name": "Krieg Operador de Rádio",
+  "role": "Estrategista",
+  "atk": 2,
+  "int": 6,
+  "mov": 2,
+  "alc": 1,
+  "src": "novo",
+  "ab": {
+   "name": "Chamar Artilharia",
+   "text": "Ao entrar, chama a artilharia: cause 2 de dano a 1 inimigo a até 4 casas."
+  },
+  "k": {
+   "entry": {
+    "t": "dmg",
+    "r": 4,
+    "n": 2
+   }
+  }
+ },
+ {
+  "id": "k_sapador",
+  "f": "KRI",
+  "clan": "KRI",
+  "name": "Krieg Sapadora",
+  "role": "Engenheiro",
+  "atk": 3,
+  "int": 6,
+  "mov": 2,
+  "alc": 1,
+  "src": "novo",
+  "ab": {
+   "name": "Campo Minado",
+   "text": "Ao entrar, arme uma mina numa casa livre adjacente: o primeiro inimigo que entrar sofre 3 de dano."
+  },
+  "k": {
+   "entry": {
+    "t": "mine",
+    "n": 3
+   }
+  }
+ },
   {
    "id": "w_lobo",
    "f": "WAC",

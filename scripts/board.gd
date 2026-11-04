@@ -29,7 +29,7 @@ var RIM = 12.0         # raio da borda arredondada (onde o deserto se curva)
 var UNDER = 34.0       # altura da base rochosa por baixo do planetoide
 const ZOOM_MIN = 4.0
 const ZOOM_MAX = 140.0
-const BIG = ["moby", "balu", "banker", "l_behemot", "l_leviathan", "z_dragao", "golk", "w_mamute", "k_tank", "z_tank", "l_tank", "l_colosso", "sismico", "rhombo", "tork", "w_tric", "z_meca", "t_fendas", "t_raiz", "t_basalto", "t_carrinho", "t_sentinela", "t_britadeira", "a_garra"]
+const BIG = ["moby", "balu", "banker", "l_behemot", "l_leviathan", "z_dragao", "golk", "w_mamute", "k_tank", "z_tank", "l_tank", "l_colosso", "sismico", "rhombo", "tork", "w_tric", "z_meca", "t_fendas", "t_raiz", "t_basalto", "t_carrinho", "t_sentinela", "t_britadeira", "a_garra", "k_escudeiro"]
 
 var g: Game = null
 var cam: Camera3D
