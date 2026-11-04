@@ -12,7 +12,7 @@ const TDESC = {
 	"ossada": "Ossada baixa. Intransponível, abriga quem está ao lado (-2).", "ossada_c": "Ossada central. Dá para entrar; quem está dentro sofre -1 de tiros.",
 	"buraco": "Buraco de verme. Intransponível enquanto estiver aberto (2 rounds).",
 }
-const RULES = "[b]Objetivo:[/b] derrotar o Comandante inimigo (ele entra no round 6). No fim do round 10 vence quem tiver mais Vida no Comandante; empate: soma da Vida dos aliados.\n\n[b]Turno:[/b] os lados se alternam ativando 1 peça por vez. Cada peça ativada tem [b]2 ações[/b], e cada tipo só pode ser usado [b]1 vez por turno[/b]: mover 1 vez, atacar 1 vez, usar habilidade ativa (ex.: mover + atacar). [b]Táticas não gastam ação:[/b] cada peça ativada pode jogar 1 carta de graça. Arraste a carta e solte no personagem (ou na casa) destacado para escolher quem recebe o efeito. Habilidades passivas não gastam ação. Colocar uma reserva em campo gasta 1 ação. [b]A área de entrada cresce:[/b] nos rounds 1 a 3 ela vai até 1 casa da sua base, nos rounds 4 a 6 até 2 casas, nos rounds 7 a 9 até 3 casas e no round 10 até 4 casas (sempre na sua metade do mapa).\n\n[b]Altura:[/b] atacar de cima +1 de dano, de baixo -1. Tiros (alcance 2+) de cima ganham +1 de alcance. Corpo a corpo só com até 1 nível de diferença.\n\n[b]Linha de tiro:[/b] uma casa no caminho bloqueia se o topo dela for mais alto que o atacante e o alvo.\n\n[b]Abrigo:[/b] -2 de dano se uma rocha/ruína/ossada vizinha ao alvo estiver do lado do atacante.\n\n[b]Tarhut:[/b] as dunas mudam a cada 5 rounds (aviso 1 round antes); a cada 3 rounds o [color=#ff6a4a]Verme Gigante[/color] sai da areia (o \"!\" avisa 1 round antes): quem estiver no buraco sofre 4 de dano e quem estiver ao lado, 1. Fuja das casas marcadas!\n\n[b]Controles:[/b] clique numa peça sua e depois numa casa verde (mover) ou num inimigo vermelho (atacar), ou arraste a peça e solte. Confirme a prévia. Botão direito gira a câmera, arrastar o fundo move o mapa, a roda aproxima. Q/E giram. Enter confirma, Esc cancela.\n\n[b]Toque (tablet/celular):[/b] toque numa peça e numa casa para agir. 1 dedo arrasta o mapa; pinça com 2 dedos aproxima/afasta; girar os 2 dedos gira a câmera; arrastar os 2 dedos para cima/baixo inclina a visão. \"Tudo\" recentraliza."
+const RULES = "[b]Objetivo:[/b] derrotar o Comandante inimigo (ele entra no round 6). No fim do round 10 vence quem tiver mais Vida no Comandante; empate: soma da Vida dos aliados.\n\n[b]Turno:[/b] os lados se alternam ativando 1 peça por vez. Cada peça ativada tem [b]2 ações[/b], e cada tipo só pode ser usado [b]1 vez por turno[/b]: mover 1 vez, atacar 1 vez, usar habilidade ativa (ex.: mover + atacar). [b]Táticas não gastam ação:[/b] cada peça ativada pode jogar 1 carta de graça. Arraste a carta e solte no personagem (ou na casa) destacado para escolher quem recebe o efeito. Habilidades passivas não gastam ação. Colocar uma reserva em campo gasta 1 ação. [b]A área de entrada cresce:[/b] nos rounds 1 a 3 ela vai até 1 casa da sua base, nos rounds 4 a 6 até 2 casas, nos rounds 7 a 9 até 3 casas e no round 10 até 4 casas (sempre na sua metade do mapa).\n\n[b]Altura:[/b] atacar de cima +1 de dano, de baixo -1. Tiros (alcance 2+) de cima ganham +1 de alcance. Corpo a corpo só com até 1 nível de diferença.\n\n[b]Linha de tiro:[/b] uma casa no caminho bloqueia se o topo dela for mais alto que o atacante e o alvo.\n\n[b]Abrigo:[/b] -2 de dano se uma rocha/ruína/ossada vizinha ao alvo estiver do lado do atacante.\n\n[b]Tarhut:[/b] as dunas mudam a cada 5 rounds (aviso 1 round antes); a cada 3 rounds o [color=#ff6a4a]Verme Gigante[/color] sai da areia (o \"!\" avisa 1 round antes): quem estiver no buraco sofre 4 de dano e quem estiver ao lado, 1. Fuja das casas marcadas!\n\n[b]Online:[/b] na tela do exército, toque em \"⚡ Online\". Um jogador cria a sala e passa o código de 6 letras; o outro digita o código e entra. O mapa é o planeta de quem criou a sala. No app instalado (PC/Android), a sala usa o IP da rede local no lugar do código.\n\n[b]Controles:[/b] clique numa peça sua e depois numa casa verde (mover) ou num inimigo vermelho (atacar), ou arraste a peça e solte. Confirme a prévia. Botão direito gira a câmera, arrastar o fundo move o mapa, a roda aproxima. Q/E giram. Enter confirma, Esc cancela.\n\n[b]Toque (tablet/celular):[/b] toque numa peça e numa casa para agir. 1 dedo arrasta o mapa; pinça com 2 dedos aproxima/afasta; girar os 2 dedos gira a câmera; arrastar os 2 dedos para cima/baixo inclina a visão. \"Tudo\" recentraliza."
 
 var board
 var game: Game = null
@@ -72,7 +72,16 @@ var busy: bool = false
 var running: bool = false
 var panel_open: String = ""
 var res_drag: Variant = null
-var card_drag: Variant = null   # carta de tática sendo arrastada: {id, start, on}
+var card_drag: Variant = null
+# ---- online ----
+var me: int = 0                  # índice do jogador deste aparelho (0 offline; 0 ou 1 online)
+var online: bool = false
+var net: Node = null
+var net_queue: Array = []        # jogadas do outro aparelho esperando para serem repetidas
+var net_busy: bool = false
+var opp_thinking: bool = false   # o motor espera uma resposta do outro jogador
+var net_seed: int = 0
+var net_pre_ans: Array = []      # respostas que chegaram antes da partida começar aqui   # carta de tática sendo arrastada: {id, start, on}
 var sfx = null
 var vfx = null
 var impact_delay: float = 0.0
@@ -81,6 +90,13 @@ var impact_until: int = 0
 
 func _ready() -> void:
 	randomize()
+	net = Node.new()
+	net.set_script(load("res://scripts/net.gd"))
+	add_child(net)
+	net.connected.connect(_net_connected)
+	net.message.connect(_net_msg)
+	net.closed.connect(_net_closed)
+	net.status.connect(_net_status)
 	board = Node3D.new()
 	board.set_script(load("res://scripts/board.gd"))
 	add_child(board)
@@ -449,6 +465,10 @@ func _leave_battle() -> void:
 
 # ================= menu: galáxia =================
 func _show_menu() -> void:
+	if online:
+		online = false
+		net.send({"t": "bye"})
+		net.close()
 	var from_battle = board.visible
 	if from_battle:
 		await _fade(1.0, 0.35, Color("#03050b"))
@@ -810,6 +830,9 @@ func _show_army() -> void:
 	ob.item_selected.connect(_army_cpu.bind(ob))
 	ob.custom_minimum_size = Vector2(170, 38)
 	ov.add_child(ob)
+	var b4 = _cbtn(ov, "⚡ JOGAR ONLINE", C_DEPLOY, _online_panel)
+	b4.custom_minimum_size = Vector2(170, 34)
+	b4.tooltip_text = "Jogar contra outra pessoa pela internet, com código de sala"
 	# --- comandante (embaixo à esquerda, o planeta aparece acima) ---
 	var cmdp = PanelContainer.new()
 	ui.add_child(cmdp)
@@ -893,6 +916,7 @@ func _show_army() -> void:
 	b2.custom_minimum_size = Vector2(0, 38)
 	var b3 = _cbtn(br, "Limpar", C_HUD, _army_clear)
 	b3.custom_minimum_size = Vector2(0, 38)
+
 	if compact:
 		for bb in [b2, b3]:
 			bb.add_theme_font_size_override("font_size", 12)
@@ -1399,6 +1423,19 @@ func _start_match(sides) -> void:
 	game = Game.new()
 	game.tree = get_tree()
 	game.cpu = [autotest, true]
+	if online:
+		game.rng.seed = net_seed
+		game.cpu = [false, false]
+		game.remote = [me != 0, me != 1]
+		game.net_send = net.send
+		game.ans_buf = net_pre_ans
+		net_pre_ans = []
+		net_busy = false
+		opp_thinking = false
+	else:
+		me = 0
+		game.rng.randomize()
+	board.me = me
 	game.setup(sides, setup_cfg["map"])
 	game.question.connect(_on_question)
 	game.changed.connect(refresh)
@@ -1476,7 +1513,7 @@ func _build_hud() -> void:
 	# botões do canto
 	var topr = _hbox(ui, 6)
 	_place(topr, Control.PRESET_TOP_RIGHT, 8)
-	if compact:
+	if compact and not online:
 		_button(topr, "CPU", _toggle_cpu)
 	_button(topr, "Cartas", func(): _toggle_panel("cards"))
 	if not compact:
@@ -1635,7 +1672,7 @@ func viewer() -> int:
 
 # ---- colocar reservas em campo: quando e onde ----
 func can_deploy_now() -> bool:
-	return my_turn() and game.act == null and not game.reserve_of(0).is_empty() and not game.deploy_hexes(0).is_empty()
+	return my_turn() and game.act == null and not game.reserve_of(me).is_empty() and not game.deploy_hexes(me).is_empty()
 
 
 func deploy_block_reason() -> String:
@@ -1647,13 +1684,13 @@ func deploy_block_reason() -> String:
 		return "Aguarde a sua vez para colocar reservas."
 	if game.act != null:
 		return "Termine a ativação de %s (botão Encerrar ativação) para colocar uma reserva." % game.nm(game.active_unit())
-	if game.deploy_hexes(0).is_empty():
+	if game.deploy_hexes(me).is_empty():
 		return "Sua entrada está lotada: tire uma peça de lá para abrir espaço."
 	return ""
 
 
 func my_turn() -> bool:
-	return game != null and game.winner == Game.NONE and not game.cpu[game.cur] and not busy and asking == null
+	return game != null and game.winner == Game.NONE and not game.cpu[game.cur] and game.cur == me and not game.remote[game.cur] and not busy and asking == null
 
 
 func sel_unit() -> Variant:
@@ -1739,9 +1776,9 @@ func refresh() -> void:
 	var st = {"hl": {}, "lit": null, "labels": {}, "label_colors": {}, "tags": {}, "sel_uid": -1, "ghost": null}
 	for p in range(2):
 		for h in game.entry_zone(p):
-			st["hl"][h] = "entry%d" % p
+			st["hl"][h] = "entry%d" % (0 if p == me else 1)
 	if can_deploy_now() or dsel >= 0 or (res_drag != null and res_drag.get("on", false)):
-		for h in game.deploy_hexes(0):
+		for h in game.deploy_hexes(me):
 			st["hl"][h] = "deploy"
 			st["labels"][h] = "+ ENTRAR"
 			st["label_colors"][h] = C_DEPLOY.lightened(0.4)
@@ -1828,10 +1865,10 @@ func refresh() -> void:
 
 
 func _refresh_top() -> void:
-	var who = "Você" if game.cur == 0 else "CPU"
-	var status = "Fim de jogo" if game.winner != Game.NONE else ("Sua vez" if game.cur == 0 else ("Vez da CPU" + (" (jogando...)" if busy else "")))
+	var who = "Você" if game.cur == me else _opp()
+	var status = "Fim de jogo" if game.winner != Game.NONE else ("Sua vez" if game.cur == me else ("Vez do " + _opp().to_lower() + (" (jogando...)" if busy or opp_thinking else "")))
 	w["title"].text = "%s  ·  Round %d/10  ·  %s" % [game.map_name, game.round_no, status]
-	var tcol = C_GOLD if game.winner != Game.NONE else (C_YOU if game.cur == 0 else C_CPU)
+	var tcol = C_GOLD if game.winner != Game.NONE else (C_YOU if game.cur == me else C_CPU)
 	w["title"].add_theme_color_override("font_color", tcol)
 	var ev = []
 	var def = DB.maps[game.map_id]
@@ -1855,8 +1892,8 @@ func _refresh_top() -> void:
 				ev.append("Vermes no round %d" % wr)
 	w["events"].text = "   ·   ".join(ev)
 	w["round"].text = "Round %d/10" % game.round_no
-	w["turn"].text = "SUA VEZ" if game.cur == 0 else "VEZ DA CPU"
-	w["turn"].add_theme_color_override("font_color", C_YOU if game.cur == 0 else C_CPU)
+	w["turn"].text = "SUA VEZ" if game.cur == me else ("VEZ DO " + _opp().to_upper())
+	w["turn"].add_theme_color_override("font_color", C_YOU if game.cur == me else C_CPU)
 	w["turn"].add_theme_font_size_override("font_size", 18)
 	if font_title != null:
 		w["turn"].add_theme_font_override("font", font_title)
@@ -1867,13 +1904,13 @@ func _refresh_party() -> void:
 		var box: VBoxContainer = w["party%d" % p]
 		for c in box.get_children():
 			c.queue_free()
-		_label(box, ("VOCÊ · " if p == 0 else "CPU · ") + ("Mix" if game.P[p].get("mix", false) else DB.factions[game.P[p]["fac"]]["short"]), 13, Color("#4f9be0") if p == 0 else Color("#e0563f"))
-		var dep_ok = p == 0 and can_deploy_now()
+		_label(box, ("VOCÊ · " if p == me else (_opp().to_upper() + " · ")) + ("Mix" if game.P[p].get("mix", false) else DB.factions[game.P[p]["fac"]]["short"]), 13, Color("#4f9be0") if p == me else Color("#e0563f"))
+		var dep_ok = p == me and can_deploy_now()
 		var shown_res_head = false
 		for u in game.units:
 			if u.owner != p or u.barrier:
 				continue
-			if p == 0 and u.st == "reserve" and not shown_res_head:
+			if p == me and u.st == "reserve" and not shown_res_head:
 				shown_res_head = true
 				var hd = PanelContainer.new()
 				var sbx = StyleBoxFlat.new()
@@ -1899,7 +1936,7 @@ func _refresh_party() -> void:
 			if u.st == "field":
 				stx = "usado" if u.activated else "pronto"
 			elif u.st == "reserve":
-				stx = "▶ pode entrar" if (p == 0 and dep_ok) else "reserva"
+				stx = "▶ pode entrar" if (p == me and dep_ok) else "reserva"
 			elif u.st == "off":
 				stx = "round 6"
 			var b = Button.new()
@@ -1916,7 +1953,7 @@ func _refresh_party() -> void:
 				b.expand_icon = true
 			if u.st == "dead":
 				b.modulate = Color(0.5, 0.5, 0.5)
-			elif u.st == "reserve" and p == 0 and dep_ok:
+			elif u.st == "reserve" and p == me and dep_ok:
 				b.add_theme_color_override("font_color", C_DEPLOY.lightened(0.5))
 				var gsb = StyleBoxFlat.new()
 				gsb.bg_color = C_DEPLOY.darkened(0.7)
@@ -1927,13 +1964,13 @@ func _refresh_party() -> void:
 				b.tooltip_text = "Clique e depois escolha uma casa ciano da sua entrada, ou arraste até ela. Gasta 1 ação."
 			elif u.st == "reserve" or u.st == "off" or u.activated:
 				b.modulate = Color(0.82, 0.82, 0.82)
-				if u.st == "reserve" and p == 0:
+				if u.st == "reserve" and p == me:
 					b.tooltip_text = deploy_block_reason()
 			if u.uid == sel or u.uid == dsel or u.uid == inspect:
 				b.modulate = Color(1.2, 1.1, 0.7)
 			var uid = u.uid
 			b.pressed.connect(func(): _on_roster(uid))
-			if p == 0 and u.st == "reserve":
+			if p == me and u.st == "reserve":
 				b.button_down.connect(func(): _start_res_drag(uid))
 			box.add_child(b)
 
@@ -1949,7 +1986,7 @@ func _refresh_ucard() -> void:
 		else:
 			var c = DB.cards[u.cid]
 			var fcol = DB.factions[c["f"]]["color"]
-			txt = "[color=%s]%s[/color] · %s\n[font_size=24][b]%s[/b][/font_size]\n" % [fcol, DB.factions[c["f"]]["name"].to_upper(), "Você" if u.owner == 0 else "CPU", c["name"]]
+			txt = "[color=%s]%s[/color] · %s\n[font_size=24][b]%s[/b][/font_size]\n" % [fcol, DB.factions[c["f"]]["name"].to_upper(), "Você" if u.owner == me else _opp(), c["name"]]
 			txt += "%s\n[b]Vida[/b] %d/%d   [b]Ataque[/b] %d   [b]Movimento[/b] %d   [b]Alcance[/b] %d\n" % [c["role"], max(0, u.hp), u.maxhp, game.atk_of(u, null), game.mov_of(u), game.alc_of(u)]
 			if u.st == "field":
 				txt += "[i]%s[/i]\n" % game.t_name(u.pos())
@@ -1997,7 +2034,7 @@ func _refresh_actbar() -> void:
 		elif asking != null:
 			note = "Responda à pergunta"
 		else:
-			note = "A CPU está jogando..." if game.cpu[game.cur] else "Aguarde"
+			note = "A CPU está jogando..." if game.cpu[game.cur] else ("O oponente está jogando..." if online else "Aguarde")
 	elif dsel >= 0:
 		note = "Escolha uma casa CIANO da sua entrada (entrar gasta 1 ação)"
 	elif u == null:
@@ -2193,7 +2230,7 @@ func _refresh_side() -> void:
 		c.queue_free()
 	match panel_open:
 		"cards":
-			var pl = game.P[0]
+			var pl = game.P[me]
 			w["side_title"].text = "Suas cartas · %d na mão · baralho %d" % [pl["hand"].size(), pl["deck"].size()]
 			_label(body, "Jogar uma carta gasta 1 ação (reações são oferecidas sozinhas no turno do rival).", 13, Color("#8fb8cc"))
 			for id in pl["hand"]:
@@ -2212,7 +2249,7 @@ func _refresh_side() -> void:
 			var start = max(0, game.logs.size() - 80)
 			for i in range(start, game.logs.size()):
 				var l = game.logs[i]
-				var col = "#ffab40" if l["p"] < 0 else ("#7cc0ff" if l["p"] == 0 else "#ff8a6a")
+				var col = "#ffab40" if l["p"] < 0 else ("#7cc0ff" if l["p"] == me else "#ff8a6a")
 				lines.append("[color=%s]•[/color] %s" % [col, l["text"]])
 			r2.text = "\n".join(lines)
 		"rules":
@@ -2248,7 +2285,7 @@ func _card_targets(id: String) -> Dictionary:
 		"avanco":
 			txt = "Até 2 aliados andam 1 casa"
 			for x in game.field():
-				if x.owner == 0 and not x.barrier:
+				if x.owner == me and not x.barrier:
 					hs.append(x.pos())
 		"cobertura":
 			txt = "Reação: aliado atacado de longe sofre -3"
@@ -2270,7 +2307,7 @@ func _card_targets(id: String) -> Dictionary:
 			txt = "Sua mão: compra 2, descarta 1"
 		"reforco":
 			txt = "Reserva que entrar: chega com 2 ações"
-			hs = game.deploy_hexes(0)
+			hs = game.deploy_hexes(me)
 		"pulso":
 			txt = "Inimigo a até 2 casas perde o equipamento"
 			if u != null:
@@ -2411,7 +2448,7 @@ func _refresh_hand() -> void:
 		c.queue_free()
 	if game == null:
 		return
-	var pl = game.P[0]
+	var pl = game.P[me]
 	for id in pl["hand"]:
 		box.add_child(_make_card(id))
 	var info = _label(box, "  Baralho\n  %d" % pl["deck"].size(), 12, C_DIM)
@@ -2495,7 +2532,7 @@ func _card_playable(id: String) -> bool:
 
 
 func _any_card_playable() -> bool:
-	for id in game.P[0]["hand"]:
+	for id in game.P[me]["hand"]:
 		if _card_playable(id):
 			return true
 	return false
@@ -2663,7 +2700,7 @@ func after() -> void:
 	pend = null
 	am = ""
 	tip = null
-	if game.act != null and game.winner == Game.NONE and not game.cpu[game.act["p"]] and game.act["actions"] <= 0 and not _any_hand_playable_now():
+	if game.act != null and game.winner == Game.NONE and not game.cpu[game.act["p"]] and game.act["p"] == me and game.act["actions"] <= 0 and not _any_hand_playable_now():
 		ab = false
 		busy = true
 		await get_tree().create_timer(0.35).timeout
@@ -2689,6 +2726,8 @@ func after() -> void:
 	refresh()
 	if game.winner != Game.NONE:
 		_game_over()
+		return
+	_net_pump()
 
 
 func _any_hand_playable_now() -> bool:
@@ -2892,6 +2931,10 @@ func _input(event: InputEvent) -> void:
 
 # ================= perguntas do motor =================
 func _on_question(p: int, q: Dictionary) -> void:
+	if game.remote[p]:
+		opp_thinking = true
+		refresh()
+		return
 	asking = {"p": p, "q": q}
 	refresh()
 
@@ -3163,7 +3206,7 @@ func _on_fx(e: Dictionary) -> void:
 			_later(2.2, banner.bind("ÁREA DE ENTRADA MAIOR", "Agora dá para colocar personagens até %d casas da sua base" % int(e["r"])))
 			for pz in range(2):
 				var ew = board.world_xz(DB.entry_c[pz])
-				vfx.flip("ring", Vector3(ew.x, 0.3, ew.y), 3.0 + 2.6 * int(e["r"]), 0.9, C_DEPLOY if pz == 0 else C_CPU, true)
+				vfx.flip("ring", Vector3(ew.x, 0.3, ew.y), 3.0 + 2.6 * int(e["r"]), 0.9, C_DEPLOY if pz == me else C_CPU, true)
 			sfx.play("vfx_portal", -8.0)
 		"tactic_on":
 			var tcol: Color = TYPE_COL.get(DB.tactics[e["id"]]["type"], C_CARD)
@@ -3176,7 +3219,7 @@ func _on_fx(e: Dictionary) -> void:
 		"abfx":
 			_on_abfx(e)
 		"ult":
-			banner("★ " + str(e["name"]), ("Você" if e["p"] == 0 else "CPU") + " · " + game.nm(game.by_uid(e["uid"])))
+			banner("★ " + str(e["name"]), ("Você" if e["p"] == me else _opp()) + " · " + game.nm(game.by_uid(e["uid"])))
 			sfx.play("poder", -1.0, 0.8)
 		"wind":
 			banner("O vento muda!", "tempestade de areia: as dunas vão se mover")
@@ -3209,7 +3252,7 @@ func _on_fx(e: Dictionary) -> void:
 			board.worm_emerge(hs)
 		"round":
 			sfx.play("round", -6.0)
-			banner("Round %d" % e["round"], "os comandantes entram" if e["round"] == 6 else ("Você começa" if game.first == 0 else "A CPU começa"))
+			banner("Round %d" % e["round"], "os comandantes entram" if e["round"] == 6 else ("Você começa" if game.first == me else (_opp() + " começa")))
 	board.sync_units()
 
 
@@ -3448,6 +3491,202 @@ func _shots(dir: String) -> void:
 	get_tree().quit()
 
 
+# ================= modo online =================
+func _opp() -> String:
+	return "Oponente" if online else "CPU"
+
+
+func _my_army() -> Dictionary:
+	return {"fac": setup_cfg["fac"], "cmd": _cur_cmd(), "mix": mix, "picks": army_picks.duplicate(), "start": army_start.duplicate()}
+
+
+func _online_panel() -> void:
+	if stage != "army":
+		return
+	if army_picks.size() != 5 or army_start.size() != 2:
+		w["army_hint"].text = "Monte o exército (5 tropas, 2 com ★) antes de jogar online."
+		w["army_hint"].add_theme_color_override("font_color", Color("#ffb070"))
+		return
+	if w.has("online") and is_instance_valid(w["online"]):
+		w["online"].queue_free()
+	sfx.play("clique", -8.0)
+	var dim = ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.55)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	ui.add_child(dim)
+	w["online"] = dim
+	var cc = CenterContainer.new()
+	cc.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.add_child(cc)
+	var p = PanelContainer.new()
+	p.add_theme_stylebox_override("panel", _flat(Color(0.03, 0.05, 0.11, 0.97), C_DEPLOY, 2, 12, 22))
+	cc.add_child(p)
+	var v = _vbox(p, 12)
+	v.custom_minimum_size = Vector2(min(520, get_viewport().get_visible_rect().size.x - 40), 0)
+	_label(v, "JOGAR ONLINE", 30, C_GOLD)
+	var info = _label(v, "Um jogador cria a sala e passa o código; o outro entra com ele. O mapa é o planeta de quem criou a sala.", 14, C_DIM)
+	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var hb = _hbox(v, 8)
+	var bh = _cbtn(hb, "Criar sala", C_GOLD, _online_host, true)
+	_primary(bh)
+	bh.custom_minimum_size = Vector2(0, 44)
+	bh.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var jh = _hbox(v, 8)
+	var le = LineEdit.new()
+	le.placeholder_text = "código da sala" if net.web else "IP de quem criou (ex.: 192.168.0.10)"
+	le.custom_minimum_size = Vector2(0, 44)
+	le.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	le.add_theme_font_size_override("font_size", 20)
+	jh.add_child(le)
+	var bj = _cbtn(jh, "Entrar", C_DEPLOY, func(): _online_join(le.text))
+	bj.custom_minimum_size = Vector2(110, 44)
+	le.text_submitted.connect(func(t): _online_join(t))
+	var codel = _label(v, "", 44, C_DEPLOY.lightened(0.3))
+	codel.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	codel.visible = false
+	w["online_code"] = codel
+	var st = _label(v, "", 15, C_TXT)
+	st.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	w["online_status"] = st
+	var bc = _cbtn(v, "Cancelar", C_HUD, _online_cancel)
+	bc.custom_minimum_size = Vector2(0, 38)
+
+
+func _online_set(text: String, col: Color = C_TXT) -> void:
+	if w.has("online_status") and is_instance_valid(w["online_status"]):
+		w["online_status"].text = text
+		w["online_status"].add_theme_color_override("font_color", col)
+
+
+func _online_host() -> void:
+	net.host()
+	if w.has("online_code") and is_instance_valid(w["online_code"]):
+		w["online_code"].text = net.code
+		w["online_code"].visible = true
+	_online_set("Criando a sala...")
+
+
+func _online_join(c: String) -> void:
+	if c.strip_edges() == "":
+		_online_set("Digite o código da sala.", Color("#ffb070"))
+		return
+	net.join(c)
+	_online_set("Procurando a sala...")
+
+
+func _online_cancel() -> void:
+	net.close()
+	if w.has("online") and is_instance_valid(w["online"]):
+		w["online"].queue_free()
+	w.erase("online")
+
+
+func _net_status(text: String) -> void:
+	_online_set(text)
+
+
+func _net_connected() -> void:
+	_online_set("Conectado! Preparando a partida...", C_DEPLOY.lightened(0.3))
+	if net.role == "guest":
+		net.send({"t": "hello", "army": _my_army()})
+
+
+func _net_msg(d: Dictionary) -> void:
+	match d.get("t", ""):
+		"hello":
+			if net.role != "host" or stage != "army":
+				return
+			# quem criou a sala monta a partida: mapa, semente do sorteio e os dois exércitos
+			DB.set_map(setup_cfg["map"])
+			var sides = []
+			var armies = [_my_army(), d["army"]]
+			for p in range(2):
+				var a = armies[p]
+				var spots = DB.entry[p]
+				sides.append({"fac": a["fac"], "cmd": a["cmd"], "mix": a["mix"], "picks": a["picks"], "start": [{"id": a["start"][0], "h": spots[0]}, {"id": a["start"][1], "h": spots[spots.size() - 1]}]})
+			var sd = randi()
+			net.send({"t": "start", "seed": sd, "map": setup_cfg["map"], "sides": sides})
+			_online_begin(sides, sd, setup_cfg["map"], 0)
+		"start":
+			if net.role != "guest":
+				return
+			_online_begin(d["sides"], int(d["seed"]), d["map"], 1)
+		"cmd":
+			net_queue.append(d["c"])
+			_net_pump()
+		"ans":
+			opp_thinking = false
+			if game != null and stage == "battle" and online:
+				game.ans_buf.append(d["v"])
+				game.remote_ans.emit()
+				refresh()
+			else:
+				net_pre_ans.append(d["v"])
+		"bye":
+			_net_closed("O oponente saiu da partida.")
+
+
+func _online_begin(sides: Array, sd: int, map_id: String, who: int) -> void:
+	online = true
+	net_queue = []
+	net_pre_ans = []
+	me = who
+	net_seed = sd
+	setup_cfg["map"] = map_id
+	planet_id = _planet_of_map(map_id)
+	if w.has("online") and is_instance_valid(w["online"]):
+		w["online"].queue_free()
+	w.erase("online")
+	stage = "dive"
+	sfx.play("confirmar", -6.0)
+	await _ui_fade(0.0, 0.4)
+	sfx.play("vfx_portal", -6.0)
+	sfx.stop_loop("musica_galaxia", 2.5)
+	_fac_music("")
+	galaxy.set_mode("dive", planet_id)
+	await get_tree().create_timer(1.15).timeout
+	await _fade(1.0, 0.55, galaxy.data(planet_id).get("dive", Color("#e0b070")))
+	intro = true
+	_start_match(sides)
+
+
+# repete, em ordem, as jogadas que chegaram do outro aparelho
+func _net_pump() -> void:
+	if not online or game == null or net_busy or busy or running or net_queue.is_empty():
+		return
+	net_busy = true
+	while not net_queue.is_empty() and game != null and online:
+		var c = net_queue.pop_front()
+		busy = true
+		refresh()
+		await game.exec_cmd(c)
+		busy = false
+		refresh()
+		if game == null or game.winner != Game.NONE:
+			break
+	net_busy = false
+	if game != null:
+		await after()
+
+
+func _net_closed(reason: String) -> void:
+	if stage == "army" or stage == "dive":
+		_online_set(reason, Color("#ff8a6a"))
+		return
+	if not online:
+		return
+	online = false
+	net.close()
+	if game != null and game.winner == Game.NONE and stage == "battle":
+		banner("CONEXÃO PERDIDA", reason)
+		var p = _panel(ui)
+		_place(p, Control.PRESET_CENTER)
+		var v = _vbox(p, 12)
+		_label(v, "Conexão perdida", 40, C_GOLD)
+		_label(v, reason, 18)
+		_button(v, "Voltar ao menu", _show_menu)
+
+
 func _game_over() -> void:
 	if autotest:
 		print("AUTOTESTE FIM: vencedor=%d round=%d eventos=%d" % [game.winner, game.round_no, game.logs.size()])
@@ -3459,7 +3698,7 @@ func _game_over() -> void:
 	if w.has("over"):
 		return
 	var win = game.winner
-	var title = "Empate" if win == Game.DRAW else ("Vitória!" if win == 0 else "Derrota")
+	var title = "Empate" if win == Game.DRAW else ("Vitória!" if win == me else "Derrota")
 	var reason = ""
 	if not game.final_score.is_empty():
 		var f = game.final_score
@@ -3474,8 +3713,9 @@ func _game_over() -> void:
 	_label(v, title, 56, C_GOLD)
 	_label(v, reason, 18)
 	var hb = _hbox(v, 10)
-	_button(hb, "Revanche", func(): _start_match(last_sides))
-	_button(hb, "Novos exércitos", _to_army)
+	if not online:
+		_button(hb, "Revanche", func(): _start_match(last_sides))
+		_button(hb, "Novos exércitos", _to_army)
 	_button(hb, "Menu", _show_menu)
 	_button(hb, "Ver o tabuleiro", func(): p.queue_free())
 	w["over"] = p
@@ -3502,7 +3742,7 @@ func _talk_voice(u, text: String, mood: String) -> void:
 
 # ================= placas de vida (estilo da HUD) =================
 func _make_plate(u) -> Dictionary:
-	var col = C_YOU if u.owner == 0 else C_CPU
+	var col = C_YOU if u.owner == me else C_CPU
 	var border = C_GOLD if u.is_cmd else col
 	var W = 128.0
 	var H = 40.0
@@ -3895,11 +4135,11 @@ func _entrance_side(p: int, layer: Control) -> void:
 	if DB.portraits.has(cid):
 		h.add_child(_tex_rect(DB.portraits[cid], Vector2(110, 110)))
 	var v = _vbox(h, 2)
-	_label(v, "VOCÊ" if p == 0 else "ADVERSÁRIO", 13, C_YOU if p == 0 else C_CPU)
+	_label(v, "VOCÊ" if p == me else "ADVERSÁRIO", 13, C_YOU if p == me else C_CPU)
 	_label(v, "EXÉRCITO MISTO" if game.P[p].get("mix", false) else DB.factions[fac]["name"].to_upper(), 34, fcol.lightened(0.35))
 	_label(v, "Comandante: %s · chega no round 6" % DB.cards[cid]["name"], 15, C_DIM)
-	card.position = Vector2(-700, 70) if p == 0 else Vector2(get_viewport().get_visible_rect().size.x + 100, 70)
-	var goal_x = 40.0 if p == 0 else get_viewport().get_visible_rect().size.x - 40.0
+	card.position = Vector2(-700, 70) if p == me else Vector2(get_viewport().get_visible_rect().size.x + 100, 70)
+	var goal_x = 40.0 if p == me else get_viewport().get_visible_rect().size.x - 40.0
 	await get_tree().process_frame
 	if p == 1:
 		goal_x -= card.size.x

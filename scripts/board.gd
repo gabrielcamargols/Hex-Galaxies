@@ -32,6 +32,7 @@ const ZOOM_MIN = 4.0
 const ZOOM_MAX = 140.0
 const BIG = ["moby", "balu", "banker", "l_behemot", "l_leviathan", "z_dragao", "golk", "w_mamute", "k_tank", "z_tank", "l_tank", "l_colosso", "sismico", "rhombo", "tork", "w_tric", "z_meca", "t_fendas", "t_raiz", "t_basalto", "t_carrinho", "t_sentinela", "t_britadeira", "a_garra", "k_escudeiro", "w_urso", "w_gorila", "w_javali"]
 
+var me: int = 0   # jogador deste aparelho (cores: você azul, oponente laranja)
 var g: Game = null
 var cam: Camera3D
 var cam_yaw: float = 0.0
@@ -1155,7 +1156,7 @@ func _make_unit(u) -> void:
 	tor.inner_radius = 0.42
 	tor.outer_radius = 0.5
 	ring.mesh = tor
-	ring.material_override = _mat(Color("#3d8bff") if u.owner == 0 else Color("#ff7a2f"), true)
+	ring.material_override = _mat(Color("#3d8bff") if u.owner == me else Color("#ff7a2f"), true)
 	ring.position = Vector3(0, 0.04, 0)
 	ring.scale = Vector3(1, 0.4, 1)
 	node.add_child(ring)
@@ -1193,7 +1194,7 @@ func _make_unit(u) -> void:
 	heart.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	heart.no_depth_test = true
 	heart.render_priority = 5
-	heart.modulate = Color("#3d8bff") if u.owner == 0 else Color("#ff7a2f")
+	heart.modulate = Color("#3d8bff") if u.owner == me else Color("#ff7a2f")
 	heart.position = Vector3(0, body_h + 0.25, 0)
 	heart.visible = false   # a vida agora é a placa 2D da HUD (main.gd)
 	node.add_child(heart)
@@ -1384,7 +1385,7 @@ func _update_units(delta: float) -> void:
 			node.position = drag["world"] + Vector3(0, 0.6, 0)
 		# vida e marcas
 		d["hp"].text = str(u.hp)
-		d["heart"].modulate = (Color("#ff2a2a") if u.hp <= u.maxhp / 3 else (Color("#3d8bff") if u.owner == 0 else Color("#ff7a2f")))
+		d["heart"].modulate = (Color("#ff2a2a") if u.hp <= u.maxhp / 3 else (Color("#3d8bff") if u.owner == me else Color("#ff7a2f")))
 		var fl = []
 		if u.is_cmd:
 			fl.append("CMD")
@@ -1417,7 +1418,7 @@ func _update_units(delta: float) -> void:
 				d["lunge"] = max(0.0, d["lunge"] - delta * 3.0)
 				sy *= 1.0 + 0.15 * sin(d["lunge"] * PI)
 			sprite.scale = Vector3(1.0, sy, 1.0)
-		d["ring"].material_override.albedo_color = Color("#ffffff") if selected else (Color("#3d8bff") if u.owner == 0 else Color("#ff7a2f"))
+		d["ring"].material_override.albedo_color = Color("#ffffff") if selected else (Color("#3d8bff") if u.owner == me else Color("#ff7a2f"))
 		# etiqueta de dano previsto / motivo
 		var tg = state.get("tags", {}).get(u.uid, null)
 		if tg != null:
@@ -1561,6 +1562,10 @@ func fit_camera(snap: bool) -> void:
 		goal["yaw"] = PI / 2.0
 		goal["dist"] = PLAT * 3.25
 		goal["target"] = Vector3(-1.5, 0, 0)
+	if me == 1:
+		# o segundo jogador vê o tabuleiro do lado dele
+		goal["yaw"] += PI
+		goal["target"] = -goal["target"]
 	if snap:
 		cam_yaw = goal["yaw"]
 		cam_pitch = goal["pitch"]

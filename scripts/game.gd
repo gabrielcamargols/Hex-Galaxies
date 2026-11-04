@@ -70,6 +70,14 @@ var terr_ver: int = 0
 var earth: Dictionary = {}  # Vector2i -> ajuste de altura (Erguer a Terra)
 var tree: SceneTree = null
 var pace_time: float = 0.28
+# ---- online: os dois aparelhos rodam a mesma partida e trocam as jogadas ----
+signal remote_ans          # chegou a resposta de uma pergunta feita ao outro jogador
+var rng := RandomNumberGenerator.new()   # todo sorteio do jogo passa por aqui (mesma semente nos dois)
+var net_send: Callable = Callable()       # envia {"t": "cmd"/"ans", ...} para o outro aparelho
+var remote: Array = [false, false]        # lado controlado pelo outro aparelho
+var ans_buf: Array = []                   # respostas recebidas e ainda não usadas
+var replay: int = 0                       # > 0: repetindo uma jogada que veio do outro aparelho
+var net_depth: int = 0
 var pre_hex: Variant = null   # casa onde a carta foi solta (arrastar e soltar)
 var tac_fx: Variant = null    # tática esperando o alvo para mostrar o efeito
 const TAC_SELF = ["propulsor", "placas", "lente", "reparo", "camuflagem"]
@@ -84,7 +92,7 @@ func setup(sides: Array, mid: String) -> void:
 	DB.set_map(map_id)
 	var def = DB.maps[map_id]
 	if def.has("dunes"):
-		dune = randi() % def["dunes"].size()
+		dune = rng.randi() % def["dunes"].size()
 	if def.has("res"):
 		for rr in def["res"]:
 			res[Vector2i(rr[0], rr[1])] = rr[2]
@@ -93,7 +101,7 @@ func setup(sides: Array, mid: String) -> void:
 	for p in range(2):
 		var s = sides[p]
 		var deck = DB.tactic_ids.duplicate()
-		deck.shuffle()
+		_shuffle(deck)
 		var cmd_id = s.get("cmd", DB.factions[s["fac"]]["cmd"])
 		P.append({"fac": s["fac"], "cmd": cmd_id, "mix": s.get("mix", false), "deck": deck, "hand": [], "discard": [], "passed": false, "obj_used": {}, "discount": false})
 		_mk(cmd_id, p, "off")
@@ -365,11 +373,89 @@ func pace() -> void:
 
 
 func ask(p: int, q: Dictionary) -> Variant:
+	if remote[p]:
+		# quem responde é o outro aparelho: espera a resposta chegar pela rede
+		while ans_buf.is_empty():
+			question.emit(p, q)
+			await remote_ans
+		return ans_buf.pop_front()
+	var v: Variant = null
 	if cpu[p]:
-		return AI.answer(self, p, q)
-	question.emit(p, q)
-	var v = await answered
+		v = AI.answer(self, p, q)
+	else:
+		question.emit(p, q)
+		v = await answered
+	if net_send.is_valid():
+		net_send.call({"t": "ans", "v": v})
 	return v
+
+
+func _shuffle(arr: Array) -> void:
+	for i in range(arr.size() - 1, 0, -1):
+		var j = rng.randi() % (i + 1)
+		var t = arr[i]
+		arr[i] = arr[j]
+		arr[j] = t
+
+
+func _pick(arr: Array) -> Variant:
+	return arr[rng.randi() % arr.size()]
+
+
+# jogadas: quem joga envia, o outro aparelho repete (jogadas internas não são reenviadas)
+func _send_cmd(c: Array) -> void:
+	if net_send.is_valid() and replay == 0 and net_depth == 0:
+		net_send.call({"t": "cmd", "c": c})
+
+
+func _run(c: Array, f: Callable) -> Variant:
+	_send_cmd(c)
+	net_depth += 1
+	var r = await f.call()
+	net_depth -= 1
+	return r
+
+
+# repete uma jogada que veio do outro aparelho
+func exec_cmd(c: Array) -> void:
+	replay += 1
+	var u = by_uid(int(c[1])) if c.size() > 1 and (c[1] is int or c[1] is float) and c[0] != "pass" and c[0] != "tactic" else null
+	match c[0]:
+		"start":
+			start_activation(u)
+		"end":
+			await end_activation()
+		"pass":
+			await pass_turn(int(c[1]))
+		"deploy":
+			await deploy(u, c[2], bool(c[3]))
+		"move":
+			await act_move(u, c[2])
+		"attack":
+			await act_attack(u, by_uid(int(c[2])))
+		"moveatk":
+			await act_move_attack(u, c[2], by_uid(int(c[3])) if c[3] != null else null)
+		"tunnel":
+			await act_tunnel(u, c[2])
+		"ult":
+			await act_ult(u)
+		"interact":
+			await act_interact(u)
+		"collect":
+			await act_collect(u)
+		"tactic":
+			await play_tactic(int(c[1]), c[2], c[3])
+	replay -= 1
+
+
+# resumo do estado (para conferir que os dois aparelhos estão iguais)
+func state_hash() -> int:
+	var s = "%d|%d|%d|" % [round_no, cur, winner]
+	for u in units:
+		s += "%d:%s:%d:%d:%d;" % [u.uid, u.st, u.q, u.r, u.hp]
+	for pl in P:
+		s += ",".join(pl["hand"]) + "|"
+	return s.hash()
 
 
 func pick_hex(p: int, text: String, opts: Array, kind: String, optional: bool = false) -> Variant:
@@ -755,7 +841,7 @@ func draw_cards(p: int, n: int = 1) -> int:
 			if pl["discard"].is_empty():
 				break
 			pl["deck"] = pl["discard"].duplicate()
-			pl["deck"].shuffle()
+			_shuffle(pl["deck"])
 			pl["discard"] = []
 		pl["hand"].append(pl["deck"].pop_front())
 		got += 1
@@ -789,7 +875,7 @@ func begin_game() -> void:
 		if yes:
 			var pl = P[p]
 			pl["deck"].append_array(pl["hand"])
-			pl["deck"].shuffle()
+			_shuffle(pl["deck"])
 			pl["hand"] = []
 			draw_cards(p, 3)
 			log_msg(p, "Trocou a mão inicial.")
@@ -851,7 +937,7 @@ func map_events() -> void:
 			for i in range(def["dunes"].size()):
 				if i != dune:
 					opts.append(i)
-			dune_next = opts.pick_random()
+			dune_next = _pick(opts)
 			emitfx({"t": "wind"})
 			log_msg(-1, "O vento muda: no próximo round as dunas viram \"%s\"." % def["dunes"][dune_next]["name"])
 	if def.get("worms", false):
@@ -902,11 +988,11 @@ func map_events() -> void:
 		if (round_no + 1) % WORM_EVERY == 0:
 			var cand = DB.hexes.filter(func(h): return _tremor_ok(h))
 			if not cand.is_empty():
-				var c = cand.pick_random()
+				var c = _pick(cand)
 				tremors = [c, -c]
 				var c2s = cand.filter(func(h): return DB.dist(h, c) >= 3 and DB.dist(h, -c) >= 3)
 				if not c2s.is_empty():
-					var c2 = c2s.pick_random()
+					var c2 = _pick(c2s)
 					tremors.append(c2)
 					tremors.append(-c2)
 				log_msg(-1, "A areia treme: buracos de verme vão abrir no próximo round nas casas marcadas.")
@@ -1050,6 +1136,10 @@ func auto_pass() -> void:
 
 
 func pass_turn(p: int) -> void:
+	await _run(["pass", p], func(): await _pass_turn(p))
+
+
+func _pass_turn(p: int) -> void:
 	P[p]["passed"] = true
 	log_msg(p, "Passou.")
 	if P[1 - p]["passed"]:
@@ -1064,11 +1154,16 @@ func _new_act(u, actions: int, cant: bool) -> Dictionary:
 
 
 func start_activation(u) -> void:
+	_send_cmd(["start", u.uid])
 	act = _new_act(u, 2, false)
 	log_msg(u.owner, "Ativa %s." % nm(u))
 
 
 func deploy(u, h: Vector2i, via_obj: bool = false) -> void:
+	await _run(["deploy", u.uid, h, via_obj], func(): await _deploy(u, h, via_obj))
+
+
+func _deploy(u, h: Vector2i, via_obj: bool = false) -> void:
 	var p = u.owner
 	var pl = P[p]
 	u.st = "field"
@@ -1103,6 +1198,10 @@ func deploy(u, h: Vector2i, via_obj: bool = false) -> void:
 
 
 func end_activation() -> void:
+	await _run(["end"], func(): await _end_activation())
+
+
+func _end_activation() -> void:
 	if act == null:
 		return
 	var a = act
@@ -1132,6 +1231,10 @@ func can_attack_any(u) -> bool:
 
 # ================= ações =================
 func act_move(u, h: Vector2i) -> bool:
+	return await _run(["move", u.uid, h], func(): return await _act_move(u, h))
+
+
+func _act_move(u, h: Vector2i) -> bool:
 	if not is_live(u) or act["actions"] < 1 or rooted(u) or act["moved"]:
 		return false
 	if not can_reach(u, h):
@@ -1143,6 +1246,10 @@ func act_move(u, h: Vector2i) -> bool:
 
 
 func act_attack(u, t) -> bool:
+	return await _run(["attack", u.uid, t.uid], func(): return await _act_attack(u, t))
+
+
+func _act_attack(u, t) -> bool:
 	if not can_attack_now(u) or not attack_targets(u).has(t):
 		return false
 	act["actions"] -= 1
@@ -1151,6 +1258,10 @@ func act_attack(u, t) -> bool:
 
 
 func act_move_attack(u, h, t) -> bool:
+	return await _run(["moveatk", u.uid, h, t.uid if t != null else null], func(): return await _act_move_attack(u, h, t))
+
+
+func _act_move_attack(u, h, t) -> bool:
 	if not is_live(u) or act["actions"] < 1 or K(u).get("action", "") != "moveAttack":
 		return false
 	act["actions"] -= 1
@@ -1172,6 +1283,10 @@ func act_move_attack(u, h, t) -> bool:
 
 
 func act_tunnel(u, h: Vector2i) -> bool:
+	return await _run(["tunnel", u.uid, h], func(): return await _act_tunnel(u, h))
+
+
+func _act_tunnel(u, h: Vector2i) -> bool:
 	if not is_live(u) or act["actions"] < 1 or act["moved"]:
 		return false
 	if not tunnel_opts(u).has(h):
@@ -1310,6 +1425,10 @@ func ult_score(u, h: Vector2i) -> float:
 
 
 func act_ult(u) -> bool:
+	return await _run(["ult", u.uid], func(): return await _act_ult(u))
+
+
+func _act_ult(u) -> bool:
 	if not can_ult(u):
 		return false
 	var p = u.owner
@@ -1416,6 +1535,10 @@ func can_interact(u) -> bool:
 
 
 func act_interact(u) -> bool:
+	return await _run(["interact", u.uid], func(): return await _act_interact(u))
+
+
+func _act_interact(u) -> bool:
 	if not can_interact(u):
 		return false
 	var o = DB.obj_at(u.pos())
@@ -1449,6 +1572,10 @@ func can_collect(u) -> bool:
 
 
 func act_collect(u) -> bool:
+	return await _run(["collect", u.uid], func(): return await _act_collect(u))
+
+
+func _act_collect(u) -> bool:
 	if not can_collect(u):
 		return false
 	var k = u.pos()
@@ -1707,7 +1834,7 @@ func entry_effect(u) -> void:
 			var pl = P[p]
 			if pl["deck"].is_empty() and not pl["discard"].is_empty():
 				pl["deck"] = pl["discard"].duplicate()
-				pl["deck"].shuffle()
+				_shuffle(pl["deck"])
 				pl["discard"] = []
 			if not pl["deck"].is_empty():
 				var ans = await ask(p, {"t": "peek", "text": "%s: carta do topo do baralho." % name, "card": pl["deck"][0]})
@@ -2027,6 +2154,10 @@ func gancho_targets(u) -> Array:
 
 
 func play_tactic(p: int, id: String, drop: Variant = null) -> bool:
+	return await _run(["tactic", p, id, drop], func(): return await _play_tactic(p, id, drop))
+
+
+func _play_tactic(p: int, id: String, drop: Variant = null) -> bool:
 	if not tactic_playable(p, id):
 		return false
 	var A = act
@@ -2194,7 +2325,7 @@ func play_tactic(p: int, id: String, drop: Variant = null) -> bool:
 		"interceptar":
 			var oh = P[1 - p]["hand"]
 			if not oh.is_empty():
-				var cid = oh[randi() % oh.size()]
+				var cid = oh[rng.randi() % oh.size()]
 				oh.erase(cid)
 				P[p]["hand"].append(cid)
 				log_msg(p, "Interceptar: roubou %s do oponente." % DB.tactics[cid]["name"])
