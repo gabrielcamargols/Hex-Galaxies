@@ -805,6 +805,9 @@ func start_round() -> void:
 		pl["obj_used"] = {}
 		pl["passed"] = false
 	log_msg(-1, "Round %d começou." % round_no)
+	if round_no > 1 and (round_no - 1) % ZONE_GROW == 0:
+		log_msg(-1, "A área de entrada cresceu: agora vai até %d casas da base." % zone_radius())
+		emitfx({"t": "zone_grow", "r": zone_radius()})
 	await map_events()
 	if winner != NONE:
 		return
@@ -919,10 +922,10 @@ func commander_enters(p: int) -> void:
 	var c = commander(p)
 	if c.st != "off":
 		return
-	var opts = DB.entry[p].filter(func(h): return is_free(h))
+	var opts = deploy_hexes(p)
 	if opts.is_empty():
 		var occ = []
-		for h in DB.entry[p]:
+		for h in entry_zone(p):
 			var u = unit_at(h)
 			if u != null and u.owner == p and not u.barrier:
 				occ.append(h)
@@ -931,7 +934,7 @@ func commander_enters(p: int) -> void:
 			var back = unit_at(h)
 			back.st = "reserve"
 			log_msg(p, "%s voltou à reserva." % nm(back))
-			opts = DB.entry[p].filter(func(hh): return is_free(hh))
+			opts = deploy_hexes(p)
 	if opts.is_empty():
 		return
 	var d = await pick_hex(p, "%s entra em campo: escolha uma casa livre da sua entrada." % nm(c), opts, "place")
@@ -993,8 +996,24 @@ func do_final_score() -> void:
 
 
 # ================= ativações =================
+# a área de entrada cresce com os rounds: raio 1 (rounds 1-3), 2 (4-6), 3 (7-9), 4 (10)
+const ZONE_GROW = 3
+
+
+func zone_radius() -> int:
+	return 1 + int(max(0, round_no - 1) / ZONE_GROW)
+
+
+# casas da área de entrada do lado p (sempre na própria metade do mapa)
+func entry_zone(p: int) -> Array:
+	var r = zone_radius()
+	var c0 = DB.entry_c[p]
+	var c1 = DB.entry_c[1 - p]
+	return DB.hexes.filter(func(h): return DB.dist(h, c0) <= r and (DB.dist(h, c0) <= 1 or DB.dist(h, c0) < DB.dist(h, c1)))
+
+
 func deploy_hexes(p: int) -> Array:
-	return DB.entry[p].filter(func(h): return is_free(h))
+	return entry_zone(p).filter(func(h): return is_free(h))
 
 
 func reserve_of(p: int) -> Array:

@@ -12,7 +12,7 @@ const TDESC = {
 	"ossada": "Ossada baixa. Intransponível, abriga quem está ao lado (-2).", "ossada_c": "Ossada central. Dá para entrar; quem está dentro sofre -1 de tiros.",
 	"buraco": "Buraco de verme. Intransponível enquanto estiver aberto (2 rounds).",
 }
-const RULES = "[b]Objetivo:[/b] derrotar o Comandante inimigo (ele entra no round 6). No fim do round 10 vence quem tiver mais Vida no Comandante; empate: soma da Vida dos aliados.\n\n[b]Turno:[/b] os lados se alternam ativando 1 peça por vez. Cada peça ativada tem [b]2 ações[/b], e cada tipo só pode ser usado [b]1 vez por turno[/b]: mover 1 vez, atacar 1 vez, usar habilidade ativa (ex.: mover + atacar). [b]Táticas não gastam ação:[/b] cada peça ativada pode jogar 1 carta de graça. Arraste a carta e solte no personagem (ou na casa) destacado para escolher quem recebe o efeito. Habilidades passivas não gastam ação. Colocar uma reserva em campo gasta 1 ação.\n\n[b]Altura:[/b] atacar de cima +1 de dano, de baixo -1. Tiros (alcance 2+) de cima ganham +1 de alcance. Corpo a corpo só com até 1 nível de diferença.\n\n[b]Linha de tiro:[/b] uma casa no caminho bloqueia se o topo dela for mais alto que o atacante e o alvo.\n\n[b]Abrigo:[/b] -2 de dano se uma rocha/ruína/ossada vizinha ao alvo estiver do lado do atacante.\n\n[b]Tarhut:[/b] as dunas mudam a cada 5 rounds (aviso 1 round antes); a cada 3 rounds o [color=#ff6a4a]Verme Gigante[/color] sai da areia (o \"!\" avisa 1 round antes): quem estiver no buraco sofre 4 de dano e quem estiver ao lado, 1. Fuja das casas marcadas!\n\n[b]Controles:[/b] clique numa peça sua e depois numa casa verde (mover) ou num inimigo vermelho (atacar), ou arraste a peça e solte. Confirme a prévia. Botão direito gira a câmera, arrastar o fundo move o mapa, a roda aproxima. Q/E giram. Enter confirma, Esc cancela.\n\n[b]Toque (tablet/celular):[/b] toque numa peça e numa casa para agir. 1 dedo arrasta o mapa; pinça com 2 dedos aproxima/afasta; girar os 2 dedos gira a câmera; arrastar os 2 dedos para cima/baixo inclina a visão. \"Tudo\" recentraliza."
+const RULES = "[b]Objetivo:[/b] derrotar o Comandante inimigo (ele entra no round 6). No fim do round 10 vence quem tiver mais Vida no Comandante; empate: soma da Vida dos aliados.\n\n[b]Turno:[/b] os lados se alternam ativando 1 peça por vez. Cada peça ativada tem [b]2 ações[/b], e cada tipo só pode ser usado [b]1 vez por turno[/b]: mover 1 vez, atacar 1 vez, usar habilidade ativa (ex.: mover + atacar). [b]Táticas não gastam ação:[/b] cada peça ativada pode jogar 1 carta de graça. Arraste a carta e solte no personagem (ou na casa) destacado para escolher quem recebe o efeito. Habilidades passivas não gastam ação. Colocar uma reserva em campo gasta 1 ação. [b]A área de entrada cresce:[/b] nos rounds 1 a 3 ela vai até 1 casa da sua base, nos rounds 4 a 6 até 2 casas, nos rounds 7 a 9 até 3 casas e no round 10 até 4 casas (sempre na sua metade do mapa).\n\n[b]Altura:[/b] atacar de cima +1 de dano, de baixo -1. Tiros (alcance 2+) de cima ganham +1 de alcance. Corpo a corpo só com até 1 nível de diferença.\n\n[b]Linha de tiro:[/b] uma casa no caminho bloqueia se o topo dela for mais alto que o atacante e o alvo.\n\n[b]Abrigo:[/b] -2 de dano se uma rocha/ruína/ossada vizinha ao alvo estiver do lado do atacante.\n\n[b]Tarhut:[/b] as dunas mudam a cada 5 rounds (aviso 1 round antes); a cada 3 rounds o [color=#ff6a4a]Verme Gigante[/color] sai da areia (o \"!\" avisa 1 round antes): quem estiver no buraco sofre 4 de dano e quem estiver ao lado, 1. Fuja das casas marcadas!\n\n[b]Controles:[/b] clique numa peça sua e depois numa casa verde (mover) ou num inimigo vermelho (atacar), ou arraste a peça e solte. Confirme a prévia. Botão direito gira a câmera, arrastar o fundo move o mapa, a roda aproxima. Q/E giram. Enter confirma, Esc cancela.\n\n[b]Toque (tablet/celular):[/b] toque numa peça e numa casa para agir. 1 dedo arrasta o mapa; pinça com 2 dedos aproxima/afasta; girar os 2 dedos gira a câmera; arrastar os 2 dedos para cima/baixo inclina a visão. \"Tudo\" recentraliza."
 
 var board
 var game: Game = null
@@ -1738,7 +1738,7 @@ func refresh() -> void:
 	var H = highlights()
 	var st = {"hl": {}, "lit": null, "labels": {}, "label_colors": {}, "tags": {}, "sel_uid": -1, "ghost": null}
 	for p in range(2):
-		for h in DB.entry[p]:
+		for h in game.entry_zone(p):
 			st["hl"][h] = "entry%d" % p
 	if can_deploy_now() or dsel >= 0 or (res_drag != null and res_drag.get("on", false)):
 		for h in game.deploy_hexes(0):
@@ -3159,6 +3159,12 @@ func _on_fx(e: Dictionary) -> void:
 					vfx.flip("spikes", pp, 1.8, 0.5)
 		"card":
 			sfx.play("carta", -4.0)
+		"zone_grow":
+			_later(2.2, banner.bind("ÁREA DE ENTRADA MAIOR", "Agora dá para colocar personagens até %d casas da sua base" % int(e["r"])))
+			for pz in range(2):
+				var ew = board.world_xz(DB.entry_c[pz])
+				vfx.flip("ring", Vector3(ew.x, 0.3, ew.y), 3.0 + 2.6 * int(e["r"]), 0.9, C_DEPLOY if pz == 0 else C_CPU, true)
+			sfx.play("vfx_portal", -8.0)
 		"tactic_on":
 			var tcol: Color = TYPE_COL.get(DB.tactics[e["id"]]["type"], C_CARD)
 			var tp = _hex_pos(e["h"], 0.05)
