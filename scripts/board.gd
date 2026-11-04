@@ -165,6 +165,7 @@ func build(game: Game) -> void:
 	_build_far(desert)
 	built_ver = -1
 	refresh_terrain()
+	_build_rails()
 	fit_camera(true)
 
 
@@ -684,11 +685,17 @@ func _cen_tile(root: Node3D, h: Vector2i, k: String) -> bool:
 	if desert:
 		match k:
 			"rocha":
+				# mesas de arenito e pilhas de rocha se alternam, para a crista não ficar repetida
+				if (h.x * 3 + h.y * 5 + 99) % 2 == 0:
+					return _model(root, "tarhut_arenito_%d" % v, Vector3.ZERO, 1.6, yaw, true)
 				return _model(root, "cen_tarhut_rocha_%d" % v, Vector3.ZERO, 1.45, yaw, true)
-			"ossada":
+			"ossada", "ossada_c":
+				# o esqueleto do centro é uma peça só, gigante, sobre as casas do meio
+				if DB.dist(h, Vector2i.ZERO) <= 1:
+					if h == Vector2i.ZERO:
+						return _model(root, "cen_tarhut_ossada_0", Vector3(0, 0, 0), 5.2, 0.5, true)
+					return true
 				return _model(root, "cen_tarhut_ossada_%d" % v, Vector3.ZERO, 1.7, yaw, true)
-			"ossada_c":
-				return _model(root, "cen_tarhut_ossada_%d" % v, Vector3(0, 0, -0.05), 1.95, yaw, true)
 			"buraco":
 				return _model(root, "cen_tarhut_buraco_%d" % v, Vector3(0, -0.05, 0), 1.55, yaw, true)
 		return false
@@ -930,63 +937,172 @@ func _rock_fallback(root: Node3D) -> void:
 	_mesh(root, _cyl(0.32, 0.5, 0.35, 6), Color("#a8937a"), Vector3(0.05, 0.75, -0.04), Vector3(0, 0.7, 0))
 
 
+# ---------- entorno do planeta: regiões temáticas em volta do tabuleiro ----------
+# cada região tem um tema (ângulo relativo à base do jogador 0, em graus) e o mesmo modelo
+# não se repete em casas vizinhas. Os temas se espelham do outro lado (simetria do mapa).
+const BIOMES = {
+	"valak": [[0, 42, "camp"], [70, 30, "forest"], [122, 22, "rocks"]],
+	"tarhut": [[0, 45, "mesa"], [72, 26, "bones"], [124, 24, "crystal"]],
+}
+# [modelo (sem _n), peso, diâmetro, distância mínima do tabuleiro]
+const THEMES = {
+	"camp": [["cen_valak_caixa", 2.0, 0.8, 1], ["cen_valak_barril", 2.0, 0.55, 1], ["cen_valak_vagonete", 1.2, 1.0, 1], ["valak_tanque", 0.8, 1.6, 2]],
+	"forest": [["cen_valak_pinheiro", 5.0, 1.2, 1], ["cen_valak_rocha", 0.7, 1.1, 1]],
+	"rocks": [["cen_valak_rocha", 4.0, 1.4, 1], ["cen_valak_pinheiro", 1.0, 1.1, 1]],
+	"sea": [["cen_valak_pinheiro", 1.0, 1.0, 2], ["cen_valak_rocha", 1.0, 1.0, 2]],
+	"mesa": [["tarhut_arenito", 3.0, 1.9, 1], ["cen_tarhut_rocha", 2.0, 1.5, 1], ["cen_tarhut_cacto", 0.6, 0.9, 1]],
+	"bones": [["cen_tarhut_ossada", 2.5, 1.9, 1], ["tarhut_ossos", 1.5, 1.6, 2], ["cen_tarhut_cacto_bola", 0.8, 0.8, 1]],
+	"crystal": [["cen_tarhut_cristal", 3.0, 1.0, 1], ["tarhut_cristal", 1.5, 1.2, 2], ["cen_tarhut_rocha", 0.6, 1.2, 1]],
+	"open": [["cen_tarhut_cacto", 1.0, 0.95, 1], ["cen_tarhut_cacto_bola", 1.0, 0.85, 1]],
+}
+const DENSITY = {"camp": 0.5, "forest": 0.85, "rocks": 0.55, "sea": 0.1, "mesa": 0.6, "bones": 0.38, "crystal": 0.5, "open": 0.12}
+# peças únicas de cada região (uma só, em lugar de destaque)
+const LANDMARKS = {
+	"camp": [["cen_valak_domo", 2.4, 2, -12.0], ["valak_guindaste", 2.4, 3, 14.0], ["valak_torre", 1.7, 2, 26.0]],
+	"bones": [["tarhut_destroco", 2.6, 3, 0.0]],
+}
+
+
+func _ang_diff(a: float, b: float) -> float:
+	return abs(wrapf(a - b, -PI, PI))
+
+
+func _biome_of(h: Vector2i, desert: bool) -> Array:
+	var wp = world_xz(h)
+	var ang = atan2(wp.y, wp.x)
+	var e0 = world_xz(DB.entry_c[0])
+	var a0 = atan2(e0.y, e0.x)
+	for side in [0.0, PI]:
+		for bdef in BIOMES["tarhut" if desert else "valak"]:
+			var c = a0 + side + deg_to_rad(float(bdef[0]))
+			var d = _ang_diff(ang, c)
+			if d <= deg_to_rad(float(bdef[1])):
+				return [bdef[2], c, d]
+	return ["open" if desert else "sea", 0.0, 1.0]
+
+
+func _ground_at(p: Vector3, desert: bool, foot: float) -> Vector3:
+	if desert:
+		return p
+	# Valak é cercado de água: cada peça fica numa ilhota de areia e grama
+	var r = max(0.7, foot * 0.62)
+	var isl = _mesh(scenery_root, _cyl(r, r * 1.22, 0.35, 9), Color("#e8d29a"), p + Vector3(0, 0.05, 0))
+	isl.material_overlay = outline_mat
+	_mesh(scenery_root, _cyl(r * 0.8, r, 0.2, 9), Color("#7fb54a"), p + Vector3(0, 0.3, 0))
+	return p + Vector3(0, 0.4, 0)
+
+
 func _build_scenery(desert: bool) -> void:
+	var placed = {}
+	var used_marks = {}
+	var cells = []
 	for q in range(-DB.R - 4, DB.R + 5):
 		for r in range(-DB.R - 4, DB.R + 5):
 			var h = Vector2i(q, r)
 			var d = DB.out_dist(h)
-			if d <= 0 or d > 4:
+			if d >= 1 and d <= 4:
+				cells.append(h)
+	# marcos primeiro: um por região, na distância e ângulo definidos
+	for side in [0.0, PI]:
+		for bdef in BIOMES["tarhut" if desert else "valak"]:
+			var theme = bdef[2]
+			if not LANDMARKS.has(theme):
 				continue
-			if _rnd(h, 9) < (0.55 if d == 1 else 0.7):
+			for lm in LANDMARKS[theme]:
+				var e0 = world_xz(DB.entry_c[0])
+				var want = atan2(e0.y, e0.x) + side + deg_to_rad(float(bdef[0]) + float(lm[3]))
+				var best: Variant = null
+				var bd = 1e9
+				for h in cells:
+					if DB.out_dist(h) != int(lm[2]) or placed.has(h):
+						continue
+					var wp = world_xz(h)
+					var dd = _ang_diff(atan2(wp.y, wp.x), want)
+					if dd < bd:
+						bd = dd
+						best = h
+				if best == null:
+					continue
+				var wpb = world_xz(best)
+				var pb = Vector3(wpb.x, planet_y(wpb.x, wpb.y), wpb.y)
+				pb = _ground_at(pb, desert, float(lm[1]))
+				var toward = atan2(-wpb.x, -wpb.y)
+				if _model(scenery_root, "%s_%d" % [lm[0], int(side > 0)], pb, float(lm[1]), toward + _rnd(best, 3) * 0.6 - 0.3, true):
+					placed[best] = lm[0]
+					for n in DB.DIRS:
+						placed[best + n] = "_livre"
+	# o resto: cada casa segue o tema da sua região, sem repetir o vizinho
+	for h in cells:
+		if placed.has(h):
+			continue
+		var d = DB.out_dist(h)
+		var bio = _biome_of(h, desert)
+		var theme = bio[0]
+		var dens = DENSITY[theme]
+		# as bordas da região ficam mais ralas: transição natural para a próxima
+		dens *= clamp(1.25 - float(bio[2]) * 1.4, 0.35, 1.0) if theme != "sea" and theme != "open" else 1.0
+		if d == 1:
+			dens *= 0.55
+		if _rnd(h, 9) > dens:
+			continue
+		var near = []
+		for n in DB.DIRS:
+			if placed.has(h + n):
+				near.append(placed[h + n])
+		var opts = THEMES[theme].filter(func(e): return d >= int(e[3]) and not near.has(e[0]))
+		if opts.is_empty():
+			continue
+		var tot = 0.0
+		for e in opts:
+			tot += float(e[1])
+		var roll = _rnd(h, 11) * tot
+		var pick = opts[0]
+		for e in opts:
+			roll -= float(e[1])
+			if roll <= 0.0:
+				pick = e
+				break
+		var wp = world_xz(h)
+		var px = wp.x + (_rnd(h, 5) - 0.5) * 0.7
+		var pz = wp.y + (_rnd(h, 6) - 0.5) * 0.7
+		var sz = float(pick[2]) * (0.85 + _rnd(h, 8) * 0.35) * (0.85 if d == 1 else 1.0)
+		var p = Vector3(px, planet_y(px, pz), pz)
+		p = _ground_at(p, desert, sz)
+		if _model(scenery_root, "%s_%d" % [pick[0], int(_rnd(h, 12) * 3) % 3], p, sz, _rnd(h, 13) * TAU, true):
+			placed[h] = pick[0]
+
+
+# trilhos da mina (Valak): ligam as bases ao poço central
+func _build_rails() -> void:
+	var rails = DB.maps[g.map_id].get("rails", [])
+	if rails.is_empty():
+		return
+	var set = {}
+	for e in rails:
+		set[Vector2i(int(e[0]), int(e[1]))] = true
+		set[Vector2i(-int(e[0]), -int(e[1]))] = true
+	var wood = Color("#6e4a2a")
+	var steel = Color("#9aa2ae")
+	for h in set.keys():
+		var c = world_xz(h)
+		var y = top_y(h) + 0.03
+		for n in DB.DIRS:
+			if not set.has(h + n):
 				continue
-			var wp = world_xz(h)
-			var px = wp.x + (_rnd(h, 5) - 0.5) * 0.9
-			var pz = wp.y + (_rnd(h, 6) - 0.5) * 0.9
-			var p = Vector3(px, planet_y(px, pz), pz)
-			var s = 0.8 + _rnd(h, 8) * 0.6
-			var k = int(_rnd(h, 7) * 6)
-			if not desert and _rnd(h, 14) < 0.6:
-				var isl = _mesh(scenery_root, _cyl(0.75 * s, 0.95 * s, 0.35, 8), Color("#e8d29a"), p + Vector3(0, 0.05, 0))
-				isl.material_overlay = outline_mat
-				_mesh(scenery_root, _cyl(0.55 * s, 0.75 * s, 0.2, 8), Color("#7fb54a"), p + Vector3(0, 0.3, 0))
-				p += Vector3(0, 0.4, 0)
-			if _prop(scenery_root, desert, h, p, s * (1.0 if d > 1 else 0.8), d):
-				continue
-			if desert:
-				match k:
-					0, 1:
-						if not _model(scenery_root, "rocha", p, 1.1 * s, _rnd(h, 2) * TAU):
-							_mesh(scenery_root, _cyl(0.3 * s, 0.45 * s, 0.6 * s, 6), Color("#8a7562"), p + Vector3(0, 0.3 * s, 0), Vector3(0, _rnd(h, 2) * 3.0, 0))
-					2:
-						if not _model(scenery_root, "ossada", p, 1.3 * s, _rnd(h, 3) * TAU):
-							_ribs(scenery_root, p, s * 0.8, 4)
-					3:
-						for i in range(3):
-							var cm = _mesh(scenery_root, _cyl(0.0, 0.1 * s, (0.5 + i * 0.25) * s, 5), Color("#a35cf0").lerp(Color("#c98aff"), i * 0.4), p + Vector3(-0.2 + i * 0.2, (0.25 + i * 0.12) * s, 0))
-							var em = StandardMaterial3D.new()
-							em.albedo_color = Color("#b06af5")
-							em.emission_enabled = true
-							em.emission = Color("#8a4ad8")
-							em.emission_energy_multiplier = 0.6
-							cm.material_override = em
-					4:
-						_mesh(scenery_root, _cyl(0.09 * s, 0.09 * s, 0.9 * s, 8), Color("#5f9a4a"), p + Vector3(0, 0.45 * s, 0))
-						_mesh(scenery_root, _cyl(0.06 * s, 0.06 * s, 0.35 * s, 8), Color("#5f9a4a"), p + Vector3(0.15 * s, 0.6 * s, 0), Vector3(0, 0, 1.2))
-					_:
-						var dm = _mesh(scenery_root, SphereMesh.new(), Color("#f0cf8e"), p)
-						dm.scale = Vector3(1.6 * s, 0.4 * s, 1.1 * s)
-			else:
-				match k:
-					0, 1, 2:
-						_mesh(scenery_root, _cyl(0.6 * s, 0.7 * s, 0.3, 7), Color("#8fc24e"), p + Vector3(0, 0.12, 0), Vector3(0, _rnd(h, 3) * 3.0, 0))
-						if _rnd(h, 4) > 0.4:
-							_pine(scenery_root, p + Vector3(0, 0.27, 0), 0.9 * s)
-					3:
-						_mesh(scenery_root, _cyl(0.3 * s, 0.45 * s, 0.5 * s, 6), Color("#8a7562"), p + Vector3(0, 0.2 * s, 0))
-					4:
-						_mesh(scenery_root, _box(Vector3(0.45, 0.45, 0.45)), Color("#a6763f"), p + Vector3(0, 0.15, 0), Vector3(0, _rnd(h, 1) * 3.0, 0))
-					_:
-						_mesh(scenery_root, _cyl(0.0, 0.15, 0.5, 6), Color("#e0563f"), p + Vector3(0, 0.2, 0))
+			var o = world_xz(h + n)
+			var mid = (c + o) * 0.5
+			var dirv = (mid - c)
+			var ang = atan2(dirv.x, dirv.y)
+			var seg = Node3D.new()
+			seg.position = Vector3(c.x, y, c.y)
+			seg.rotation = Vector3(0, ang, 0)
+			scenery_root.add_child(seg)
+			var L = dirv.length()
+			for k in range(3):
+				var sl = _mesh(seg, _box(Vector3(0.62, 0.05, 0.12)), wood, Vector3(0, 0, L * (k + 0.5) / 3.0))
+				sl.material_overlay = outline_mat
+			for sx in [-0.2, 0.2]:
+				_mesh(seg, _box(Vector3(0.05, 0.06, L + 0.02)), steel, Vector3(sx, 0.04, L * 0.5))
 
 
 func _make_heart() -> ImageTexture:
