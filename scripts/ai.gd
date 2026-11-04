@@ -355,6 +355,24 @@ static func answer(g, p: int, q: Dictionary) -> Variant:
 	return null
 
 
+# modo Mix: comandante e tropas de qualquer facção
+static func setup_mix() -> Dictionary:
+	var cmds = []
+	for f in DB.factions.keys():
+		cmds.append(DB.factions[f]["cmd"])
+	var cmd = cmds[randi() % cmds.size()]
+	var pool = DB.card_list.filter(func(c): return not c.get("cmd", false))
+	pool.shuffle()
+	var picks = []
+	var needs = [func(c): return int(c["alc"]) >= 2, func(c): return int(c["int"]) >= 10, func(_c): return true, func(_c): return true, func(_c): return true]
+	for f in needs:
+		for c in pool:
+			if f.call(c) and not picks.has(c["id"]):
+				picks.append(c["id"])
+				break
+	return {"fac": DB.cards[cmd]["f"], "cmd": cmd, "mix": true, "picks": picks}
+
+
 static func setup(fac: String) -> Dictionary:
 	var pool = DB.card_list.filter(func(c): return c["f"] == fac and not c.get("cmd", false))
 	pool.shuffle()

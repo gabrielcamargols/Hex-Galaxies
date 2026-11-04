@@ -36,6 +36,9 @@ var font_title: Font = null
 var font_btn: Font = null
 var setup_cfg: Dictionary = {"map": "tarhut", "fac": "ABY", "cpu": "FAU"}
 var army_picks: Array = []     # 5 ids escolhidos pelo jogador
+var mix: bool = false          # modo Mix: tropas e comandante de qualquer facção
+var mix_cmd: String = ""
+var mix_filter: String = ""    # filtro de facção na grade do Mix ("" = todas)
 var army_start: Array = []     # até 2 ids que começam em campo
 var army_fac: String = ""
 var army_detail: String = ""   # peça mostrada no painel de detalhes
@@ -640,7 +643,34 @@ func _to_army() -> void:
 
 # ================= montar exército =================
 func _army_pool() -> Array:
+	if mix:
+		return DB.card_list.filter(func(c): return not c.get("cmd", false) and (mix_filter == "" or c["f"] == mix_filter))
 	return DB.card_list.filter(func(c): return c["f"] == setup_cfg["fac"] and not c.get("cmd", false))
+
+
+func _cur_cmd() -> String:
+	if mix and mix_cmd != "":
+		return mix_cmd
+	return DB.factions[setup_cfg["fac"]]["cmd"]
+
+
+func _mix_cmd_step(d: int) -> void:
+	var cmds = []
+	for f in DB.factions.keys():
+		cmds.append(DB.factions[f]["cmd"])
+	var i = cmds.find(mix_cmd)
+	mix_cmd = cmds[(i + d + cmds.size()) % cmds.size()]
+	setup_cfg["fac"] = DB.cards[mix_cmd]["f"]
+	army_detail = mix_cmd
+	sfx.play("clique", -8.0)
+	_fac_music(setup_cfg["fac"])
+	_army_refresh()
+
+
+func _mix_filter_pick(f: String) -> void:
+	mix_filter = f
+	sfx.play("clique", -8.0)
+	_army_refresh_rest()
 
 
 func _fac_col(f: String) -> Color:
@@ -738,8 +768,9 @@ func _show_army() -> void:
 	stage = "army"
 	sfx.stop_loop("musica_galaxia", 1.5)
 	_fac_music(setup_cfg["fac"])
-	if army_fac != setup_cfg["fac"]:
-		army_fac = setup_cfg["fac"]
+	var akey = "MIX" if mix else setup_cfg["fac"]
+	if army_fac != akey:
+		army_fac = akey
 		army_picks = []
 		army_start = []
 	_clear_ui()
@@ -770,6 +801,8 @@ func _show_army() -> void:
 	for f in DB.factions.keys():
 		ob.add_item(DB.factions[f]["short"])
 		ob.set_item_metadata(ob.item_count - 1, f)
+	ob.add_item("Mix (misturado)")
+	ob.set_item_metadata(ob.item_count - 1, "MIX")
 	for i in range(ob.item_count):
 		if ob.get_item_metadata(i) == setup_cfg["cpu"]:
 			ob.selected = i
@@ -800,6 +833,11 @@ func _show_army() -> void:
 	_label(mh, "TROPAS", 22, C_TXT)
 	var mt = _label(mh, "toque para pôr ou tirar do exército", 12, C_DIM)
 	mt.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var mixbar = HFlowContainer.new()
+	mixbar.add_theme_constant_override("h_separation", 5)
+	mixbar.add_theme_constant_override("v_separation", 5)
+	mid.add_child(mixbar)
+	w["mixbar"] = mixbar
 	var sc = ScrollContainer.new()
 	sc.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -862,8 +900,8 @@ func _show_army() -> void:
 	go.custom_minimum_size = Vector2(130 if compact else 190, 0)
 	go.add_theme_font_size_override("font_size", 17 if compact else 22)
 	w["go"] = go
-	if army_detail == "" or not DB.cards.has(army_detail) or DB.cards[army_detail]["f"] != setup_cfg["fac"]:
-		army_detail = DB.factions[setup_cfg["fac"]]["cmd"]
+	if army_detail == "" or not DB.cards.has(army_detail) or (not mix and DB.cards[army_detail]["f"] != setup_cfg["fac"]):
+		army_detail = _cur_cmd()
 	_army_refresh()
 
 
@@ -875,12 +913,12 @@ func _army_refresh() -> void:
 	# abas de facção
 	for c in w["tabs"].get_children():
 		c.queue_free()
-	for f in DB.factions.keys():
-		var on = f == fac
+	for f in DB.factions.keys() + ["MIX"]:
+		var on = (f == fac and not mix) if f != "MIX" else mix
 		var b = Button.new()
-		b.custom_minimum_size = Vector2(56, 54) if compact else Vector2(52 + DB.factions[f]["short"].length() * 9, 54)
-		b.tooltip_text = DB.factions[f]["short"]
-		var col = _fac_col(f)
+		b.custom_minimum_size = Vector2(56, 54) if compact else Vector2(52 + (DB.factions[f]["short"].length() if f != "MIX" else 4) * 9, 54)
+		b.tooltip_text = DB.factions[f]["short"] if f != "MIX" else "Mix: misture todas as facções"
+		var col = _fac_col(f) if f != "MIX" else Color("#e8e0ff")
 		b.add_theme_stylebox_override("normal", _flat(Color(col.darkened(0.55), 0.92) if on else Color(0.03, 0.05, 0.1, 0.85), col if on else col.darkened(0.35), 2 if on else 1, 8, 4))
 		b.add_theme_stylebox_override("hover", _flat(Color(col.darkened(0.5), 0.95), col.lightened(0.2), 2, 8, 4))
 		b.add_theme_stylebox_override("pressed", _flat(Color(col.darkened(0.4), 0.95), col.lightened(0.3), 2, 8, 4))
@@ -891,10 +929,15 @@ func _army_refresh() -> void:
 		hb.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 4)
 		hb.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		b.add_child(hb)
-		var cid = DB.factions[f]["cmd"]
-		if DB.portraits.has(cid):
-			hb.add_child(_tex_rect(DB.portraits[cid], Vector2(38, 42)))
-		var tl = _label(hb, DB.factions[f]["short"], 11, Color.WHITE if on else col.lightened(0.45))
+		if f == "MIX":
+			var ml = _label(hb, "✦", 24, Color.WHITE if on else col)
+			ml.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			ml.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		else:
+			var cid = DB.factions[f]["cmd"]
+			if DB.portraits.has(cid):
+				hb.add_child(_tex_rect(DB.portraits[cid], Vector2(38, 42)))
+		var tl = _label(hb, DB.factions[f]["short"] if f != "MIX" else "Mix", 11, Color.WHITE if on else col.lightened(0.45))
 		tl.visible = not compact
 		tl.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		tl.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -905,14 +948,14 @@ func _army_refresh() -> void:
 	for c in w["cmdp"].get_children():
 		c.queue_free()
 	w["cmdp"].add_theme_stylebox_override("panel", _flat(Color(0.03, 0.05, 0.11, 0.86), fc, 2, 12, 12))
-	var cid2 = DB.factions[fac]["cmd"]
+	var cid2 = _cur_cmd()
 	var cc = DB.cards[cid2]
 	var cv = _vbox(w["cmdp"], 6)
 	var ch = _hbox(cv, 10)
 	if DB.portraits.has(cid2):
 		ch.add_child(_tex_rect(DB.portraits[cid2], Vector2(76, 76)))
 	var cnv = _vbox(ch, 1)
-	_label(cnv, "COMANDANTE · %s" % DB.factions[fac]["short"].to_upper(), 11, fc.lightened(0.35))
+	_label(cnv, ("COMANDANTE · %s" % DB.factions[fac]["short"].to_upper()) if not mix else ("MIX · COMANDANTE (%s)" % DB.factions[fac]["short"].to_upper()), 11, fc.lightened(0.35))
 	_label(cnv, cc["name"], 22, C_GOLD)
 	_label(cnv, "Vida %d · Atq %d · Mov %d · entra no round 6" % [int(cc["int"]), int(cc["atk"]), int(cc["mov"])], 12, C_DIM)
 	var cb = Button.new()
@@ -921,6 +964,13 @@ func _army_refresh() -> void:
 	cb.add_theme_font_size_override("font_size", 11)
 	cb.pressed.connect(_army_show.bind(cid2))
 	cnv.add_child(cb)
+	if mix:
+		var sw = _hbox(cnv, 6)
+		var pb = _cbtn(sw, "◀", C_HUD, _mix_cmd_step.bind(-1))
+		pb.custom_minimum_size = Vector2(44, 32)
+		_label(sw, "trocar comandante", 11, C_DIM).size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		var nb = _cbtn(sw, "▶", C_HUD, _mix_cmd_step.bind(1))
+		nb.custom_minimum_size = Vector2(44, 32)
 	if compact:
 		_army_refresh_rest()
 		return
@@ -932,6 +982,24 @@ func _army_refresh() -> void:
 
 
 func _army_refresh_rest() -> void:
+	# filtro de facção (só no Mix)
+	for c in w["mixbar"].get_children():
+		c.queue_free()
+	w["mixbar"].visible = mix
+	if mix:
+		for f in [""] + DB.factions.keys():
+			var col = Color("#e8e0ff") if f == "" else _fac_col(f)
+			var on = mix_filter == f
+			var fb = Button.new()
+			fb.text = "Todas" if f == "" else DB.factions[f]["short"]
+			fb.add_theme_font_size_override("font_size", 11 if compact else 12)
+			fb.add_theme_stylebox_override("normal", _flat(Color(col.darkened(0.55), 0.92) if on else Color(0.03, 0.05, 0.1, 0.85), col if on else col.darkened(0.35), 2 if on else 1, 6, 5))
+			fb.add_theme_stylebox_override("hover", _flat(Color(col.darkened(0.5), 0.95), col.lightened(0.2), 2, 6, 5))
+			fb.add_theme_stylebox_override("pressed", _flat(Color(col.darkened(0.4), 0.95), col, 2, 6, 5))
+			fb.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+			fb.add_theme_color_override("font_color", Color.WHITE if on else col.lightened(0.4))
+			fb.pressed.connect(_mix_filter_pick.bind(f))
+			w["mixbar"].add_child(fb)
 	# grade
 	for c in w["grid"].get_children():
 		c.queue_free()
@@ -1059,7 +1127,7 @@ func _army_slot(id: String) -> Control:
 		l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		return p
 	var on = army_start.has(id)
-	p.add_theme_stylebox_override("panel", _flat(Color(0.05, 0.08, 0.16, 0.92), C_GOLD if on else _fac_col(setup_cfg["fac"]), 2, 8, 5))
+	p.add_theme_stylebox_override("panel", _flat(Color(0.05, 0.08, 0.16, 0.92), C_GOLD if on else _fac_col(DB.cards[id]["f"]), 2, 8, 5))
 	var v = _vbox(p, 2)
 	var tex = DB.portraits.get(id, null)
 	v.add_child(_tex_rect(tex, Vector2(0, 36 if compact else 50)))
@@ -1184,8 +1252,21 @@ func _army_detail_build() -> void:
 
 
 func _army_fac_pick(f: String) -> void:
-	if f == setup_cfg["fac"]:
+	if f == "MIX":
+		if mix:
+			return
+		# entra no Mix mantendo as tropas já escolhidas
+		mix = true
+		mix_cmd = DB.factions[setup_cfg["fac"]]["cmd"]
+		mix_filter = ""
+		army_fac = "MIX"
+		army_detail = mix_cmd
+		sfx.play("clique", -8.0)
+		_army_refresh()
 		return
+	if f == setup_cfg["fac"] and not mix:
+		return
+	mix = false
 	setup_cfg["fac"] = f
 	army_fac = f
 	army_picks = []
@@ -1239,7 +1320,7 @@ func _army_star(id: String) -> void:
 
 
 func _army_random() -> void:
-	var x = AI.setup(setup_cfg["fac"])["picks"]
+	var x = AI.setup_mix()["picks"] if mix else AI.setup(setup_cfg["fac"])["picks"]
 	for id in x:
 		if army_picks.size() < 5 and not army_picks.has(id):
 			army_picks.append(id)
@@ -1264,7 +1345,7 @@ func _army_clear() -> void:
 
 
 func _cpu_fac() -> String:
-	if setup_cfg["cpu"] != "RND" and DB.factions.has(setup_cfg["cpu"]):
+	if setup_cfg["cpu"] == "MIX" or (setup_cfg["cpu"] != "RND" and DB.factions.has(setup_cfg["cpu"])):
 		return setup_cfg["cpu"]
 	var fs = DB.factions.keys().filter(func(f): return f != setup_cfg["fac"])
 	return fs[randi() % fs.size()]
@@ -1277,7 +1358,7 @@ func _army_go() -> void:
 	sfx.play("confirmar", -6.0)
 	DB.set_map(setup_cfg["map"])
 	var spots = DB.entry[0]
-	var mine = {"fac": setup_cfg["fac"], "picks": army_picks.duplicate(), "start": [{"id": army_start[0], "h": spots[0]}, {"id": army_start[1], "h": spots[spots.size() - 1]}]}
+	var mine = {"fac": setup_cfg["fac"], "cmd": _cur_cmd(), "mix": mix, "picks": army_picks.duplicate(), "start": [{"id": army_start[0], "h": spots[0]}, {"id": army_start[1], "h": spots[spots.size() - 1]}]}
 	var sides = [mine, _cpu_side(1, _cpu_fac())]
 	await _ui_fade(0.0, 0.4)
 	sfx.play("vfx_portal", -6.0)
@@ -1293,7 +1374,7 @@ func _army_go() -> void:
 
 func _cpu_side(p: int, fac: String) -> Dictionary:
 	DB.set_map(setup_cfg["map"])
-	var s = AI.setup(fac)
+	var s = AI.setup_mix() if fac == "MIX" else AI.setup(fac)
 	var tough = s["picks"].duplicate()
 	tough.sort_custom(func(a, b): return int(DB.cards[a]["int"]) > int(DB.cards[b]["int"]))
 	var spots = DB.entry[p]
@@ -1307,7 +1388,7 @@ func _start_match(sides) -> void:
 		sides = []
 		for p in range(2):
 			var fac = setup_cfg["fac"] if p == 0 else setup_cfg["cpu"]
-			var s = AI.setup(fac)
+			var s = AI.setup_mix() if fac == "MIX" else AI.setup(fac)
 			var tough = s["picks"].duplicate()
 			tough.sort_custom(func(a, b): return int(DB.cards[a]["int"]) > int(DB.cards[b]["int"]))
 			var spots = DB.entry[p]
@@ -1785,7 +1866,7 @@ func _refresh_party() -> void:
 		var box: VBoxContainer = w["party%d" % p]
 		for c in box.get_children():
 			c.queue_free()
-		_label(box, ("VOCÊ · " if p == 0 else "CPU · ") + DB.factions[game.P[p]["fac"]]["short"], 13, Color("#4f9be0") if p == 0 else Color("#e0563f"))
+		_label(box, ("VOCÊ · " if p == 0 else "CPU · ") + ("Mix" if game.P[p].get("mix", false) else DB.factions[game.P[p]["fac"]]["short"]), 13, Color("#4f9be0") if p == 0 else Color("#e0563f"))
 		var dep_ok = p == 0 and can_deploy_now()
 		var shown_res_head = false
 		for u in game.units:
@@ -3738,12 +3819,12 @@ func _entrance_side(p: int, layer: Control) -> void:
 	card.add_theme_stylebox_override("panel", _flat(Color(0.02, 0.04, 0.09, 0.9), fcol, 3, 12, 14))
 	layer.add_child(card)
 	var h = _hbox(card, 14)
-	var cid = DB.factions[fac]["cmd"]
+	var cid = game.P[p].get("cmd", DB.factions[fac]["cmd"])
 	if DB.portraits.has(cid):
 		h.add_child(_tex_rect(DB.portraits[cid], Vector2(110, 110)))
 	var v = _vbox(h, 2)
 	_label(v, "VOCÊ" if p == 0 else "ADVERSÁRIO", 13, C_YOU if p == 0 else C_CPU)
-	_label(v, DB.factions[fac]["name"].to_upper(), 34, fcol.lightened(0.35))
+	_label(v, "EXÉRCITO MISTO" if game.P[p].get("mix", false) else DB.factions[fac]["name"].to_upper(), 34, fcol.lightened(0.35))
 	_label(v, "Comandante: %s · chega no round 6" % DB.cards[cid]["name"], 15, C_DIM)
 	card.position = Vector2(-700, 70) if p == 0 else Vector2(get_viewport().get_visible_rect().size.x + 100, 70)
 	var goal_x = 40.0 if p == 0 else get_viewport().get_visible_rect().size.x - 40.0

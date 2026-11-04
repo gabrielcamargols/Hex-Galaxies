@@ -2,12 +2,15 @@ extends Node
 ## Teste de balanceamento: CPU contra CPU em todos os confrontos de facção, nos dois mapas.
 ## godot --headless --path . -- --balance=N out=/caminho/resultado.json [maps=tarhut,posto]
 ## N = partidas por confronto (cada par joga N vezes em cada mapa, alternando o lado).
+## only=MIX testa exércitos do modo Mix contra cada facção.
 
 var results: Array = []
 
 
 func run(n: int, out_path: String, maps: Array, only: String = "") -> void:
 	var facs = DB.factions.keys()
+	if only == "MIX":
+		facs.append("MIX")
 	var total = 0
 	var t0 = Time.get_ticks_msec()
 	for mp in maps:
@@ -27,7 +30,7 @@ func run(n: int, out_path: String, maps: Array, only: String = "") -> void:
 
 
 func _side(p: int, fac: String) -> Dictionary:
-	var s = AI.setup(fac)
+	var s = AI.setup_mix() if fac == "MIX" else AI.setup(fac)
 	var tough = s["picks"].duplicate()
 	tough.sort_custom(func(x, y): return int(DB.cards[x]["int"]) > int(DB.cards[y]["int"]))
 	var spots = DB.entry[p]

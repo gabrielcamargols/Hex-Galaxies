@@ -91,8 +91,9 @@ func setup(sides: Array, mid: String) -> void:
 		var s = sides[p]
 		var deck = DB.tactic_ids.duplicate()
 		deck.shuffle()
-		P.append({"fac": s["fac"], "deck": deck, "hand": [], "discard": [], "passed": false, "obj_used": {}, "discount": false})
-		_mk(DB.factions[s["fac"]]["cmd"], p, "off")
+		var cmd_id = s.get("cmd", DB.factions[s["fac"]]["cmd"])
+		P.append({"fac": s["fac"], "cmd": cmd_id, "mix": s.get("mix", false), "deck": deck, "hand": [], "discard": [], "passed": false, "obj_used": {}, "discount": false})
+		_mk(cmd_id, p, "off")
 		for id in s["picks"]:
 			var u = _mk(id, p, "reserve")
 			for st in s["start"]:
