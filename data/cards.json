@@ -2647,7 +2647,7 @@
    "id": "flanquear",
    "name": "Flanquear",
    "type": "Manobra",
-   "cost": 1,
+   "cost": 0,
    "text": "Na sua ativação, mova o personagem ativo 1 casa livre."
   },
   {
@@ -2661,14 +2661,14 @@
    "id": "troca",
    "name": "Troca de Posições",
    "type": "Manobra",
-   "cost": 1,
+   "cost": 0,
    "text": "Troque o personagem ativo de casa com um aliado adjacente. Ambos devem estar em terreno livre."
   },
   {
    "id": "avanco",
    "name": "Avanço Coordenado",
    "type": "Comando",
-   "cost": 1,
+   "cost": 0,
    "text": "Mova até 2 aliados diferentes 1 casa livre cada. Resolva um de cada vez."
   },
   {
@@ -2696,42 +2696,42 @@
    "id": "propulsor",
    "name": "Propulsor Auxiliar",
    "type": "Equipamento",
-   "cost": 1,
-   "text": "Equipe o personagem ativo. Ele recebe +1 Movimento. Não altera deslocamentos de distância fixa."
+   "cost": 0,
+   "text": "Equipe um personagem seu em campo (arraste a carta até ele). Ele recebe +1 Movimento. Não altera deslocamentos de distância fixa."
   },
   {
    "id": "placas",
    "name": "Placas Reforçadas",
    "type": "Equipamento",
-   "cost": 1,
-   "text": "Equipe o personagem ativo. Reduza em 1 o dano de cada ataque recebido (mínimo 0)."
+   "cost": 0,
+   "text": "Equipe um personagem seu em campo (arraste a carta até ele). Reduza em 1 o dano de cada ataque recebido (mínimo 0)."
   },
   {
    "id": "lente",
    "name": "Lente de Precisão",
    "type": "Equipamento",
-   "cost": 1,
-   "text": "Equipe o personagem ativo. +1 alcance em ataques normais. Não afeta habilidades."
+   "cost": 0,
+   "text": "Equipe um personagem seu em campo (arraste a carta até ele). +1 alcance em ataques normais. Não afeta habilidades."
   },
   {
    "id": "reparo",
    "name": "Reparo de Campo",
    "type": "Comando",
-   "cost": 1,
-   "text": "O personagem ativo recupera 4 de Vida, até o seu valor inicial."
+   "cost": 0,
+   "text": "Um personagem seu em campo (arraste a carta até ele) recupera 4 de Vida, até o seu valor inicial."
   },
   {
    "id": "dados",
    "name": "Dados de Combate",
    "type": "Comando",
-   "cost": 1,
+   "cost": 0,
    "text": "Compre 2 cartas e depois descarte 1 carta da mão."
   },
   {
    "id": "fogo",
    "name": "Fogo Concentrado",
    "type": "Comando",
-   "cost": 1,
+   "cost": 0,
    "text": "Seu personagem ativo recebe +2 dano no próximo ataque desta ativação."
   },
   {
@@ -2745,14 +2745,14 @@
    "id": "pulso",
    "name": "Pulso de Interferência",
    "type": "Comando",
-   "cost": 1,
+   "cost": 0,
    "text": "Escolha um inimigo a até 2 casas do ativo, com linha de visão. Descarte seu equipamento, se houver."
   },
   {
    "id": "granada",
    "name": "Granada de Fragmentação",
    "type": "Comando",
-   "cost": 1,
+   "cost": 0,
    "text": "Escolha uma casa a até 3 do ativo, com linha de visão. Cada inimigo nela e nas casas em volta sofre 1 de dano."
   },
   {
@@ -2773,42 +2773,42 @@
    "id": "barreira",
    "name": "Barreira Portátil",
    "type": "Comando",
-   "cost": 1,
+   "cost": 0,
    "text": "Crie uma Barreira com 3 de Vida numa casa livre adjacente ao ativo. Ela bloqueia movimento e linha de visão."
   },
   {
    "id": "gancho",
    "name": "Gancho Magnético",
    "type": "Manobra",
-   "cost": 1,
+   "cost": 0,
    "text": "Puxe um inimigo a até 3 casas do ativo, com linha de visão, 1 casa na direção dele."
   },
   {
    "id": "camuflagem",
    "name": "Camuflagem Óptica",
    "type": "Comando",
-   "cost": 1,
-   "text": "O personagem ativo não pode ser alvo de ataques até o início do próximo round."
+   "cost": 0,
+   "text": "Um personagem seu em campo (arraste a carta até ele) não pode ser alvo de ataques até o início do próximo round."
   },
   {
    "id": "onda",
    "name": "Onda de Choque",
    "type": "Manobra",
-   "cost": 1,
+   "cost": 0,
    "text": "Empurre cada inimigo adjacente ao ativo 1 casa para longe dele."
   },
   {
    "id": "orbital",
    "name": "Bombardeio Orbital",
    "type": "Comando",
-   "cost": 2,
+   "cost": 0,
    "text": "Escolha um inimigo a até 5 casas do ativo, mesmo sem linha de visão: ele sofre 3 de dano."
   },
   {
    "id": "kit",
    "name": "Kit de Campo",
    "type": "Comando",
-   "cost": 1,
+   "cost": 0,
    "text": "O ativo e cada aliado a até 2 casas dele recuperam 2 de Vida, até o valor inicial."
   },
  {
@@ -2829,42 +2829,42 @@
   "id": "resgate",
   "name": "Teletransporte de Resgate",
   "type": "Manobra",
-  "cost": 1,
+  "cost": 0,
   "text": "Troque de lugar o personagem ativo com um aliado a até 4 casas dele."
  },
  {
   "id": "quantica",
   "name": "Troca Quântica",
   "type": "Manobra",
-  "cost": 1,
+  "cost": 0,
   "text": "Troque de lugar um aliado e um inimigo, ambos a até 3 casas do personagem ativo."
  },
  {
   "id": "interceptar",
   "name": "Interceptar Suprimentos",
   "type": "Comando",
-  "cost": 1,
+  "cost": 0,
   "text": "Roube 1 carta aleatória da mão do oponente."
  },
  {
   "id": "grito",
   "name": "Grito de Guerra",
   "type": "Comando",
-  "cost": 1,
+  "cost": 0,
   "text": "Todos os seus personagens em campo recebem +1 ATQ até o fim do round."
  },
  {
   "id": "evacuacao",
   "name": "Evacuação Médica",
   "type": "Comando",
-  "cost": 2,
+  "cost": 0,
   "text": "O último aliado derrotado (exceto o comandante) volta para a sua reserva com metade da Vida."
  },
  {
   "id": "execucao",
   "name": "Golpe de Misericórdia",
   "type": "Comando",
-  "cost": 1,
+  "cost": 0,
   "text": "Um inimigo adjacente ao ativo com 3 de Vida ou menos é derrotado na hora. Não funciona em comandantes."
  },
  {
@@ -2878,7 +2878,7 @@
   "id": "rede",
   "name": "Rede de Contenção",
   "type": "Comando",
-  "cost": 1,
+  "cost": 0,
   "text": "Um inimigo a até 3 casas do ativo, com linha de visão, não pode se mover até o fim do próximo round."
  }
  ]

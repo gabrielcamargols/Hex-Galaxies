@@ -70,6 +70,9 @@ var terr_ver: int = 0
 var earth: Dictionary = {}  # Vector2i -> ajuste de altura (Erguer a Terra)
 var tree: SceneTree = null
 var pace_time: float = 0.28
+var pre_hex: Variant = null   # casa onde a carta foi solta (arrastar e soltar)
+var tac_fx: Variant = null    # tática esperando o alvo para mostrar o efeito
+const TAC_SELF = ["propulsor", "placas", "lente", "reparo", "camuflagem"]
 var fallen: Array = []  # uids dos personagens derrotados, em ordem
 var guard_round: Dictionary = {}  # uid -> round em que já protegeu (guardOnce)
 
@@ -375,9 +378,17 @@ func pick_hex(p: int, text: String, opts: Array, kind: String, optional: bool = 
 	var hs = []
 	for o in opts:
 		hs.append(o if o is Vector2i else o.pos())
-	var h = await ask(p, {"t": "hex", "text": text, "opts": hs, "optional": optional, "kind": kind})
+	var h: Variant = null
+	if pre_hex != null and hs.has(pre_hex):
+		h = pre_hex
+		pre_hex = null
+	else:
+		h = await ask(p, {"t": "hex", "text": text, "opts": hs, "optional": optional, "kind": kind})
 	if h == null and not optional:
-		return hs[0]
+		h = hs[0]
+	if h != null and tac_fx != null:
+		emitfx({"t": "tactic_on", "id": tac_fx, "h": h, "p": p})
+		tac_fx = null
 	return h
 
 
@@ -1833,7 +1844,7 @@ func tactic_playable(p: int, id: String) -> bool:
 		"propulsor", "placas", "lente":
 			return true
 		"reparo":
-			return u.hp < u.maxhp
+			return self_targets(p, id).size() > 0
 		"dados":
 			return P[p]["deck"].size() + P[p]["discard"].size() > 0
 		"fogo":
@@ -1851,7 +1862,7 @@ func tactic_playable(p: int, id: String) -> bool:
 		"gancho":
 			return not gancho_targets(u).is_empty()
 		"camuflagem":
-			return not has_fx(u, "veil")
+			return self_targets(p, id).size() > 0
 		"onda":
 			return enemies_of(u).any(func(x): return not x.barrier and DB.dist(x.pos(), u.pos()) == 1 and push_dest(x, u.pos()) != null)
 		"orbital":
@@ -1877,6 +1888,58 @@ func tactic_playable(p: int, id: String) -> bool:
 		"rede":
 			return not rede_targets(u).is_empty()
 	return false
+
+
+# personagens seus que podem receber uma tática pessoal (equipamento, reparo, camuflagem)
+func self_targets(p: int, id: String) -> Array:
+	return units.filter(func(x): return x.owner == p and x.st == "field" and not x.barrier and (id != "reparo" or x.hp < x.maxhp) and (id != "camuflagem" or not has_fx(x, "veil")))
+
+
+# casas onde dá para soltar a carta (vazio = em qualquer lugar do tabuleiro)
+func drop_opts(p: int, id: String) -> Array:
+	var u = active_unit()
+	if u == null:
+		return []
+	var mine = func(arr): return arr.map(func(x): return x.pos())
+	match id:
+		"propulsor", "placas", "lente", "reparo", "camuflagem":
+			return mine.call(self_targets(p, id))
+		"fogo", "ultimo", "adrenalina", "contra", "kit", "onda":
+			return [u.pos()]
+		"grito":
+			return mine.call(allies_of(u, true).filter(func(x): return not x.barrier))
+		"avanco":
+			return mine.call(allies_of(u, true).filter(func(x): return not step_free(x.pos()).is_empty() and not rooted(x)))
+		"flanquear":
+			return step_free(u.pos())
+		"troca":
+			return mine.call(allies_of(u).filter(func(x): return DB.dist(x.pos(), u.pos()) == 1))
+		"resgate":
+			return mine.call(allies_of(u).filter(func(x): return not x.barrier and DB.dist(x.pos(), u.pos()) <= 4))
+		"quantica":
+			return mine.call(quantica_allies(u) + quantica_enemies(u))
+		"pulso":
+			return mine.call(enemies_of(u).filter(func(x): return x.eq != "" and DB.dist(x.pos(), u.pos()) <= 2 and los(u.pos(), x.pos())))
+		"granada":
+			return granada_opts(u)
+		"sinalizador":
+			return mine.call(enemies_of(u).filter(func(x): return not x.barrier and DB.dist(x.pos(), u.pos()) <= 4 and los(u.pos(), x.pos())))
+		"barreira":
+			return adj_free(u.pos())
+		"gancho":
+			return mine.call(gancho_targets(u))
+		"orbital":
+			return mine.call(enemies_of(u).filter(func(x): return DB.dist(x.pos(), u.pos()) <= 5))
+		"execucao":
+			return mine.call(execucao_targets(u))
+		"rede":
+			return mine.call(rede_targets(u))
+	return []
+
+
+func drop_ok(p: int, id: String, h: Vector2i) -> bool:
+	var opts = drop_opts(p, id)
+	return opts.is_empty() or opts.has(h)
 
 
 func field_count(p: int) -> int:
@@ -1944,17 +2007,34 @@ func gancho_targets(u) -> Array:
 	return enemies_of(u).filter(func(x): return not x.barrier and DB.dist(x.pos(), u.pos()) >= 2 and DB.dist(x.pos(), u.pos()) <= 3 and los(u.pos(), x.pos()) and gancho_dest(u, x) != null)
 
 
-func play_tactic(p: int, id: String) -> bool:
+func play_tactic(p: int, id: String, drop: Variant = null) -> bool:
 	if not tactic_playable(p, id):
 		return false
 	var A = act
 	var u = active_unit()
 	var c = DB.tactics[id]
+	# quem recebe uma tática pessoal: a peça onde a carta foi solta (ou o ativo)
+	var tu = u
+	if TAC_SELF.has(id):
+		var ts0 = self_targets(p, id)
+		if drop != null and unit_at(drop) != null and ts0.has(unit_at(drop)):
+			tu = unit_at(drop)
+		elif not ts0.has(u) and not ts0.is_empty():
+			tu = ts0[0]
 	take_card(p, id)
 	A["tactic"] = true
 	A["actions"] -= int(c["cost"])
 	log_msg(p, "Tática: %s." % c["name"])
 	emitfx({"t": "card", "id": id, "p": p})
+	pre_hex = drop
+	tac_fx = null
+	if TAC_SELF.has(id) or ["fogo", "ultimo", "adrenalina", "contra", "kit", "onda", "dados", "interceptar", "evacuacao"].has(id):
+		emitfx({"t": "tactic_on", "id": id, "h": tu.pos(), "p": p})
+	elif id == "grito":
+		for x in allies_of(u, true).filter(func(y): return not y.barrier):
+			emitfx({"t": "tactic_on", "id": id, "h": x.pos(), "p": p})
+	else:
+		tac_fx = id
 	match id:
 		"flanquear":
 			var h = await pick_hex(p, "Flanquear: mova o ativo 1 casa livre.", step_free(u.pos()), "move")
@@ -1989,10 +2069,10 @@ func play_tactic(p: int, id: String) -> bool:
 				if winner != NONE:
 					break
 		"propulsor", "placas", "lente":
-			u.eq = id
-			log_msg(p, "%s equipou %s." % [nm(u), c["name"]])
+			tu.eq = id
+			log_msg(p, "%s equipou %s." % [nm(tu), c["name"]])
 		"reparo":
-			heal(u, 4)
+			heal(tu, 4)
 		"dados":
 			draw_cards(p, 2)
 			var dc = await ask(p, {"t": "card", "text": "Dados de Combate: descarte 1 carta da mão.", "opts": P[p]["hand"].duplicate(), "optional": false})
@@ -2044,9 +2124,9 @@ func play_tactic(p: int, id: String) -> bool:
 				log_msg(p, "%s foi puxado." % nm(t6))
 				await move_unit(t6, gancho_dest(u, t6))
 		"camuflagem":
-			u.fx.append({"k": "veil", "v": 1, "until": "start"})
-			abfx("veil", u.pos(), u.uid)
-			log_msg(p, "%s sumiu de vista até o próximo round." % nm(u))
+			tu.fx.append({"k": "veil", "v": 1, "until": "start"})
+			abfx("veil", tu.pos(), tu.uid)
+			log_msg(p, "%s sumiu de vista até o próximo round." % nm(tu))
 		"onda":
 			abfx("quake", u.pos(), u.uid)
 			for t7 in enemies_of(u).filter(func(x): return not x.barrier and DB.dist(x.pos(), u.pos()) == 1):
@@ -2136,6 +2216,8 @@ func play_tactic(p: int, id: String) -> bool:
 				tn.fx.append({"k": "root", "end": round_no + 1})
 				abfx("glue", hn, u.uid)
 				log_msg(p, "%s está preso na rede até o fim do próximo round." % nm(tn))
+	pre_hex = null
+	tac_fx = null
 	changed.emit()
 	return true
 

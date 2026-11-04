@@ -12,7 +12,7 @@ const TDESC = {
 	"ossada": "Ossada baixa. Intransponível, abriga quem está ao lado (-2).", "ossada_c": "Ossada central. Dá para entrar; quem está dentro sofre -1 de tiros.",
 	"buraco": "Buraco de verme. Intransponível enquanto estiver aberto (2 rounds).",
 }
-const RULES = "[b]Objetivo:[/b] derrotar o Comandante inimigo (ele entra no round 6). No fim do round 10 vence quem tiver mais Vida no Comandante; empate: soma da Vida dos aliados.\n\n[b]Turno:[/b] os lados se alternam ativando 1 peça por vez. Cada peça ativada tem [b]2 ações[/b], e cada tipo só pode ser usado [b]1 vez por turno[/b]: mover 1 vez, atacar 1 vez, usar habilidade ativa ou jogar uma carta (ex.: mover + atacar, mover + carta, atacar + carta). Habilidades passivas não gastam ação. Colocar uma reserva em campo gasta 1 ação.\n\n[b]Altura:[/b] atacar de cima +1 de dano, de baixo -1. Tiros (alcance 2+) de cima ganham +1 de alcance. Corpo a corpo só com até 1 nível de diferença.\n\n[b]Linha de tiro:[/b] uma casa no caminho bloqueia se o topo dela for mais alto que o atacante e o alvo.\n\n[b]Abrigo:[/b] -2 de dano se uma rocha/ruína/ossada vizinha ao alvo estiver do lado do atacante.\n\n[b]Tarhut:[/b] as dunas mudam a cada 5 rounds (aviso 1 round antes); a cada 3 rounds o [color=#ff6a4a]Verme Gigante[/color] sai da areia (o \"!\" avisa 1 round antes): quem estiver no buraco sofre 4 de dano e quem estiver ao lado, 1. Fuja das casas marcadas!\n\n[b]Controles:[/b] clique numa peça sua e depois numa casa verde (mover) ou num inimigo vermelho (atacar), ou arraste a peça e solte. Confirme a prévia. Botão direito gira a câmera, arrastar o fundo move o mapa, a roda aproxima. Q/E giram. Enter confirma, Esc cancela.\n\n[b]Toque (tablet/celular):[/b] toque numa peça e numa casa para agir. 1 dedo arrasta o mapa; pinça com 2 dedos aproxima/afasta; girar os 2 dedos gira a câmera; arrastar os 2 dedos para cima/baixo inclina a visão. \"Tudo\" recentraliza."
+const RULES = "[b]Objetivo:[/b] derrotar o Comandante inimigo (ele entra no round 6). No fim do round 10 vence quem tiver mais Vida no Comandante; empate: soma da Vida dos aliados.\n\n[b]Turno:[/b] os lados se alternam ativando 1 peça por vez. Cada peça ativada tem [b]2 ações[/b], e cada tipo só pode ser usado [b]1 vez por turno[/b]: mover 1 vez, atacar 1 vez, usar habilidade ativa (ex.: mover + atacar). [b]Táticas não gastam ação:[/b] cada peça ativada pode jogar 1 carta de graça. Arraste a carta e solte no personagem (ou na casa) destacado para escolher quem recebe o efeito. Habilidades passivas não gastam ação. Colocar uma reserva em campo gasta 1 ação.\n\n[b]Altura:[/b] atacar de cima +1 de dano, de baixo -1. Tiros (alcance 2+) de cima ganham +1 de alcance. Corpo a corpo só com até 1 nível de diferença.\n\n[b]Linha de tiro:[/b] uma casa no caminho bloqueia se o topo dela for mais alto que o atacante e o alvo.\n\n[b]Abrigo:[/b] -2 de dano se uma rocha/ruína/ossada vizinha ao alvo estiver do lado do atacante.\n\n[b]Tarhut:[/b] as dunas mudam a cada 5 rounds (aviso 1 round antes); a cada 3 rounds o [color=#ff6a4a]Verme Gigante[/color] sai da areia (o \"!\" avisa 1 round antes): quem estiver no buraco sofre 4 de dano e quem estiver ao lado, 1. Fuja das casas marcadas!\n\n[b]Controles:[/b] clique numa peça sua e depois numa casa verde (mover) ou num inimigo vermelho (atacar), ou arraste a peça e solte. Confirme a prévia. Botão direito gira a câmera, arrastar o fundo move o mapa, a roda aproxima. Q/E giram. Enter confirma, Esc cancela.\n\n[b]Toque (tablet/celular):[/b] toque numa peça e numa casa para agir. 1 dedo arrasta o mapa; pinça com 2 dedos aproxima/afasta; girar os 2 dedos gira a câmera; arrastar os 2 dedos para cima/baixo inclina a visão. \"Tudo\" recentraliza."
 
 var board
 var game: Game = null
@@ -72,6 +72,7 @@ var busy: bool = false
 var running: bool = false
 var panel_open: String = ""
 var res_drag: Variant = null
+var card_drag: Variant = null   # carta de tática sendo arrastada: {id, start, on}
 var sfx = null
 var vfx = null
 var impact_delay: float = 0.0
@@ -2256,13 +2257,13 @@ func _card_targets(id: String) -> Dictionary:
 		"dispersao":
 			txt = "Reação: aliado atacado recua 1 casa"
 		"propulsor":
-			txt = "Personagem ativo: +1 Movimento"
+			txt = "Seu personagem (arraste): +1 Movimento"
 		"placas":
-			txt = "Personagem ativo: -1 dano recebido"
+			txt = "Seu personagem (arraste): -1 dano recebido"
 		"lente":
-			txt = "Personagem ativo: +1 Alcance"
+			txt = "Seu personagem (arraste): +1 Alcance"
 		"reparo":
-			txt = "Personagem ativo: +4 de Vida"
+			txt = "Seu personagem (arraste): +4 de Vida"
 		"fogo":
 			txt = "Personagem ativo: +2 dano no ataque"
 		"dados":
@@ -2298,7 +2299,7 @@ func _card_targets(id: String) -> Dictionary:
 				for x in game.gancho_targets(u):
 					hs.append(x.pos())
 		"camuflagem":
-			txt = "Ativo: não pode ser atacado no round"
+			txt = "Seu personagem (arraste): não pode ser atacado no round"
 		"onda":
 			txt = "Inimigos ao lado: empurrados 1 casa"
 			if u != null:
@@ -2363,14 +2364,36 @@ func _with_card_hover(st: Dictionary) -> Dictionary:
 	if card_hover == "" or game == null:
 		return st
 	var st2 = st.duplicate(true)
-	for h in _card_targets(card_hover)["hexes"]:
+	var dragging = card_drag != null and card_drag["on"]
+	var hs = _drop_hexes(card_hover) if dragging else _card_targets(card_hover)["hexes"]
+	var col: Color = TYPE_COL.get(DB.tactics[card_hover]["type"], Color("#e0c8ff"))
+	for h in hs:
 		st2["hl"][h] = "pk"
-		st2["labels"][h] = "carta"
-		st2["label_colors"][h] = Color("#e0c8ff")
+		st2["labels"][h] = "solte aqui" if dragging else "carta"
+		st2["label_colors"][h] = col.lightened(0.3)
 	return st2
 
 
+# casas onde a carta pode ser solta agora (calcula com a peça selecionada se ainda não há ativação)
+func _drop_hexes(id: String) -> Array:
+	if game == null or not my_turn():
+		return []
+	if game.act != null:
+		return game.drop_opts(game.cur, id)
+	var u = sel_unit()
+	if u == null or not game.can_start(u):
+		return []
+	game.act = game._new_act(u, 2, false)
+	var hs = game.drop_opts(game.cur, id)
+	if hs.is_empty():
+		hs = [u.pos()]
+	game.act = null
+	return hs
+
+
 func _card_hover_set(id: String, card: Control, on: bool) -> void:
+	if card_drag != null and card_drag["on"]:
+		return
 	card_hover = id if on else ""
 	card.pivot_offset = Vector2(card.size.x / 2.0, card.size.y)
 	var tw = create_tween()
@@ -2453,8 +2476,8 @@ func _make_card(id: String) -> Control:
 func _card_input(ev: InputEvent, id: String) -> void:
 	if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
 		if _card_playable(id):
-			card_hover = ""
-			_play_card(id)
+			# segurar e arrastar: solta no personagem; só tocar: usa como antes
+			card_drag = {"id": id, "start": get_viewport().get_mouse_position(), "on": false}
 		else:
 			sfx.play("clique", -10.0, 0.7)
 func _card_playable(id: String) -> bool:
@@ -2478,7 +2501,7 @@ func _any_card_playable() -> bool:
 	return false
 
 
-func _play_card(id: String) -> void:
+func _play_card(id: String, drop: Variant = null) -> void:
 	if not _card_playable(id):
 		return
 	panel_open = ""
@@ -2486,7 +2509,7 @@ func _play_card(id: String) -> void:
 		game.start_activation(sel_unit())
 	busy = true
 	refresh()
-	await game.play_tactic(game.cur, id)
+	await game.play_tactic(game.cur, id, drop)
 	busy = false
 	await after()
 
@@ -2790,6 +2813,41 @@ func _start_res_drag(uid: int) -> void:
 func _input(event: InputEvent) -> void:
 	if game == null:
 		return
+	if card_drag != null:
+		if event is InputEventMouseMotion:
+			var mp = (event as InputEventMouseMotion).position
+			if not card_drag["on"] and mp.distance_to(card_drag["start"]) > 10.0:
+				card_drag["on"] = true
+				card_hover = card_drag["id"]
+				var ipath = "res://ui/icons/%s.png" % card_drag["id"]
+				w["drag_icon"].texture = load(ipath) if ResourceLoader.exists(ipath) else null
+				w["drag_icon"].modulate = TYPE_COL.get(DB.tactics[card_drag["id"]]["type"], C_CARD)
+				w["drag_icon"].visible = true
+				w["drag_icon"].size = Vector2(96, 96)
+				w["drag_icon"].z_index = 50
+				for cc in w["hand"].get_children():
+					cc.scale = Vector2.ONE
+					cc.z_index = 0
+				board.set_state(_with_card_hover(last_st))
+			if card_drag["on"]:
+				w["drag_icon"].position = mp - Vector2(48, 48)
+		elif event is InputEventMouseButton and not (event as InputEventMouseButton).pressed and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT:
+			var cd = card_drag
+			card_drag = null
+			w["drag_icon"].visible = false
+			w["drag_icon"].modulate = Color.WHITE
+			w["drag_icon"].size = Vector2(70, 70)
+			card_hover = ""
+			if not cd["on"]:
+				_play_card(cd["id"])
+			else:
+				get_viewport().set_input_as_handled()
+				var h = board.pick_hex((event as InputEventMouseButton).position)
+				if h != null and _drop_hexes(cd["id"]).has(h):
+					_play_card(cd["id"], h)
+				else:
+					sfx.play("clique", -8.0, 0.7)
+					board.set_state(last_st)
 	if res_drag != null:
 		if event is InputEventMouseMotion:
 			var pos = (event as InputEventMouseMotion).position
@@ -3101,6 +3159,14 @@ func _on_fx(e: Dictionary) -> void:
 					vfx.flip("spikes", pp, 1.8, 0.5)
 		"card":
 			sfx.play("carta", -4.0)
+		"tactic_on":
+			var tcol: Color = TYPE_COL.get(DB.tactics[e["id"]]["type"], C_CARD)
+			var tp = _hex_pos(e["h"], 0.05)
+			vfx.flip("ring", tp, 3.4, 0.55, tcol, true)
+			vfx.flip("aura", tp + Vector3(0, 0.9, 0), 2.6, 0.75, tcol.lightened(0.25))
+			vfx.flip("sparkle", tp + Vector3(0, 1.4, 0), 1.8, 0.6, tcol.lightened(0.5), false, 0.12)
+			board.float_text(e["h"], DB.tactics[e["id"]]["name"], tcol.lightened(0.35))
+			sfx.play("vfx_aura", -9.0)
 		"abfx":
 			_on_abfx(e)
 		"ult":
