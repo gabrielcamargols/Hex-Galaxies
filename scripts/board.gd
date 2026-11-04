@@ -10,8 +10,8 @@ signal worm_bite(pos)                 # o verme mergulhou de volta
 const S3 = 1.7320508
 const HS = 0.55          # altura de cada nível
 const BASE_Y = -0.6
-const TILE = 0.9
-const INNER = 0.76
+const TILE = 1.0          # casas encostadas: o tabuleiro vira um chão contínuo
+const INNER = 0.95        # aro bem fino, só para dar para contar as casas
 # [centro, borda, lateral] — cada tipo de terreno tem uma cor própria para não se confundir
 const PAL = {
 	"grass": ["#86bd4a", "#64a034", "#3a5e20"], "grass2": ["#a0c856", "#7aa83c", "#4a6a26"],
@@ -19,8 +19,9 @@ const PAL = {
 	"wood": ["#b07840", "#8c5a2c", "#4e3018"], "ramp": ["#d09a58", "#b07a3a", "#5e3e20"],
 	"mud": ["#6a5238", "#4e3c28", "#2e2214"], "rubble": ["#8c8c9a", "#70707e", "#44444e"],
 	"quick": ["#8e8040", "#6e6230", "#3e3618"], "stone": ["#8e827c", "#726862", "#4a4240"],
-	"bone": ["#d8ccb0", "#bcae90", "#7e7058"], "cracked": ["#b8a688", "#9a8a6c", "#665a44"],
+	"bone": ["#d8ccb0", "#bcae90", "#7e7058"], "cracked": ["#d8b47a", "#c49a60", "#7a5430"],
 	"hole": ["#3a2418", "#24140c", "#120a04"],
+	"rubble_g": ["#94b052", "#7a9440", "#4a5e26"], "sand2": ["#caa062", "#b8884c", "#7a5430"], "grass3": ["#7cb444", "#5e9830", "#3a5e20"],
 }
 const ELEV = {"tarhut": "#c0583a", "posto": "#e0c060"}  # tom que as casas altas puxam
 # planeta: o tabuleiro fica num platô e o chão se curva em volta (deserto contínuo)
@@ -458,10 +459,9 @@ func pal_of(t: Dictionary, h: Vector2i) -> String:
 	match t["k"]:
 		"duna":
 			return "dune"
-		"rocha", "ruina", "galpao":
-			return "stone"
-		"ossada", "ossada_c":
-			return "bone" if desert else "grass"
+		"rocha", "ruina", "galpao", "ossada", "ossada_c":
+			# o modelo em cima já mostra o que é: o chão continua o mesmo do terreno
+			return "sand2" if desert else "grass3"
 		"areia":
 			return "sand" if desert else "grass"
 		"movedica":
@@ -477,7 +477,7 @@ func pal_of(t: Dictionary, h: Vector2i) -> String:
 		"lama":
 			return "mud"
 		"escombros":
-			return "rubble"
+			return "rubble" if desert else "rubble_g"
 		"colina":
 			return "grass2"
 	return "sand" if desert else "grass"
@@ -507,10 +507,15 @@ func refresh_terrain() -> void:
 		var pal = PAL[pal_of(t, h)]
 		var ec = Color(ELEV.get(g.map_id, "#c0583a"))
 		var lv = clamp(float(t["h"]) * 0.16, 0.0, 0.5)
+		# variação suave por casa: o chão parece natural, não um quadriculado
+		var jit = (_rnd(h, 7) - 0.5) * 0.08
+		var c0 = Color(pal[0]).lerp(ec, lv).lightened(lv * 0.25)
+		c0 = c0.lightened(jit) if jit > 0 else c0.darkened(-jit)
+		var c1 = c0.lerp(Color(pal[1]).lerp(ec, lv), 0.35)
+		var cs = c0.lerp(Color(pal[2]).lerp(ec.darkened(0.3), lv), 0.45)
 		var body = MeshInstance3D.new()
-		body.mesh = _tile_mesh(Color(pal[0]).lerp(ec, lv).lightened(lv * 0.25), Color(pal[1]).lerp(ec, lv), Color(pal[2]).lerp(ec.darkened(0.3), lv))
+		body.mesh = _tile_mesh(c0, c1, cs)
 		body.material_override = tile_mat
-		body.material_overlay = outline_mat
 		tile["node"].add_child(body)
 		tile["body"] = body
 		var props = Node3D.new()
@@ -537,7 +542,7 @@ func _place_tile(h: Vector2i) -> void:
 func _tile_mesh(c0: Color, c1: Color, cs: Color) -> ArrayMesh:
 	var st = SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var rim = c0.lightened(0.28)
+	var rim = c1.darkened(0.06)
 	var pts_o = []
 	var pts_i = []
 	for k in range(6):
@@ -552,7 +557,7 @@ func _tile_mesh(c0: Color, c1: Color, cs: Color) -> ArrayMesh:
 		var n = Vector3(mid.x, 0, mid.y).normalized()
 		st.set_normal(n)
 		var top_c = cs
-		var bot_c = cs.darkened(0.35)
+		var bot_c = cs.darkened(0.2)
 		_tri(st, Vector3(a.x, 1, a.y), top_c, Vector3(b.x, 1, b.y), top_c, Vector3(b.x, 0, b.y), bot_c)
 		_tri(st, Vector3(a.x, 1, a.y), top_c, Vector3(b.x, 0, b.y), bot_c, Vector3(a.x, 0, a.y), bot_c)
 	st.set_normal(Vector3.UP)
