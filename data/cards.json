@@ -65,16 +65,10 @@
    "alc": 1,
    "src": "pdf",
    "ab": {
-    "name": "Comando dos Clãs",
-    "text": "Outros Faurianos a até 2 casas recebem +1 ATQ. Fora do campo, meça desde o centro da sua entrada."
+    "name": "Banquete dos Clãs",
+    "text": "Quando entra em campo, espalha 6 bananas pelo mapa (até 6 casas dele): 2 de cura (+3 Vida), 2 de força (+2 ATQ no round) e 2 de mira (+1 alcance no round). Os aliados ganham o bônus ao passar pelas casas onde elas estão."
    },
-   "k": {
-    "auraAtk": {
-     "r": 2,
-     "who": "FAU"
-    },
-    "climbAll": true
-   },
+   "k": {"entry": {"t": "bananas", "n": 2, "r": 6}, "climbAll": true},
    "ab2": {
     "name": "Escalada Primepata",
     "text": "Sobe em qualquer superfície: rochas, ruínas, ossadas, galpões e penhascos de qualquer altura. Sempre ligada, não gasta ação.",
@@ -112,14 +106,10 @@
    "alc": 2,
    "src": "pdf",
    "ab": {
-    "name": "Olhar de Batedora",
-    "text": "Ao entrar em campo, olhe a carta do topo do seu baralho. Pode colocá-la no fundo."
+    "name": "Caçada em Sequência",
+    "text": "Após atacar um inimigo, avança automaticamente (até 3 casas) até o outro inimigo mais próximo e também o ataca. Uma vez por ativação."
    },
-   "k": {
-    "entry": {
-     "t": "peek"
-    }
-   }
+   "k": {"hunt": 3}
   },
   {
    "id": "rhombo",
@@ -190,18 +180,10 @@
    "alc": 1,
    "src": "pdf",
    "ab": {
-    "name": "Ritmo do Clã",
-    "text": "Ao entrar em campo, restaure 2 de Vida de outro Fauriano aliado a até 2 casas, sem superar sua Vida inicial."
+    "name": "Set dos Quatro Discos",
+    "text": "Tem 4 discos, cada um com uma música e um efeito (ATQ, cura, Movimento ou defesa). Pode tocar 2 por partida, ao fim da sua ativação. Nos rounds 1-3 só beneficia Zaboo; nos rounds 4-6, também aliados a 1 casa; depois, aliados a 2 casas."
    },
-   "k": {
-    "entry": {
-     "t": "heal",
-     "r": 2,
-     "n": 2,
-     "who": "FAU",
-     "self": false
-    }
-   }
+   "k": {"discs": 2}
   },
   {
    "id": "caninus_black",
@@ -255,15 +237,10 @@
    "alc": 1,
    "src": "pdf",
    "ab": {
-    "name": "Detonação Controlada",
-    "text": "Ao entrar em campo, cause 2 dano a cada inimigo adjacente. Resolve o dano simultaneamente."
+    "name": "Soco Bomba",
+    "text": "A cada round carrega o soco. Ao atacar, pode liberar a carga: +3 de dano, mas Tork perde 2 de Vida. A carga é consumida ao usar e não se acumula entre rounds."
    },
-   "k": {
-    "entry": {
-     "t": "dmgAdj",
-     "n": 2
-    }
-   }
+   "k": {"charge": 3, "chargeCost": 2}
   },
   {
    "id": "astrax",
@@ -338,12 +315,10 @@
    "alc": 1,
    "src": "cat",
    "ab": {
-    "name": "Campo Preparado",
-    "text": "A primeira peça inimiga que terminar um movimento adjacente a Rappy, a cada round, sofre 2 dano."
+    "name": "Campo Minado Clandestino",
+    "text": "Sempre que sua equipe derrota um inimigo, pode esconder uma bomba (3 de dano) invisível ao adversário numa casa a até 14 casas de Rappy."
    },
-   "k": {
-    "rappy": 2
-   }
+   "k": {"bombs": 14}
   },
   {
    "id": "cameo",
@@ -424,16 +399,10 @@
    "alc": 1,
    "src": "cat",
    "ab": {
-    "name": "Ordem de Conquista",
-    "text": "Ao entrar, mova 1 Fauriano aliado a até 3 casas para uma casa livre adjacente a Luna Nari."
+    "name": "Chamando Reforços",
+    "text": "Na primeira vez que ficar com metade da Vida ou menos, pode chamar até dois aliados para casas ao seu lado, reposicionando-os."
    },
-   "k": {
-    "entry": {
-     "t": "pullAlly",
-     "r": 3,
-     "who": "FAU"
-    }
-   }
+   "k": {"rally": 2}
   },
   {
    "id": "skarp",
@@ -446,12 +415,10 @@
    "alc": 1,
    "src": "novo",
    "ab": {
-    "name": "Espinhos Elétricos",
-    "text": "Após atacar, cause 1 dano a cada outro inimigo adjacente a Skarp."
+    "name": "Retaliação Espinhosa",
+    "text": "Ao ser atacado, devolve 1 de dano ao atacante e, se sobreviver e tiver alcance, contra-ataca. Um contra-ataque por inimigo a cada round; o dano de retorno vale em todos os ataques."
    },
-   "k": {
-    "after": "burstEnemies"
-   }
+   "k": {"spiky": 1}
   },
   {
    "id": "brakka",
@@ -464,16 +431,10 @@
    "alc": 3,
    "src": "novo",
    "ab": {
-    "name": "Coordenação Aérea",
-    "text": "Ao entrar, escolha 1 inimigo a até 3 casas: ataques contra ele causam +1 dano até o fim do round."
+    "name": "Superioridade Aérea",
+    "text": "Aéreo: ignora elevações ao se mover e não recebe ataques corpo a corpo de unidades terrestres. Porém, recebe +2 de dano de atiradores e snipers (alcance 3 ou mais)."
    },
-   "k": {
-    "entry": {
-     "t": "mark",
-     "r": 3,
-     "n": 1
-    }
-   }
+   "k": {"air": 2, "climbAll": true}
   },
   {
    "id": "muggo",
@@ -507,15 +468,10 @@
    "alc": 1,
    "src": "novo",
    "ab": {
-    "name": "Barreira Tecnológica",
-    "text": "Aliados adjacentes a Boro sofrem 1 a menos de dano de ataques."
+    "name": "Última Resistência",
+    "text": "Enquanto houver 3 ou menos personagens da sua equipe em campo, contando Boro, ele pode rolar até 3 casas (Movimento 3)."
    },
-   "k": {
-    "auraRed": {
-     "r": 1,
-     "n": 1
-    }
-   }
+   "k": {"lastStand": 3}
   },
   {
    "id": "drako",
@@ -528,17 +484,10 @@
    "alc": 1,
    "src": "novo",
    "ab": {
-    "name": "Medicina Resistente",
-    "text": "Ao entrar, restaure 3 de Vida de 1 aliado a até 2 casas, sem superar sua Vida inicial."
+    "name": "Veneno Transfusor",
+    "text": "Sempre que ataca, envenena o inimigo. A cada round, o alvo envenenado perde 1 de Vida e um aliado escolhido a até 5 casas de Drako recupera 1 de Vida. Se não houver aliado ferido nesse alcance, Drako recebe a cura."
    },
-   "k": {
-    "entry": {
-     "t": "heal",
-     "r": 2,
-     "n": 3,
-     "self": true
-    }
-   }
+   "k": {"after": "toxin"}
   },
   {
    "id": "rhazur",

@@ -1822,6 +1822,12 @@ func refresh() -> void:
 			st["hl"][h] = "deploy"
 			st["labels"][h] = "+ ENTRAR"
 			st["label_colors"][h] = C_DEPLOY.lightened(0.4)
+	# bombas escondidas do Rappy: só o dono vê
+	for mn in game.mines:
+		if mn.get("hidden", false) and mn["owner"] == me:
+			st["labels"][mn["h"]] = "BOMBA"
+			st["label_colors"][mn["h"]] = Color("#ff9a3a")
+	board.sync_bananas(game.bananas, me)
 	for h in game.tremors:
 		st["hl"][h] = "trem"
 		st["labels"][h] = "!"
@@ -2187,6 +2193,11 @@ func _refresh_prompt() -> void:
 			"show":
 				text += "\n" + (_cards_text(q["cards"]) if not q["cards"].is_empty() else "A mão está vazia.")
 				_button(box, "Fechar", func(): _answer(true))
+			"choice":
+				for i in range(q["opts"].size()):
+					var ii = i
+					var bt2 = _button(box, q["opts"][i], func(): _answer(ii))
+					bt2.custom_minimum_size = Vector2(0, 40)
 			"unitlist":
 				for uid in q["opts"]:
 					var u2 = game.by_uid(uid)
@@ -3246,6 +3257,17 @@ func _on_fx(e: Dictionary) -> void:
 					vfx.flip("spikes", pp, 1.8, 0.5)
 		"card":
 			sfx.play("carta", -4.0)
+		"banana":
+			var bcol = {"cura": Color("#5bd46a"), "dano": Color("#ff6a4a"), "alcance": Color("#5ec8f0")}.get(e["b"], C_GOLD)
+			vfx.flip("sparkle", _hex_pos(e["h"], 0.6), 2.0, 0.6, bcol)
+			board.float_text(e["h"], {"cura": "+3 VIDA", "dano": "+2 ATQ", "alcance": "+1 ALC"}.get(e["b"], ""), bcol)
+			sfx.play("vfx_heal", -8.0)
+		"music":
+			var mp2: Variant = _unit_pos(e["uid"], 1.2)
+			if mp2 != null:
+				vfx.flip("ring", mp2 - Vector3(0, 1.1, 0), 3.0 + 2.2 * game.disc_radius(), 0.9, Color("#ff7ad8"), true)
+				vfx.flip("sonic", mp2, 2.4, 0.8, Color("#ff7ad8"))
+			sfx.play("vfx_aura", -6.0)
 		"zone_grow":
 			_later(2.2, banner.bind("ÁREA DE ENTRADA MAIOR", "Agora dá para colocar personagens até %d casas da sua base" % int(e["r"])))
 			for pz in range(2):
@@ -3547,10 +3569,11 @@ func _my_army() -> Dictionary:
 func _online_panel() -> void:
 	if stage != "army":
 		return
+	var filled = false
 	if army_picks.size() != 5 or army_start.size() != 2:
-		w["army_hint"].text = "Monte o exército (5 tropas, 2 com ★) antes de jogar online."
-		w["army_hint"].add_theme_color_override("font_color", Color("#ffb070"))
-		return
+		# exército incompleto: completa sozinho para não travar o botão
+		_army_random()
+		filled = true
 	if w.has("online") and is_instance_valid(w["online"]):
 		w["online"].queue_free()
 	sfx.play("clique", -8.0)
@@ -3568,7 +3591,7 @@ func _online_panel() -> void:
 	var v = _vbox(p, 12)
 	v.custom_minimum_size = Vector2(min(520, get_viewport().get_visible_rect().size.x - 40), 0)
 	_label(v, "JOGAR ONLINE", 30, C_GOLD)
-	var info = _label(v, "Um jogador cria a sala e passa o código; o outro entra com ele. O mapa é o planeta de quem criou a sala.", 14, C_DIM)
+	var info = _label(v, ("Seu exército estava incompleto: completei com tropas sorteadas (dá para cancelar e trocar). " if filled else "") + "Um jogador cria a sala e passa o código; o outro entra com ele. O mapa é o planeta de quem criou a sala.", 14, C_DIM)
 	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	var hb = _hbox(v, 8)
 	var bh = _cbtn(hb, "Criar sala", C_GOLD, _online_host, true)
@@ -3585,10 +3608,24 @@ func _online_panel() -> void:
 	var bj = _cbtn(jh, "Entrar", C_DEPLOY, func(): _online_join(le.text))
 	bj.custom_minimum_size = Vector2(110, 44)
 	le.text_submitted.connect(func(t): _online_join(t))
+	if net.web and _is_touch():
+		# celular: abre a caixa de texto do navegador, que sempre mostra o teclado
+		le.focus_entered.connect(func():
+			le.release_focus()
+			var tx = net.ask_text("Código da sala (6 letras):")
+			if tx.strip_edges() != "":
+				le.text = tx.strip_edges().to_upper()
+				_online_join(le.text))
 	var codel = _label(v, "", 44, C_DEPLOY.lightened(0.3))
 	codel.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	codel.visible = false
 	w["online_code"] = codel
+	var cp = _cbtn(v, "Copiar código", C_HUD, func():
+		net.copy_text(net.code)
+		_online_set("Código copiado: %s. Mande para o outro jogador e deixe esta janela aberta." % net.code, C_DEPLOY.lightened(0.3)))
+	cp.custom_minimum_size = Vector2(0, 34)
+	cp.visible = false
+	w["online_copy"] = cp
 	var st = _label(v, "", 15, C_TXT)
 	st.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	w["online_status"] = st
@@ -3607,6 +3644,7 @@ func _online_host() -> void:
 	if w.has("online_code") and is_instance_valid(w["online_code"]):
 		w["online_code"].text = net.code
 		w["online_code"].visible = true
+		w["online_copy"].visible = true
 	_online_set("Criando a sala...")
 
 

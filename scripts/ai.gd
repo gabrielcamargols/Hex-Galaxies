@@ -292,6 +292,8 @@ static func answer(g, p: int, q: Dictionary) -> Variant:
 				return true
 			if q.get("kind", "") == "revide":
 				return true
+			if q.get("kind", "") == "charge" or q.get("kind", "") == "rally":
+				return true
 			if q.get("kind", "") == "earth":
 				var eu = g.unit_at(q["h"])
 				return eu != null and eu.owner == p
@@ -314,6 +316,9 @@ static func answer(g, p: int, q: Dictionary) -> Variant:
 			return "keep" if ["fogo", "placas", "reparo", "cobertura", "escudo"].has(q["card"]) else "bottom"
 		"show":
 			return true
+		"choice":
+			# Zaboo: toca o primeiro disco (ATQ) quando dá, senão a cura
+			return 0
 		"unitlist":
 			return q["opts"][0]
 		"hex":

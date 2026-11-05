@@ -79,6 +79,20 @@ func send(d: Dictionary) -> void:
 		pps.put_packet(s.to_utf8_buffer())
 
 
+# celular no navegador: caixa de texto do próprio navegador (sempre abre o teclado)
+func ask_text(t: String) -> String:
+	if not web:
+		return ""
+	return str(JavaScriptBridge.eval("window.hexNet.ask(%s)" % JSON.stringify(t), true))
+
+
+func copy_text(t: String) -> void:
+	if web:
+		JavaScriptBridge.eval("window.hexNet.copy(%s)" % JSON.stringify(t), true)
+	else:
+		DisplayServer.clipboard_set(t)
+
+
 func close() -> void:
 	is_open = false
 	role = ""
@@ -157,8 +171,35 @@ func _process(_dt: float) -> void:
 const _JS = """
 (function(){
 if (window.hexNet) return;
-var N = {inbox: [], peer: null, conn: null, bc: null};
-function push(k, v){ N.inbox.push({k: k, v: v}); }
+var N = {inbox: [], peer: null, conn: null, bc: null, timer: null};
+function push(k, v){ N.inbox.push({k: k, v: v}); try { console.log('HEXNET ' + k + ' ' + v); } catch(e) {} }
+// servidores que ajudam a conexão a atravessar roteadores e a rede do celular
+var ICE = {iceServers: [
+  {urls: 'stun:stun.l.google.com:19302'},
+  {urls: 'stun:stun1.l.google.com:19302'},
+  {urls: 'stun:global.stun.twilio.com:3478'},
+  {urls: ['turn:eu-0.turn.peerjs.com:3478', 'turn:us-0.turn.peerjs.com:3478'], username: 'peerjs', credential: 'peerjsp'}
+], sdpSemantics: 'unified-plan'};
+function erro(t){
+  var m = {
+    'peer-unavailable': 'Sala não encontrada. Confira o código (e se quem criou ainda está com a janela aberta).',
+    'unavailable-id': 'Esse código já está em uso. Crie outra sala.',
+    'network': 'Sem conexão com o servidor de salas. Verifique a internet.',
+    'server-error': 'O servidor de salas não respondeu. Tente de novo em instantes.',
+    'socket-error': 'Sem conexão com o servidor de salas. Verifique a internet.',
+    'socket-closed': 'A conexão com o servidor de salas caiu.',
+    'browser-incompatible': 'Este navegador não permite jogar online. Tente o Chrome atualizado.',
+    'webrtc': 'A conexão direta entre os aparelhos falhou. Tente outra rede (Wi-Fi/4G).'
+  };
+  return m[t] || ('Erro na conexão: ' + t);
+}
+function armTimeout(){
+  clearTimeout(N.timer);
+  N.timer = setTimeout(function(){
+    if (N.conn && N.conn.open) return;
+    push('close', 'Não foi possível conectar com o outro aparelho em 25 segundos. As redes podem estar bloqueando a conexão direta: tentem os dois no Wi-Fi, ou um no Wi-Fi e outro no 4G, e criem uma sala nova.');
+  }, 25000);
+}
 N.poll = function(){ var s = JSON.stringify(N.inbox); N.inbox = []; return s; };
 var local = /[?&]net=local/.test(location.search);
 function load(cb){
@@ -166,15 +207,21 @@ function load(cb){
   var s = document.createElement('script');
   s.src = '""" + PEERJS + """';
   s.onload = cb;
-  s.onerror = function(){ push('close', 'Sem acesso ao servidor de salas. Verifique a internet.'); };
+  s.onerror = function(){ push('close', 'Não foi possível carregar o sistema online. Verifique a internet ou desative o bloqueador de anúncios para este site.'); };
   document.head.appendChild(s);
 }
 function wire(c){
   N.conn = c;
-  c.on('open', function(){ push('open', ''); });
+  c.on('open', function(){ clearTimeout(N.timer); push('open', ''); });
   c.on('data', function(d){ push('msg', String(d)); });
   c.on('close', function(){ push('close', 'O outro jogador saiu.'); });
-  c.on('error', function(e){ push('close', 'Erro na conexão: ' + e); });
+  c.on('error', function(e){ push('close', erro(e && e.type ? e.type : String(e))); });
+  if (c.peerConnection) {
+    c.peerConnection.addEventListener('iceconnectionstatechange', function(){
+      var st = c.peerConnection.iceConnectionState;
+      if (st === 'failed') push('close', erro('webrtc'));
+    });
+  }
 }
 function bcWire(code, role){
   N.bc = new BroadcastChannel('hexgal-' + code);
@@ -191,25 +238,30 @@ function bcWire(code, role){
 N.host = function(code){
   load(function(){
     if (local) { bcWire(code, 'host'); push('status', 'Sala ' + code + ' criada. Aguardando o outro jogador...'); return; }
-    N.peer = new Peer('hexgal-' + code.toLowerCase());
-    N.peer.on('open', function(){ push('status', 'Sala ' + code + ' criada. Aguardando o outro jogador...'); });
-    N.peer.on('connection', function(c){ if (N.conn) { c.close(); return; } wire(c); });
-    N.peer.on('error', function(e){ push('close', e.type === 'unavailable-id' ? 'Esse código já está em uso. Crie outra sala.' : 'Erro no servidor de salas: ' + e.type); });
+    N.peer = new Peer('hexgal-' + code.toLowerCase(), {config: ICE, debug: 1});
+    N.peer.on('open', function(){ push('status', 'Sala ' + code + ' criada. Passe o código para o outro jogador e deixe esta janela aberta.'); });
+    N.peer.on('connection', function(c){ if (N.conn) { c.close(); return; } push('status', 'O outro jogador chegou. Conectando...'); armTimeout(); wire(c); });
+    N.peer.on('error', function(e){ push('close', erro(e.type)); });
+    N.peer.on('disconnected', function(){ if (!N.conn) { try { N.peer.reconnect(); } catch(e) {} } });
   });
 };
 N.join = function(code){
   load(function(){
     if (local) { bcWire(code, 'guest'); N.bc.postMessage({k: 'hello'}); push('status', 'Procurando a sala ' + code + '...'); return; }
-    N.peer = new Peer();
+    N.peer = new Peer({config: ICE, debug: 1});
     N.peer.on('open', function(){
-      push('status', 'Procurando a sala ' + code + '...');
+      push('status', 'Conectando à sala ' + code + '...');
+      armTimeout();
       wire(N.peer.connect('hexgal-' + code.toLowerCase(), {reliable: true}));
     });
-    N.peer.on('error', function(e){ push('close', e.type === 'peer-unavailable' ? 'Sala ' + code + ' não encontrada. Confira o código.' : 'Erro no servidor de salas: ' + e.type); });
+    N.peer.on('error', function(e){ push('close', erro(e.type)); });
   });
 };
 N.send = function(s){ if (N.conn) N.conn.send(s); };
+N.ask = function(t){ var v = window.prompt(t, ''); return v === null ? '' : String(v); };
+N.copy = function(t){ try { navigator.clipboard.writeText(t); return true; } catch(e) { return false; } };
 N.close = function(){
+  clearTimeout(N.timer);
   try { if (N.conn) N.conn.close(); } catch(e) {}
   try { if (N.peer) N.peer.destroy(); } catch(e) {}
   try { if (N.bc) N.bc.close(); } catch(e) {}

@@ -38,6 +38,10 @@ class Unit:
 	var is_cmd: bool = false
 	var ult_used: bool = false
 	var dying: Variant = null
+	var charge: bool = false          # Tork: soco carregado neste round
+	var luna_used: bool = false       # Luna Nari: já chamou reforços
+	var discs: Array = []             # Zaboo: discos já tocados
+	var countered: Dictionary = {}    # Skarp: uid do atacante -> round do contra-ataque
 
 	func pos() -> Vector2i:
 		return Vector2i(q, r)
@@ -82,7 +86,9 @@ var tut: bool = false                     # partida do tutorial
 var pre_hex: Variant = null   # casa onde a carta foi solta (arrastar e soltar)
 var tac_fx: Variant = null    # tática esperando o alvo para mostrar o efeito
 const TAC_SELF = ["propulsor", "placas", "lente", "reparo", "camuflagem"]
-var fallen: Array = []  # uids dos personagens derrotados, em ordem
+var fallen: Array = []
+var bananas: Dictionary = {}   # Karo: casa -> {"t": cura/dano/alcance, "p": dono}
+var bomb_queue: Array = []     # Rappy: bombas a esconder (uid do Rappy)  # uids dos personagens derrotados, em ordem
 var guard_round: Dictionary = {}  # uid -> round em que já protegeu (guardOnce)
 
 
@@ -343,11 +349,15 @@ func nm(u) -> String:
 
 
 func mov_of(u) -> int:
-	return int(DB.cards[u.cid]["mov"]) + (1 if u.eq == "propulsor" else 0)
+	var m = int(DB.cards[u.cid]["mov"]) + (1 if u.eq == "propulsor" else 0) + fx_sum(u, "mov")
+	var ls = int(K(u).get("lastStand", 0))
+	if ls > 0 and field_count(u.owner) <= 3:
+		m = max(m, ls)
+	return m
 
 
 func alc_of(u) -> int:
-	return int(DB.cards[u.cid]["alc"]) + (1 if u.eq == "lente" else 0)
+	return int(DB.cards[u.cid]["alc"]) + (1 if u.eq == "lente" else 0) + fx_sum(u, "alc")
 
 
 func cmd_point(c) -> Vector2i:
@@ -513,6 +523,8 @@ func atk_of(a, t) -> int:
 			v += int(k["atkIsolated"])
 		if k.has("atkBig") and (t.barrier or int(DB.cards[t.cid]["int"]) >= 10):
 			v += int(k["atkBig"])
+		if not t.barrier and K(t).has("air") and alc_of(a) >= 3:
+			v += int(K(t)["air"])
 	if k.has("atkAllyAdj"):
 		var aa = k["atkAllyAdj"]
 		if allies_of(a).any(func(x): return DB.dist(x.pos(), a.pos()) == 1 and match_who(x, aa.get("who", ""))):
@@ -527,6 +539,7 @@ func reduction_of(t, peek: bool = false) -> int:
 	var k = K(t)
 	if t.eq == "placas":
 		red += 1
+	red += fx_sum(t, "red")
 	if k.has("selfRed"):
 		red += int(k["selfRed"])
 	if k.has("selfRedHome") and home_half(t.owner, t.pos()):
@@ -646,6 +659,9 @@ func attack_targets(a, fpos = null) -> Array:
 			continue
 		if d == 1 and abs(hp - stand_h(t.pos())) > 1 and not K(a).has("climbAll"):
 			continue
+		# aéreo: unidades terrestres de corpo a corpo não o alcançam
+		if K(t).has("air") and alc_of(a) <= 1 and not K(a).has("air") and not K(a).has("climbAll"):
+			continue
 		if not los(ap, t.pos()):
 			continue
 		ts.append(t)
@@ -721,6 +737,9 @@ func tunnel_opts(u) -> Array:
 
 func move_unit(u, h: Vector2i, own: bool = false) -> void:
 	var fpos = u.pos()
+	if not bananas.is_empty() and not u.barrier:
+		for ph in _path(u, fpos, h):
+			_eat_banana(u, ph)
 	u.q = h.x
 	u.r = h.y
 	emitfx({"t": "move", "uid": u.uid, "from": fpos, "to": h})
@@ -728,7 +747,53 @@ func move_unit(u, h: Vector2i, own: bool = false) -> void:
 	await arrive(u, own)
 
 
+# caminho mais curto (em casas) por onde a peça passa, para pegar bananas no caminho
+func _path(u, a: Vector2i, b: Vector2i) -> Array:
+	if a == b:
+		return []
+	var prev = {a: a}
+	var q = [a]
+	while not q.is_empty():
+		var c = q.pop_front()
+		if c == b:
+			break
+		for n in DB.nbrs(c):
+			if prev.has(n):
+				continue
+			if n != b and (unit_at(n) != null or (blocks.has(n) and not K(u).has("climbAll"))):
+				continue
+			prev[n] = c
+			q.append(n)
+	if not prev.has(b):
+		return [b]
+	var out = []
+	var c2 = b
+	while c2 != a:
+		out.push_front(c2)
+		c2 = prev[c2]
+	return out
+
+
+func _eat_banana(u, h: Vector2i) -> void:
+	if not bananas.has(h) or bananas[h]["p"] != u.owner or u.barrier:
+		return
+	var bt = bananas[h]["t"]
+	bananas.erase(h)
+	match bt:
+		"cura":
+			heal(u, 3)
+			log_msg(u.owner, "%s comeu uma banana de cura: +3 de Vida." % nm(u))
+		"dano":
+			u.fx.append({"k": "atk", "v": 2, "until": "end"})
+			log_msg(u.owner, "%s comeu uma banana de força: +2 ATQ neste round." % nm(u))
+		"alcance":
+			u.fx.append({"k": "alc", "v": 1, "until": "end"})
+			log_msg(u.owner, "%s comeu uma banana de mira: +1 alcance neste round." % nm(u))
+	emitfx({"t": "banana", "h": h, "b": bt, "uid": u.uid})
+
+
 func arrive(u, own: bool = false) -> void:
+	_eat_banana(u, u.pos())
 	for i in range(mines.size()):
 		var m = mines[i]
 		if m["owner"] != u.owner and m["h"] == u.pos() and not u.barrier:
@@ -798,6 +863,10 @@ func settle() -> void:
 		var killer = by_uid(by) if by > 0 else null
 		if killer != null and killer.owner != t.owner and K(killer).has("killGrow") and not t.barrier:
 			killer.kills += 1
+		if not t.barrier:
+			for rp in units:
+				if rp.st == "field" and rp.owner != t.owner and K(rp).has("bombs"):
+					bomb_queue.append(rp.uid)
 		if K(t).has("deathBlast") and not t.barrier:
 			blast = true
 			var nb = int(K(t)["deathBlast"])
@@ -896,6 +965,7 @@ func start_round() -> void:
 	round_no += 1
 	for u in units:
 		u.activated = false
+		u.charge = K(u).has("charge")
 		u.fx = u.fx.filter(func(f): return f.get("until", "") != "start")
 	for pl in P:
 		pl["obj_used"] = {}
@@ -1040,6 +1110,7 @@ func commander_enters(p: int) -> void:
 	emitfx({"t": "summon", "uid": c.uid, "h": d})
 	log_msg(p, "%s entrou em campo." % nm(c))
 	await arrive(c)
+	await entry_effect(c)
 
 
 func end_round() -> void:
@@ -1054,6 +1125,12 @@ func end_round() -> void:
 		await pace()
 		if winner != NONE:
 			return
+	await _toxin_tick()
+	if winner != NONE:
+		return
+	await resolve_queues()
+	if winner != NONE:
+		return
 	for p in range(2):
 		for k in field().filter(func(u): return u.owner == p and K(u).has("endHeal")):
 			var opts = allies_of(k).filter(func(x): return DB.dist(x.pos(), k.pos()) == 1 and x.hp < x.maxhp)
@@ -1218,7 +1295,12 @@ func _end_activation() -> void:
 	var u = by_uid(a["uid"])
 	if u != null:
 		u.activated = true
+	if u != null and u.st == "field" and K(u).has("discs") and u.discs.size() < int(K(u)["discs"]):
+		await _zaboo_disc(u)
 	act = null
+	await resolve_queues()
+	if winner != NONE:
+		return
 	await hand_limit(a["p"])
 	if winner != NONE:
 		return
@@ -1661,6 +1743,14 @@ func resolve_attack(a, t) -> void:
 	if had_first or _mare_on(cm, a):
 		passive_boost = true
 	a.mare_used = true
+	var bomb_punch = false
+	if K(a).has("charge") and a.charge and a.hp > int(K(a).get("chargeCost", 2)):
+		var yes_c = await ask(p, {"t": "yesno", "text": "Soco Bomba: liberar a carga? +%d de dano, mas %s perde %d de Vida." % [int(K(a)["charge"]), nm(a), int(K(a).get("chargeCost", 2))], "kind": "charge", "uid": a.uid})
+		if yes_c:
+			a.charge = false
+			bomb_punch = true
+			packet += int(K(a)["charge"])
+			emitfx({"t": "passive", "kind": "power", "uid": a.uid})
 	emitfx({"t": "strike", "from": a.uid, "to": t.uid, "ranged": ranged})
 	if passive_boost:
 		emitfx({"t": "passive", "kind": "power", "uid": a.uid})
@@ -1703,6 +1793,24 @@ func resolve_attack(a, t) -> void:
 	if (red > 0 or react_red > 0) and not target.barrier:
 		emitfx({"t": "passive", "kind": "shield", "uid": target.uid})
 	damage(target, dealt, a, true)
+	if bomb_punch:
+		abfx("blast", target.pos(), a.uid)
+		log_msg(p, "Soco Bomba! %s perde %d de Vida." % [nm(a), int(K(a).get("chargeCost", 2))])
+		damage(a, int(K(a).get("chargeCost", 2)), null)
+	# Skarp: devolve dano sempre que é atacado e pode contra-atacar 1 vez por inimigo a cada round
+	if K(target).has("spiky") and not target.barrier and a.st == "field":
+		var ns = int(K(target)["spiky"])
+		abfx("zap", a.pos(), target.uid)
+		log_msg(target.owner, "%s: %s sofre %d de retorno." % [DB.cards[target.cid]["ab"]["name"], nm(a), ns])
+		damage(a, ns, target)
+		if target.hp > 0 and a.hp > 0 and target.countered.get(a.uid, -1) != round_no:
+			var dd = DB.dist(target.pos(), a.pos())
+			if dd <= alc_of(target) and los(target.pos(), a.pos()) and not (dd == 1 and abs(stand_h(target.pos()) - stand_h(a.pos())) > 1):
+				target.countered[a.uid] = round_no
+				var cdmg = max(0, atk_of(target, a) - reduction_of(a))
+				emitfx({"t": "strike", "from": target.uid, "to": a.uid, "ranged": dd > 1})
+				log_msg(target.owner, "%s contra-ataca %s (%d)." % [nm(target), nm(a), cdmg])
+				damage(a, cdmg, target, true)
 	# espinhos: quem ataca corpo a corpo sofre dano de volta (Medusa)
 	if K(target).has("thorns") and DB.dist(a.pos(), target.pos()) == 1 and a.st == "field":
 		var nt = int(K(target)["thorns"])
@@ -1713,6 +1821,10 @@ func resolve_attack(a, t) -> void:
 	var k = K(a)
 	var after = k.get("after", "")
 	if dealt > 0 and target.hp > 0:
+		if after == "toxin" and not target.barrier and not target.fx.any(func(f): return f["k"] == "tox"):
+			target.fx.append({"k": "tox", "src": a.uid})
+			abfx("poison", target.pos(), a.uid)
+			log_msg(p, "%s foi envenenado: perde 1 de Vida a cada round." % nm(target))
 		if after == "pending":
 			pending.append({"uid": target.uid, "n": 1, "p": p, "src": a.uid})
 			abfx("poison", target.pos(), a.uid)
@@ -1798,6 +1910,11 @@ func resolve_attack(a, t) -> void:
 			await move_unit(a, h)
 		if winner != NONE or a.st != "field":
 			return
+	if K(a).has("hunt") and not A.get("hunted", false):
+		A["hunted"] = true
+		await _hunt(a, target)
+		if winner != NONE or a.st != "field":
+			return
 	if not A["tactic"] and P[p]["hand"].has("retirada") and not rooted(a) and not step_free(a.pos()).is_empty():
 		var h = await ask(p, {"t": "hex", "text": "Retirada Calculada: mover o ativo 1 casa livre?", "opts": step_free(a.pos()), "optional": true, "kind": "move", "card": "retirada"})
 		if h != null:
@@ -1805,6 +1922,132 @@ func resolve_attack(a, t) -> void:
 			A["tactic"] = true
 			log_msg(p, "Retirada Calculada.")
 			await move_unit(a, h)
+
+
+# ================= habilidades especiais =================
+# Vexa: avança até o inimigo mais próximo e ataca também
+func _hunt(a, first) -> void:
+	var reach = int(K(a)["hunt"])
+	var foes = enemies_of(a).filter(func(x): return x != first and not x.barrier and x.st == "field" and not has_fx(x, "veil") and not imprisoned(x))
+	foes.sort_custom(func(x, y): return DB.dist(x.pos(), a.pos()) < DB.dist(y.pos(), a.pos()))
+	for t2 in foes:
+		if attack_targets(a).has(t2):
+			log_msg(a.owner, "Caçada em Sequência: %s ataca %s." % [nm(a), nm(t2)])
+			await resolve_attack(a, t2)
+			return
+		if rooted(a):
+			continue
+		var best: Variant = null
+		for o in move_opts(a, reach):
+			if attack_targets(a, o["h"]).has(t2) and (best == null or o["c"] < best["c"]):
+				best = o
+		if best != null:
+			abfx("dash", a.pos(), a.uid)
+			log_msg(a.owner, "Caçada em Sequência: %s avança até %s." % [nm(a), nm(t2)])
+			await move_unit(a, best["h"], true)
+			if winner != NONE or a.st != "field" or t2.st != "field":
+				return
+			await resolve_attack(a, t2)
+			return
+
+
+# Drako: veneno tira 1 de Vida por round e cura 1 aliado a até 5 casas de Drako (ou ele mesmo)
+func _toxin_tick() -> void:
+	var hit = false
+	for t in units.duplicate():
+		if t.st != "field":
+			continue
+		for f in t.fx.filter(func(x): return x["k"] == "tox"):
+			var dk = by_uid(int(f["src"]))
+			log_msg(dk.owner if dk != null else -1, "Veneno Transfusor: %s perde 1 de Vida." % nm(t))
+			abfx("poison", t.pos(), dk.uid if dk != null else -1)
+			damage(t, 1, dk)
+			hit = true
+			if dk != null and dk.st == "field":
+				var opts = allies_of(dk).filter(func(x): return not x.barrier and DB.dist(x.pos(), dk.pos()) <= 5 and x.hp < x.maxhp)
+				var who = dk
+				if not opts.is_empty():
+					var hh = await pick_hex(dk.owner, "Veneno Transfusor: escolha o aliado (até 5 casas de %s) que recupera 1 de Vida." % nm(dk), opts, "ally")
+					if hh != null and unit_at(hh) != null:
+						who = unit_at(hh)
+				heal(who, 1)
+	if hit:
+		settle()
+		await pace()
+
+
+# bombas do Rappy e reforços da Luna: resolvidos ao fim de cada ativação e do round
+func resolve_queues() -> void:
+	while not bomb_queue.is_empty():
+		var rp = by_uid(bomb_queue.pop_front())
+		if rp == null or rp.st != "field":
+			continue
+		var opts = DB.hexes.filter(func(h): return is_free(h) and DB.dist(h, rp.pos()) <= int(K(rp)["bombs"]) and not mines.any(func(m): return m["h"] == h) and tt_of(terr(h)["k"]).get("pass", 0))
+		var hb = await pick_hex(rp.owner, "Campo Minado Clandestino: esconda uma bomba (o adversário não vê). Até %d casas de %s." % [int(K(rp)["bombs"]), nm(rp)], opts, "place", true)
+		if hb != null:
+			mines.append({"owner": rp.owner, "h": hb, "n": 3, "src": -rp.uid, "hidden": true})
+			log_msg(rp.owner, "Rappy escondeu uma bomba em algum lugar do mapa.")
+	for lu in field().filter(func(x): return K(x).has("rally") and not x.luna_used and x.hp * 2 <= x.maxhp):
+		lu.luna_used = true
+		var yes = await ask(lu.owner, {"t": "yesno", "text": "Chamando Reforços: %s está ferida. Trazer até 2 aliados para perto dela?" % nm(lu), "kind": "rally"})
+		if not yes:
+			continue
+		emitfx({"t": "passive", "kind": "power", "uid": lu.uid})
+		for i in range(int(K(lu)["rally"])):
+			var al = allies_of(lu).filter(func(x): return not x.barrier and DB.dist(x.pos(), lu.pos()) > 1)
+			var spots = adj_free(lu.pos())
+			if al.is_empty() or spots.is_empty():
+				break
+			var ha = await pick_hex(lu.owner, "Chamando Reforços: escolha o %dº aliado (ou pule)." % (i + 1), al, "ally", true)
+			if ha == null:
+				break
+			var mover = unit_at(ha)
+			var hd = await pick_hex(lu.owner, "Para qual casa ao lado de %s?" % nm(lu), spots, "move")
+			abfx("dash", mover.pos(), lu.uid)
+			log_msg(lu.owner, "Chamando Reforços: %s veio para perto de %s." % [nm(mover), nm(lu)])
+			await move_unit(mover, hd)
+			if winner != NONE:
+				return
+
+
+const DISCS = [
+	{"id": "guerra", "name": "Tambores de Guerra", "text": "+2 ATQ até o fim do round"},
+	{"id": "cura", "name": "Balada Verde", "text": "+3 de Vida"},
+	{"id": "ritmo", "name": "Ritmo Veloz", "text": "+1 Movimento até o fim do round"},
+	{"id": "ferro", "name": "Hino de Ferro", "text": "-1 dano recebido até o fim do round"},
+]
+
+
+# alcance da música: só Zaboo nos rounds 1-3, aliados a 1 casa nos rounds 4-6, a 2 casas depois
+func disc_radius() -> int:
+	return 0 if round_no <= 3 else (1 if round_no <= 6 else 2)
+
+
+func _zaboo_disc(u) -> void:
+	var left = DISCS.filter(func(d): return not u.discs.has(d["id"]))
+	var r = disc_radius()
+	var who = "só Zaboo" if r == 0 else ("Zaboo e aliados a até %d casa%s" % [r, "s" if r > 1 else ""])
+	var labels = left.map(func(d): return "%s: %s" % [d["name"], d["text"]])
+	labels.append("Guardar para depois")
+	var pick = await ask(u.owner, {"t": "choice", "text": "Set dos Quatro Discos (%d de %d tocados). Tocar um disco agora? Afeta %s." % [u.discs.size(), int(K(u)["discs"]), who], "opts": labels, "kind": "disc", "uid": u.uid})
+	var i = int(pick) if pick != null else -1
+	if i < 0 or i >= left.size():
+		return
+	var dsc = left[i]
+	u.discs.append(dsc["id"])
+	emitfx({"t": "music", "uid": u.uid, "disc": dsc["id"]})
+	log_msg(u.owner, "Zaboo tocou \"%s\" (%s)." % [dsc["name"], who])
+	for x in allies_of(u, true).filter(func(y): return not y.barrier and DB.dist(y.pos(), u.pos()) <= r):
+		match dsc["id"]:
+			"guerra":
+				x.fx.append({"k": "atk", "v": 2, "until": "end"})
+			"cura":
+				heal(x, 3)
+			"ritmo":
+				x.fx.append({"k": "mov", "v": 1, "until": "end"})
+			"ferro":
+				x.fx.append({"k": "red", "v": 1, "until": "end"})
+		abfx("buff", x.pos(), u.uid)
 
 
 # ================= efeitos de entrada =================
@@ -1835,6 +2078,19 @@ func entry_effect(u) -> void:
 	var en = enemies_of(u).filter(func(x): return not x.barrier and DB.dist(x.pos(), u.pos()) <= r)
 	emitfx({"t": "passive", "kind": "ability", "uid": u.uid})
 	match e["t"]:
+		"bananas":
+			# Karo: espalha bananas de cura, força e mira perto dele (só os aliados pegam)
+			var spots = DB.hexes.filter(func(h): return is_free(h) and h != u.pos() and DB.dist(h, u.pos()) <= int(e.get("r", 6)) and tt_of(terr(h)["k"]).get("pass", 0) and not bananas.has(h))
+			_shuffle(spots)
+			var kinds = []
+			for kk in ["cura", "dano", "alcance"]:
+				for j in range(n):
+					kinds.append(kk)
+			for j in range(min(kinds.size(), spots.size())):
+				bananas[spots[j]] = {"t": kinds[j], "p": p}
+			abfx("insight", u.pos(), u.uid)
+			emitfx({"t": "bananas"})
+			log_msg(p, "Banquete dos Clãs: %d bananas espalhadas pelo mapa." % min(kinds.size(), spots.size()))
 		"peek", "top3", "discount":
 			abfx("insight", u.pos(), u.uid)
 		"pushAllAdj", "dmgAdj":

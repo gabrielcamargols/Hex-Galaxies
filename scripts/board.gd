@@ -120,6 +120,7 @@ func build(game: Game) -> void:
 	unit_nodes.clear()
 	for c in scenery_root.get_children():
 		c.queue_free()
+	banana_nodes.clear()
 	var desert = g.map_id == "tarhut"
 	# planetoide do tamanho do tabuleiro
 	var far = 0.0
@@ -1104,6 +1105,45 @@ func _build_rails() -> void:
 				sl.material_overlay = outline_mat
 			for sx in [-0.2, 0.2]:
 				_mesh(seg, _box(Vector3(0.05, 0.06, L + 0.02)), steel, Vector3(sx, 0.04, L * 0.5))
+
+
+# bananas do Karo: cada uma com a cor do bônus (verde cura, vermelho força, azul mira)
+var banana_nodes: Dictionary = {}
+
+
+func sync_bananas(b: Dictionary, viewer: int) -> void:
+	for h in banana_nodes.keys():
+		if not b.has(h):
+			banana_nodes[h].queue_free()
+			banana_nodes.erase(h)
+	for h in b.keys():
+		if banana_nodes.has(h) or not tiles.has(h):
+			continue
+		var col = {"cura": Color("#5bd46a"), "dano": Color("#ff6a4a"), "alcance": Color("#5ec8f0")}.get(b[h]["t"], Color.WHITE)
+		var n = Node3D.new()
+		n.position = Vector3(world_xz(h).x, top_y(h) + 0.05, world_xz(h).y)
+		scenery_root.add_child(n)
+		var ring = _mesh(n, _disc(0.42, 16), col, Vector3(0, 0.02, 0))
+		ring.material_override = _mat(Color(col, 0.55), true)
+		ring.material_override.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		# banana: dois gomos curvos amarelos
+		for i in range(3):
+			var a = -0.5 + i * 0.5
+			var seg = _mesh(n, CapsuleMesh.new(), Color("#ffd23a"), Vector3(sin(a) * 0.16, 0.22 + cos(a) * 0.05, 0), Vector3(0, 0, PI / 2 + a))
+			seg.scale = Vector3(0.11, 0.14, 0.11)
+			seg.material_overlay = outline_mat
+		var tip = _mesh(n, _cyl(0.02, 0.03, 0.08, 6), Color("#5a3a18"), Vector3(-0.26, 0.28, 0))
+		tip.rotation = Vector3(0, 0, 0.9)
+		var lab = Label3D.new()
+		lab.text = {"cura": "CURA", "dano": "FORÇA", "alcance": "MIRA"}.get(b[h]["t"], "")
+		lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		lab.font_size = 34
+		lab.outline_size = 10
+		lab.pixel_size = 0.006
+		lab.modulate = col.lightened(0.3)
+		lab.position = Vector3(0, 0.62, 0)
+		n.add_child(lab)
+		banana_nodes[h] = n
 
 
 func _make_heart() -> ImageTexture:
