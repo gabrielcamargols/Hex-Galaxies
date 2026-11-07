@@ -379,7 +379,8 @@
      -9,
      "escaravelho"
     ]
-   ]
+   ],
+   "zone_grow": 2
   }
  },
  "terrain": {

@@ -104,6 +104,10 @@ var fallen: Array = []
 var bananas: Dictionary = {}   # Karo: casa -> {"t": cura/dano/alcance, "p": dono}
 var bomb_queue: Array = []     # Rappy: bombas a esconder (uid do Rappy)  # uids dos personagens derrotados, em ordem
 var guard_round: Dictionary = {}  # uid -> round em que já protegeu (guardOnce)
+const CLOCK_START = 600.0     # relógio de xadrez: 10 minutos para cada jogador
+var clock_on: bool = false
+var clock: Array = [CLOCK_START, CLOCK_START]
+var flagged: int = NONE       # jogador que estourou o tempo
 var fires: Array = []     # Incendiário: [{h, owner, until}] casas em chamas
 var shells: Array = []    # Rádio: [{h, owner, round, src}] artilharia que cai no início do próximo round
 
@@ -489,6 +493,11 @@ func exec_cmd(c: Array) -> void:
 			undo_move()
 		"scarab":
 			await act_scarab(int(c[1]), str(c[2]))
+		"flag":
+			if winner == NONE:
+				flagged = int(c[1])
+				winner = 1 - flagged
+				changed.emit()
 	replay -= 1
 
 
@@ -1152,7 +1161,9 @@ func start_round() -> void:
 		pl["obj_used"] = {}
 		pl["passed"] = false
 	log_msg(-1, "Round %d começou." % round_no)
-	if round_no > 1 and (round_no - 1) % ZONE_GROW == 0:
+	if storm_on():
+		log_msg(-1, "Tempestade de areia: todos os ataques causam 2 a menos de dano neste round.")
+	if round_no > 1 and (round_no - 1) % zone_grow() == 0:
 		log_msg(-1, "A área de entrada cresceu: agora vai até %d casas da base." % zone_radius())
 		emitfx({"t": "zone_grow", "r": zone_radius()})
 	await map_events()
@@ -1445,8 +1456,28 @@ func do_final_score() -> void:
 const ZONE_GROW = 3
 
 
+# a cada quantos rounds a área de entrada cresce (cada mapa pode ter o seu ritmo)
+func zone_grow() -> int:
+	return int(DB.maps[map_id].get("zone_grow", ZONE_GROW))
+
+
 func zone_radius() -> int:
-	return 1 + int(max(0, round_no - 1) / ZONE_GROW)
+	return 1 + int(max(0, round_no - 1) / zone_grow())
+
+
+# tempestade de areia (mapas com dunas): no round em que o vento muda e no round em que as dunas mudam
+func storm_on() -> bool:
+	return DB.maps[map_id].has("dunes") and (round_no % DUNE_EVERY == 0 or (round_no > 1 and (round_no - 1) % DUNE_EVERY == 0))
+
+
+func flag_time(p: int) -> void:
+	if winner != NONE:
+		return
+	flagged = p
+	winner = 1 - p
+	log_msg(-1, "Tempo esgotado: %s." % ("jogador 1" if p == 0 else "jogador 2"))
+	_send_cmd(["flag", p])
+	changed.emit()
 
 
 # casas da área de entrada do lado p (sempre na própria metade do mapa)
@@ -2260,7 +2291,10 @@ func resolve_attack(a, t) -> void:
 				log_msg(d, "%s: -%d de dano." % [DB.tactics[c]["name"], react_red])
 	var tm2 = tm if target == t else terrain_mods(a, target)
 	var red = reduction_of(target)
-	var dealt = max(0, packet - red - react_red - int(tm2["cover"]) - int(tm2["forest"]))
+	var storm_pen = 2 if storm_on() else 0
+	var dealt = max(0, packet - red - react_red - int(tm2["cover"]) - int(tm2["forest"]) - storm_pen)
+	if storm_pen > 0:
+		log_msg(p, "Tempestade de areia: -2 de dano.")
 	if (red > 0 or react_red > 0) and not target.barrier:
 		emitfx({"t": "passive", "kind": "shield", "uid": target.uid})
 	damage(target, dealt, a, true)
@@ -3308,6 +3342,9 @@ func preview_damage(a, t, fpos = null) -> Dictionary:
 	if red > 0:
 		total -= red
 		parts.append("-%d defesas do alvo" % red)
+	if storm_on():
+		total -= 2
+		parts.append("-2 tempestade de areia")
 	a.q = save.x
 	a.r = save.y
 	var dmg = max(0, total)

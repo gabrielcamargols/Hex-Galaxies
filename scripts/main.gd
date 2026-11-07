@@ -12,7 +12,7 @@ const TDESC = {
 	"ossada": "Ossada baixa. Intransponível, abriga quem está ao lado (-2).", "ossada_c": "Ossada central. Dá para entrar; quem está dentro sofre -1 de tiros.",
 	"buraco": "Buraco de verme. Intransponível enquanto estiver aberto (2 rounds).",
 }
-const RULES = "[b]Objetivo:[/b] derrotar o Comandante inimigo (ele entra no round 4). No fim do round 10 vence quem tiver mais Vida no Comandante; empate: soma da Vida dos aliados.\n\n[b]Turno:[/b] os lados se alternam ativando 1 peça por vez. Cada peça ativada tem [b]2 ações[/b], e cada tipo só pode ser usado [b]1 vez por turno[/b]: mover 1 vez, atacar 1 vez, usar habilidade ativa (ex.: mover + atacar). [b]Táticas não gastam ação:[/b] cada peça ativada pode jogar 1 carta de graça. Arraste a carta e solte no personagem (ou na casa) destacado para escolher quem recebe o efeito. Habilidades passivas não gastam ação. Colocar uma reserva em campo gasta 1 ação. [b]A área de entrada cresce:[/b] nos rounds 1 a 3 ela vai até 1 casa da sua base, nos rounds 4 a 6 até 2 casas, nos rounds 7 a 9 até 3 casas e no round 10 até 4 casas (sempre na sua metade do mapa).\n\n[b]Altura:[/b] atacar de cima +1 de dano, de baixo -1. Tiros (alcance 2+) de cima ganham +1 de alcance. Corpo a corpo só com até 1 nível de diferença.\n\n[b]Núcleo:[/b] nos rounds 2, 4, 6 e 8 surge um núcleo de energia que fica 2 rounds. Leve uma peça até ele para capturar: 2 cartas, +2 ATQ ou +4 Vida com defesa. O local do próximo aparece antes, marcado no mapa.\n\n[b]Impulso:[/b] derrubar uma tropa dá 1 casa de movimento grátis (1 vez por ativação).\n\n[b]Linha de tiro:[/b] uma casa no caminho bloqueia se o topo dela for mais alto que o atacante e o alvo.\n\n[b]Abrigo:[/b] -2 de dano se uma rocha/ruína/ossada vizinha ao alvo estiver do lado do atacante.\n\n[b]Tarhut (o mapa mais difícil):[/b] as dunas, com até 5 níveis de altura, mudam inteiras a cada 3 rounds (aviso 1 round antes, nos rounds 4, 7 e 10). Elas bloqueiam tiros e dão vantagem de altura; quem estiver no alto quando a duna baixar despenca: 1 de dano, +1 se cair 3 níveis e +1 se cair 5. A cada 3 rounds o [color=#ff6a4a]Verme Gigante[/color] sai da areia (o \"!\" avisa 1 round antes): quem estiver no buraco sofre 4 de dano e quem estiver ao lado, 1. Fuja das casas marcadas! O deserto é enorme.\n\n[b]Escaravelhos Verdes (Tarhut):[/b] coletar um (1 ação) o guarda com você. [b]1 escaravelho[/b] restaura 6 de Vida de uma peça; [b]2 escaravelhos[/b] deixam uma peça usar a ativa mais uma vez; os que sobrarem no fim somam +1 de Vida ao seu comandante na contagem do round 10. Os botões ficam no seu painel de exército.\n\n[b]Online:[/b] na tela do exército, toque em \"⚡ Online\". Um jogador cria a sala e passa o código de 6 letras; o outro digita o código e entra. O mapa é o planeta de quem criou a sala. No app instalado (PC/Android), a sala usa o IP da rede local no lugar do código.\n\n[b]Controles:[/b] clique numa peça sua e depois numa casa verde (mover) ou num inimigo vermelho (atacar), ou arraste a peça e solte. Confirme a prévia. Botão direito gira a câmera, arrastar o fundo move o mapa, a roda aproxima. Q/E giram. Enter confirma, Esc cancela.\n\n[b]Toque (tablet/celular):[/b] toque numa peça e numa casa para agir. 1 dedo arrasta o mapa; pinça com 2 dedos aproxima/afasta; girar os 2 dedos gira a câmera; arrastar os 2 dedos para cima/baixo inclina a visão. \"Tudo\" recentraliza."
+const RULES = "[b]Objetivo:[/b] derrotar o Comandante inimigo (ele entra no round 4). No fim do round 10 vence quem tiver mais Vida no Comandante; empate: soma da Vida dos aliados.\n\n[b]Turno:[/b] os lados se alternam ativando 1 peça por vez. Cada peça ativada tem [b]2 ações[/b], e cada tipo só pode ser usado [b]1 vez por turno[/b]: mover 1 vez, atacar 1 vez, usar habilidade ativa (ex.: mover + atacar). [b]Táticas não gastam ação:[/b] cada peça ativada pode jogar 1 carta de graça. Arraste a carta e solte no personagem (ou na casa) destacado para escolher quem recebe o efeito. Habilidades passivas não gastam ação. Colocar uma reserva em campo gasta 1 ação. [b]A área de entrada cresce:[/b] a cada 3 rounds (nos rounds 1 a 3 vai até 1 casa da sua base, 4 a 6 até 2 casas...) e, no Tarhut, a cada 2 rounds (1 casa nos rounds 1-2, 2 nos rounds 3-4... até 5), sempre na sua metade do mapa.\n\n[b]Relógio de xadrez:[/b] cada jogador tem 10 minutos no total. O seu relógio só corre enquanto é a sua vez (e para durante as animações); quando você termina, ele para e o do rival começa. Quem ficar sem tempo perde.\n\n[b]Altura:[/b] atacar de cima +1 de dano, de baixo -1. Tiros (alcance 2+) de cima ganham +1 de alcance. Corpo a corpo só com até 1 nível de diferença.\n\n[b]Núcleo:[/b] nos rounds 2, 4, 6 e 8 surge um núcleo de energia que fica 2 rounds. Leve uma peça até ele para capturar: 2 cartas, +2 ATQ ou +4 Vida com defesa. O local do próximo aparece antes, marcado no mapa.\n\n[b]Impulso:[/b] derrubar uma tropa dá 1 casa de movimento grátis (1 vez por ativação).\n\n[b]Linha de tiro:[/b] uma casa no caminho bloqueia se o topo dela for mais alto que o atacante e o alvo.\n\n[b]Abrigo:[/b] -2 de dano se uma rocha/ruína/ossada vizinha ao alvo estiver do lado do atacante.\n\n[b]Tarhut (o mapa mais difícil):[/b] as dunas, com até 5 níveis de altura, mudam inteiras a cada 3 rounds (aviso 1 round antes, nos rounds 4, 7 e 10). Elas bloqueiam tiros e dão vantagem de altura; quem estiver no alto quando a duna baixar despenca: 1 de dano, +1 se cair 3 níveis e +1 se cair 5. A cada 3 rounds o [color=#ff6a4a]Verme Gigante[/color] sai da areia (o \"!\" avisa 1 round antes): quem estiver no buraco sofre 4 de dano e quem estiver ao lado, 1. Fuja das casas marcadas! O deserto é enorme. [color=#ffb14a]Tempestade de areia:[/color] no round em que o vento muda (3, 6, 9) e no round em que as dunas mudam (4, 7, 10), todos os ataques causam 2 a menos de dano.\n\n[b]Escaravelhos Verdes (Tarhut):[/b] coletar um (1 ação) o guarda com você. [b]1 escaravelho[/b] restaura 6 de Vida de uma peça; [b]2 escaravelhos[/b] deixam uma peça usar a ativa mais uma vez; os que sobrarem no fim somam +1 de Vida ao seu comandante na contagem do round 10. Os botões ficam no seu painel de exército.\n\n[b]Online:[/b] na tela do exército, toque em \"⚡ Online\". Um jogador cria a sala e passa o código de 6 letras; o outro digita o código e entra. O mapa é o planeta de quem criou a sala. No app instalado (PC/Android), a sala usa o IP da rede local no lugar do código.\n\n[b]Controles:[/b] clique numa peça sua e depois numa casa verde (mover) ou num inimigo vermelho (atacar), ou arraste a peça e solte. Confirme a prévia. Botão direito gira a câmera, arrastar o fundo move o mapa, a roda aproxima. Q/E giram. Enter confirma, Esc cancela.\n\n[b]Toque (tablet/celular):[/b] toque numa peça e numa casa para agir. 1 dedo arrasta o mapa; pinça com 2 dedos aproxima/afasta; girar os 2 dedos gira a câmera; arrastar os 2 dedos para cima/baixo inclina a visão. \"Tudo\" recentraliza."
 
 var board
 var game: Game = null
@@ -1649,6 +1649,7 @@ func _start_match(sides) -> void:
 	game.tree = get_tree()
 	game.cpu = [autotest, true]
 	game.tut = tut
+	game.clock_on = not tut and not autotest
 	if online:
 		game.rng.seed = net_seed
 		game.cpu = [false, false]
@@ -2197,13 +2198,56 @@ func _turn_sound() -> void:
 		sfx.play("vez_rival", -9.0, 1.0, 0.0)
 
 
+var title_base: String = ""
+
+
+func _fmt_clock(t: float) -> String:
+	var sec = int(ceil(max(0.0, t)))
+	return "%02d:%02d" % [sec / 60, sec % 60]
+
+
+func _apply_title() -> void:
+	if not w.has("title") or not is_instance_valid(w["title"]):
+		return
+	w["title"].text = title_base
+	if game == null or not game.clock_on:
+		return
+	for p in range(2):
+		var cl = w.get("clock%d" % p, null)
+		if cl == null or not is_instance_valid(cl):
+			continue
+		var t = float(game.clock[p])
+		var run = game.cur == p and game.winner == Game.NONE
+		cl.text = "⏱ %s%s" % [_fmt_clock(t), "  ◀ jogando" if run else ""]
+		cl.add_theme_color_override("font_color", Color("#ff5a4a") if t < 60.0 else (Color("#ffe39a") if run else Color("#8fb8cc")))
+
+
+# relógio de xadrez: só corre para quem está jogando (e não durante animações)
+func _tick_clock(delta: float) -> void:
+	if game == null or not game.clock_on or game.winner != Game.NONE or not ui.visible:
+		return
+	var p = game.cur
+	if game.cpu[p] and not online:
+		return
+	if busy and asking == null:
+		return
+	if opp_thinking:
+		return
+	game.clock[p] = float(game.clock[p]) - delta
+	if game.clock[p] <= 0.0 and not game.remote[p]:
+		game.flag_time(p)
+
+
 func _refresh_top() -> void:
 	var who = "Você" if game.cur == me else _opp()
 	var status = "Fim de jogo" if game.winner != Game.NONE else ("Sua vez" if game.cur == me else ("Vez do " + _opp().to_lower() + (" (jogando...)" if busy or opp_thinking else "")))
-	w["title"].text = "%s  ·  Round %d/10  ·  %s" % [game.map_name, game.round_no, status]
+	title_base = "%s  ·  Round %d/10  ·  %s" % [game.map_name, game.round_no, status]
+	_apply_title()
 	var tcol = C_GOLD if game.winner != Game.NONE else (C_YOU if game.cur == me else C_CPU)
 	w["title"].add_theme_color_override("font_color", tcol)
 	var ev = []
+	if game.storm_on():
+		ev.append("TEMPESTADE DE AREIA: ATAQUES -2")
 	var def = DB.maps[game.map_id]
 	if def.has("dunes"):
 		if game.dune_next >= 0:
@@ -2238,6 +2282,8 @@ func _refresh_party() -> void:
 			c.queue_free()
 		var col = Color("#4f9be0") if p == me else Color("#e0563f")
 		_label(box, ("VOCÊ · " if p == me else (_opp().to_upper() + " · ")) + ("Mix" if game.P[p].get("mix", false) else DB.factions[game.P[p]["fac"]]["short"]), 13, col)
+		if game.clock_on:
+			w["clock%d" % p] = _label(box, "", 18, col)
 		var res = []
 		var fld = []
 		var dead = []
@@ -4005,6 +4051,8 @@ func _process(_delta: float) -> void:
 				eb.modulate = Color(k, k, k)
 			else:
 				eb.modulate = Color.WHITE
+		_tick_clock(_delta)
+		_apply_title()
 		_update_plates(_delta)
 		_tremor_omen(_delta)
 		vfx.cam_k = _fx_scale()
@@ -4311,6 +4359,8 @@ func _game_over() -> void:
 		reason = "Fim do round 10. Vida dos comandantes %d x %d; aliados %d x %d." % [f["c"][0], f["c"][1], f["s"][0], f["s"][1]]
 		if f.has("sc") and (f["sc"][0] + f["sc"][1]) > 0:
 			reason += " (escaravelhos incluídos: %d x %d)" % [f["sc"][0], f["sc"][1]]
+	elif game.flagged != Game.NONE:
+		reason = "Tempo esgotado: %s ficou sem tempo." % ("você" if game.flagged == me else _opp())
 	elif win == Game.DRAW:
 		reason = "Os dois comandantes caíram juntos."
 	else:
