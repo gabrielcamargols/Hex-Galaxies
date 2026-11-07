@@ -36,7 +36,8 @@ void light() {
 	vec2 p = FRAGCOORD.xy;
 	vec2 rp = vec2(p.x + p.y, p.x - p.y) * 0.70710678 / 6.0;
 	float d = length(fract(rp) - 0.5);
-	float r = 0.42 * sqrt(1.0 - lit);
-	shade *= 1.0 - (1.0 - smoothstep(r - 0.07, r + 0.07, d)) * (1.0 - lit) * 0.45;
+	float sh = smoothstep(0.02, -0.25, nd);
+	float r = 0.4 * sqrt(sh);
+	shade *= 1.0 - (1.0 - smoothstep(r - 0.07, r + 0.07, d)) * sh * 0.3;
 	DIFFUSE_LIGHT += LIGHT_COLOR * (shade + hi * highlight * vec3(1.0, 0.92, 0.7));
 }

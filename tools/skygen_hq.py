@@ -38,7 +38,7 @@ for c, f in zip(cols, fields):
     img = img * (1 - body * 0.45) + c * body * 0.45 * 0.6          # corpo leve da nebulosa
     r = 0.48 * np.sqrt(np.clip(f, 0, 1))
     dots = np.clip((r - dd) / 0.05 + 0.5, 0, 1)[..., None] * (body > 0.08)
-    img = img * (1 - dots * 0.45) + c * dots * 0.45
+    img = img * (1 - dots * 0.12) + c * dots * 0.12
 
 im = Image.fromarray(np.clip(img, 0, 255).astype(np.uint8), "RGB").convert("RGBA")
 d = ImageDraw.Draw(im)
