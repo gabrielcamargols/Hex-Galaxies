@@ -1758,8 +1758,8 @@ func _build_hud() -> void:
 	# câmera: linha compacta acima do painel de fim de turno
 	var camv = _hbox(ui, 4)
 	_place(camv, Control.PRESET_BOTTOM_RIGHT, 8)
-	camv.offset_top -= 168
-	camv.offset_bottom -= 168
+	camv.offset_top -= 116 if compact else 128
+	camv.offset_bottom -= 116 if compact else 128
 	for cb in [["<", func(): board.rotate_cam(-1), "Girar a câmera"], [">", func(): board.rotate_cam(1), "Girar a câmera"], ["+", func(): board.zoom_cam(0.7), "Aproximar (roda do mouse)"], ["-", func(): board.zoom_cam(1.4), "Afastar (roda do mouse)"], ["Tudo", func(): board.fit_camera(false), "Ver o tabuleiro inteiro"]]:
 		var bb = _button(camv, cb[0], cb[1])
 		bb.tooltip_text = cb[2]
@@ -1769,8 +1769,9 @@ func _build_hud() -> void:
 			bb.visible = false
 	# colunas de peças
 	var left = _panel(ui)
-	_place(left, Control.PRESET_CENTER_LEFT, 8)
-	w["party0"] = _vbox(left, 4)
+	_place(left, Control.PRESET_TOP_LEFT, 8)
+	w["party0_sc"] = _roster_scroll(left)
+	w["party0"] = _vbox(w["party0_sc"], 3)
 	# avisos de ação (no alto)
 	var aw = _panel(topcol)
 	aw.add_theme_stylebox_override("panel", _tex_box("res://ui/panel_soft.png", 22, C_HUD, 16, 8))
@@ -1828,20 +1829,21 @@ func _build_hud() -> void:
 	# fim de turno
 	var eb = _panel(ui)
 	_place(eb, Control.PRESET_BOTTOM_RIGHT, 8)
-	var ev = _vbox(eb, 6)
-	w["round"] = _label(ev, "", 28, C_GOLD)
-	w["round"].horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	w["turn"] = _label(ev, "", 14)
-	w["turn"].horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	w["end"] = _button(ev, "Passar", _on_end_pressed)
-	w["end"].custom_minimum_size = Vector2(150 if compact else 170, 52)
-	if compact:
-		w["round"].add_theme_font_size_override("font_size", 22)
+	w["end_panel"] = eb
+	var ev = _vbox(eb, 4)
+	w["end_hint"] = _label(ev, "", 13, C_DIM)
+	w["end_hint"].horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	w["end"] = _button(ev, "PASSAR O ROUND", _on_end_pressed)
+	w["end"].custom_minimum_size = Vector2(210 if compact else 270, 60 if compact else 72)
+	w["end"].add_theme_font_size_override("font_size", 20 if compact else 24)
+	if font_title != null:
+		w["end"].add_theme_font_override("font", font_title)
 	# coluna da CPU (à direita, acima do fim de turno)
 	var right = _panel(ui)
 	_place(right, Control.PRESET_TOP_RIGHT, 8)
 	right.offset_top = 64
-	w["party1"] = _vbox(right, 4)
+	w["party1_sc"] = _roster_scroll(right)
+	w["party1"] = _vbox(w["party1_sc"], 3)
 	w["party1_panel"] = right
 	right.visible = cpu_open or not compact
 	# painel lateral (cartas / registro / regras)
@@ -1911,7 +1913,7 @@ func can_deploy_now() -> bool:
 
 
 func deploy_block_reason() -> String:
-	if game.reserve_of(0).is_empty():
+	if game.reserve_of(me).is_empty():
 		return "Sem reservas: todas as suas peças já estão em campo."
 	if game.winner != Game.NONE:
 		return "Fim de jogo."
@@ -2013,10 +2015,12 @@ func refresh() -> void:
 		for h in game.entry_zone(p):
 			st["hl"][h] = "entry%d" % (0 if p == me else 1)
 	if can_deploy_now() or dsel >= 0 or (res_drag != null and res_drag.get("on", false)):
+		var show_lbl = dsel >= 0 or (res_drag != null and res_drag.get("on", false))
 		for h in game.deploy_hexes(me):
 			st["hl"][h] = "deploy"
-			st["labels"][h] = "+ ENTRAR"
-			st["label_colors"][h] = C_DEPLOY.lightened(0.4)
+			if show_lbl:
+				st["labels"][h] = "+ ENTRAR"
+				st["label_colors"][h] = C_DEPLOY.lightened(0.4)
 	# bombas escondidas do Rappy: só o dono vê
 	for mn in game.mines:
 		if mn.get("hidden", false) and mn["owner"] == me:
@@ -2144,12 +2148,7 @@ func _refresh_top() -> void:
 	elif game.core_next != null:
 		ev.insert(0, "Núcleo surge no round %d" % game.core_next_round)
 	w["events"].text = "   ·   ".join(ev)
-	w["round"].text = "Round %d/10" % game.round_no
-	w["turn"].text = "SUA VEZ" if game.cur == me else ("VEZ DO " + _opp().to_upper())
-	w["turn"].add_theme_color_override("font_color", C_YOU if game.cur == me else C_CPU)
-	w["turn"].add_theme_font_size_override("font_size", 18)
-	if font_title != null:
-		w["turn"].add_theme_font_override("font", font_title)
+	w["events"].visible = not ev.is_empty()
 
 
 func _refresh_party() -> void:
@@ -2157,75 +2156,145 @@ func _refresh_party() -> void:
 		var box: VBoxContainer = w["party%d" % p]
 		for c in box.get_children():
 			c.queue_free()
-		_label(box, ("VOCÊ · " if p == me else (_opp().to_upper() + " · ")) + ("Mix" if game.P[p].get("mix", false) else DB.factions[game.P[p]["fac"]]["short"]), 13, Color("#4f9be0") if p == me else Color("#e0563f"))
-		var dep_ok = p == me and can_deploy_now()
-		var shown_res_head = false
+		var col = Color("#4f9be0") if p == me else Color("#e0563f")
+		_label(box, ("VOCÊ · " if p == me else (_opp().to_upper() + " · ")) + ("Mix" if game.P[p].get("mix", false) else DB.factions[game.P[p]["fac"]]["short"]), 13, col)
+		var res = []
+		var fld = []
+		var dead = []
 		for u in game.units:
 			if u.owner != p or u.barrier:
 				continue
-			if p == me and u.st == "reserve" and not shown_res_head:
-				shown_res_head = true
-				var hd = PanelContainer.new()
-				var sbx = StyleBoxFlat.new()
-				sbx.bg_color = C_DEPLOY.darkened(0.1) if dep_ok else Color(0.25, 0.22, 0.2, 0.9)
-				sbx.set_corner_radius_all(6)
-				sbx.set_content_margin_all(6)
-				hd.add_theme_stylebox_override("panel", sbx)
-				box.add_child(hd)
-				var hl = Label.new()
-				hl.autowrap_mode = TextServer.AUTOWRAP_WORD
-				hl.custom_minimum_size = Vector2(176 if compact else 190, 0)
-				hl.add_theme_font_size_override("font_size", 12)
-				if compact:
-					hl.add_theme_font_size_override("font_size", 12)
-				if dep_ok:
-					hl.text = "PODE COLOCAR EM CAMPO\nClique ou arraste um retrato até uma casa CIANO \"+ ENTRAR\" (1 ação)."
-					hl.add_theme_color_override("font_color", Color("#06201e"))
-				else:
-					hl.text = "RESERVA\n" + deploy_block_reason()
-					hl.add_theme_color_override("font_color", Color("#8fb8cc"))
-				hd.add_child(hl)
-			var stx = "caiu"
 			if u.st == "field":
-				stx = "usado" if u.activated else "pronto"
-			elif u.st == "reserve":
-				stx = "▶ pode entrar" if (p == me and dep_ok) else "reserva"
-			elif u.st == "off":
-				stx = "round %d" % Game.CMD_ROUND
-			var b = Button.new()
-			b.text = "%s\nVida %d/%d · %s" % [DB.cards[u.cid]["name"], max(0, u.hp), u.maxhp, stx]
-			b.add_theme_font_size_override("font_size", 12)
-			b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-			b.custom_minimum_size = Vector2(190, 52)
-			if compact:
-				b.text = "%s  %d/%d\n%s" % [_short(u.cid), max(0, u.hp), u.maxhp, stx]
-				b.add_theme_font_size_override("font_size", 13)
-				b.custom_minimum_size = Vector2(176, 44)
-			if DB.portraits.has(u.cid):
-				b.icon = DB.portraits[u.cid]
-				b.expand_icon = true
-			if u.st == "dead":
-				b.modulate = Color(0.5, 0.5, 0.5)
-			elif u.st == "reserve" and p == me and dep_ok:
-				b.add_theme_color_override("font_color", C_DEPLOY.lightened(0.5))
-				var gsb = StyleBoxFlat.new()
-				gsb.bg_color = C_DEPLOY.darkened(0.7)
-				gsb.border_color = C_DEPLOY
-				gsb.set_border_width_all(3)
-				gsb.set_corner_radius_all(6)
-				b.add_theme_stylebox_override("normal", gsb)
-				b.tooltip_text = "Clique e depois escolha uma casa ciano da sua entrada, ou arraste até ela. Gasta 1 ação."
-			elif u.st == "reserve" or u.st == "off" or u.activated:
-				b.modulate = Color(0.82, 0.82, 0.82)
-				if u.st == "reserve" and p == me:
-					b.tooltip_text = deploy_block_reason()
-			if u.uid == sel or u.uid == dsel or u.uid == inspect:
-				b.modulate = Color(1.2, 1.1, 0.7)
-			var uid = u.uid
-			b.pressed.connect(func(): _on_roster(uid))
-			if p == me and u.st == "reserve":
-				b.button_down.connect(func(): _start_res_drag(uid))
-			box.add_child(b)
+				fld.append(u)
+			elif u.st == "dead":
+				dead.append(u)
+			else:
+				res.append(u)
+		var dep_ok = p == me and can_deploy_now()
+		# reservas primeiro: é o que o jogador procura para colocar em campo
+		if not res.is_empty():
+			var hd = PanelContainer.new()
+			var ready_n = res.filter(func(x): return x.st == "reserve").size()
+			hd.add_theme_stylebox_override("panel", _flat(C_DEPLOY.darkened(0.15) if dep_ok else Color(0.1, 0.14, 0.2, 0.9), C_DEPLOY if dep_ok else Color(0.25, 0.32, 0.4), 1, 6, 5))
+			box.add_child(hd)
+			var hv = _vbox(hd, 0)
+			var t1 = _label(hv, ("PARA ENTRAR · %d" % ready_n) if dep_ok else ("RESERVA · %d" % res.size()), 13, Color("#06201e") if dep_ok else Color("#9fd8e8"))
+			if dep_ok:
+				_label(hv, "Arraste até \"+ ENTRAR\" (1 ação)", 11, Color("#06201e"))
+			elif p == me:
+				var why = deploy_block_reason()
+				if why != "" and ready_n > 0:
+					var wl = _label(hv, why, 11, Color("#8fb8cc"))
+					wl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+					wl.custom_minimum_size = Vector2(_roster_w() - 12, 0)
+			t1.add_theme_constant_override("outline_size", 0)
+			var grid = GridContainer.new()
+			grid.columns = 3
+			grid.add_theme_constant_override("h_separation", 3)
+			grid.add_theme_constant_override("v_separation", 3)
+			box.add_child(grid)
+			for u in res:
+				grid.add_child(_res_tile(u, p, dep_ok))
+		if not fld.is_empty():
+			_label(box, "EM CAMPO · %d" % fld.size(), 11, C_DIM)
+			for u in fld:
+				box.add_child(_field_row(u))
+		if not dead.is_empty():
+			var names = dead.map(func(x): return _short(x.cid))
+			var dl = _label(box, "Caídos: " + ", ".join(names), 11, Color(0.55, 0.58, 0.62))
+			dl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			dl.custom_minimum_size = Vector2(_roster_w(), 0)
+
+
+func _roster_w() -> float:
+	return 186.0 if compact else 200.0
+
+
+func _roster_scroll(parent: Control) -> ScrollContainer:
+	var sc = ScrollContainer.new()
+	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	parent.add_child(sc)
+	return sc
+
+
+# limita a altura das listas para não ficarem embaixo da ficha nem do botão de passar
+func _fit_rosters() -> void:
+	if not w.has("party0_sc") or not is_instance_valid(w["party0_sc"]):
+		return
+	var vh = ui.size.y
+	var uc: Control = w["ucard"]
+	var avail0 = vh - 32.0 - ((uc.size.y + 10.0) if uc.visible else 0.0)
+	var avail1 = vh - 64.0 - 24.0 - w["end_panel"].size.y - 56.0
+	for pair in [[w["party0_sc"], w["party0"], avail0], [w["party1_sc"], w["party1"], avail1]]:
+		var need = pair[1].get_combined_minimum_size()
+		var h = clamp(need.y, 60.0, max(60.0, pair[2]))
+		var cur: Vector2 = pair[0].custom_minimum_size
+		var nw = need.x + (10.0 if need.y > h else 0.0)
+		if abs(cur.y - h) > 1.0 or abs(cur.x - nw) > 1.0:
+			pair[0].custom_minimum_size = Vector2(nw, h)
+
+
+func _unit_btn(u, text: String) -> Button:
+	var b = Button.new()
+	b.text = text
+	if DB.portraits.has(u.cid):
+		b.icon = DB.portraits[u.cid]
+		b.expand_icon = true
+	var uid = u.uid
+	b.pressed.connect(func(): _on_roster(uid))
+	if u.uid == sel or u.uid == dsel or u.uid == inspect:
+		b.modulate = Color(1.25, 1.15, 0.7)
+	return b
+
+
+# reserva: retrato grande com o nome embaixo (3 por linha)
+func _res_tile(u, p: int, dep_ok: bool) -> Button:
+	var off = u.st == "off"
+	var b = _unit_btn(u, ("R%d" % Game.CMD_ROUND) if off else _short(u.cid))
+	b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	b.vertical_icon_alignment = VERTICAL_ALIGNMENT_TOP
+	b.add_theme_font_size_override("font_size", 11)
+	b.add_theme_constant_override("icon_max_width", 50 if compact else 54)
+	b.clip_text = true
+	b.custom_minimum_size = Vector2((_roster_w() - 6.0) / 3.0, 74 if compact else 78)
+	var c = DB.cards[u.cid]
+	b.tooltip_text = "%s\nVida %d · Ataque %d · Movimento %d · Alcance %d" % [c["name"], u.maxhp, c.get("atk", 0), c.get("mov", 0), c.get("alc", 1)]
+	if off:
+		b.tooltip_text += "\nComandante: entra no round %d" % Game.CMD_ROUND
+	var ok = dep_ok and not off
+	if ok:
+		b.add_theme_stylebox_override("normal", _flat(C_DEPLOY.darkened(0.7), C_DEPLOY, 2, 6, 3))
+		b.add_theme_stylebox_override("hover", _flat(C_DEPLOY.darkened(0.45), C_DEPLOY.lightened(0.3), 2, 6, 3))
+		b.add_theme_color_override("font_color", C_DEPLOY.lightened(0.5))
+		b.tooltip_text += "\nClique e escolha uma casa ciano, ou arraste até ela (1 ação)."
+		var uid = u.uid
+		b.button_down.connect(func(): _start_res_drag(uid))
+	else:
+		b.add_theme_stylebox_override("normal", _flat(Color(0.06, 0.09, 0.14, 0.9), Color(0.2, 0.26, 0.34), 1, 6, 3))
+		if not (u.uid == sel or u.uid == dsel or u.uid == inspect):
+			b.modulate = Color(0.75, 0.75, 0.75) if off or p != me else Color(0.9, 0.9, 0.9)
+		if p == me and not off:
+			b.tooltip_text += "\n" + deploy_block_reason()
+	return b
+
+
+# em campo: uma linha só (retrato, nome, vida e se ainda pode agir)
+func _field_row(u) -> Button:
+	var used = u.activated
+	var b = _unit_btn(u, "%s  %d/%d%s" % [_short(u.cid), max(0, u.hp), u.maxhp, "  · usado" if used else ""])
+	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	b.add_theme_font_size_override("font_size", 13)
+	b.add_theme_constant_override("icon_max_width", 30)
+	b.custom_minimum_size = Vector2(_roster_w(), 36)
+	b.tooltip_text = "%s · Vida %d/%d · %s" % [DB.cards[u.cid]["name"], max(0, u.hp), u.maxhp, "já agiu neste round" if used else "pronto para agir"]
+	if u.is_cmd:
+		b.text = "★ " + b.text
+	var hp_frac = float(max(0, u.hp)) / max(1.0, float(u.maxhp))
+	var fc = Color("#7fe08a") if hp_frac > 0.6 else (Color("#ffcf5a") if hp_frac > 0.3 else Color("#ff6a5a"))
+	b.add_theme_color_override("font_color", fc)
+	if used and not (u.uid == sel or u.uid == inspect):
+		b.modulate = Color(0.62, 0.62, 0.66)
+	return b
 
 
 func _refresh_ucard() -> void:
@@ -2341,27 +2410,39 @@ func _refresh_actbar() -> void:
 			if not can_mv:
 				why.append("Mover: já se moveu neste turno (máx. 1)." if moved else ("Mover: está preso." if game.rooted(u) else "Mover: nenhuma casa livre ao alcance."))
 			if not can_at:
-				why.append("Atacar: já atacou neste turno (máx. 1)." if attacked else ("Atacar: não pode neste turno." if cant else "Atacar: nenhum inimigo ao alcance. Clique num inimigo para ver o porquê."))
-			if not k.has("action") and not u.barrier:
-				why.append("%s é passiva: funciona sozinha." % DB.cards[u.cid]["ab"]["name"])
+				why.append("Atacar: já atacou neste turno (máx. 1)." if attacked else ("Atacar: não pode neste turno." if cant else "Atacar: nenhum inimigo ao alcance."))
 	if mine and game.act == null and can_deploy_now():
-		var bres = _cbtn(box, "+ Colocar reserva (%d)" % game.reserve_of(0).size(), C_DEPLOY, _pick_first_reserve, dsel >= 0)
+		var bres = _cbtn(box, "+ Colocar reserva (%d)" % game.reserve_of(me).size(), C_DEPLOY, _pick_first_reserve, dsel >= 0)
 		bres.tooltip_text = "Escolhe a primeira reserva; depois clique numa casa ciano da entrada. Para escolher outra, clique no retrato dela à esquerda."
 	var tac_ok = false
 	if mine:
 		tac_ok = _any_card_playable()
-	if tac_ok:
-		why.push_front("Há carta tática que dá para jogar agora (cartas embaixo).")
 	w["note"].text = note
 	if w.has("abp"):
 		w["abp"].visible = u != null
 	w["why"].text = "  ·  ".join(why)
 	w["legend"].visible = mine and (u != null or dsel >= 0)
 	var e = w["end"]
-	e.text = "Encerrar ativação" if (game.act != null and mine) else "Passar o round"
+	var acting = game.act != null and mine
+	e.text = "ENCERRAR ATIVAÇÃO" if acting else "PASSAR O ROUND ▶"
 	e.disabled = not mine
-	var nothing_left = game.act != null and mine and game.act["actions"] <= 0
-	_style_btn(e, C_GOLD if nothing_left else C_END, nothing_left)
+	var hint = ""
+	var pulse = false
+	if not mine:
+		hint = "Fim de jogo" if game.winner != Game.NONE else ("Vez do " + _opp().to_lower())
+	elif acting:
+		pulse = game.act["actions"] <= 0
+		hint = "Sem ações: encerre" if pulse else "Termina a vez desta peça"
+	else:
+		var idle = game.field().filter(func(x): return x.owner == me and not x.barrier and game.can_start(x)).is_empty()
+		pulse = idle and not can_deploy_now()
+		hint = "Todas as suas peças já agiram" if idle else "Quando não quiser ativar mais peças"
+	w["end_hint"].text = hint
+	if mine:
+		_primary(e)
+	else:
+		_style_btn(e, C_END, false)
+	e.set_meta("pulse", pulse)
 
 
 func _refresh_prompt() -> void:
@@ -3729,6 +3810,14 @@ func _process(_delta: float) -> void:
 	if stage == "select":
 		_update_tags()
 	if game != null and board.visible:
+		_fit_rosters()
+		if w.has("end") and is_instance_valid(w["end"]):
+			var eb: Button = w["end"]
+			if eb.get_meta("pulse", false) and not eb.disabled:
+				var k = 1.0 + 0.28 * (0.5 + 0.5 * sin(Time.get_ticks_msec() / 220.0))
+				eb.modulate = Color(k, k, k)
+			else:
+				eb.modulate = Color.WHITE
 		_update_plates(_delta)
 		_tremor_omen(_delta)
 		vfx.cam_k = _fx_scale()

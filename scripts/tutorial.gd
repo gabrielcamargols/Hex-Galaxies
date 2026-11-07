@@ -25,7 +25,7 @@ const STEPS = [
 	{"t": "Mova-se", "x": "Cada peça ativada tem 2 AÇÕES: mover 1 vez e atacar 1 vez.\n\nAs casas verdes mostram até onde ele anda. Toque na casa marcada com AQUI e depois em Confirmar."},
 	{"t": "Ataque!", "x": "O inimigo ao lado está em vermelho: dá para atacar.\n\nToque nele, veja a prévia do dano e toque em Confirmar."},
 	{"t": "A vez passa", "x": "As 2 ações acabaram, então a ativação terminou sozinha. Agora a vez é do adversário, depois volta para você.\n\nOs dois lados se alternam, uma peça por vez, até todos passarem.", "next": true},
-	{"t": "Reforços", "x": "Suas reservas estão na lista à esquerda. Colocar uma em campo gasta 1 ação.\n\nToque num retrato \"▶ pode entrar\" e depois numa casa ciano \"+ ENTRAR\" (ou arraste o retrato até lá)."},
+	{"t": "Reforços", "x": "Suas reservas estão na lista à esquerda. Colocar uma em campo gasta 1 ação.\n\nToque num retrato do quadro PARA ENTRAR (no alto à esquerda) e depois numa casa ciano \"+ ENTRAR\" (ou arraste o retrato até lá)."},
 	{"t": "Termine a ativação", "x": "Quem acabou de entrar ainda tem 1 ação: pode andar ou atacar.\n\nQuando não quiser fazer mais nada, toque em \"Encerrar ativação\"."},
 	{"t": "O terreno importa", "x": "• Atacar de cima: +1 de dano (de baixo: -1).\n• Rochas, galpões e caixas bloqueiam a linha de tiro e dão abrigo (-2 de dano).\n• Floresta e lama custam mais movimento.\n• A área de entrada cresce a cada 3 rounds.\n\nToque numa casa ou peça para ver o que ela faz.", "next": true},
 	{"t": "Passe o round", "x": "Quando não quiser ativar mais peças, toque em \"Passar o round\". O round acaba quando os dois passam, e as peças ficam prontas de novo.", "pass": true},
