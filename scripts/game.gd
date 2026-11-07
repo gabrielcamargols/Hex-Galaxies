@@ -49,6 +49,7 @@ class Unit:
 		return Vector2i(q, r)
 
 
+var cine: Callable = Callable()   # main.gd: cinemática antes de os comandantes entrarem
 var round_no: int = 0
 var first: int = 0
 var cur: int = 0
@@ -991,6 +992,9 @@ func start_round() -> void:
 	if winner != NONE:
 		return
 	if round_no == CMD_ROUND:
+		# cinemática dos comandantes observando o campo (só na tela; não muda o estado)
+		if cine.is_valid():
+			await cine.call()
 		for p in range(2):
 			await commander_enters(p)
 	if winner != NONE:

@@ -1667,6 +1667,8 @@ func _start_match(sides) -> void:
 	turn_seen = -1
 	game.setup(sides, setup_cfg["map"])
 	game.question.connect(_on_question)
+	if not autotest:
+		game.cine = _cine_commanders
 	game.changed.connect(refresh)
 	game.fx_event.connect(_on_fx)
 	sel = -1
@@ -2152,6 +2154,28 @@ func refresh() -> void:
 	_refresh_hand()
 	_refresh_prompt()
 	_refresh_side()
+
+
+# cinemática do round 4: cada comandante assiste ao campo antes de entrar
+func _cine_commanders() -> void:
+	if tut or game == null:
+		return
+	var cmds = []
+	for p in [me, 1 - me]:
+		var c = game.commander(p)
+		if c != null and c.st == "off" and DB.art.has(c.cid):
+			cmds.append({"cid": c.cid, "owner": p})
+	if cmds.is_empty():
+		return
+	var was = ui.visible
+	ui.visible = false
+	var cn = Node3D.new()
+	cn.set_script(load("res://scripts/cinematica.gd"))
+	add_child(cn)
+	await cn.run(self, cmds)
+	cn.queue_free()
+	ui.visible = was
+	refresh()
 
 
 # aviso sonoro quando a vez muda de jogador
