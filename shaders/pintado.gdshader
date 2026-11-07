@@ -32,5 +32,11 @@ void light() {
 	float lit = smoothstep(-0.05, 0.08, nd + b) * ATTENUATION;
 	float hi = smoothstep(0.62, 0.7, nd + b * 0.7) * ATTENUATION;
 	vec3 shade = mix(shadow_tint * shadow_level, vec3(1.0), lit);
+	// retícula de quadrinho na sombra (espaço de tela)
+	vec2 p = FRAGCOORD.xy;
+	vec2 rp = vec2(p.x + p.y, p.x - p.y) * 0.70710678 / 6.0;
+	float d = length(fract(rp) - 0.5);
+	float r = 0.42 * sqrt(1.0 - lit);
+	shade *= 1.0 - (1.0 - smoothstep(r - 0.07, r + 0.07, d)) * (1.0 - lit) * 0.45;
 	DIFFUSE_LIGHT += LIGHT_COLOR * (shade + hi * highlight * vec3(1.0, 0.92, 0.7));
 }

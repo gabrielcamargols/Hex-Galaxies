@@ -46,7 +46,7 @@ var cam_speed: float = 8.0      # mais baixo = câmera mais lenta (chegada no pl
 var shake: float = 0.0
 
 var tiles: Dictionary = {}       # Vector2i -> {node, disp_h, props, hl, dim, label, flash}
-var tile_mat: StandardMaterial3D
+var tile_mat: Material
 var unit_nodes: Dictionary = {}  # uid -> {node, sprite, hp, label, path, ...}
 var state: Dictionary = {}       # destaques vindos do controlador
 var built_ver: int = -1
@@ -76,12 +76,8 @@ func _ready() -> void:
 	outline_mat.cull_mode = BaseMaterial3D.CULL_FRONT
 	outline_mat.grow = true
 	outline_mat.grow_amount = 0.025
-	tile_mat = StandardMaterial3D.new()
-	tile_mat.vertex_color_use_as_albedo = true
-	tile_mat.diffuse_mode = BaseMaterial3D.DIFFUSE_TOON
-	tile_mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
-	tile_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-	tile_mat.roughness = 1.0
+	# sombreado de quadrinho leve (retícula na sombra), sem filtro de tela
+	tile_mat = _hq_mat()
 	heart_tex = _make_heart()
 	var we = WorldEnvironment.new()
 	env = Environment.new()
@@ -138,13 +134,7 @@ func build(game: Game) -> void:
 	_setup_sky()
 	ground.mesh = _planet_mesh(desert)
 	ground.position = Vector3.ZERO
-	var gm = StandardMaterial3D.new()
-	gm.vertex_color_use_as_albedo = true
-	gm.diffuse_mode = BaseMaterial3D.DIFFUSE_TOON
-	gm.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
-	gm.roughness = 1.0
-	gm.cull_mode = BaseMaterial3D.CULL_DISABLED
-	ground.material_override = gm
+	ground.material_override = _hq_mat()
 	for h in DB.hexes:
 		var node = Node3D.new()
 		var wp = world_xz(h)
@@ -616,6 +606,18 @@ func _overlay_mat(c: Color) -> StandardMaterial3D:
 	m.albedo_color = c
 	m.render_priority = 1
 	return m
+
+
+func _hq_mat() -> Material:
+	if ResourceLoader.exists("res://shaders/hq_toon.gdshader"):
+		var m = ShaderMaterial.new()
+		m.shader = load("res://shaders/hq_toon.gdshader")
+		return m
+	var f = StandardMaterial3D.new()
+	f.vertex_color_use_as_albedo = true
+	f.diffuse_mode = BaseMaterial3D.DIFFUSE_TOON
+	f.cull_mode = BaseMaterial3D.CULL_DISABLED
+	return f
 
 
 func _mat(c: Color, unshaded: bool = false) -> StandardMaterial3D:

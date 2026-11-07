@@ -56,7 +56,7 @@ var vol = {"Musica": 80.0, "Efeitos": 90.0, "Vozes": 90.0}
 var res_pref: String = "1600x900"
 var fullscreen: bool = false
 var render_q: float = 1.0
-var hq_on: bool = true          # filtro de quadrinho (pode desligar em aparelhos fracos)
+var hq_on: bool = false         # filtro de quadrinho na tela (pesado; desligado por padrão)
 var hq_rect: ColorRect = null
 var fast_mode: bool = false      # modo rápido: sem confirmar, prévia ao apontar, animações 2×
 var pend_hover: bool = false
@@ -589,7 +589,7 @@ func _show_menu() -> void:
 		fast_mode = not fast_mode
 		_save_prefs()
 		fb.text = _fast_label())
-	var hb2 = _cbtn(row2, "Filtro HQ: " + ("LIGADO" if hq_on else "desligado"), C_HUD, func(): pass)
+	var hb2 = _cbtn(row2, "Filtro HQ (pesado): " + ("LIGADO" if hq_on else "desligado"), C_HUD, func(): pass)
 	hb2.custom_minimum_size = Vector2(200, 40)
 	hb2.tooltip_text = "Contorno de tinta, retícula e cores de quadrinho no mapa. Desligue se o aparelho ficar lento."
 	hb2.pressed.connect(func():
@@ -597,7 +597,7 @@ func _show_menu() -> void:
 		if hq_rect != null:
 			hq_rect.visible = hq_on
 		_save_prefs()
-		hb2.text = "Filtro HQ: " + ("LIGADO" if hq_on else "desligado"))
+		hb2.text = "Filtro HQ (pesado): " + ("LIGADO" if hq_on else "desligado"))
 	var ver = _label(ui, "protótipo · Godot 4.7", 12, C_DIM)
 	_place(ver, Control.PRESET_BOTTOM_RIGHT, 12)
 	_ui_fade(1.0, 0.9)
@@ -4719,7 +4719,7 @@ func _load_prefs() -> void:
 	if cf.load("user://prefs.cfg") == OK:
 		ui_pref = str(cf.get_value("ui", "scale", "auto"))
 		fast_mode = bool(cf.get_value("ui", "fast", false))
-		hq_on = bool(cf.get_value("video", "hq", true))
+		hq_on = bool(cf.get_value("video", "hq2", false))
 		for b in vol.keys():
 			vol[b] = float(cf.get_value("som", b, vol[b]))
 		res_pref = str(cf.get_value("video", "res", res_pref))
@@ -4736,7 +4736,7 @@ func _save_prefs() -> void:
 	cf.set_value("video", "res", res_pref)
 	cf.set_value("video", "full", fullscreen)
 	cf.set_value("video", "q", render_q)
-	cf.set_value("video", "hq", hq_on)
+	cf.set_value("video", "hq2", hq_on)
 	cf.save("user://prefs.cfg")
 
 
