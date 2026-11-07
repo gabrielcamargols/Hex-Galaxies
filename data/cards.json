@@ -503,11 +503,12 @@
    "src": "pdf",
    "ab": {
     "name": "Maré Brutal",
-    "text": "Cada Abyssal aliado a até 3 casas de Rhazur recebe +1 ATQ no seu primeiro ataque após entrar. Inclui Rhazur. Fora do campo, meça desde o centro da sua entrada."
+    "text": "Cada Abyssal aliado a até 3 casas de Rhazur recebe +1 ATQ no seu primeiro ataque após entrar. Inclui Rhazur. Fora do campo, meça desde o centro da sua entrada. Fome do Abismo: 1 vez por round, quando um Abyssal a até 3 casas de Rhazur derruba um inimigo, ele restaura 2 de Vida."
    },
    "k": {
     "mare": true,
-    "ult": "abyss"
+    "ult": "abyss",
+    "fome": 3
    },
    "ab2": {
     "name": "Abraço do Abismo",
@@ -527,11 +528,11 @@
    "alc": 3,
    "src": "pdf",
    "ab": {
-    "name": "Espinhos Venenosos",
-    "text": "Se seu ataque causar dano, o mesmo alvo sofre mais 1 dano no fim deste round."
+    "name": "Veneno Lento",
+    "text": "Se seu ataque causar dano, o alvo fica envenenado até o fim da partida: perde 1 de Vida no fim de cada round. Máximo de 3 envenenados por partida."
    },
    "k": {
-    "after": "pending"
+    "after": "venom"
    }
   },
   {
@@ -541,16 +542,16 @@
    "role": "Lutador",
    "hg": "HG-024",
    "atk": 4,
-   "int": 4,
+   "int": 5,
    "mov": 2,
    "alc": 1,
    "src": "pdf",
    "ab": {
-    "name": "Descarga em Cadeia",
-    "text": "Após atacar, cause 1 dano a outro inimigo adjacente a Strahl, se houver."
+    "name": "Descarga Condutiva",
+    "text": "Após atacar, cause 1 de dano a até 2 inimigos adjacentes ao alvo (2 de dano em quem estiver envenenado)."
    },
    "k": {
-    "after": "chain"
+    "after": "arc"
    }
   },
   {
@@ -565,14 +566,16 @@
    "alc": 2,
    "src": "pdf",
    "ab": {
-    "name": "Mina Flutuante",
-    "text": "Ao entrar, marque 1 casa livre adjacente. O primeiro inimigo que entrar nela sofre 3 dano; retire a mina. Máximo 1 mina sua."
+    "name": "Maré de Minas",
+    "text": "Ao entrar, marque 1 casa livre adjacente. O primeiro inimigo que entrar nela sofre 3 de dano e fica preso até o fim do próximo round; retire a mina. Pode ter até 2 minas suas."
    },
    "k": {
     "entry": {
      "t": "mine",
      "n": 3
-    }
+    },
+    "mineCap": 2,
+    "mineRoot": true
    }
   },
   {
@@ -588,10 +591,10 @@
    "src": "pdf",
    "ab": {
     "name": "Arpão de Arrasto",
-    "text": "Se causar dano no ataque, pode mover o alvo 1 casa em direção a Rayak, para um destino livre que reduza a distância."
+    "text": "Se causar dano no ataque, pode puxar o alvo até 2 casas em direção a Rayak (uma por vez). Depois, 1 vez por round, um Abyssal adjacente ao alvo pode atacá-lo de graça."
    },
    "k": {
-    "after": "pull"
+    "after": "pull2"
    }
   },
   {
@@ -601,16 +604,17 @@
    "role": "Guardião",
    "hg": "HG-027",
    "atk": 3,
-   "int": 10,
+   "int": 9,
    "mov": 1,
    "alc": 1,
    "src": "pdf",
    "ab": {
     "name": "Guarda Silencioso",
-    "text": "Pode receber o dano destinado a outro aliado adjacente. Transfira todo o pacote, 1 única vez; não encadeie proteções."
+    "text": "Pode receber o dano destinado a outro aliado adjacente (todo o pacote, 1 única vez; não encadeie). Lamento do Abismo: ao proteger, o atacante perde 1 ATQ até o fim do round."
    },
    "k": {
-    "guard": true
+    "guard": true,
+    "lament": true
    }
   },
   {
@@ -626,10 +630,10 @@
    "src": "pdf",
    "ab": {
     "name": "Caos de Espinhos",
-    "text": "Após atacar, cause 1 dano a todas as outras peças adjacentes a Oncus, incluindo aliados e comandantes."
+    "text": "Após atacar, cause 1 dano a todas as outras peças adjacentes a Oncus: inimigos e aliados Abyssais com mais de 5 de Vida. Nunca fere comandantes aliados."
    },
    "k": {
-    "after": "burstAll"
+    "after": "burstSafe"
    }
   },
   {
@@ -645,10 +649,11 @@
    "src": "pdf",
    "ab": {
     "name": "Investida Selvagem",
-    "text": "1 ação: mova até seu MOV e faça 1 ataque normal. Conta no limite de 1 ataque por ativação."
+    "text": "1 ação: mova até seu MOV e faça 1 ataque normal. Maré Viva: se o alvo estava a 3 ou mais casas de onde Moby começou, o ataque ganha +2 e o alvo é puxado 1 casa."
    },
    "k": {
-    "action": "moveAttack"
+    "action": "moveAttack",
+    "viva": 2
    }
   },
   {
@@ -672,7 +677,14 @@
      "r": 2,
      "n": 3,
      "self": true
-    }
+    },
+    "ult": "mend"
+   },
+   "ab2": {
+    "name": "Luz da Fenda",
+    "text": "1 vez por partida, 1 ação: um Abyssal a até 3 casas (inclusive ela) restaura até 6 de Vida.",
+    "kind": "ativa",
+    "per": "partida"
    }
   },
   {
@@ -687,10 +699,13 @@
    "alc": 4,
    "src": "pdf",
    "ab": {
-    "name": "Tiro Sônico",
-    "text": "Pode atacar a até 4 casas. Precisa de linha de visão; esse alcance já consta em ALC."
+    "name": "Eco Profundo",
+    "text": "Pode atacar a até 4 casas (precisa de linha de visão). Se o alvo já foi atacado por outro Abyssal neste round, causa +1 de dano e o empurra 1 casa."
    },
-   "k": {}
+   "k": {
+    "after": "echo",
+    "atkFocus": 1
+   }
   },
   {
    "id": "kling",
@@ -708,7 +723,15 @@
     "text": "No fim do round, restaure 1 de Vida de outro aliado adjacente, sem superar a Vida inicial."
    },
    "k": {
-    "endHeal": 1
+    "endHeal": 1,
+    "ult": "plate",
+    "ultRound": true
+   },
+   "ab2": {
+    "name": "Casco de Reparo",
+    "text": "1 vez por round, 1 ação: um aliado adjacente sofre 1 a menos de dano de ataques até o fim do round.",
+    "kind": "ativa",
+    "per": "round"
    }
   },
   {
@@ -724,12 +747,13 @@
    "src": "pdf",
    "ab": {
     "name": "Cortina de Tinta",
-    "text": "Ao entrar, não pode ser alvo de ataques até o início do próximo round. Continua vulnerável a dano de efeitos."
+    "text": "Ao entrar, não pode ser alvo de ataques até o início do próximo round. Nuvem de Tinta: ao causar dano, o alvo fica cego (-2 ATQ até o fim do round)."
    },
    "k": {
     "entry": {
      "t": "veil"
-    }
+    },
+    "after": "blind"
    }
   },
   {
@@ -745,10 +769,11 @@
    "src": "cat",
    "ab": {
     "name": "Ganância Dourada",
-    "text": "Sempre que derrotar uma peça, recebe +1 ATQ permanente, até o máximo de +3."
+    "text": "Sempre que derrotar uma peça, recebe +1 ATQ permanente (máx. +3) e restaura 1 de Vida."
    },
    "k": {
-    "killGrow": 3
+    "killGrow": 3,
+    "killHeal": 1
    }
   },
  {
@@ -764,14 +789,15 @@
   "src": "novo",
   "ab": {
    "name": "Isca Ofuscante",
-   "text": "Ao entrar, ofusque 1 inimigo a até 3 casas: −2 ATQ até o fim do round."
+   "text": "Ao entrar, ofusque 1 inimigo a até 3 casas: -2 ATQ até o fim do round. Alvos ofuscados não têm abrigo contra ataques à distância dos Abyssais."
   },
   "k": {
    "entry": {
     "t": "debuff",
     "r": 3,
     "n": 2
-   }
+   },
+   "dazeCover": true
   }
  },
  {
@@ -787,10 +813,15 @@
   "src": "novo",
   "ab": {
    "name": "Toque Elétrico",
-   "text": "Quem a atacar corpo a corpo sofre 2 de dano depois do ataque."
+   "text": "Quem a atacar corpo a corpo sofre 2 de dano depois do ataque. Olhar Petrificante: ao entrar, 1 inimigo a até 3 casas não pode se mover até o fim do próximo round."
   },
   "k": {
-   "thorns": 2
+   "thorns": 2,
+   "entry": {
+    "t": "root",
+    "r": 3,
+    "n": 1
+   }
   }
  },
  {
@@ -800,16 +831,17 @@
   "name": "Garra-Funda",
   "role": "Tanque",
   "atk": 3,
-  "int": 10,
+  "int": 9,
   "mov": 1,
   "alc": 1,
   "src": "novo",
   "ab": {
    "name": "Carapaça de Cracas",
-   "text": "Sofre 1 a menos de dano de cada ataque."
+   "text": "Sofre 1 a menos de dano de cada ataque. Maré Alta: enquanto houver outro Abyssal adjacente a ela, inimigos adjacentes a ela têm -1 de MOV."
   },
   "k": {
-   "selfRed": 1
+   "selfRed": 1,
+   "slowAura": true
   }
  },
  {
@@ -825,10 +857,11 @@
   "src": "novo",
   "ab": {
    "name": "Manto da Penumbra",
-   "text": "Após atacar, pode mover 1 casa livre sem gastar ação."
+   "text": "Após atacar, pode mover 1 casa livre sem gastar ação. Golpe nas Sombras: +2 ATQ contra um alvo sem nenhum aliado adjacente a ele."
   },
   "k": {
-   "after": "freeMove"
+   "after": "freeMove",
+   "atkIsolated": 2
   }
  },
   {

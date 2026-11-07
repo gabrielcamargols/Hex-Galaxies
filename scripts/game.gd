@@ -48,6 +48,7 @@ class Unit:
 	var hitters: Array = []           # uids de quem já atacou esta peça neste round (Morteiro)
 	var hitters_round: int = 0
 	var gloria_round: int = 0         # Comandante Krieg: round em que já comprou pela Glória do Clã
+	var venoms: int = 0               # Bayak: marcas de veneno já aplicadas na partida
 	var dose_used: bool = false       # Médico Krieg: Última Dose já usada
 
 	func pos() -> Vector2i:
@@ -374,6 +375,11 @@ func mov_of(u) -> int:
 	var ls = int(K(u).get("lastStand", 0))
 	if ls > 0 and field_count(u.owner) <= 3:
 		m = max(m, ls)
+	if m > 1 and not u.barrier:
+		for g in units:
+			if g.st == "field" and g.owner != u.owner and K(g).has("slowAura") and DB.dist(g.pos(), u.pos()) == 1 and allies_of(g).any(func(x): return DB.dist(x.pos(), g.pos()) == 1 and DB.cards[x.cid]["f"] == DB.cards[g.cid]["f"]):
+				m -= 1
+				break
 	return m
 
 
@@ -557,6 +563,8 @@ func atk_of(a, t) -> int:
 			v += min(near.size(), int(aa.get("max", 99))) * int(aa["n"])
 		elif not near.is_empty():
 			v += int(aa["n"])
+	if t != null and k.has("viva") and act != null and act["uid"] == a.uid and act.has("from") and DB.dist(act["from"], t.pos()) >= 3:
+		v += int(k["viva"])
 	if k.has("atkStill") and _still(a):
 		v += int(k["atkStill"])
 	if t != null and k.has("atkFlank"):
@@ -672,7 +680,7 @@ func terrain_mods(a, t, fpos = null) -> Dictionary:
 		o["atk"] = DB.HIGH_DMG
 	elif ha < ht:
 		o["atk"] = -DB.LOW_DMG
-	var no_cover = K(a).has("lob") or (K(a).has("atkStill") and _still(a))
+	var no_cover = K(a).has("lob") or (K(a).has("atkStill") and _still(a)) or (has_fx(t, "dazed") and DB.cards[a.cid]["f"] == "ABY")
 	if d > 1:
 		for c in DB.nbrs(t.pos()):
 			if no_cover:
@@ -858,6 +866,9 @@ func arrive(u, own: bool = false) -> void:
 			emitfx({"t": "boom", "h": u.pos()})
 			log_msg(m["owner"], "%s ativou uma mina." % nm(u))
 			damage(u, int(m["n"]), null)
+			if m.get("root", false) and u.st == "field":
+				u.fx.append({"k": "root", "end": round_no + 1})
+				log_msg(m["owner"], "%s ficou preso na mina." % nm(u))
 			break
 	if u.st == "field" and not u.barrier:
 		for f in fires:
@@ -944,6 +955,11 @@ func settle() -> void:
 			if K(killer).has("killHeal"):
 				heal(killer, int(K(killer)["killHeal"]))
 				log_msg(killer.owner, "%s: recupera Vida ao derrubar %s." % [DB.cards[killer.cid]["ab"]["name"], nm(t)])
+			var kf = commander(killer.owner)
+			if kf != null and kf != killer and kf.st != "dead" and kf.gloria_round != round_no and K(kf).has("fome") and DB.cards[killer.cid]["f"] == "ABY" and DB.dist(killer.pos(), cmd_point(kf)) <= int(K(kf)["fome"]):
+				kf.gloria_round = round_no
+				heal(killer, 2)
+				log_msg(killer.owner, "Fome do Abismo: %s restaura 2 de Vida." % nm(killer))
 			var kc = commander(killer.owner)
 			if kc != null and kc != killer and kc.st != "dead" and kc.gloria_round != round_no and K(kc).has("gloria") and DB.cards[killer.cid]["f"] == "KRI" and DB.dist(killer.pos(), cmd_point(kc)) <= int(K(kc)["gloria"]):
 				kc.gloria_round = round_no
@@ -1379,6 +1395,9 @@ func end_round() -> void:
 	await _toxin_tick()
 	if winner != NONE:
 		return
+	_venom_tick()
+	if winner != NONE:
+		return
 	await resolve_queues()
 	if winner != NONE:
 		return
@@ -1636,6 +1655,7 @@ func _act_move_attack(u, h, t) -> bool:
 	if not is_live(u) or act["actions"] < 1 or K(u).get("action", "") != "moveAttack":
 		return false
 	act["actions"] -= 1
+	act["from"] = u.pos()
 	if h != null and h != u.pos() and not rooted(u) and not act["moved"]:
 		act["moved"] = true
 		abfx("dash", u.pos(), u.uid)
@@ -1746,6 +1766,10 @@ func ult_opts(u) -> Array:
 			return out2
 		"orbital":
 			return DB.hexes.filter(func(h): return DB.dist(h, p) >= 1 and DB.dist(h, p) <= 5 and is_free(h))
+		"mend":
+			return allies_of(u, true).filter(func(x): return DB.cards[x.cid]["f"] == "ABY" and DB.dist(x.pos(), p) <= 3 and x.hp < x.maxhp).map(func(x): return x.pos())
+		"plate":
+			return allies_of(u).filter(func(x): return DB.dist(x.pos(), p) == 1 and not has_fx(x, "plated")).map(func(x): return x.pos())
 		"detonate":
 			return mines.filter(func(m): return m["owner"] == u.owner and not m.get("hidden", false)).map(func(m): return m["h"])
 		"barricade":
@@ -1796,6 +1820,16 @@ func ult_score(u, h: Vector2i) -> float:
 				if DB.dist(e3.pos(), h) <= max(2, alc_of(t)):
 					s4 += 1.0
 			return s4
+		"mend":
+			return float(t.maxhp - t.hp) + (3.0 if t.is_cmd else 0.0) if t != null else 0.0
+		"plate":
+			var sp = 0.0
+			if t != null:
+				for e9 in enemies_of(u):
+					if DB.dist(e9.pos(), t.pos()) <= 3:
+						sp += 0.7
+				sp += 0.3 * float(10 - t.hp) / 3.0
+			return sp
 		"detonate":
 			var sd = 0.0
 			for e6 in enemies_of(u):
@@ -1854,7 +1888,7 @@ func _act_ult(u) -> bool:
 	var kind = ult_kind(u)
 	var ab2 = DB.cards[u.cid].get("ab2", {})
 	var uname = ab2.get("name", "Ativa")
-	var texts = {"detonate": "escolha a mina a detonar", "barricade": "escolha a casa adjacente da Barricada", "grenade": "escolha o alvo da granada (até 3, passa por cima de obstáculos)", "artillery": "escolha a casa que a artilharia vai atingir no início do próximo round (até 5)", "abyss": "escolha o inimigo a puxar (até 8 casas)", "bombard": "escolha a casa do bombardeio (até 6)", "prison": "escolha o inimigo a prender (até 4)", "earth": "escolha a 1ª casa a mudar de altura (até 4)", "stampede": "escolha até onde avançar em linha reta", "orbital": "escolha onde pousar (até 5)"}
+	var texts = {"mend": "escolha o Abyssal a restaurar (até 3 casas)", "plate": "escolha o aliado adjacente a reforçar", "detonate": "escolha a mina a detonar", "barricade": "escolha a casa adjacente da Barricada", "grenade": "escolha o alvo da granada (até 3, passa por cima de obstáculos)", "artillery": "escolha a casa que a artilharia vai atingir no início do próximo round (até 5)", "abyss": "escolha o inimigo a puxar (até 8 casas)", "bombard": "escolha a casa do bombardeio (até 6)", "prison": "escolha o inimigo a prender (até 4)", "earth": "escolha a 1ª casa a mudar de altura (até 4)", "stampede": "escolha até onde avançar em linha reta", "orbital": "escolha onde pousar (até 5)"}
 	var h = await pick_hex(p, "%s: %s." % [uname, texts.get(kind, "escolha")], ult_opts(u), "ult", true)
 	if h == null:
 		return false
@@ -1934,6 +1968,17 @@ func _act_ult(u) -> bool:
 				await move_unit(u, c, true)
 				if u.st != "field":
 					break
+		"mend":
+			var tm9 = unit_at(h)
+			abfx("heal", h, u.uid)
+			heal(tm9, 6)
+			log_msg(p, "Luz da Fenda: %s se recompõe." % nm(tm9))
+		"plate":
+			var tp9 = unit_at(h)
+			tp9.fx.append({"k": "red", "v": 1, "until": "end"})
+			tp9.fx.append({"k": "plated", "v": 1, "until": "end"})
+			abfx("barrier", h, u.uid)
+			log_msg(p, "Casco de Reparo: %s sofre 1 a menos de dano neste round." % nm(tp9))
 		"detonate":
 			mines = mines.filter(func(m): return not (m["h"] == h and m["owner"] == p))
 			abfx("bombard", h, u.uid)
@@ -2133,6 +2178,9 @@ func resolve_attack(a, t) -> void:
 				target = b
 				if K(b).has("counter"):
 					counter_by = b
+				if K(b).has("lament"):
+					a.fx.append({"k": "atk", "v": -1, "until": "end"})
+					log_msg(d, "Lamento do Abismo: %s perde 1 ATQ neste round." % nm(a))
 				guard_round[b.uid] = round_no
 				log_msg(d, "%s protege %s." % [nm(b), nm(t)])
 				break
@@ -2195,6 +2243,16 @@ func resolve_attack(a, t) -> void:
 		if after == "pending":
 			pending.append({"uid": target.uid, "n": 1, "p": p, "src": a.uid})
 			abfx("poison", target.pos(), a.uid)
+		if after == "venom" and not target.barrier and a.venoms < 3 and not has_fx(target, "venom"):
+			a.venoms += 1
+			target.fx.append({"k": "venom", "src": a.uid})
+			abfx("poison", target.pos(), a.uid)
+			log_msg(p, "Veneno Lento: %s está envenenado até o fim da partida (%d/3)." % [nm(target), a.venoms])
+		if after == "blind" and not target.barrier:
+			target.fx.append({"k": "atk", "v": -2, "until": "end"})
+			target.fx.append({"k": "dazed", "v": 1, "until": "end"})
+			abfx("silence", target.pos(), a.uid)
+			log_msg(p, "Nuvem de Tinta: %s está cego (-2 ATQ)." % nm(target))
 		if after == "rootHit":
 			abfx("glue", target.pos(), a.uid)
 			target.fx.append({"k": "root", "end": round_no + 1})
@@ -2215,6 +2273,11 @@ func resolve_attack(a, t) -> void:
 		abfx("nova", a.pos(), a.uid)
 		for x in ss2:
 			damage(x, 1, a)
+	if after == "burstSafe":
+		var ss5 = field().filter(func(x): return x != a and x != target and DB.dist(x.pos(), a.pos()) == 1 and (x.owner != a.owner or (not x.is_cmd and not x.barrier and x.hp > 5)))
+		abfx("nova", a.pos(), a.uid)
+		for x in ss5:
+			damage(x, 1, a)
 	if after == "burstEnemies":
 		var ss3 = enemies_of(a).filter(func(x): return x != target and DB.dist(x.pos(), a.pos()) == 1)
 		abfx("zap", a.pos(), a.uid)
@@ -2223,6 +2286,33 @@ func resolve_attack(a, t) -> void:
 	settle()
 	if winner != NONE:
 		return
+	if after == "arc" and target.st != "dead":
+		var ss6 = enemies_of(a).filter(func(x): return x != target and DB.dist(x.pos(), target.pos()) == 1)
+		ss6.sort_custom(func(x, y): return x.hp < y.hp)
+		for x in ss6.slice(0, 2):
+			abfx("bolt", x.pos(), a.uid)
+			damage(x, 2 if has_fx(x, "venom") else 1, a)
+		if not ss6.is_empty():
+			log_msg(p, "Descarga Condutiva atinge %d inimigo(s)." % min(2, ss6.size()))
+		settle()
+		if winner != NONE:
+			return
+	if after == "echo" and dealt > 0 and target.st == "field" and not target.barrier and target.hitters.any(func(id): return id != a.uid and by_uid(id) != null and DB.cards[by_uid(id).cid]["f"] == "ABY"):
+		var ed = push_dest(target, a.pos())
+		if ed != null:
+			abfx("sonic", target.pos(), a.uid)
+			log_msg(p, "Eco Profundo: %s é empurrado." % nm(target))
+			await move_unit(target, ed)
+			if winner != NONE:
+				return
+	if K(a).has("viva") and dealt > 0 and target.st == "field" and not target.barrier and act != null and act.has("from") and DB.dist(act["from"], target.pos()) >= 3:
+		var vo = step_free(target.pos()).filter(func(h2): return DB.dist(h2, a.pos()) < DB.dist(target.pos(), a.pos()))
+		if not vo.is_empty():
+			abfx("hook", target.pos(), a.uid)
+			log_msg(p, "Maré Viva: %s é puxado." % nm(target))
+			await move_unit(target, vo[0])
+			if winner != NONE:
+				return
 	if after == "chain":
 		var ss4 = enemies_of(a).filter(func(x): return x != target and DB.dist(x.pos(), a.pos()) == 1)
 		if not ss4.is_empty():
@@ -2234,6 +2324,32 @@ func resolve_attack(a, t) -> void:
 			settle()
 			if winner != NONE:
 				return
+	if after == "pull2" and dealt > 0 and target.st == "field" and not target.barrier:
+		for i in range(2):
+			var op2 = step_free(target.pos()).filter(func(h2): return DB.dist(h2, a.pos()) < DB.dist(target.pos(), a.pos()))
+			if op2.is_empty() or target.st != "field":
+				break
+			var hp2 = await pick_hex(p, "Arpão de Arrasto: puxe o alvo %d casa(s) em sua direção (%dª casa)." % [1, i + 1], op2, "move", true)
+			if hp2 == null:
+				break
+			abfx("hook", target.pos(), a.uid)
+			await move_unit(target, hp2)
+			if winner != NONE:
+				return
+		if target.st == "field" and a.gloria_round != round_no:
+			var fr = allies_of(a).filter(func(x): return DB.cards[x.cid]["f"] == "ABY" and DB.dist(x.pos(), target.pos()) == 1 and not rooted_cant(x))
+			if not fr.is_empty():
+				var hf = await pick_hex(p, "Arrasto: um Abyssal adjacente ao alvo ataca de graça (ou pule).", fr, "ally", true)
+				if hf != null:
+					var fa = unit_at(hf)
+					a.gloria_round = round_no
+					var fd = max(0, atk_of(fa, target) + fx_sum(target, "mark") - reduction_of(target))
+					emitfx({"t": "strike", "from": fa.uid, "to": target.uid, "ranged": false})
+					log_msg(p, "%s ataca de graça %s (%d)." % [nm(fa), nm(target), fd])
+					damage(target, fd, fa, true)
+					settle()
+					if winner != NONE:
+						return
 	if after == "pull" and dealt > 0 and target.st == "field" and not target.barrier:
 		var ops = step_free(target.pos()).filter(func(h2): return DB.dist(h2, a.pos()) < DB.dist(target.pos(), a.pos()))
 		if not ops.is_empty():
@@ -2333,6 +2449,26 @@ func _hunt(a, first) -> void:
 
 
 # Drako: veneno tira 1 de Vida por round e cura 1 aliado a até 5 casas de Drako (ou ele mesmo)
+# Bayak: veneno que dura até o fim da partida (1 de dano no fim de cada round)
+func _venom_tick() -> void:
+	var hit = false
+	for t in units.duplicate():
+		if t.st != "field":
+			continue
+		for f in t.fx.filter(func(x): return x["k"] == "venom"):
+			var by = by_uid(int(f["src"]))
+			abfx("poison", t.pos(), int(f["src"]))
+			log_msg(by.owner if by != null else -1, "Veneno Lento: %s perde 1 de Vida." % nm(t))
+			damage(t, 1, by)
+			hit = true
+	if hit:
+		settle()
+
+
+func rooted_cant(x) -> bool:
+	return x.barrier or imprisoned(x)
+
+
 func _toxin_tick() -> void:
 	var hit = false
 	for t in units.duplicate():
@@ -2543,6 +2679,8 @@ func entry_effect(u) -> void:
 				match e["t"]:
 					"debuff":
 						t4.fx.append({"k": "atk", "v": -n, "until": "end"})
+						if K(u).has("dazeCover"):
+							t4.fx.append({"k": "dazed", "v": 1, "until": "end"})
 					"silence":
 						t4.fx.append({"k": "silence", "v": 1, "until": "end"})
 					"root":
@@ -2580,6 +2718,8 @@ func entry_effect(u) -> void:
 			if h7b != null:
 				abfx("mine", h7b, u.uid)
 				_add_mine(p, h7b, n, u.uid, int(K(u).get("mineCap", 1)))
+				if K(u).has("mineRoot"):
+					mines.back()["root"] = true
 				log_msg(p, "%s: mina posicionada." % name)
 		"barrier":
 			var h8 = await pick_hex(p, "%s: escolha uma casa livre adjacente para a Barreira." % name, adj_free(u.pos()), "place")

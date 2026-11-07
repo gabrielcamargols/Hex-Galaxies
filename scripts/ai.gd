@@ -151,7 +151,7 @@ static func run(g, u) -> void:
 		if A["actions"] <= 0:
 			break
 		if g.can_ult(u):
-			var need = {"abyss": 7.0, "bombard": 4.0, "prison": 7.0, "stampede": 3.0, "orbital": 5.0, "earth": 3.0, "detonate": 4.0, "grenade": 3.0, "artillery": 3.0, "barricade": 2.0}
+			var need = {"abyss": 7.0, "bombard": 4.0, "prison": 7.0, "stampede": 3.0, "orbital": 5.0, "earth": 3.0, "detonate": 4.0, "grenade": 3.0, "artillery": 3.0, "barricade": 2.0, "mend": 3.0, "plate": 1.2}
 			var kind_u = g.ult_kind(u)
 			if need.has(kind_u):
 				var bs = -1e9
