@@ -26,23 +26,15 @@ vec3 grab(vec2 uv) {
 void fragment() {
 	vec2 uv = SCREEN_UV;
 	vec2 px = SCREEN_PIXEL_SIZE;
-	// desalinho de impressão: vermelho e azul levemente deslocados, mais forte nas bordas
-	vec2 off = (uv - 0.5) * px * misprint * 2.0;
-	vec3 c = vec3(texture(scr, uv + off, 0.0).r, grab(uv).g, texture(scr, uv - off, 0.0).b);
-
-	// contorno: Sobel na luminância
+	// versão leve (5 leituras): cor do pixel + contorno pelas 4 diagonais
+	vec3 c = grab(uv);
 	float s = 1.5;
 	float tl = lum(grab(uv + px * vec2(-s, -s)));
-	float tc = lum(grab(uv + px * vec2(0.0, -s)));
 	float tr = lum(grab(uv + px * vec2(s, -s)));
-	float ml = lum(grab(uv + px * vec2(-s, 0.0)));
-	float mr = lum(grab(uv + px * vec2(s, 0.0)));
 	float bl = lum(grab(uv + px * vec2(-s, s)));
-	float bc = lum(grab(uv + px * vec2(0.0, s)));
 	float br = lum(grab(uv + px * vec2(s, s)));
-	float gx = -tl - 2.0 * ml - bl + tr + 2.0 * mr + br;
-	float gy = -tl - 2.0 * tc - tr + bl + 2.0 * bc + br;
-	float edge = smoothstep(ink_lo, ink_hi, sqrt(gx * gx + gy * gy)) * ink;
+	float g = (abs(tl - br) + abs(tr - bl)) * 1.6;
+	float edge = smoothstep(ink_lo, ink_hi, g) * ink;
 
 	// cores vivas
 	float l = lum(c);

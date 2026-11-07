@@ -554,7 +554,7 @@ func _show_menu() -> void:
 		var lg = _tex_rect(load("res://ui/logo.png"), Vector2(0, 170 if compact else 250))
 		lg.size_flags_horizontal = Control.SIZE_FILL
 		col.add_child(lg)
-		var tw = create_tween().set_loops()
+		var tw = lg.create_tween().set_loops()
 		lg.pivot_offset = Vector2(get_viewport().get_visible_rect().size.x / 2.0, 125)
 		tw.tween_property(lg, "scale", Vector2(1.03, 1.03), 0.9).set_trans(Tween.TRANS_SINE)
 		tw.tween_property(lg, "scale", Vector2(1.0, 1.0), 0.9).set_trans(Tween.TRANS_SINE)
@@ -4178,7 +4178,35 @@ func _say(uid: int, text: String, delay: float = 0.0, mood: String = "fala") -> 
 		sfx.play("clique", -12.0, 1.3, 0.2)
 
 
+# proteção de desempenho: se os primeiros segundos rodarem lentos, desliga o filtro HQ e baixa a resolução 3D
+var perf_t: float = 0.0
+var perf_n: int = 0
+var perf_done: bool = false
+
+
+func _perf_guard(delta: float) -> void:
+	if perf_done:
+		return
+	perf_t += delta
+	perf_n += 1
+	if perf_t < 1.5:
+		perf_n = 0 if perf_t < 1.0 else perf_n
+		return
+	if perf_t >= 5.0:
+		perf_done = true
+		var fps = perf_n / max(0.01, perf_t - 1.0)
+		if fps < 28.0:
+			if hq_on and hq_rect != null:
+				hq_rect.visible = false
+				hq_on = false
+			if render_q > 0.75:
+				render_q = 0.75
+				get_viewport().scaling_3d_scale = render_q
+			print("desempenho baixo (%.0f fps): filtro HQ desligado e resolução 3D reduzida" % fps)
+
+
 func _process(_delta: float) -> void:
+	_perf_guard(_delta)
 	if stage == "select":
 		_update_tags()
 	if game != null and board.visible:
