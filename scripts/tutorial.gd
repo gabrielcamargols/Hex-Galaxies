@@ -19,7 +19,7 @@ var field0 := 0
 var pos0 := Vector2i.ZERO
 
 const STEPS = [
-	{"t": "Bem-vindo ao Hex Galaxies!", "x": "Você comanda um exército numa batalha por turnos em hexágonos.\n\nPara vencer: derrote o COMANDANTE inimigo (ele entra no round 6) ou chegue ao fim do round 10 com mais Vida no seu comandante.", "next": true},
+	{"t": "Bem-vindo ao Hex Galaxies!", "x": "Você comanda um exército numa batalha por turnos em hexágonos.\n\nPara vencer: derrote o COMANDANTE inimigo (ele entra no round 4) ou chegue ao fim do round 10 com mais Vida no seu comandante.", "next": true},
 	{"t": "Escolha quem vai agir", "x": "Cada vez que chega a sua vez, você ativa UMA peça.\n\nToque no Krieg Brawler (a peça marcada com AQUI)."},
 	{"t": "Táticas são grátis", "x": "As cartas embaixo são táticas. Jogar uma carta NÃO gasta ação (1 carta por ativação).\n\nArraste \"Fogo Concentrado\" e solte em cima do Brawler: o próximo ataque dele causa +2 de dano."},
 	{"t": "Mova-se", "x": "Cada peça ativada tem 2 AÇÕES: mover 1 vez e atacar 1 vez.\n\nAs casas verdes mostram até onde ele anda. Toque na casa marcada com AQUI e depois em Confirmar."},
@@ -29,7 +29,7 @@ const STEPS = [
 	{"t": "Termine a ativação", "x": "Quem acabou de entrar ainda tem 1 ação: pode andar ou atacar.\n\nQuando não quiser fazer mais nada, toque em \"Encerrar ativação\"."},
 	{"t": "O terreno importa", "x": "• Atacar de cima: +1 de dano (de baixo: -1).\n• Rochas, galpões e caixas bloqueiam a linha de tiro e dão abrigo (-2 de dano).\n• Floresta e lama custam mais movimento.\n• A área de entrada cresce a cada 3 rounds.\n\nToque numa casa ou peça para ver o que ela faz.", "next": true},
 	{"t": "Passe o round", "x": "Quando não quiser ativar mais peças, toque em \"Passar o round\". O round acaba quando os dois passam, e as peças ficam prontas de novo.", "pass": true},
-	{"t": "Pronto para a guerra!", "x": "No round 6 os comandantes entram em campo e cada um tem uma habilidade especial que pode virar a partida.\n\nDica: abra \"Regras\" a qualquer momento. Na tela do exército há o modo Mix e o Jogar Online.", "end": true},
+	{"t": "Pronto para a guerra!", "x": "No round 4 os comandantes entram em campo e cada um tem uma habilidade especial que pode virar a partida. A partir do round 2, dispute o NÚCLEO DE ENERGIA: o próximo local aparece marcado antes.\n\nDica: abra \"Regras\" a qualquer momento. Na tela do exército há o modo Mix e o Jogar Online.", "end": true},
 ]
 
 

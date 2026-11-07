@@ -63,6 +63,13 @@ static func pos_score(g, u, h: Vector2i) -> float:
 	s += g.h_of(h) * (0.9 if ranged else 0.4)
 	if g.res.has(h):
 		s += 1.2
+	if g.core != null:
+		if h == g.core:
+			s += 6.0
+		else:
+			s -= DB.dist(h, g.core) * 0.25
+	elif g.core_next != null and g.round_no + 1 >= g.core_next_round:
+		s -= DB.dist(h, g.core_next) * 0.15
 	if g.tremors.has(h):
 		s -= 9.0
 	elif g.tremors.any(func(x): return DB.dist(x, h) == 1):
@@ -317,6 +324,9 @@ static func answer(g, p: int, q: Dictionary) -> Variant:
 		"show":
 			return true
 		"choice":
+			if q.get("kind", "") == "core":
+				var cu = g.by_uid(q["uid"])
+				return 2 if cu != null and cu.hp * 2 <= cu.maxhp else 1
 			# Zaboo: toca o primeiro disco (ATQ) quando dá, senão a cura
 			return 0
 		"unitlist":

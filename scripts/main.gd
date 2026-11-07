@@ -12,7 +12,7 @@ const TDESC = {
 	"ossada": "Ossada baixa. Intransponível, abriga quem está ao lado (-2).", "ossada_c": "Ossada central. Dá para entrar; quem está dentro sofre -1 de tiros.",
 	"buraco": "Buraco de verme. Intransponível enquanto estiver aberto (2 rounds).",
 }
-const RULES = "[b]Objetivo:[/b] derrotar o Comandante inimigo (ele entra no round 6). No fim do round 10 vence quem tiver mais Vida no Comandante; empate: soma da Vida dos aliados.\n\n[b]Turno:[/b] os lados se alternam ativando 1 peça por vez. Cada peça ativada tem [b]2 ações[/b], e cada tipo só pode ser usado [b]1 vez por turno[/b]: mover 1 vez, atacar 1 vez, usar habilidade ativa (ex.: mover + atacar). [b]Táticas não gastam ação:[/b] cada peça ativada pode jogar 1 carta de graça. Arraste a carta e solte no personagem (ou na casa) destacado para escolher quem recebe o efeito. Habilidades passivas não gastam ação. Colocar uma reserva em campo gasta 1 ação. [b]A área de entrada cresce:[/b] nos rounds 1 a 3 ela vai até 1 casa da sua base, nos rounds 4 a 6 até 2 casas, nos rounds 7 a 9 até 3 casas e no round 10 até 4 casas (sempre na sua metade do mapa).\n\n[b]Altura:[/b] atacar de cima +1 de dano, de baixo -1. Tiros (alcance 2+) de cima ganham +1 de alcance. Corpo a corpo só com até 1 nível de diferença.\n\n[b]Linha de tiro:[/b] uma casa no caminho bloqueia se o topo dela for mais alto que o atacante e o alvo.\n\n[b]Abrigo:[/b] -2 de dano se uma rocha/ruína/ossada vizinha ao alvo estiver do lado do atacante.\n\n[b]Tarhut:[/b] as dunas mudam a cada 5 rounds (aviso 1 round antes); a cada 3 rounds o [color=#ff6a4a]Verme Gigante[/color] sai da areia (o \"!\" avisa 1 round antes): quem estiver no buraco sofre 4 de dano e quem estiver ao lado, 1. Fuja das casas marcadas!\n\n[b]Online:[/b] na tela do exército, toque em \"⚡ Online\". Um jogador cria a sala e passa o código de 6 letras; o outro digita o código e entra. O mapa é o planeta de quem criou a sala. No app instalado (PC/Android), a sala usa o IP da rede local no lugar do código.\n\n[b]Controles:[/b] clique numa peça sua e depois numa casa verde (mover) ou num inimigo vermelho (atacar), ou arraste a peça e solte. Confirme a prévia. Botão direito gira a câmera, arrastar o fundo move o mapa, a roda aproxima. Q/E giram. Enter confirma, Esc cancela.\n\n[b]Toque (tablet/celular):[/b] toque numa peça e numa casa para agir. 1 dedo arrasta o mapa; pinça com 2 dedos aproxima/afasta; girar os 2 dedos gira a câmera; arrastar os 2 dedos para cima/baixo inclina a visão. \"Tudo\" recentraliza."
+const RULES = "[b]Objetivo:[/b] derrotar o Comandante inimigo (ele entra no round 4). No fim do round 10 vence quem tiver mais Vida no Comandante; empate: soma da Vida dos aliados.\n\n[b]Turno:[/b] os lados se alternam ativando 1 peça por vez. Cada peça ativada tem [b]2 ações[/b], e cada tipo só pode ser usado [b]1 vez por turno[/b]: mover 1 vez, atacar 1 vez, usar habilidade ativa (ex.: mover + atacar). [b]Táticas não gastam ação:[/b] cada peça ativada pode jogar 1 carta de graça. Arraste a carta e solte no personagem (ou na casa) destacado para escolher quem recebe o efeito. Habilidades passivas não gastam ação. Colocar uma reserva em campo gasta 1 ação. [b]A área de entrada cresce:[/b] nos rounds 1 a 3 ela vai até 1 casa da sua base, nos rounds 4 a 6 até 2 casas, nos rounds 7 a 9 até 3 casas e no round 10 até 4 casas (sempre na sua metade do mapa).\n\n[b]Altura:[/b] atacar de cima +1 de dano, de baixo -1. Tiros (alcance 2+) de cima ganham +1 de alcance. Corpo a corpo só com até 1 nível de diferença.\n\n[b]Núcleo:[/b] nos rounds 2, 4, 6 e 8 surge um núcleo de energia que fica 2 rounds. Leve uma peça até ele para capturar: 2 cartas, +2 ATQ ou +4 Vida com defesa. O local do próximo aparece antes, marcado no mapa.\n\n[b]Impulso:[/b] derrubar uma tropa dá 1 casa de movimento grátis (1 vez por ativação).\n\n[b]Linha de tiro:[/b] uma casa no caminho bloqueia se o topo dela for mais alto que o atacante e o alvo.\n\n[b]Abrigo:[/b] -2 de dano se uma rocha/ruína/ossada vizinha ao alvo estiver do lado do atacante.\n\n[b]Tarhut:[/b] as dunas mudam a cada 5 rounds (aviso 1 round antes); a cada 3 rounds o [color=#ff6a4a]Verme Gigante[/color] sai da areia (o \"!\" avisa 1 round antes): quem estiver no buraco sofre 4 de dano e quem estiver ao lado, 1. Fuja das casas marcadas!\n\n[b]Online:[/b] na tela do exército, toque em \"⚡ Online\". Um jogador cria a sala e passa o código de 6 letras; o outro digita o código e entra. O mapa é o planeta de quem criou a sala. No app instalado (PC/Android), a sala usa o IP da rede local no lugar do código.\n\n[b]Controles:[/b] clique numa peça sua e depois numa casa verde (mover) ou num inimigo vermelho (atacar), ou arraste a peça e solte. Confirme a prévia. Botão direito gira a câmera, arrastar o fundo move o mapa, a roda aproxima. Q/E giram. Enter confirma, Esc cancela.\n\n[b]Toque (tablet/celular):[/b] toque numa peça e numa casa para agir. 1 dedo arrasta o mapa; pinça com 2 dedos aproxima/afasta; girar os 2 dedos gira a câmera; arrastar os 2 dedos para cima/baixo inclina a visão. \"Tudo\" recentraliza."
 
 var board
 var game: Game = null
@@ -52,6 +52,9 @@ var last_st: Dictionary = {}       # destaques atuais do tabuleiro (sem a carta)
 var dlg: Dictionary = {}           # falas (data/dialogos.json)
 var bubbles: Array = []            # balões de fala ativos
 var plates: Dictionary = {}        # uid -> placa de vida 2D (estilo da HUD)
+var fast_mode: bool = false      # modo rápido: sem confirmar, prévia ao apontar, animações 2×
+var pend_hover: bool = false
+var intense: bool = false
 var ui_pref: String = "auto"       # tamanho da interface: auto, 100, 125, 150, 175
 var compact: bool = false          # tela pequena (celular): HUD enxuta e letras maiores
 var cpu_open: bool = false         # painel da CPU aberto no modo compacto
@@ -103,6 +106,7 @@ func _ready() -> void:
 	board.set_script(load("res://scripts/board.gd"))
 	add_child(board)
 	board.hex_tapped.connect(_on_hex_tapped)
+	board.hex_hovered.connect(_on_hex_hover)
 	board.unit_dropped.connect(_on_unit_dropped)
 	board.unit_drag_started.connect(_on_unit_drag_started)
 	board.worm_roar.connect(_on_worm_roar)
@@ -453,6 +457,10 @@ func _fac_music(fac: String) -> void:
 
 # sai da batalha (se houver) e volta para a galáxia
 func _leave_battle() -> void:
+	Engine.time_scale = 1.0
+	if intense:
+		intense = false
+		sfx.stop_loop("tensao_loop", 1.0)
 	if tut_node != null and is_instance_valid(tut_node):
 		tut_node.queue_free()
 	tut_node = null
@@ -519,11 +527,71 @@ func _show_menu() -> void:
 	rb.custom_minimum_size = Vector2(180, 40)
 	var sb = _cbtn(row2, _ui_scale_label(), C_HUD, _cycle_ui_scale)
 	sb.custom_minimum_size = Vector2(240, 40)
+	var fb = _cbtn(row2, _fast_label(), C_HUD, func(): pass)
+	fb.custom_minimum_size = Vector2(210, 40)
+	fb.tooltip_text = "Sem confirmação para mover e atacar, prévia de dano ao apontar o alvo e animações em velocidade 2×."
+	fb.pressed.connect(func():
+		fast_mode = not fast_mode
+		_save_prefs()
+		fb.text = _fast_label())
 	var ver = _label(ui, "protótipo · Godot 4.7", 12, C_DIM)
 	_place(ver, Control.PRESET_BOTTOM_RIGHT, 12)
 	_ui_fade(1.0, 0.9)
 	if fader.color.a > 0.0:
 		_fade(0.0, 0.7)
+
+
+func _fast_label() -> String:
+	return "Modo rápido: " + ("LIGADO" if fast_mode else "desligado")
+
+
+func _apply_speed() -> void:
+	Engine.time_scale = 2.0 if fast_mode and game != null and stage == "battle" and not tut else 1.0
+
+
+# pausa curtíssima no impacto (o tempo quase para e volta)
+func _hitstop(sec: float) -> void:
+	Engine.time_scale = 0.06
+	await get_tree().create_timer(sec, true, false, true).timeout
+	_apply_speed()
+
+
+# música mais intensa quando um comandante está em perigo
+func _check_tension() -> void:
+	if game == null or stage != "battle":
+		return
+	var danger = false
+	for p in range(2):
+		var c = game.commander(p)
+		if c != null and c.st == "field" and c.hp * 2 <= c.maxhp:
+			danger = true
+	if danger and not intense:
+		intense = true
+		sfx.loop("tensao_loop", -6.0, 2.0)
+		banner("COMANDANTE EM PERIGO", "a batalha está decidida por um fio")
+	elif not danger and intense:
+		intense = false
+		sfx.stop_loop("tensao_loop", 2.5)
+
+
+# modo rápido: apontar um inimigo mostra a prévia do dano (o clique ataca direto)
+func _on_hex_hover(h) -> void:
+	if not fast_mode or game == null or not my_turn() or ab or dsel >= 0 or card_drag != null:
+		return
+	var u = sel_unit()
+	var at = game.unit_at(h) if h != null else null
+	if u != null and at != null and at.owner != u.owner and (game.is_live(u) or game.can_start(u)):
+		var H = highlights()
+		if H["at"].has(h):
+			var pm = _pend_move()
+			pend = {"kind": "moveatk", "h": pm["h"], "cost": pm["cost"], "tuid": at.uid} if pm != null else {"kind": "attack", "tuid": at.uid}
+			pend_hover = true
+			refresh()
+			return
+	if pend_hover:
+		pend = null
+		pend_hover = false
+		refresh()
 
 
 # ================= tutorial =================
@@ -1014,7 +1082,7 @@ func _army_refresh() -> void:
 	var cnv = _vbox(ch, 1)
 	_label(cnv, ("COMANDANTE · %s" % DB.factions[fac]["short"].to_upper()) if not mix else ("MIX · COMANDANTE (%s)" % DB.factions[fac]["short"].to_upper()), 11, fc.lightened(0.35))
 	_label(cnv, cc["name"], 22, C_GOLD)
-	_label(cnv, "Vida %d · Atq %d · Mov %d · entra no round 6" % [int(cc["int"]), int(cc["atk"]), int(cc["mov"])], 12, C_DIM)
+	_label(cnv, "Vida %d · Atq %d · Mov %d · entra no round 4" % [int(cc["int"]), int(cc["atk"]), int(cc["mov"])], 12, C_DIM)
 	var cb = Button.new()
 	cb.flat = true
 	cb.text = "ver detalhes ▶"
@@ -1526,6 +1594,7 @@ func _start_match(sides) -> void:
 		tut_node = tn
 	elif not autotest:
 		await _entrance()
+	_apply_speed()
 	await game.begin_game()
 	busy = false
 	await after()
@@ -1828,6 +1897,14 @@ func refresh() -> void:
 			st["labels"][mn["h"]] = "BOMBA"
 			st["label_colors"][mn["h"]] = Color("#ff9a3a")
 	board.sync_bananas(game.bananas, me)
+	board.sync_core(game.core, game.core_next if game.core == null or game.core_next != game.core else null)
+	if game.core != null:
+		st["labels"][game.core] = "NÚCLEO"
+		st["label_colors"][game.core] = Color("#7ff0ff")
+	if game.core_next != null and game.core_next != game.core:
+		st["labels"][game.core_next] = "próximo núcleo · round %d" % game.core_next_round
+		st["label_colors"][game.core_next] = Color("#9fd8e8")
+	_check_tension()
 	for h in game.tremors:
 		st["hl"][h] = "trem"
 		st["labels"][h] = "!"
@@ -1932,10 +2009,14 @@ func _refresh_top() -> void:
 			ev.append("TREMOR: VERMES NO PRÓXIMO ROUND")
 		else:
 			var wr = game.round_no + 1
-			while wr % Game.WORM_EVERY != 0:
+			while not game.worm_round(wr):
 				wr += 1
 			if wr <= 10:
 				ev.append("Vermes no round %d" % wr)
+	if game.core != null:
+		ev.insert(0, "NÚCLEO ATIVO até o round %d" % game.core_until)
+	elif game.core_next != null:
+		ev.insert(0, "Núcleo surge no round %d" % game.core_next_round)
 	w["events"].text = "   ·   ".join(ev)
 	w["round"].text = "Round %d/10" % game.round_no
 	w["turn"].text = "SUA VEZ" if game.cur == me else ("VEZ DO " + _opp().to_upper())
@@ -1984,7 +2065,7 @@ func _refresh_party() -> void:
 			elif u.st == "reserve":
 				stx = "▶ pode entrar" if (p == me and dep_ok) else "reserva"
 			elif u.st == "off":
-				stx = "round 6"
+				stx = "round %d" % Game.CMD_ROUND
 			var b = Button.new()
 			b.text = "%s\nVida %d/%d · %s" % [DB.cards[u.cid]["name"], max(0, u.hp), u.maxhp, stx]
 			b.add_theme_font_size_override("font_size", 12)
@@ -2039,7 +2120,7 @@ func _refresh_ucard() -> void:
 			elif u.st == "reserve":
 				txt += "[i]Na reserva (arraste para a entrada)[/i]\n"
 			elif u.st == "off":
-				txt += "[i]Entra no round 6[/i]\n"
+				txt += "[i]Entra no round %d[/i]\n" % Game.CMD_ROUND
 			if u.eq != "":
 				txt += "Equipado: %s\n" % DB.tactics[u.eq]["name"]
 			var passive = "ativa (gasta 1 ação)" if c["k"].has("action") else "passiva (não gasta ação)"
@@ -2838,15 +2919,26 @@ func _on_hex_tapped(h) -> void:
 			var H = highlights()
 			var pm = _pend_move()
 			if at != null and H["at"].has(h):
+				# modo rápido: no PC ataca no clique (a prévia já apareceu ao apontar);
+				# no toque, o 1º toque mostra a prévia e o 2º ataca
+				var again = pend != null and pend.get("tuid", -1) == at.uid and not pend_hover
 				if pm != null:
 					pend = {"kind": "moveatk", "h": pm["h"], "cost": pm["cost"], "tuid": at.uid}
 				else:
 					pend = {"kind": "attack", "tuid": at.uid}
+				pend_hover = false
+				if fast_mode and (again or not _is_touch()):
+					_confirm_pend()
+					return
 				refresh()
 				return
 			for m in H["mv"]:
 				if m["h"] == h:
 					pend = {"kind": "move", "h": h, "cost": m["c"]}
+					pend_hover = false
+					if fast_mode:
+						_confirm_pend()
+						return
 					refresh()
 					return
 			if pend != null and (h == u.pos() or (pm != null and h == pm["h"])):
@@ -3220,6 +3312,15 @@ func _on_fx(e: Dictionary) -> void:
 			vfx.heal_fx(_hex_pos(e["h"], 0.1))
 			sfx.play("cura", -4.0)
 		"die":
+			var du2 = game.by_uid(e["uid"])
+			if du2 != null and not du2.barrier:
+				var big = du2.is_cmd
+				_later(d + 0.05, func():
+					_hitstop(0.22 if big else 0.09)
+					board.quake()
+					sfx.play("vfx_boom", -1.0 if big else -4.0, 0.7 if big else 0.85, 0.0))
+				if big:
+					_later(d + 0.3, func(): banner("COMANDANTE DERROTADO", game.nm(du2)))
 			_banter_death(e["uid"])
 			var hp = _hex_pos(e["h"], 0.2)
 			var dc = _unit_color(e["uid"])
@@ -3268,6 +3369,22 @@ func _on_fx(e: Dictionary) -> void:
 				vfx.flip("ring", mp2 - Vector3(0, 1.1, 0), 3.0 + 2.2 * game.disc_radius(), 0.9, Color("#ff7ad8"), true)
 				vfx.flip("sonic", mp2, 2.4, 0.8, Color("#ff7ad8"))
 			sfx.play("vfx_aura", -6.0)
+		"core":
+			var cp2 = _hex_pos(e["h"], 0.1)
+			match e["what"]:
+				"spawn":
+					vfx.flip("portal", cp2, 3.2, 1.0, Color("#7ff0ff"))
+					vfx.flip("ring", cp2, 4.5, 0.9, Color("#7ff0ff"), true)
+					sfx.play("vfx_portal", -4.0)
+					_later(1.6, banner.bind("NÚCLEO DE ENERGIA", "capture com qualquer peça: cartas ou bônus"))
+				"take":
+					vfx.flip("sparkle", cp2 + Vector3(0, 0.8, 0), 3.0, 0.8, Color("#7ff0ff"))
+					vfx.flip("ring", cp2, 3.6, 0.7, Color("#ffffff"), true)
+					sfx.play("vfx_crystal", -3.0)
+				"fade":
+					vfx.flip("smoke", cp2, 2.2, 0.8)
+		"danger":
+			_later(1.0, banner.bind("O DESERTO DESPERTA", "%d buracos de verme no próximo round · fuja das casas marcadas" % int(e["n"])))
 		"zone_grow":
 			_later(2.2, banner.bind("ÁREA DE ENTRADA MAIOR", "Agora dá para colocar personagens até %d casas da sua base" % int(e["r"])))
 			for pz in range(2):
@@ -3318,7 +3435,7 @@ func _on_fx(e: Dictionary) -> void:
 			board.worm_emerge(hs)
 		"round":
 			sfx.play("round", -6.0)
-			banner("Round %d" % e["round"], "os comandantes entram" if e["round"] == 6 else ("Você começa" if game.first == me else (_opp() + " começa")))
+			banner("Round %d" % e["round"], "os comandantes entram" if e["round"] == Game.CMD_ROUND else ("Você começa" if game.first == me else (_opp() + " começa")))
 	board.sync_units()
 
 
@@ -3969,11 +4086,13 @@ func _load_prefs() -> void:
 	var cf = ConfigFile.new()
 	if cf.load("user://prefs.cfg") == OK:
 		ui_pref = str(cf.get_value("ui", "scale", "auto"))
+		fast_mode = bool(cf.get_value("ui", "fast", false))
 
 
 func _save_prefs() -> void:
 	var cf = ConfigFile.new()
 	cf.set_value("ui", "scale", ui_pref)
+	cf.set_value("ui", "fast", fast_mode)
 	cf.save("user://prefs.cfg")
 
 
@@ -4219,7 +4338,7 @@ func _entrance_side(p: int, layer: Control) -> void:
 	var v = _vbox(h, 2)
 	_label(v, "VOCÊ" if p == me else "ADVERSÁRIO", 13, C_YOU if p == me else C_CPU)
 	_label(v, "EXÉRCITO MISTO" if game.P[p].get("mix", false) else DB.factions[fac]["name"].to_upper(), 34, fcol.lightened(0.35))
-	_label(v, "Comandante: %s · chega no round 6" % DB.cards[cid]["name"], 15, C_DIM)
+	_label(v, "Comandante: %s · chega no round 4" % DB.cards[cid]["name"], 15, C_DIM)
 	card.position = Vector2(-700, 70) if p == me else Vector2(get_viewport().get_visible_rect().size.x + 100, 70)
 	var goal_x = 40.0 if p == me else get_viewport().get_visible_rect().size.x - 40.0
 	await get_tree().process_frame

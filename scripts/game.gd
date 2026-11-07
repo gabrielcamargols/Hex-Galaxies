@@ -12,6 +12,8 @@ const WORM_EVERY = 3
 const HOLE_ROUNDS = 2
 const HOLE_DMG = 4
 const FALL_DMG = 1
+const CMD_ROUND = 4          # round em que os comandantes entram
+const CORE_ROUNDS = [2, 4, 6, 8]   # rounds em que o núcleo surge (fica 2 rounds)
 const NONE = -1
 const DRAW = 2
 
@@ -86,6 +88,10 @@ var tut: bool = false                     # partida do tutorial
 var pre_hex: Variant = null   # casa onde a carta foi solta (arrastar e soltar)
 var tac_fx: Variant = null    # tática esperando o alvo para mostrar o efeito
 const TAC_SELF = ["propulsor", "placas", "lente", "reparo", "camuflagem"]
+var core: Variant = null        # núcleo ativo (casa) ou null
+var core_until: int = 0
+var core_next: Variant = null   # onde o próximo núcleo vai surgir (mostrado antes)
+var core_next_round: int = 0
 var fallen: Array = []
 var bananas: Dictionary = {}   # Karo: casa -> {"t": cura/dano/alcance, "p": dono}
 var bomb_queue: Array = []     # Rappy: bombas a esconder (uid do Rappy)  # uids dos personagens derrotados, em ordem
@@ -794,6 +800,8 @@ func _eat_banana(u, h: Vector2i) -> void:
 
 func arrive(u, own: bool = false) -> void:
 	_eat_banana(u, u.pos())
+	if core != null and u.pos() == core and u.st == "field" and not u.barrier:
+		await _capture_core(u)
 	for i in range(mines.size()):
 		var m = mines[i]
 		if m["owner"] != u.owner and m["h"] == u.pos() and not u.barrier:
@@ -977,7 +985,7 @@ func start_round() -> void:
 	await map_events()
 	if winner != NONE:
 		return
-	if round_no == 6:
+	if round_no == CMD_ROUND:
 		for p in range(2):
 			await commander_enters(p)
 	if winner != NONE:
@@ -994,6 +1002,9 @@ func start_round() -> void:
 
 func map_events() -> void:
 	var def = DB.maps[map_id]
+	await _core_events()
+	if winner != NONE:
+		return
 	if def.has("dunes"):
 		if dune_next >= 0 and (round_no - 1) % DUNE_EVERY == 0:
 			var before = {}
@@ -1026,7 +1037,7 @@ func map_events() -> void:
 		if holes.size() != n0:
 			load_map()
 			log_msg(-1, "Um buraco de verme se fechou.")
-		if round_no % WORM_EVERY == 0 and not tremors.is_empty():
+		if worm_round(round_no) and not tremors.is_empty():
 			for t in tremors:
 				holes.append({"h": t, "until": round_no + HOLE_ROUNDS})
 			tremors = []
@@ -1065,18 +1076,94 @@ func map_events() -> void:
 			await pace()
 			if winner != NONE:
 				return
-		if (round_no + 1) % WORM_EVERY == 0:
+		if worm_round(round_no + 1) and round_no + 1 <= 10:
+			# quanto mais perto do fim, mais áreas ameaçadas (sempre com rota de fuga livre ao lado)
+			var pairs = 2 if round_no + 1 < 8 else (3 if round_no + 1 < 10 else 4)
 			var cand = DB.hexes.filter(func(h): return _tremor_ok(h))
-			if not cand.is_empty():
-				var c = _pick(cand)
-				tremors = [c, -c]
-				var c2s = cand.filter(func(h): return DB.dist(h, c) >= 3 and DB.dist(h, -c) >= 3)
-				if not c2s.is_empty():
-					var c2 = _pick(c2s)
-					tremors.append(c2)
-					tremors.append(-c2)
-				log_msg(-1, "A areia treme: buracos de verme vão abrir no próximo round nas casas marcadas.")
+			tremors = []
+			for i in range(pairs):
+				var ok = cand.filter(func(h): return not tremors.has(h) and tremors.all(func(t): return DB.dist(h, t) >= 3) and DB.dist(h, -h) >= 3 and _escape_ok(h))
+				if ok.is_empty():
+					break
+				var c = _pick(ok)
+				tremors.append(c)
+				tremors.append(-c)
+			if not tremors.is_empty():
+				if round_no + 1 >= 8:
+					log_msg(-1, "O deserto está cada vez mais perigoso: %d buracos de verme vão abrir no próximo round. Fuja das casas marcadas!" % tremors.size())
+					emitfx({"t": "danger", "n": tremors.size()})
+				else:
+					log_msg(-1, "A areia treme: buracos de verme vão abrir no próximo round nas casas marcadas.")
 				emitfx({"t": "tremor", "hexes": tremors.duplicate()})
+
+
+# vermes: rounds 3 e 6, e todo round a partir do 8
+func worm_round(r: int) -> bool:
+	return r == 3 or r == 6 or r >= 8
+
+
+# rota de fuga: pelo menos 2 casas livres e seguras ao lado da casa ameaçada
+func _escape_ok(h: Vector2i) -> bool:
+	var n = 0
+	for c in DB.nbrs(h):
+		if not blocks.has(c) and c != -h and terr(c)["k"] != "buraco":
+			n += 1
+	return n >= 3
+
+
+# ================= núcleo central =================
+func _core_spot() -> Variant:
+	var c0 = DB.entry_c[0]
+	var c1 = DB.entry_c[1]
+	var cand = DB.hexes.filter(func(h): return not blocks.has(h) and tt_of(terr(h)["k"]).get("pass", 0) and terr(h)["k"] != "movedica" and abs(DB.dist(h, c0) - DB.dist(h, c1)) <= 1 and DB.dist(h, c0) >= 3 and DB.dist(h, c1) >= 3 and h != core and not tremors.has(h))
+	if cand.is_empty():
+		return null
+	return _pick(cand)
+
+
+func _core_events() -> void:
+	if core != null and round_no > core_until:
+		log_msg(-1, "O núcleo se apagou sem ser capturado.")
+		emitfx({"t": "core", "what": "fade", "h": core})
+		core = null
+	if round_no == 1:
+		core_next = _core_spot()
+		core_next_round = CORE_ROUNDS[0]
+	if CORE_ROUNDS.has(round_no) and core_next != null:
+		core = core_next
+		core_until = round_no + 1
+		log_msg(-1, "Um NÚCLEO DE ENERGIA surgiu! Leve uma peça até ele para capturar (fica 2 rounds).")
+		emitfx({"t": "core", "what": "spawn", "h": core})
+		var nx = CORE_ROUNDS.find(round_no) + 1
+		core_next = null
+		if nx < CORE_ROUNDS.size():
+			core_next_round = CORE_ROUNDS[nx]
+			core_next = _core_spot()
+		var occ = unit_at(core)
+		if occ != null and not occ.barrier:
+			await _capture_core(occ)
+
+
+func _capture_core(u) -> void:
+	var h = core
+	core = null
+	emitfx({"t": "core", "what": "take", "h": h, "uid": u.uid})
+	log_msg(u.owner, "%s capturou o núcleo!" % nm(u))
+	var opts = ["Comprar 2 cartas de tática", "+2 ATQ até o fim do próximo round", "+4 de Vida e -1 dano recebido no próximo round"]
+	var pick = await ask(u.owner, {"t": "choice", "text": "Núcleo capturado por %s! Escolha a recompensa:" % nm(u), "opts": opts, "kind": "core", "uid": u.uid})
+	match int(pick) if pick != null else 0:
+		1:
+			u.fx.append({"k": "atk", "v": 2, "till": round_no + 1})
+			log_msg(u.owner, "Núcleo: %s ganhou +2 ATQ." % nm(u))
+		2:
+			heal(u, 4)
+			u.fx.append({"k": "red", "v": 1, "till": round_no + 1})
+			log_msg(u.owner, "Núcleo: %s recuperou 4 de Vida e está blindado." % nm(u))
+		_:
+			draw_cards(u.owner, 2)
+			log_msg(u.owner, "Núcleo: comprou 2 cartas.")
+			await hand_limit(u.owner)
+	emitfx({"t": "passive", "kind": "power", "uid": u.uid})
 
 
 func _tremor_ok(h: Vector2i) -> bool:
@@ -1142,7 +1229,7 @@ func end_round() -> void:
 				heal(t, int(K(k)["endHeal"]))
 				log_msg(p, "%s restaura 1 de Vida de %s." % [nm(k), nm(t)])
 	for u in units:
-		u.fx = u.fx.filter(func(f): return f.get("until", "") != "end" and not ((f["k"] == "root" or f["k"] == "prison") and int(f["end"]) <= round_no))
+		u.fx = u.fx.filter(func(f): return f.get("until", "") != "end" and int(f.get("till", 999)) > round_no and not ((f["k"] == "root" or f["k"] == "prison") and int(f["end"]) <= round_no))
 	for pl in P:
 		pl["discount"] = false
 	if round_no >= 10:
@@ -1908,6 +1995,16 @@ func resolve_attack(a, t) -> void:
 		if h != null:
 			abfx("dash", a.pos(), a.uid)
 			await move_unit(a, h)
+		if winner != NONE or a.st != "field":
+			return
+	# impulso: derrubar uma tropa dá 1 casa grátis (1 vez por ativação)
+	if target.st == "dead" and not target.barrier and is_live(a) and not A.get("momentum", false) and not rooted(a) and not step_free(a.pos()).is_empty():
+		A["momentum"] = true
+		var hm = await ask(p, {"t": "hex", "text": "Impulso! %s derrubou %s: avançar 1 casa grátis?" % [nm(a), nm(target)], "opts": step_free(a.pos()), "optional": true, "kind": "move"})
+		if hm != null:
+			abfx("dash", a.pos(), a.uid)
+			log_msg(p, "Impulso: %s avança." % nm(a))
+			await move_unit(a, hm, true)
 		if winner != NONE or a.st != "field":
 			return
 	if K(a).has("hunt") and not A.get("hunted", false):

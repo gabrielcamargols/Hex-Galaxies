@@ -2,6 +2,7 @@ extends Node3D
 ## Tabuleiro 3D (2.5D): casas em prisma com altura, cenário, câmera e peças com as artes.
 
 signal hex_tapped(h)                 # clique/toque numa casa (Vector2i)
+signal hex_hovered(h)                # mouse passou sobre uma casa (sem clicar)
 signal unit_dropped(uid, h)          # soltou uma peça arrastada (h pode ser null)
 signal unit_drag_started(uid)
 signal worm_roar(pos)                 # o verme rugiu lá do alto (posição do buraco)
@@ -121,6 +122,10 @@ func build(game: Game) -> void:
 	for c in scenery_root.get_children():
 		c.queue_free()
 	banana_nodes.clear()
+	core_node = null
+	core_next_node = null
+	core_at = null
+	core_next_at = null
 	var desert = g.map_id == "tarhut"
 	# planetoide do tamanho do tabuleiro
 	var far = 0.0
@@ -1109,6 +1114,60 @@ func _build_rails() -> void:
 
 # bananas do Karo: cada uma com a cor do bônus (verde cura, vermelho força, azul mira)
 var banana_nodes: Dictionary = {}
+var hover_seen: Variant = null
+var core_node: Node3D = null
+var core_next_node: Node3D = null
+var core_at: Variant = null
+var core_next_at: Variant = null
+
+
+# núcleo de energia: orbe brilhante girando; o próximo aparece como um anel fantasma
+func sync_core(c: Variant, nxt: Variant) -> void:
+	if c != core_at:
+		if core_node != null:
+			core_node.queue_free()
+			core_node = null
+		core_at = c
+		if c != null and tiles.has(c):
+			core_node = Node3D.new()
+			core_node.position = Vector3(world_xz(c).x, top_y(c), world_xz(c).y)
+			scenery_root.add_child(core_node)
+			var orb = MeshInstance3D.new()
+			var sm = SphereMesh.new()
+			sm.radius = 0.24
+			sm.height = 0.48
+			orb.mesh = sm
+			var om = StandardMaterial3D.new()
+			om.albedo_color = Color("#bff8ff")
+			om.emission_enabled = true
+			om.emission = Color("#3fd8ff")
+			om.emission_energy_multiplier = 2.2
+			orb.material_override = om
+			orb.position = Vector3(0, 0.75, 0)
+			orb.name = "orb"
+			core_node.add_child(orb)
+			for i in range(3):
+				var ring = _mesh(core_node, _cyl(0.5 - i * 0.12, 0.5 - i * 0.12, 0.05, 6), Color("#7ff0ff"), Vector3(0, 0.08 + i * 0.05, 0))
+				ring.material_override = _mat(Color("#7ff0ff", 0.55 - i * 0.12), true)
+				ring.material_override.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+			var lt = OmniLight3D.new()
+			lt.light_color = Color("#7ff0ff")
+			lt.light_energy = 1.6
+			lt.omni_range = 3.0
+			lt.position = Vector3(0, 0.8, 0)
+			core_node.add_child(lt)
+	if nxt != core_next_at:
+		if core_next_node != null:
+			core_next_node.queue_free()
+			core_next_node = null
+		core_next_at = nxt
+		if nxt != null and tiles.has(nxt):
+			core_next_node = Node3D.new()
+			core_next_node.position = Vector3(world_xz(nxt).x, top_y(nxt) + 0.04, world_xz(nxt).y)
+			scenery_root.add_child(core_next_node)
+			var gr = _mesh(core_next_node, _disc(0.62, 6), Color("#7ff0ff"), Vector3.ZERO)
+			gr.material_override = _mat(Color("#7ff0ff", 0.22), true)
+			gr.material_override.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 
 
 func sync_bananas(b: Dictionary, viewer: int) -> void:
@@ -1348,6 +1407,11 @@ func _unit_goal(u) -> Vector2i:
 
 
 func _process(delta: float) -> void:
+	if core_node != null and is_instance_valid(core_node):
+		var orb = core_node.get_node_or_null("orb")
+		if orb != null:
+			orb.position.y = 0.75 + sin(Time.get_ticks_msec() / 300.0) * 0.08
+			orb.rotation.y += delta * 2.0
 	if g == null:
 		return
 	_update_camera(delta)
@@ -1792,6 +1856,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			cam_goal = null
 			cam_yaw -= mm.relative.x * 0.008
 			cam_pitch = clamp(cam_pitch + mm.relative.y * 0.005, 0.45, 1.4)
+		if mm.button_mask == 0:
+			var hh = pick_hex(mm.position)
+			if hh != hover_seen:
+				hover_seen = hh
+				hex_hovered.emit(hh)
 		elif mm.button_mask & MOUSE_BUTTON_MASK_LEFT:
 			if drag != null:
 				if not drag["on"] and mm.position.distance_to(drag["start"]) > 7.0:
