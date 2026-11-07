@@ -851,6 +851,7 @@ func _add_marks(root: Node3D, h: Vector2i) -> void:
 		rl.pixel_size = 0.006
 		rl.position = Vector3(0.42, 0.55, 0.22)
 		if rt == "escaravelho":
+			rl.visible = false
 			rl.position = Vector3(0.0, 2.5, 0.0)
 			rl.font_size = 60
 			rl.modulate = Color("#8dff9f")

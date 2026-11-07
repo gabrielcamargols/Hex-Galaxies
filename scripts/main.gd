@@ -20,18 +20,18 @@ var ui: Control
 var w: Dictionary = {}
 
 # código de cores: o mesmo em botões, casas do tabuleiro e legenda
-const C_MOVE = Color("#4cd964")     # andar
-const C_ATK = Color("#ff4d4d")      # atacar / inimigo atacável
-const C_ABIL = Color("#b06cff")     # habilidade / escolher alvo de efeito
-const C_CARD = Color("#4da3ff")     # cartas táticas
-const C_DEPLOY = Color("#22d3c5")   # colocar reserva em campo
-const C_YOU = Color("#3d8bff")      # seu lado
-const C_CPU = Color("#ff7a2f")      # lado da CPU
-const C_GOLD = Color("#ffab40")     # títulos e destaque
-const C_END = Color("#cfe9f5")      # encerrar / passar
-const C_HUD = Color("#29d8ff")      # molduras da HUD
-const C_TXT = Color("#dff6ff")      # texto principal
-const C_DIM = Color("#8fb8cc")      # texto secundário
+const C_MOVE = Color("#4cff6a")     # andar
+const C_ATK = Color("#ff3b4d")      # atacar / inimigo atacável
+const C_ABIL = Color("#b05cff")     # habilidade / escolher alvo de efeito
+const C_CARD = Color("#3da0ff")     # cartas táticas
+const C_DEPLOY = Color("#22f0e0")   # colocar reserva em campo
+const C_YOU = Color("#2fa8ff")      # seu lado
+const C_CPU = Color("#ff7a1a")      # lado da CPU
+const C_GOLD = Color("#ffe14d")     # títulos e destaque
+const C_END = Color("#e8f6ff")      # encerrar / passar
+const C_HUD = Color("#ff3ea5")      # molduras da HUD
+const C_TXT = Color("#ffffff")      # texto principal
+const C_DIM = Color("#cbbdff")      # texto secundário
 var font_title: Font = null
 var font_btn: Font = null
 var setup_cfg: Dictionary = {"map": "tarhut", "fac": "ABY", "cpu": "FAU"}
@@ -56,6 +56,8 @@ var vol = {"Musica": 80.0, "Efeitos": 90.0, "Vozes": 90.0}
 var res_pref: String = "1600x900"
 var fullscreen: bool = false
 var render_q: float = 1.0
+var hq_on: bool = true          # filtro de quadrinho (pode desligar em aparelhos fracos)
+var hq_rect: ColorRect = null
 var fast_mode: bool = false      # modo rápido: sem confirmar, prévia ao apontar, animações 2×
 var pend_hover: bool = false
 var intense: bool = false
@@ -123,6 +125,19 @@ func _ready() -> void:
 	sfx.set_script(load("res://scripts/sfx.gd"))
 	add_child(sfx)
 	vfx.sfx = sfx
+	# filtro de quadrinho sobre o 3D (fica abaixo da interface)
+	var hq_layer = CanvasLayer.new()
+	hq_layer.layer = -1
+	add_child(hq_layer)
+	hq_rect = ColorRect.new()
+	hq_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	hq_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if ResourceLoader.exists("res://shaders/hq.gdshader"):
+		var hm = ShaderMaterial.new()
+		hm.shader = load("res://shaders/hq.gdshader")
+		hq_rect.material = hm
+	hq_layer.add_child(hq_rect)
+	hq_rect.visible = hq_on
 	var layer = CanvasLayer.new()
 	add_child(layer)
 	ui = Control.new()
@@ -151,6 +166,8 @@ func _ready() -> void:
 		if parsed is Dictionary:
 			dlg = parsed
 	_load_prefs()
+	if hq_rect != null:
+		hq_rect.visible = hq_on
 	_apply_settings.call_deferred()
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--uiscale="):
@@ -214,7 +231,22 @@ func _make_theme() -> Theme:
 		fv.spacing_glyph = 1
 		th.default_font = fv
 	# Orbitron (tecnológica) para títulos e botões; Inter para textos longos
-	if ResourceLoader.exists("res://ui/fonts/Orbitron.woff2"):
+	if ResourceLoader.exists("res://ui/fonts/InterDisplay-BlackItalic.otf"):
+		# estilo HQ: letra pesada e inclinada, com contorno de tinta preta
+		var hq = load("res://ui/fonts/InterDisplay-BlackItalic.otf")
+		if ResourceLoader.exists("res://ui/fonts/Inter-SemiBold.otf"):
+			hq.fallbacks = [load("res://ui/fonts/Inter-SemiBold.otf")]
+		var ft3 = FontVariation.new()
+		ft3.base_font = hq
+		ft3.spacing_glyph = 1
+		font_title = ft3
+		var fb3 = FontVariation.new()
+		fb3.base_font = hq
+		fb3.spacing_glyph = 1
+		font_btn = fb3
+		th.set_font("font", "Button", fb3)
+		th.set_font_size("font_size", "Button", 16)
+	elif ResourceLoader.exists("res://ui/fonts/Orbitron.woff2"):
 		var orb = load("res://ui/fonts/Orbitron.woff2")
 		# símbolos que a Orbitron não tem (·, ●, ★...) vêm da Inter (na web não há fontes do sistema)
 		if ResourceLoader.exists("res://ui/fonts/Inter-SemiBold.otf"):
@@ -243,6 +275,12 @@ func _make_theme() -> Theme:
 	th.set_stylebox("disabled", "Button", _tex_box("res://ui/btn.png", 14, Color(0.35, 0.42, 0.5), 16, 9))
 	th.set_stylebox("focus", "Button", StyleBoxEmpty.new())
 	th.set_color("font_color", "Button", C_TXT)
+	th.set_color("font_outline_color", "Button", Color.BLACK)
+	th.set_constant("outline_size", "Button", 6)
+	th.set_color("font_outline_color", "Label", Color(0.03, 0.0, 0.08))
+	th.set_constant("outline_size", "Label", 4)
+	th.set_color("font_outline_color", "RichTextLabel", Color(0.03, 0.0, 0.08))
+	th.set_constant("outline_size", "RichTextLabel", 3)
 	th.set_color("font_hover_color", "Button", Color.WHITE)
 	th.set_color("font_disabled_color", "Button", Color(0.45, 0.52, 0.6))
 	th.set_color("font_color", "Label", C_TXT)
@@ -305,6 +343,9 @@ func _label(parent: Control, text: String = "", size: int = 0, col = null) -> La
 		l.add_theme_font_override("font", font_title)
 	if col != null:
 		l.add_theme_color_override("font_color", col)
+		# texto escuro (sobre fundo claro) fica sem o contorno de tinta
+		if col.get_luminance() < 0.35:
+			l.add_theme_constant_override("outline_size", 0)
 	parent.add_child(l)
 	return l
 
@@ -329,16 +370,18 @@ func _button(parent: Control, text: String, cb: Callable) -> Button:
 
 
 func _style_btn(b: Button, col: Color, active: bool = false) -> void:
-	b.add_theme_stylebox_override("normal", _tex_box("res://ui/btn_on.png" if active else "res://ui/btn.png", 14, col if active else col.darkened(0.05), 16, 9))
-	b.add_theme_stylebox_override("hover", _tex_box("res://ui/btn_on.png", 14, col.darkened(0.3), 16, 9))
+	# HQ: botão de cor viva, contorno de tinta e letra branca com contorno preto
+	b.add_theme_stylebox_override("normal", _tex_box("res://ui/btn_on.png" if active else "res://ui/btn.png", 14, col.lightened(0.12) if active else col.darkened(0.12), 16, 9))
+	b.add_theme_stylebox_override("hover", _tex_box("res://ui/btn_on.png", 14, col.lightened(0.2), 16, 9))
 	b.add_theme_stylebox_override("pressed", _tex_box("res://ui/btn_on.png", 14, col, 16, 9))
 	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
-	b.add_theme_stylebox_override("disabled", _tex_box("res://ui/btn.png", 14, Color(0.3, 0.36, 0.44), 16, 9))
-	b.add_theme_color_override("font_color", Color.WHITE if active else col.lightened(0.55))
+	b.add_theme_stylebox_override("disabled", _tex_box("res://ui/btn.png", 14, Color(0.34, 0.32, 0.42), 16, 9))
+	b.add_theme_color_override("font_color", Color.WHITE)
 	b.add_theme_color_override("font_hover_color", Color.WHITE)
-	b.add_theme_color_override("font_pressed_color", Color.WHITE)
-	b.add_theme_color_override("font_disabled_color", Color(0.42, 0.5, 0.58))
-	b.add_theme_constant_override("outline_size", 0)
+	b.add_theme_color_override("font_pressed_color", Color("#fff6a0"))
+	b.add_theme_color_override("font_disabled_color", Color(0.62, 0.6, 0.7))
+	b.add_theme_color_override("font_outline_color", Color.BLACK)
+	b.add_theme_constant_override("outline_size", 6)
 
 
 func _cbtn(parent: Control, text: String, col: Color, cb: Callable, active: bool = false) -> Button:
@@ -503,16 +546,21 @@ func _show_menu() -> void:
 	col.add_theme_constant_override("separation", 6)
 	ui.add_child(col)
 	col.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	col.offset_top = get_viewport().get_visible_rect().size.y * 0.42
+	col.offset_top = get_viewport().get_visible_rect().size.y * 0.16
 	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var k = _label(col, "U M A   G A L Á X I A   E M   G U E R R A", 13, C_HUD)
 	k.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	var t = _label(col, "HEX GALAXIES", 62 if compact else 86, C_GOLD)
-	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	t.add_theme_color_override("font_shadow_color", Color(1.0, 0.45, 0.1, 0.45))
-	t.add_theme_constant_override("shadow_offset_x", 0)
-	t.add_theme_constant_override("shadow_offset_y", 4)
-	t.add_theme_constant_override("shadow_outline_size", 18)
+	if ResourceLoader.exists("res://ui/logo.png"):
+		var lg = _tex_rect(load("res://ui/logo.png"), Vector2(0, 170 if compact else 250))
+		lg.size_flags_horizontal = Control.SIZE_FILL
+		col.add_child(lg)
+		var tw = create_tween().set_loops()
+		lg.pivot_offset = Vector2(get_viewport().get_visible_rect().size.x / 2.0, 125)
+		tw.tween_property(lg, "scale", Vector2(1.03, 1.03), 0.9).set_trans(Tween.TRANS_SINE)
+		tw.tween_property(lg, "scale", Vector2(1.0, 1.0), 0.9).set_trans(Tween.TRANS_SINE)
+	else:
+		var t = _label(col, "HEX GALAXIES", 62 if compact else 86, C_GOLD)
+		t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var s = _label(col, "Estratégia por turnos em hexágonos", 16, C_DIM)
 	s.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var sp = Control.new()
@@ -541,6 +589,15 @@ func _show_menu() -> void:
 		fast_mode = not fast_mode
 		_save_prefs()
 		fb.text = _fast_label())
+	var hb2 = _cbtn(row2, "Filtro HQ: " + ("LIGADO" if hq_on else "desligado"), C_HUD, func(): pass)
+	hb2.custom_minimum_size = Vector2(200, 40)
+	hb2.tooltip_text = "Contorno de tinta, retícula e cores de quadrinho no mapa. Desligue se o aparelho ficar lento."
+	hb2.pressed.connect(func():
+		hq_on = not hq_on
+		if hq_rect != null:
+			hq_rect.visible = hq_on
+		_save_prefs()
+		hb2.text = "Filtro HQ: " + ("LIGADO" if hq_on else "desligado"))
 	var ver = _label(ui, "protótipo · Godot 4.7", 12, C_DIM)
 	_place(ver, Control.PRESET_BOTTOM_RIGHT, 12)
 	_ui_fade(1.0, 0.9)
@@ -924,12 +981,17 @@ func _fac_col(f: String) -> Color:
 
 
 func _flat(bg: Color, border: Color, bw: int = 2, rad: int = 10, pad: int = 10) -> StyleBoxFlat:
+	# HQ: cantos quase retos, borda mais grossa e sombra dura de tinta
 	var s = StyleBoxFlat.new()
 	s.bg_color = bg
 	s.border_color = border
-	s.set_border_width_all(bw)
-	s.set_corner_radius_all(rad)
+	s.set_border_width_all(max(bw, 3) if bw > 0 else 0)
+	s.set_corner_radius_all(min(rad, 4))
 	s.set_content_margin_all(pad)
+	if bg.a > 0.3:
+		s.shadow_color = Color(0, 0, 0, 0.85)
+		s.shadow_size = 1
+		s.shadow_offset = Vector2(4, 4)
 	return s
 
 
@@ -1305,14 +1367,16 @@ func _stat_mini(parent: Control, col: Color, v: int) -> void:
 
 # botão principal: dourado cheio, texto escuro
 func _primary(b: Button) -> void:
-	b.add_theme_stylebox_override("normal", _flat(Color("#ffab40"), Color("#ffe0a0"), 2, 8, 10))
-	b.add_theme_stylebox_override("hover", _flat(Color("#ffc060"), Color.WHITE, 2, 8, 10))
-	b.add_theme_stylebox_override("pressed", _flat(Color("#e08a20"), Color("#ffe0a0"), 2, 8, 10))
-	b.add_theme_stylebox_override("disabled", _flat(Color(0.2, 0.22, 0.28, 0.9), Color(0.35, 0.4, 0.48), 1, 8, 10))
-	b.add_theme_color_override("font_color", Color("#1c1006"))
-	b.add_theme_color_override("font_hover_color", Color("#1c1006"))
-	b.add_theme_color_override("font_pressed_color", Color("#1c1006"))
-	b.add_theme_color_override("font_disabled_color", Color(0.55, 0.6, 0.66))
+	b.add_theme_stylebox_override("normal", _tex_box("res://ui/btn_on.png", 14, Color("#ffd21f"), 18, 10))
+	b.add_theme_stylebox_override("hover", _tex_box("res://ui/btn_on.png", 14, Color("#ffe76a"), 18, 10))
+	b.add_theme_stylebox_override("pressed", _tex_box("res://ui/btn_on.png", 14, Color("#ff9d1f"), 18, 10))
+	b.add_theme_stylebox_override("disabled", _tex_box("res://ui/btn.png", 14, Color(0.34, 0.32, 0.42), 18, 10))
+	b.add_theme_color_override("font_color", Color.WHITE)
+	b.add_theme_color_override("font_hover_color", Color.WHITE)
+	b.add_theme_color_override("font_pressed_color", Color.WHITE)
+	b.add_theme_color_override("font_disabled_color", Color(0.62, 0.6, 0.7))
+	b.add_theme_color_override("font_outline_color", Color("#2a0838"))
+	b.add_theme_constant_override("outline_size", 8)
 
 
 const ST_COL = [Color("#ff5a6a"), Color("#ffab40"), Color("#4cd964"), Color("#4da3ff")]
@@ -3538,6 +3602,76 @@ func _unit_pos(uid: int, lift: float = 0.9) -> Variant:
 	return null
 
 
+# ================= estouro de quadrinho (onomatopeia) =================
+const POP_COLS = [Color("#ffe14d"), Color("#ff3ea5"), Color("#29f0ff"), Color("#b05cff"), Color("#7dff5a")]
+
+
+func _star_pts(r_out: float, r_in: float, n: int, seed_v: int) -> PackedVector2Array:
+	var rng = RandomNumberGenerator.new()
+	rng.seed = seed_v
+	var pts = PackedVector2Array()
+	for i in range(n * 2):
+		var a = TAU * i / (n * 2) + rng.randf_range(-0.08, 0.08)
+		var r = (r_out * rng.randf_range(0.8, 1.15)) if i % 2 == 0 else (r_in * rng.randf_range(0.85, 1.1))
+		pts.append(Vector2(cos(a), sin(a) * 0.8) * r)
+	return pts
+
+
+func _comic_pop(world: Variant, word: String, big: bool = false) -> void:
+	if world == null or board == null or board.cam == null or board.cam.is_position_behind(world):
+		return
+	var sp: Vector2 = board.cam.unproject_position(world)
+	var root = Node2D.new()
+	root.position = sp + Vector2(randf_range(-30, 30), -40 + randf_range(-20, 10))
+	root.rotation = randf_range(-0.22, 0.22)
+	ui.add_child(root)
+	var sc = (1.5 if big else 1.0) * clamp(get_viewport().get_visible_rect().size.y / 900.0, 0.7, 1.4)
+	var pts = _star_pts(70.0, 38.0, 11, randi())
+	var col: Color = POP_COLS.pick_random()
+	var sh = Polygon2D.new()
+	sh.polygon = pts
+	sh.color = Color(0.05, 0.0, 0.1)
+	sh.position = Vector2(7, 7)
+	root.add_child(sh)
+	var outl = Polygon2D.new()
+	outl.polygon = pts
+	outl.color = Color(0.05, 0.0, 0.1)
+	outl.scale = Vector2(1.08, 1.08)
+	root.add_child(outl)
+	var fill = Polygon2D.new()
+	fill.polygon = pts
+	fill.color = col
+	root.add_child(fill)
+	var inner = Polygon2D.new()
+	inner.polygon = _star_pts(40.0, 24.0, 9, randi())
+	inner.color = col.lightened(0.55)
+	root.add_child(inner)
+	var lb = Label.new()
+	lb.text = word
+	if font_title != null:
+		lb.add_theme_font_override("font", font_title)
+	lb.add_theme_font_size_override("font_size", 38)
+	lb.add_theme_color_override("font_color", Color.WHITE)
+	lb.add_theme_color_override("font_outline_color", Color(0.05, 0.0, 0.1))
+	lb.add_theme_constant_override("outline_size", 12)
+	lb.add_theme_color_override("font_shadow_color", Color(0.05, 0.0, 0.1))
+	lb.add_theme_constant_override("shadow_offset_x", 4)
+	lb.add_theme_constant_override("shadow_offset_y", 4)
+	lb.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lb.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	lb.size = Vector2(220, 60)
+	lb.position = Vector2(-110, -32)
+	root.add_child(lb)
+	root.scale = Vector2(0.15, 0.15) * sc
+	var tw = root.create_tween()
+	tw.tween_property(root, "scale", Vector2(1.18, 1.18) * sc, 0.12).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(root, "scale", Vector2(1.0, 1.0) * sc, 0.1)
+	tw.tween_interval(0.45)
+	tw.parallel().tween_property(root, "position:y", root.position.y - 18.0, 0.45)
+	tw.tween_property(root, "modulate:a", 0.0, 0.22)
+	tw.tween_callback(root.queue_free)
+
+
 func _hex_pos(h: Vector2i, lift: float = 0.9) -> Vector3:
 	var wp = board.world_xz(h)
 	return Vector3(wp.x, board.top_y(h) + lift, wp.y)
@@ -3721,6 +3855,7 @@ func _on_fx(e: Dictionary) -> void:
 			if a == null or tgt == null:
 				return
 			var k = _fx_scale()
+			_comic_pop(tgt, (["ZAP!", "PEW!", "FZZT!", "VUSH!"] if e["ranged"] else ["POW!", "BAM!", "WHAM!", "SOC!", "TUM!"]).pick_random())
 			_voice(e["from"], "atk", -2.0)
 			if e["ranged"]:
 				var style = _shot_style(e["from"])
@@ -3756,6 +3891,7 @@ func _on_fx(e: Dictionary) -> void:
 			var du2 = game.by_uid(e["uid"])
 			if du2 != null and not du2.barrier:
 				var big = du2.is_cmd
+				_comic_pop(_hex_pos(e["h"], 1.2), "K.O.!", true)
 				_later(d + 0.05, func():
 					_hitstop(0.22 if big else 0.09)
 					board.quake()
@@ -3775,6 +3911,7 @@ func _on_fx(e: Dictionary) -> void:
 		"move":
 			sfx.play("passo", -10.0, 1.0, 0.2)
 		"boom":
+			_comic_pop(_hex_pos(e["h"], 0.8), ["KABOOM!", "BOOM!", "KRA-KOOM!"].pick_random(), true)
 			board.boom(e["h"])
 			vfx.explosion(_hex_pos(e["h"], 0.2))
 			vfx.flip("boom", _hex_pos(e["h"], 0.0), 2.6, 0.7)
@@ -4546,6 +4683,7 @@ func _load_prefs() -> void:
 	if cf.load("user://prefs.cfg") == OK:
 		ui_pref = str(cf.get_value("ui", "scale", "auto"))
 		fast_mode = bool(cf.get_value("ui", "fast", false))
+		hq_on = bool(cf.get_value("video", "hq", true))
 		for b in vol.keys():
 			vol[b] = float(cf.get_value("som", b, vol[b]))
 		res_pref = str(cf.get_value("video", "res", res_pref))
@@ -4562,6 +4700,7 @@ func _save_prefs() -> void:
 	cf.set_value("video", "res", res_pref)
 	cf.set_value("video", "full", fullscreen)
 	cf.set_value("video", "q", render_q)
+	cf.set_value("video", "hq", hq_on)
 	cf.save("user://prefs.cfg")
 
 
