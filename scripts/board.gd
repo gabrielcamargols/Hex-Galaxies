@@ -15,14 +15,14 @@ const TILE = 1.0          # casas encostadas: o tabuleiro vira um chão contínu
 const INNER = 0.95        # aro bem fino, só para dar para contar as casas
 # [centro, borda, lateral] — cada tipo de terreno tem uma cor própria para não se confundir
 const PAL = {
-	"grass": ["#86bd4a", "#64a034", "#3a5e20"], "grass2": ["#a0c856", "#7aa83c", "#4a6a26"],
-	"sand": ["#d4a868", "#c08e50", "#7a5430"], "dune": ["#e0925a", "#c87440", "#8a4a28"],
+	"grass": ["#3c9a44", "#2c7a36", "#184a22"], "grass2": ["#52aa44", "#3c8834", "#22521e"],
+	"sand": ["#e09a48", "#c27a32", "#6e3a1a"], "dune": ["#f07c4a", "#d05a32", "#7a2a1a"],
 	"wood": ["#b07840", "#8c5a2c", "#4e3018"], "ramp": ["#d09a58", "#b07a3a", "#5e3e20"],
 	"mud": ["#6a5238", "#4e3c28", "#2e2214"], "rubble": ["#8c8c9a", "#70707e", "#44444e"],
 	"quick": ["#8e8040", "#6e6230", "#3e3618"], "stone": ["#8e827c", "#726862", "#4a4240"],
-	"bone": ["#d8ccb0", "#bcae90", "#7e7058"], "cracked": ["#d8b47a", "#c49a60", "#7a5430"],
+	"bone": ["#d8ccb0", "#bcae90", "#7e7058"], "cracked": ["#e0a058", "#c4803e", "#6e3a1a"],
 	"hole": ["#3a2418", "#24140c", "#120a04"],
-	"rubble_g": ["#94b052", "#7a9440", "#4a5e26"], "sand2": ["#caa062", "#b8884c", "#7a5430"], "grass3": ["#7cb444", "#5e9830", "#3a5e20"],
+	"rubble_g": ["#6aa040", "#548232", "#2c4a1c"], "sand2": ["#d8903e", "#b8702c", "#6e3a1a"], "grass3": ["#389444", "#2a7434", "#184a22"],
 }
 const ELEV = {"tarhut": "#c0583a", "posto": "#e0c060"}  # tom que as casas altas puxam
 # planeta: o tabuleiro fica num platô e o chão se curva em volta (deserto contínuo)
@@ -308,9 +308,9 @@ func _planet_col(desert: bool, x: float, z: float, y: float, under: float) -> Co
 	if desert:
 		var ground = BASE_Y - 0.1 - (RIM - sqrt(max(0.0, RIM * RIM - min(d, RIM) * min(d, RIM))))
 		var crest = clamp((y - ground) / 1.3, 0.0, 1.0)
-		var c = Color("#c9965e").lerp(Color("#f2cf92"), crest)
+		var c = Color("#d8893e").lerp(Color("#f4b45e"), crest)
 		return c.lerp(Color("#9a6440"), clamp(d / RIM, 0.0, 0.45))
-	return Color("#2aa6c8").lerp(Color("#11507e"), clamp(d / RIM, 0.0, 1.0))
+	return Color("#1d86c8").lerp(Color("#0e3a78"), clamp(d / RIM, 0.0, 1.0))
 
 
 func _planet_mesh(desert: bool) -> ArrayMesh:

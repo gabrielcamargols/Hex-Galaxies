@@ -15,9 +15,7 @@ const PLANETS = [
 		"desc": "Deserto de dunas que mudam a cada 5 rounds. Vermes gigantes abrem buracos.",
 		"r": 37.0, "size": 3.0, "speed": 0.034, "a0": 2.3, "tex": "tarhut",
 		"atm": Color(1.0, 0.78, 0.45, 0.9), "dive": Color("#e0b070"), "pick": true, "suns": 5},
-	{"id": "gelo", "r": 12.0, "size": 1.1, "speed": 0.09, "a0": 4.0, "tex": "gelo", "atm": Color(0.7, 0.9, 1.0, 0.6)},
 	{"id": "gigante", "r": 56.0, "size": 5.4, "speed": 0.017, "a0": 4.6, "tex": "gigante", "atm": Color(0.7, 0.5, 1.0, 0.7), "ring": true},
-	{"id": "lava", "r": 72.0, "size": 1.7, "speed": 0.011, "a0": 1.0, "tex": "lava", "atm": Color(1.0, 0.4, 0.2, 0.6)},
 ]
 
 var cam: Camera3D
@@ -75,7 +73,9 @@ void fragment() {
 	# órbitas e planetas
 	for p in PLANETS:
 		_make_planet(p)
-	_make_belt()
+	# visual HQ: sem cinturão de asteroides (deixava a cena carregada)
+	belt = Node3D.new()
+	add_child(belt)
 
 
 func _tex(n: String) -> Texture2D:
@@ -130,7 +130,8 @@ func _make_planet(p: Dictionary) -> void:
 	tm.rings = 160
 	tm.ring_segments = 4
 	ring.mesh = tm
-	ring.material_override = _unshaded(Color(1.0, 0.75, 0.35, 0.35) if pick else Color(0.45, 0.85, 1.0, 0.14))
+	ring.material_override = _unshaded(Color(1.0, 0.88, 0.3, 0.28))
+	ring.visible = pick
 	add_child(ring)
 	var body = MeshInstance3D.new()
 	body.mesh = _sphere(p["size"])
@@ -174,8 +175,8 @@ func _make_planet(p: Dictionary) -> void:
 		moon.material_override = mm
 		add_child(moon)
 		extra.append({"node": moon, "r": 4.2, "sp": 0.6, "tilt": 0.3, "ph": 0.0})
-		# satélites de mineração abandonados
-		for i in range(3):
+		# (satélites removidos no visual HQ: poluíam a cena)
+		for i in range(0):
 			var sat = MeshInstance3D.new()
 			var bm = BoxMesh.new()
 			bm.size = Vector3(0.5, 0.18, 0.18)

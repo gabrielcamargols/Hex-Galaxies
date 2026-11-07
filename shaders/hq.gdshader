@@ -3,8 +3,8 @@
 shader_type canvas_item;
 
 uniform sampler2D scr : hint_screen_texture, filter_linear;
-uniform float sat = 1.3;          // saturação
-uniform float contrast = 1.06;
+uniform float sat = 1.12;          // saturação
+uniform float contrast = 1.0;
 uniform float bands = 5.0;        // faixas de luz (sombreado de desenho)
 uniform float band_mix = 0.25;
 uniform float dot_px = 6.0;       // tamanho da célula da retícula (pixels)

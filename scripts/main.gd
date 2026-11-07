@@ -4143,10 +4143,14 @@ func _say(uid: int, text: String, delay: float = 0.0, mood: String = "fala") -> 
 	var col = _unit_color(uid)
 	var p = PanelContainer.new()
 	var sb = StyleBoxFlat.new()
-	sb.bg_color = Color(0.04, 0.07, 0.15, 0.93)
-	sb.border_color = col
-	sb.set_border_width_all(2)
-	sb.set_corner_radius_all(10)
+	# balão de HQ: branco, contorno de tinta grosso e sombra dura
+	sb.bg_color = Color("#fffdf2")
+	sb.border_color = Color(0.05, 0.0, 0.1)
+	sb.set_border_width_all(3)
+	sb.set_corner_radius_all(16)
+	sb.shadow_color = col.darkened(0.2)
+	sb.shadow_size = 1
+	sb.shadow_offset = Vector2(5, 5)
 	sb.content_margin_left = 10
 	sb.content_margin_right = 10
 	sb.content_margin_top = 5
@@ -4154,10 +4158,12 @@ func _say(uid: int, text: String, delay: float = 0.0, mood: String = "fala") -> 
 	p.add_theme_stylebox_override("panel", sb)
 	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var v = _vbox(p, 1)
-	var nl = _label(v, DB.cards[u.cid]["name"], 11, col.lightened(0.3))
+	var nl = _label(v, DB.cards[u.cid]["name"].to_upper(), 11, col.darkened(0.35))
 	if font_btn != null:
 		nl.add_theme_font_override("font", font_btn)
-	var tl = _label(v, text, 14, C_TXT)
+	nl.add_theme_constant_override("outline_size", 0)
+	var tl = _label(v, text, 15, Color("#160a26"))
+	tl.add_theme_constant_override("outline_size", 0)
 	tl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	tl.custom_minimum_size = Vector2(min(260, 9 * text.length() + 20), 0)
 	w["bubbles"].add_child(p)
@@ -4558,7 +4564,9 @@ func _make_plate(u) -> Dictionary:
 	nl.add_theme_font_size_override("font_size", 12)
 	if font_btn != null:
 		nl.add_theme_font_override("font", font_btn)
-	nl.add_theme_color_override("font_color", border.lightened(0.5))
+	nl.add_theme_color_override("font_color", Color.WHITE)
+	nl.add_theme_color_override("font_outline_color", Color(0.05, 0.0, 0.1))
+	nl.add_theme_constant_override("outline_size", 4)
 	nl.position = Vector2(10, 1)
 	nl.size = Vector2(W - 44, 18)
 	nl.clip_text = true

@@ -131,6 +131,21 @@ def _over(dst, src):
 
 YY, XX = np.mgrid[0:S, 0:S].astype(float)
 
+# estilo HQ (quadrinho): contorno de tinta, retícula no meio-tom, cores chapadas, sem brilho difuso
+HQ = True
+INK = np.array([16.0, 4.0, 30.0])
+INK_W = 4.0          # espessura do contorno (pixels em 256)
+DOT = 7.0 * SS       # célula da retícula
+_rx = (XX + YY) * 0.70710678 / DOT
+_ry = (XX - YY) * 0.70710678 / DOT
+DOT_D = np.hypot(_rx - np.floor(_rx) - 0.5, _ry - np.floor(_ry) - 0.5)
+
+
+def _vivid(c, k=1.25):
+    c = np.asarray(c, float)
+    l = c.mean()
+    return np.clip(l + (c - l) * k, 0, 255)
+
 
 def render(layers, seed):
     canvas = np.zeros((S, S, 4), float)
@@ -151,7 +166,7 @@ def render(layers, seed):
         depth = distance_transform_edt(inside)
         dn = depth / max(depth.max(), 1.0)
         # buracos (espaço negativo) na região de meio-tom
-        if L.holes > 0:
+        if L.holes > 0 and (not HQ or L.holes > 0.3):
             hn = noise_field(sd + 2, 3.2)
             band = inside & (dn > 0.05) & (dn < 0.55)
             thr = np.quantile(hn[band], 1 - L.holes * 0.55) if band.any() else 2.0
@@ -159,16 +174,30 @@ def render(layers, seed):
             inside = inside & ~cut
             depth = distance_transform_edt(inside)
             dn = depth / max(depth.max(), 1.0)
+        # contorno de tinta (por baixo da forma)
+        if HQ:
+            outside_d = distance_transform_edt(~inside)
+            ring = (outside_d <= INK_W * SS).astype(float)
+            ring = gaussian_filter(ring, 0.6 * SS)
+            _over(canvas, np.dstack([np.broadcast_to(INK, (S, S, 3)), np.clip(ring, 0, 1) * L.alpha]))
         # brilho atrás da forma
-        if L.glow > 0:
+        if L.glow > 0 and not HQ:
             g = gaussian_filter((dn > 0.25).astype(float) + inside * 0.4, 11 * SS) * L.glow * 1.6
             gc = (L.col * 0.5 + L.light * 0.5)
             _over(canvas, np.dstack([np.broadcast_to(gc, (S, S, 3)), np.clip(g, 0, 0.75) * L.alpha]))
         # 3 tons chapados pela profundidade: borda escura / meio / núcleo claro
         lo, mid, hi = L.dark, L.col, L.light
+        if HQ:
+            lo, mid, hi = _vivid(lo, 1.3), _vivid(mid, 1.3), _vivid(hi, 1.1)
         w1 = np.clip((dn - 0.16) / 0.04, 0, 1)[..., None]
         w2 = np.clip((dn - L.core) / 0.05, 0, 1)[..., None]
         rgb = lo * (1 - w1) + mid * w1
+        if HQ:
+            # retícula: pontos da cor da borda no meio-tom, maiores perto da borda
+            t = np.clip(1.0 - (dn - 0.16) / max(L.core - 0.16, 0.05), 0, 1)
+            r = 0.5 * np.sqrt(t) * 0.9
+            dots = np.clip((r - DOT_D) / 0.06 + 0.5, 0, 1)[..., None] * w1 * (1 - w2)
+            rgb = rgb * (1 - dots) + lo * dots
         rgb = rgb * (1 - w2) + hi * w2
         a = gaussian_filter(inside.astype(float), 0.7 * SS)
         _over(canvas, np.dstack([rgb, a * L.alpha]))
@@ -189,8 +218,14 @@ def render(layers, seed):
                 r = (1.2 + rr.random() * 3.2) * SS
                 fd.ellipse([qx - r, qy - r * 0.7, qx + r, qy + r * 0.7], fill=255)
             fm = np.asarray(fl, float) / 255.0
+            if HQ:
+                fring = np.clip(gaussian_filter((distance_transform_edt(fm < 0.5) <= 2.0 * SS).astype(float), 0.5 * SS), 0, 1)
+                _over(canvas, np.dstack([np.broadcast_to(INK, (S, S, 3)), fring * L.alpha]))
             frgb = np.broadcast_to(mid * 0.5 + hi * 0.5, (S, S, 3))
             _over(canvas, np.dstack([frgb, fm * L.alpha]))
+    # some suavemente perto da borda do quadro (nada cortado em linha reta)
+    edge = np.minimum(np.minimum(XX, S - 1 - XX), np.minimum(YY, S - 1 - YY))
+    canvas[..., 3] *= np.clip(edge / (18.0 * SS), 0, 1)
     canvas[..., 3] = np.clip(canvas[..., 3], 0, 1) * 255.0
     img = Image.fromarray(np.clip(canvas, 0, 255).astype(np.uint8), "RGBA")
     return img.resize((OUT, OUT), Image.LANCZOS)
@@ -593,7 +628,7 @@ def build(out_dir, only=None):
     return made
 
 
-def preview(out_dir, path, names, bg=(36, 30, 40)):
+def preview(out_dir, path, names, bg=(120, 200, 255)):
     cols = 6
     th = 110
     img = Image.new("RGBA", (th * cols + 110, th * len(names)), bg + (255,))
