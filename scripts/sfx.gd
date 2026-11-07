@@ -105,7 +105,7 @@ func loop(n: String, vol_db: float = -8.0, fade: float = 1.5) -> void:
 		p.bus = bus_of(n)
 		loops[n] = p
 	if not p.playing:
-		p.volume_db = -40.0
+		p.volume_db = vol_db - 14.0
 		p.play()
 	var tw = create_tween()
 	tw.tween_property(p, "volume_db", vol_db + master_db, fade)

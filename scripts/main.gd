@@ -477,7 +477,7 @@ func _leave_battle() -> void:
 	board.visible = false
 	bubbles.clear()
 	_stop_battle_loops()
-	sfx.loop("musica_galaxia", -9.0, 2.5)
+	sfx.loop("musica_galaxia", -9.0, 0.8)
 	galaxy.activate()
 
 
