@@ -1662,6 +1662,9 @@ func _start_match(sides) -> void:
 		me = 0
 		game.rng.randomize()
 	board.me = me
+	# no online cada jogador se vê sempre do lado direito
+	board.flip_view = online
+	turn_seen = -1
 	game.setup(sides, setup_cfg["map"])
 	game.question.connect(_on_question)
 	game.changed.connect(refresh)
@@ -2036,9 +2039,13 @@ func _pend_move() -> Variant:
 
 
 # ================= redesenho =================
+var turn_seen := -1
+
+
 func refresh() -> void:
 	if game == null or not w.has("title"):
 		return
+	_turn_sound()
 	var H = highlights()
 	var st = {"hl": {}, "lit": null, "labels": {}, "label_colors": {}, "tags": {}, "sel_uid": -1, "ghost": null}
 	for p in range(2):
@@ -2145,6 +2152,19 @@ func refresh() -> void:
 	_refresh_hand()
 	_refresh_prompt()
 	_refresh_side()
+
+
+# aviso sonoro quando a vez muda de jogador
+func _turn_sound() -> void:
+	if game.winner != Game.NONE or autotest:
+		return
+	if game.cur == turn_seen:
+		return
+	turn_seen = game.cur
+	if game.cur == me:
+		sfx.play("vez_sua", -4.0, 1.0, 0.0)
+	else:
+		sfx.play("vez_rival", -9.0, 1.0, 0.0)
 
 
 func _refresh_top() -> void:

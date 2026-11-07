@@ -34,6 +34,7 @@ const ZOOM_MAX = 140.0
 const BIG = ["moby", "balu", "banker", "l_behemot", "l_leviathan", "z_dragao", "golk", "w_mamute", "k_tank", "z_tank", "l_tank", "l_colosso", "sismico", "rhombo", "tork", "w_tric", "z_meca", "t_fendas", "t_raiz", "t_basalto", "t_carrinho", "t_sentinela", "t_britadeira", "a_garra", "k_escudeiro", "w_urso", "w_gorila", "w_javali"]
 
 var me: int = 0   # jogador deste aparelho (cores: você azul, oponente laranja)
+var flip_view := false   # online: gira a câmera para o próprio lado ficar à direita
 var g: Game = null
 var cam: Camera3D
 var cam_yaw: float = 0.0
@@ -1666,8 +1667,8 @@ func fit_camera(snap: bool) -> void:
 		goal["yaw"] = PI / 2.0
 		goal["dist"] = PLAT * 3.25
 		goal["target"] = Vector3(-1.5, 0, 0)
-	if me == 1:
-		# o segundo jogador vê o tabuleiro do lado dele
+	if (me == 1) != flip_view:
+		# gira 180°: no online cada um vê o próprio lado à direita
 		goal["yaw"] += PI
 		goal["target"] = -goal["target"]
 	if snap:
@@ -1675,6 +1676,7 @@ func fit_camera(snap: bool) -> void:
 		cam_pitch = goal["pitch"]
 		cam_dist = goal["dist"]
 		cam_target = goal["target"]
+		cam_goal = null
 	else:
 		cam_goal = goal
 
