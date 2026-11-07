@@ -515,7 +515,7 @@ func refresh_terrain() -> void:
 			tile["props"].queue_free()
 		var pal = PAL[pal_of(t, h)]
 		var ec = Color(ELEV.get(g.map_id, "#c0583a"))
-		var lv = clamp(float(t["h"]) * 0.16, 0.0, 0.5)
+		var lv = clamp(float(t["h"]) * 0.16, 0.0, 0.8)
 		# variação suave por casa: o chão parece natural, não um quadriculado
 		var jit = (_rnd(h, 7) - 0.5) * 0.08
 		var c0 = Color(pal[0]).lerp(ec, lv).lightened(lv * 0.25)
@@ -958,12 +958,12 @@ const THEMES = {
 	"forest": [["cen_valak_pinheiro", 5.0, 1.2, 1], ["cen_valak_rocha", 0.7, 1.1, 1]],
 	"rocks": [["cen_valak_rocha", 4.0, 1.4, 1], ["cen_valak_pinheiro", 1.0, 1.1, 1]],
 	"sea": [["cen_valak_pinheiro", 1.0, 1.0, 2], ["cen_valak_rocha", 1.0, 1.0, 2]],
-	"mesa": [["tarhut_arenito", 3.0, 1.9, 1], ["cen_tarhut_rocha", 2.0, 1.5, 1], ["cen_tarhut_cacto", 0.6, 0.9, 1]],
-	"bones": [["cen_tarhut_ossada", 2.5, 1.9, 1], ["tarhut_ossos", 1.5, 1.6, 2], ["cen_tarhut_cacto_bola", 0.8, 0.8, 1]],
+	"mesa": [["tarhut_arenito", 3.0, 1.9, 2], ["cen_tarhut_rocha", 1.0, 1.5, 2], ["cen_tarhut_cacto", 0.4, 0.9, 2]],
+	"bones": [["cen_tarhut_ossada", 1.0, 1.9, 2], ["tarhut_ossos", 0.8, 1.6, 2], ["cen_tarhut_cacto_bola", 1.0, 0.8, 2]],
 	"crystal": [["cen_tarhut_cristal", 3.0, 1.0, 1], ["tarhut_cristal", 1.5, 1.2, 2], ["cen_tarhut_rocha", 0.6, 1.2, 1]],
 	"open": [["cen_tarhut_cacto", 1.0, 0.95, 1], ["cen_tarhut_cacto_bola", 1.0, 0.85, 1]],
 }
-const DENSITY = {"camp": 0.5, "forest": 0.85, "rocks": 0.55, "sea": 0.1, "mesa": 0.6, "bones": 0.38, "crystal": 0.5, "open": 0.12}
+const DENSITY = {"camp": 0.5, "forest": 0.85, "rocks": 0.55, "sea": 0.1, "mesa": 0.2, "bones": 0.1, "crystal": 0.16, "open": 0.05}
 # peças únicas de cada região (uma só, em lugar de destaque)
 const LANDMARKS = {
 	"camp": [["cen_valak_domo", 2.4, 2, -12.0], ["valak_guindaste", 2.4, 3, 14.0], ["valak_torre", 1.7, 2, 26.0]],

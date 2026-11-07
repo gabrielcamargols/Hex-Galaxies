@@ -7,7 +7,7 @@ signal answered(v)         # a interface responde
 signal changed             # o estado mudou: redesenhar
 signal fx_event(e)         # efeitos visuais (dano, cura, dunas, vermes...)
 
-const DUNE_EVERY = 5
+const DUNE_EVERY = 3
 const WORM_EVERY = 3
 const HOLE_ROUNDS = 2
 const HOLE_DMG = 4
@@ -162,7 +162,7 @@ func load_map() -> void:
 		terr_map[b["h"]] = {"k": "buraco", "h": 0}
 	for eh in earth.keys():
 		var base_t = terr_map.get(eh, plain)
-		terr_map[eh] = {"k": base_t["k"], "h": clampi(int(base_t["h"]) + int(earth[eh]), 0, 3)}
+		terr_map[eh] = {"k": base_t["k"], "h": clampi(int(base_t["h"]) + int(earth[eh]), 0, max(3, int(base_t["h"])))}
 	blocks = {}
 	for h in terr_map.keys():
 		if not tt_of(terr_map[h]["k"]).get("pass", 0):
@@ -182,10 +182,13 @@ func dune_heights(idx: int) -> Dictionary:
 	for pk in def["dunes"][idx]["peaks"]:
 		var hh = int(pk[2])
 		for c in [Vector2i(pk[0], pk[1]), Vector2i(-pk[0], -pk[1])]:
-			_put_dune(out, base, c, hh)
-			if hh >= 2:
-				for n in DB.nbrs(c):
-					_put_dune(out, base, n, hh - 1)
+			# cone: cada anel afastado do pico desce 1 nível, então dá para subir degrau a degrau
+			for dq in range(-hh, hh + 1):
+				for dr in range(-hh, hh + 1):
+					var cell = c + Vector2i(dq, dr)
+					var dd = DB.dist(c, cell)
+					if dd < hh:
+						_put_dune(out, base, cell, hh - dd)
 	return out
 
 
@@ -232,6 +235,9 @@ func can_step(a: Vector2i, b: Vector2i, climber: bool = false) -> bool:
 func step_cost(a: Vector2i, b: Vector2i, climber: bool = false) -> int:
 	if climber:
 		return max(1, int(tt_of(terr(b)["k"])["c"])) + max(0, stand_h(b) - stand_h(a))
+	if terr(b)["k"] == "duna":
+		# subir a duna: 1 por degrau; os 2 últimos níveis (areia fofa no topo) custam 2
+		return 1 + (1 if h_of(b) >= 4 and h_of(b) > h_of(a) else 0) + (2 if tt_of(terr(a)["k"]).get("sink", 0) else 0)
 	return int(tt_of(terr(b)["k"])["c"]) + max(0, h_of(b) - h_of(a)) + (2 if tt_of(terr(a)["k"]).get("sink", 0) else 0)
 
 
@@ -1026,8 +1032,10 @@ func map_events() -> void:
 			emitfx({"t": "dunes"})
 			for u in field():
 				if before.has(u.uid) and before[u.uid] - h_of(u.pos()) >= 2 and not u.barrier:
-					log_msg(-1, "%s deslizou da duna." % nm(u))
-					damage(u, FALL_DMG, null)
+					var drop = before[u.uid] - h_of(u.pos())
+					var dmg = FALL_DMG + (1 if drop >= 3 else 0) + (1 if drop >= 5 else 0)
+					log_msg(-1, "%s despencou da duna (%d níveis): %d de dano." % [nm(u), drop, dmg])
+					damage(u, dmg, null)
 			settle()
 			await pace()
 			if winner != NONE:
