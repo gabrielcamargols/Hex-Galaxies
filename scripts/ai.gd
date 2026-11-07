@@ -62,7 +62,15 @@ static func pos_score(g, u, h: Vector2i) -> float:
 		s += 1.5
 	s += g.h_of(h) * (0.9 if ranged else 0.4)
 	if g.res.has(h):
-		s += 1.2
+		s += 1.2 + (2.5 if g.res[h] == "escaravelho" else 0.0)
+	# escaravelhos valem pontos e vida: atrai peças próximas (sem abandonar o combate)
+	if g.res.values().has("escaravelho") and d > 3:
+		var dsc = 99
+		for rh in g.res.keys():
+			if g.res[rh] == "escaravelho":
+				dsc = min(dsc, DB.dist(h, rh))
+		if dsc < 99:
+			s += max(0.0, 3.0 - 0.3 * dsc)
 	if g.core != null:
 		if h == g.core:
 			s += 6.0
@@ -100,7 +108,22 @@ static func unit_plan_score(g, u) -> float:
 	return best
 
 
+# escaravelhos: cura quem está muito ferido; com 2 sobrando e a ativa gasta, usa de novo
+static func use_scarabs(g, p: int) -> void:
+	if g.scarabs_of(p) <= 0 or g.winner != Game.NONE:
+		return
+	var hurt = g.field().filter(func(x): return x.owner == p and not x.barrier and (x.maxhp - x.hp >= 6 or (x.is_cmd and x.maxhp - x.hp >= 4) or (x.hp <= 3 and x.maxhp - x.hp >= 3)))
+	if not hurt.is_empty() and g.can_scarab(p, "heal"):
+		await g.act_scarab(p, "heal")
+		return
+	if g.scarabs_of(p) >= 3 and g.round_no >= 4 and g.can_scarab(p, "ult"):
+		await g.act_scarab(p, "ult")
+
+
 static func activation(g, p: int) -> void:
+	await use_scarabs(g, p)
+	if g.winner != Game.NONE:
+		return
 	var mine = g.field().filter(func(u): return u.owner == p and not u.barrier and not u.activated)
 	var rs = g.reserve_of(p)
 	var spots = g.deploy_hexes(p)

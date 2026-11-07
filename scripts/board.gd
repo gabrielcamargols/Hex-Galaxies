@@ -817,9 +817,32 @@ func _add_marks(root: Node3D, h: Vector2i) -> void:
 			rc = Color("#5ec8f0")
 		elif rt == "sucata":
 			rc = Color("#c9c2b4")
-		var rm = _mesh(root, (SphereMesh.new() as Mesh) if rt == "agua" else (_box(Vector3(0.3, 0.22, 0.3)) as Mesh), rc, Vector3(0.42, 0.18, 0.22))
+		elif rt == "escaravelho":
+			rc = Color("#2fd04f")
+		var rm = _mesh(root, (SphereMesh.new() as Mesh) if (rt == "agua" or rt == "escaravelho") else (_box(Vector3(0.3, 0.22, 0.3)) as Mesh), rc, Vector3(0.42, 0.18, 0.22))
 		if rt == "agua":
 			rm.scale = Vector3(0.3, 0.36, 0.3)
+		elif rt == "escaravelho":
+			# besouro: casco verde brilhante achatado + cabeça
+			rm.scale = Vector3(0.62, 0.34, 0.86)
+			rm.position = Vector3(0.0, 0.3, 0.0)
+			var mt = rm.material_override
+			if mt is StandardMaterial3D:
+				mt.emission_enabled = true
+				mt.emission = Color("#18c040")
+				mt.emission_energy_multiplier = 0.9
+				mt.metallic = 0.6
+				mt.roughness = 0.25
+			var hd = _mesh(root, SphereMesh.new(), Color("#1f9c42"), Vector3(0.0, 0.3, -0.48))
+			hd.scale = Vector3(0.3, 0.22, 0.26)
+			var bm = _mesh(root, _cyl(0.04, 0.04, 2.2, 6), Color("#30e050"), Vector3(0.0, 1.2, 0.0))
+			if bm.material_override is StandardMaterial3D:
+				bm.material_override.emission_enabled = true
+				bm.material_override.emission = Color("#18d040")
+				bm.material_override.emission_energy_multiplier = 1.3
+			for sx in [-1, 1]:
+				for zz in [-0.14, 0.0, 0.14]:
+					var lg = _mesh(root, _box(Vector3(0.4, 0.05, 0.05)), Color("#145c28"), Vector3(sx * 0.5, 0.14, zz * 1.7))
 		var rl = Label3D.new()
 		rl.text = DB.res[rt]["name"].split(" ")[0].to_upper()
 		rl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
@@ -827,6 +850,10 @@ func _add_marks(root: Node3D, h: Vector2i) -> void:
 		rl.outline_size = 12
 		rl.pixel_size = 0.006
 		rl.position = Vector3(0.42, 0.55, 0.22)
+		if rt == "escaravelho":
+			rl.position = Vector3(0.0, 2.5, 0.0)
+			rl.font_size = 60
+			rl.modulate = Color("#8dff9f")
 		root.add_child(rl)
 
 

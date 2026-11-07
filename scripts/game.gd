@@ -126,7 +126,7 @@ func setup(sides: Array, mid: String) -> void:
 		var deck = DB.tactic_ids.duplicate()
 		_shuffle(deck)
 		var cmd_id = s.get("cmd", DB.factions[s["fac"]]["cmd"])
-		P.append({"fac": s["fac"], "cmd": cmd_id, "mix": s.get("mix", false), "deck": deck, "hand": [], "discard": [], "passed": false, "obj_used": {}, "discount": false})
+		P.append({"fac": s["fac"], "cmd": cmd_id, "mix": s.get("mix", false), "deck": deck, "hand": [], "discard": [], "passed": false, "obj_used": {}, "discount": false, "scarabs": 0})
 		_mk(cmd_id, p, "off")
 		for id in s["picks"]:
 			var u = _mk(id, p, "reserve")
@@ -459,7 +459,7 @@ func _run(c: Array, f: Callable) -> Variant:
 # repete uma jogada que veio do outro aparelho
 func exec_cmd(c: Array) -> void:
 	replay += 1
-	var u = by_uid(int(c[1])) if c.size() > 1 and (c[1] is int or c[1] is float) and c[0] != "pass" and c[0] != "tactic" else null
+	var u = by_uid(int(c[1])) if c.size() > 1 and (c[1] is int or c[1] is float) and c[0] != "pass" and c[0] != "tactic" and c[0] != "scarab" else null
 	match c[0]:
 		"start":
 			start_activation(u)
@@ -487,6 +487,8 @@ func exec_cmd(c: Array) -> void:
 			await play_tactic(int(c[1]), c[2], c[3])
 		"undo":
 			undo_move()
+		"scarab":
+			await act_scarab(int(c[1]), str(c[2]))
 	replay -= 1
 
 
@@ -496,7 +498,7 @@ func state_hash() -> int:
 	for u in units:
 		s += "%d:%s:%d:%d:%d;" % [u.uid, u.st, u.q, u.r, u.hp]
 	for pl in P:
-		s += ",".join(pl["hand"]) + "|"
+		s += ",".join(pl["hand"]) + "|%d|" % int(pl.get("scarabs", 0))
 	return s.hash()
 
 
@@ -1422,19 +1424,19 @@ func end_round() -> void:
 
 
 func do_final_score() -> void:
-	var c = [commander(0).hp, commander(1).hp]
+	var c = [commander(0).hp + scarabs_of(0), commander(1).hp + scarabs_of(1)]
 	var s = [0, 0]
 	for u in field():
 		if not u.is_cmd and not u.barrier:
 			s[u.owner] += u.hp
-	final_score = {"c": c, "s": s}
+	final_score = {"c": c, "s": s, "sc": [scarabs_of(0), scarabs_of(1)]}
 	if c[0] != c[1]:
 		winner = 0 if c[0] > c[1] else 1
 	elif s[0] != s[1]:
 		winner = 0 if s[0] > s[1] else 1
 	else:
 		winner = DRAW
-	log_msg(-1, "Fim do round 10. Vida dos comandantes: %d × %d. Aliados: %d × %d." % [c[0], c[1], s[0], s[1]])
+	log_msg(-1, "Fim do round 10. Vida dos comandantes (com escaravelhos): %d × %d. Aliados: %d × %d." % [c[0], c[1], s[0], s[1]])
 	changed.emit()
 
 
@@ -2082,6 +2084,10 @@ func _act_collect(u) -> bool:
 		var c = await ask(p, {"t": "card", "text": "Equipamento abandonado: escolha o que equipar.", "opts": ["placas", "propulsor", "lente"], "optional": false, "kind": "equip"})
 		u.eq = c if c != null else "placas"
 		log_msg(p, "%s equipou %s." % [nm(u), DB.tactics[u.eq]["name"]])
+	elif t == "escaravelho":
+		P[p]["scarabs"] = int(P[p]["scarabs"]) + 1
+		emitfx({"t": "passive", "kind": "ability", "uid": u.uid})
+		log_msg(p, "Escaravelho Verde guardado (%d)." % int(P[p]["scarabs"]))
 	elif t == "sucata":
 		var ops = adj_free(u.pos())
 		if not ops.is_empty():
@@ -2089,6 +2095,61 @@ func _act_collect(u) -> bool:
 			if h != null:
 				_make_barrier(p, h, 3)
 	await pace()
+	return true
+
+
+# ================= escaravelhos verdes (Tarhut) =================
+# 1 escaravelho: restaura 6 de Vida de uma peça. 2 escaravelhos: uma peça usa a ativa mais uma vez.
+# No fim da partida, cada escaravelho guardado soma +1 à Vida do comandante na contagem.
+const SCARAB_HEAL = 6
+
+
+func scarabs_of(p: int) -> int:
+	return int(P[p].get("scarabs", 0))
+
+
+func scarab_opts(p: int, mode: String) -> Array:
+	if mode == "heal":
+		return field().filter(func(x): return x.owner == p and not x.barrier and x.hp < x.maxhp).map(func(x): return x.pos())
+	if mode == "ult":
+		return field().filter(func(x): return x.owner == p and not x.barrier and ult_kind(x) != "" and ult_spent(x)).map(func(x): return x.pos())
+	return []
+
+
+func can_scarab(p: int, mode: String) -> bool:
+	if winner != NONE or cur != p or scarabs_of(p) < (1 if mode == "heal" else 2):
+		return false
+	return not scarab_opts(p, mode).is_empty()
+
+
+func act_scarab(p: int, mode: String) -> bool:
+	return await _run(["scarab", p, mode], func(): return await _act_scarab(p, mode))
+
+
+func _act_scarab(p: int, mode: String) -> bool:
+	if not can_scarab(p, mode):
+		return false
+	var txt = "Escaravelho: escolha a peça que restaura %d de Vida." % SCARAB_HEAL if mode == "heal" else "2 Escaravelhos: escolha a peça que poderá usar a ativa mais uma vez."
+	var h = await pick_hex(p, txt, scarab_opts(p, mode), "ally", true)
+	if h == null:
+		return false
+	var t = unit_at(h)
+	if t == null:
+		return false
+	if mode == "heal":
+		P[p]["scarabs"] = scarabs_of(p) - 1
+		abfx("heal", h, t.uid)
+		heal(t, SCARAB_HEAL)
+		log_msg(p, "Escaravelho: %s restaura Vida." % nm(t))
+	else:
+		P[p]["scarabs"] = scarabs_of(p) - 2
+		t.ult_used = false
+		t.ult_round = -1
+		abfx("buff", h, t.uid)
+		emitfx({"t": "passive", "kind": "power", "uid": t.uid})
+		log_msg(p, "2 Escaravelhos: %s pode usar a ativa mais uma vez." % nm(t))
+	await pace()
+	changed.emit()
 	return true
 
 

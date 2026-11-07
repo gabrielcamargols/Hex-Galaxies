@@ -1,5 +1,5 @@
 {
- "radius": 10,
+ "radius": 14,
  "maps": {
   "posto": {
    "name": "Valak",
@@ -202,56 +202,56 @@
      0
     ],
     [
-     -3,
      -4,
+     -5,
      "rocha",
      0
     ],
     [
-     -5,
+     -7,
      0,
      "movedica",
      0
     ],
     [
-     -6,
+     -8,
+     1,
+     "movedica",
+     0
+    ],
+    [
+     -7,
      1,
      "movedica",
      0
     ],
     [
      -5,
-     1,
-     "movedica",
-     0
-    ],
-    [
-     -4,
      0,
      "instavel",
      0
     ],
     [
-     -6,
-     2,
+     -8,
+     3,
+     "instavel",
+     0
+    ],
+    [
+     5,
+     -4,
      "instavel",
      0
     ],
     [
      4,
-     -3,
+     -4,
      "instavel",
      0
     ],
     [
-     3,
-     -3,
-     "instavel",
-     0
-    ],
-    [
-     6,
-     -7,
+     8,
+     -9,
      "rocha",
      0
     ]
@@ -262,12 +262,17 @@
      "peaks": [
       [
        0,
-       -3,
+       -4,
        5
       ],
       [
-       -5,
-       4,
+       -7,
+       5,
+       4
+      ],
+      [
+       6,
+       -8,
        3
       ]
      ]
@@ -276,13 +281,18 @@
      "name": "Muralhas nas laterais",
      "peaks": [
       [
-       -4,
+       -6,
        -1,
        5
       ],
       [
+       5,
+       -8,
+       4
+      ],
+      [
+       0,
        4,
-       -6,
        3
       ]
      ]
@@ -291,13 +301,18 @@
      "name": "Cordilheira entre as bases",
      "peaks": [
       [
-       3,
-       -4,
+       4,
+       -6,
        5
       ],
       [
-       -6,
+       -8,
        0,
+       4
+      ],
+      [
+       -3,
+       5,
        3
       ]
      ]
@@ -306,32 +321,64 @@
      "name": "Colina gigante junto à base",
      "peaks": [
       [
-       -2,
-       -5,
+       -3,
+       -8,
        5
       ],
       [
-       5,
+       7,
        0,
+       4
+      ],
+      [
+       -6,
+       6,
        3
       ]
      ]
     }
    ],
    "shape": {
-    "q": 7,
-    "r": 10,
-    "s": 9
+    "q": 9,
+    "r": 13,
+    "s": 11
    },
    "entry_centers": [
     {
-     "q": 5,
-     "r": -10
+     "q": 6,
+     "r": -12
     },
     {
-     "q": -5,
-     "r": 10
+     "q": -6,
+     "r": 12
     }
+   ],
+   "res": [
+    [
+     2,
+     -4,
+     "escaravelho"
+    ],
+    [
+     -5,
+     -3,
+     "escaravelho"
+    ],
+    [
+     6,
+     -6,
+     "escaravelho"
+    ],
+    [
+     -3,
+     2,
+     "escaravelho"
+    ],
+    [
+     0,
+     -9,
+     "escaravelho"
+    ]
    ]
   }
  },
@@ -461,6 +508,10 @@
   "equip": {
    "name": "Equipamento abandonado",
    "text": "Equipa na hora Placas, Propulsor ou Lente, à escolha, sem usar tática."
+  },
+  "escaravelho": {
+   "name": "Escaravelho Verde",
+   "text": "Fica guardado com você: 1 cura 6 de Vida de uma peça; 2 permitem usar uma ativa mais uma vez; no fim da partida cada um soma +1 à Vida do comandante."
   }
  },
  "objectives": [],
