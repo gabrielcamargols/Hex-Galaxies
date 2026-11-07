@@ -151,7 +151,7 @@ static func run(g, u) -> void:
 		if A["actions"] <= 0:
 			break
 		if g.can_ult(u):
-			var need = {"abyss": 7.0, "bombard": 4.0, "prison": 7.0, "stampede": 3.0, "orbital": 5.0, "earth": 3.0}
+			var need = {"abyss": 7.0, "bombard": 4.0, "prison": 7.0, "stampede": 3.0, "orbital": 5.0, "earth": 3.0, "detonate": 4.0, "grenade": 3.0, "artillery": 3.0, "barricade": 2.0}
 			var kind_u = g.ult_kind(u)
 			if need.has(kind_u):
 				var bs = -1e9
@@ -294,7 +294,7 @@ static func answer(g, p: int, q: Dictionary) -> Variant:
 			if q.get("kind", "") == "balu":
 				var t = g.by_uid(q["target"])
 				var b = g.by_uid(q["guard"])
-				return (q["packet"] >= t.hp and b.hp > q["packet"] + 1) or (t.is_cmd and b.hp > q["packet"])
+				return (q["packet"] >= t.hp and b.hp > q["packet"] + 1) or (t.is_cmd and b.hp > q["packet"]) or (g.K(b).has("counter") and q["packet"] >= 3 and b.hp > q["packet"] + 2)
 			if q.get("kind", "") == "reforco":
 				return true
 			if q.get("kind", "") == "revide":

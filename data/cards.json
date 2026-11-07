@@ -846,14 +846,15 @@
    "src": "cat",
    "ab": {
     "name": "Ordem de Guerra",
-    "text": "Outras unidades Krieg a até 2 casas recebem +1 ATQ. Fora do campo, meça desde o centro da sua entrada."
+    "text": "Outras unidades Krieg a até 2 casas recebem +1 ATQ. Fora do campo, meça desde o centro da sua entrada. Glória do Clã: 1 vez por round, quando uma unidade Krieg a até 3 casas do Comandante derruba um inimigo, você compra 1 carta."
    },
    "k": {
     "auraAtk": {
      "r": 2,
      "who": "KRI"
     },
-    "ult": "bombard"
+    "ult": "bombard",
+    "gloria": 3
    },
    "ab2": {
     "name": "Bombardeio",
@@ -875,12 +876,14 @@
    "src": "cat",
    "ab": {
     "name": "Formação de Assalto",
-    "text": "Enquanto houver outra unidade Krieg aliada adjacente, recebe +1 ATQ."
+    "text": "Recebe +1 ATQ para cada outra unidade Krieg aliada adjacente (máx. +3)."
    },
    "k": {
     "atkAllyAdj": {
      "n": 1,
-     "who": "KRI"
+     "who": "KRI",
+     "per": true,
+     "max": 3
     }
    }
   },
@@ -898,7 +901,7 @@
    "src": "cat",
    "ab": {
     "name": "Muralha Móvel",
-    "text": "Outras unidades Krieg aliadas adjacentes ao Tank não podem ser alvo de ataques. Efeitos ainda as atingem."
+    "text": "Outras unidades Krieg aliadas adjacentes ao Tank não podem ser alvo de ataques à distância (2 ou mais casas). Corpo a corpo e efeitos ainda as atingem."
    },
    "k": {
     "guardClan": "KRI"
@@ -917,10 +920,12 @@
    "alc": 6,
    "src": "cat",
    "ab": {
-    "name": "Tiro de Precisão",
-    "text": "Pode atacar a até 6 casas. Precisa de linha de visão."
+    "name": "Mira Travada",
+    "text": "Pode atacar a até 6 casas (precisa de linha de visão). Se não se moveu neste turno, recebe +2 ATQ e ignora o abrigo do alvo."
    },
-   "k": {}
+   "k": {
+    "atkStill": 2
+   }
   },
   {
    "id": "k_brawler",
@@ -936,10 +941,11 @@
    "src": "cat",
    "ab": {
     "name": "Combate Cerrado",
-    "text": "Recebe +2 ATQ ao atacar um inimigo adjacente."
+    "text": "Recebe +2 ATQ ao atacar um inimigo adjacente. Sangue Frio: ao derrubar uma unidade, restaura 2 de Vida."
    },
    "k": {
-    "atkMelee": 2
+    "atkMelee": 2,
+    "killHeal": 2
    }
   },
   {
@@ -963,7 +969,14 @@
      "t": "dmg",
      "r": 2,
      "n": 2
-    }
+    },
+    "ult": "detonate"
+   },
+   "ab2": {
+    "name": "Detonador",
+    "text": "1 vez por partida, 1 ação: detone uma mina Krieg sua em qualquer lugar do mapa. Os inimigos adjacentes a ela sofrem 3 de dano.",
+    "kind": "ativa",
+    "per": "partida"
    }
   },
   {
@@ -980,7 +993,7 @@
    "src": "cat",
    "ab": {
     "name": "Triagem de Combate",
-    "text": "Ao entrar, restaure 3 de Vida de outra unidade Krieg aliada a até 2 casas."
+    "text": "Ao entrar, restaure 3 de Vida de outra unidade Krieg aliada a até 2 casas. Última Dose: 1 vez por partida, quando uma unidade Krieg a até 2 casas seria derrotada, ela volta à reserva com 3 de Vida (o Comandante fica em campo com 3)."
    },
    "k": {
     "entry": {
@@ -989,7 +1002,8 @@
      "n": 3,
      "who": "KRI",
      "self": false
-    }
+    },
+    "lastDose": 2
    }
   },
   {
@@ -1013,7 +1027,15 @@
      "r": 1,
      "n": 1,
      "who": "KRI"
-    }
+    },
+    "ult": "barricade",
+    "ultRound": true
+   },
+   "ab2": {
+    "name": "Barricada Rápida",
+    "text": "1 vez por round, 1 ação: crie uma Barreira de 3 de Vida numa casa livre adjacente.",
+    "kind": "ativa",
+    "per": "round"
    }
   },
   {
@@ -1029,11 +1051,11 @@
    "alc": 2,
    "src": "cat",
    "ab": {
-    "name": "Zona Incendiada",
-    "text": "Ao atacar, cause 1 dano a cada outro inimigo adjacente ao alvo."
+    "name": "Terra Queimada",
+    "text": "Ao atacar, cause 1 dano a cada outro inimigo adjacente ao alvo. A casa do alvo pega fogo até o fim do próximo round: quem entrar nela ou começar o round nela sofre 1 de dano."
    },
    "k": {
-    "after": "splash"
+    "after": "burn"
    }
   },
   {
@@ -1049,11 +1071,14 @@
    "alc": 1,
    "src": "cat",
    "ab": {
-    "name": "Ataque Relâmpago",
-    "text": "Após atacar, pode mover 1 casa livre sem gastar ação."
+    "name": "Pinça",
+    "text": "Recebe +2 ATQ ao atacar um alvo que tenha outra unidade Krieg aliada adjacente a ele."
    },
    "k": {
-    "after": "freeMove"
+    "atkFlank": {
+     "n": 2,
+     "who": "KRI"
+    }
    }
   },
  {
@@ -1069,13 +1094,17 @@
   "src": "novo",
   "ab": {
    "name": "Estandarte do Clã",
-   "text": "Unidades Krieg aliadas adjacentes recebem +1 ATQ."
+   "text": "Unidades Krieg aliadas adjacentes recebem +1 ATQ. Vingança do Clã: se for derrotado, as unidades Krieg a até 2 casas recebem +2 ATQ até o fim do round."
   },
   "k": {
    "allyAtk": {
     "r": 1,
     "n": 1,
     "who": "KRI"
+   },
+   "vengeance": {
+    "r": 2,
+    "n": 2
    }
   }
  },
@@ -1091,11 +1120,12 @@
   "alc": 5,
   "src": "novo",
   "ab": {
-   "name": "Barragem",
-   "text": "Pode atacar a até 5 casas. Ao atacar, cause 1 dano a cada outro inimigo adjacente ao alvo."
+   "name": "Barragem Coordenada",
+   "text": "Pode atacar a até 5 casas. Ao atacar, cause 1 dano a cada outro inimigo adjacente ao alvo. Recebe +2 ATQ contra um alvo que outra unidade Krieg já atacou neste round."
   },
   "k": {
-   "after": "splash"
+   "after": "splash",
+   "atkFocus": 2
   }
  },
  {
@@ -1111,11 +1141,12 @@
   "src": "novo",
   "ab": {
    "name": "Escudo-Torre",
-   "text": "1 vez por round, pode receber o ataque destinado a um aliado adjacente."
+   "text": "1 vez por round, pode receber o ataque destinado a um aliado adjacente. Contragolpe: ao proteger, devolve ao atacante (a até 2 casas) um golpe com o seu ATQ."
   },
   "k": {
    "guard": true,
-   "guardOnce": true
+   "guardOnce": true,
+   "counter": 2
   }
  },
  {
@@ -1131,7 +1162,7 @@
   "src": "novo",
   "ab": {
    "name": "Reconhecimento",
-   "text": "Ao entrar, marque 1 inimigo a até 4 casas: ataques contra ele causam +1 dano até o fim do round."
+   "text": "Ao entrar, marque 1 inimigo a até 4 casas: ataques contra ele causam +1 dano até o fim do round. Observador Avançado: enquanto a Batedora estiver em campo, ataques à distância das unidades Krieg contra um alvo marcado ignoram a linha de visão."
   },
   "k": {
    "entry": {
@@ -1161,7 +1192,15 @@
     "t": "dmg",
     "r": 4,
     "n": 2
-   }
+   },
+   "ult": "artillery",
+   "ultRound": true
+  },
+  "ab2": {
+   "name": "Artilharia Pesada",
+   "text": "1 vez por round, 1 ação: marque uma casa a até 5. No início do próximo round ela sofre 3 de dano e as peças ao redor sofrem 1, inclusive as aliadas.",
+   "kind": "ativa",
+   "per": "round"
   }
  },
  {
@@ -1177,13 +1216,15 @@
   "src": "novo",
   "ab": {
    "name": "Campo Minado",
-   "text": "Ao entrar, arme uma mina numa casa livre adjacente: o primeiro inimigo que entrar sofre 3 de dano."
+   "text": "Ao entrar, arme uma mina numa casa livre adjacente: o primeiro inimigo que entrar sofre 3 de dano. Pode ter 2 minas em campo e arma uma nova no local onde cada unidade Krieg aliada é derrotada."
   },
   "k": {
    "entry": {
     "t": "mine",
     "n": 3
-   }
+   },
+   "mineCap": 2,
+   "deathMine": 3
   }
  },
  {
@@ -1199,13 +1240,23 @@
   "src": "novo",
   "ab": {
    "name": "Saraivada",
-   "text": "Ao entrar, cause 1 de dano a cada inimigo adjacente."
+   "text": "Ao entrar, cause 1 de dano a cada inimigo adjacente. Seus ataques são granadas: passam por cima de obstáculos (sem linha de visão, ignorando abrigo). Se for derrotado, lança uma última granada: 1 de dano nos inimigos adjacentes."
   },
   "k": {
    "entry": {
     "t": "dmgAdj",
     "n": 1
-   }
+   },
+   "lob": true,
+   "deathGrenade": 1,
+   "ult": "grenade",
+   "ultRound": true
+  },
+  "ab2": {
+   "name": "Granada",
+   "text": "1 vez por round, 1 ação: lance uma granada num inimigo a até 3 casas, por cima de obstáculos. Ele sofre 2 de dano e os outros inimigos adjacentes a ele sofrem 1.",
+   "kind": "ativa",
+   "per": "round"
   }
  },
   {

@@ -2062,9 +2062,15 @@ func refresh() -> void:
 				st["label_colors"][h] = C_DEPLOY.lightened(0.4)
 	# bombas escondidas do Rappy: só o dono vê
 	for mn in game.mines:
-		if mn.get("hidden", false) and mn["owner"] == me:
-			st["labels"][mn["h"]] = "BOMBA"
+		if mn["owner"] == me:
+			st["labels"][mn["h"]] = "BOMBA" if mn.get("hidden", false) else "MINA"
 			st["label_colors"][mn["h"]] = Color("#ff9a3a")
+	for fr in game.fires:
+		st["labels"][fr["h"]] = "FOGO"
+		st["label_colors"][fr["h"]] = Color("#ff6a2a")
+	for sh in game.shells:
+		st["labels"][sh["h"]] = "ARTILHARIA"
+		st["label_colors"][sh["h"]] = Color("#ffcc55")
 	board.sync_bananas(game.bananas, me)
 	board.sync_core(game.core, game.core_next if game.core == null or game.core_next != game.core else null)
 	if game.core != null:
@@ -2396,7 +2402,7 @@ func _refresh_ucard() -> void:
 			txt += "[color=#ffab40][b]%s[/b][/color] [color=#8fb8cc](%s)[/color]\n%s" % [c["ab"]["name"], passive, c["ab"]["text"]]
 			if c.has("ab2"):
 				var a2 = c["ab2"]
-				var kind2 = "passiva (não gasta ação)" if a2.get("kind", "") == "passiva" else ("ativa · 1 vez por partida · 1 ação" + (" · [color=#ff8a6a]JÁ USADA[/color]" if u.ult_used else ""))
+				var kind2 = "passiva (não gasta ação)" if a2.get("kind", "") == "passiva" else ("ativa · 1 vez por %s · 1 ação" % a2.get("per", "partida") + (" · [color=#ff8a6a]JÁ USADA[/color]" if game.ult_spent(u) else ""))
 				txt += "\n[color=#ffab40][b]★ %s[/b][/color] [color=#8fb8cc](%s)[/color]\n%s" % [a2["name"], kind2, a2["text"]]
 			if game.imprisoned(u):
 				txt += "\n[color=#9fdcff]Preso na Prisão de Cristal até o fim do próximo round.[/color]"
@@ -2465,12 +2471,13 @@ func _refresh_actbar() -> void:
 			bab.disabled = left <= 0 or (moved and k.get("action", "") == "tunnel")
 			bab.tooltip_text = "Habilidade ativa: 1 ação. Casas ROXAS."
 		if k.has("ult") and DB.cards[u.cid].has("ab2"):
-			var ok_ult = (game.can_ult(u) if live else (game.can_start(u) and not u.ult_used and not game.ult_opts(u).is_empty()))
+			var ok_ult = (game.can_ult(u) if live else (game.can_start(u) and not game.ult_spent(u) and not game.ult_opts(u).is_empty()))
 			var bu = _cbtn(box, "★ " + DB.cards[u.cid]["ab2"]["name"], C_ABIL, _on_ult)
 			bu.disabled = not ok_ult or left <= 0
-			bu.tooltip_text = "Ativa do comandante · 1 vez por partida · 1 ação\n" + DB.cards[u.cid]["ab2"]["text"]
-			if u.ult_used:
-				why.append("%s: já usada nesta partida." % DB.cards[u.cid]["ab2"]["name"])
+			var per2 = DB.cards[u.cid]["ab2"].get("per", "partida")
+			bu.tooltip_text = "Ativa · 1 vez por %s · 1 ação\n%s" % [per2, DB.cards[u.cid]["ab2"]["text"]]
+			if game.ult_spent(u):
+				why.append("%s: já usada neste %s." % [DB.cards[u.cid]["ab2"]["name"], "round" if per2 == "round" else "jogo"])
 		if game.res.has(u.pos()):
 			var bc = _button(box, "Pegar " + DB.res[game.res[u.pos()]]["name"].split(" ")[0], _on_collect)
 			bc.disabled = left <= 0
@@ -3594,6 +3601,13 @@ func _on_abfx(e: Dictionary) -> void:
 			vfx.flip("beam", g0, 2.8, 0.45, Color("#ffd08a"))
 			vfx.flip("boom", g0, 3.2, 0.8, Color.WHITE, false, 0.3)
 			vfx.flip("ring", g0, 5.0, 0.6, Color("#ffb060"), true, 0.3)
+		"burn":
+			vfx.flip("boom", g0, 2.2, 0.8, Color("#ff7a2a"))
+			vfx.flip("smoke", g0, 2.0, 0.7)
+		"shell":
+			vfx.flip("beam", g0, 2.8, 0.45, Color("#ffd08a"))
+			vfx.flip("boom", g0, 3.2, 0.8, Color.WHITE, false, 0.3)
+			vfx.flip("ring", g0, 4.4, 0.6, Color("#ffb060"), true, 0.3)
 		"prison":
 			vfx.flip("prison", g0, 2.6, 0.7, Color("#c8f4ff"))
 		"stomp":
