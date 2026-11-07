@@ -1870,6 +1870,36 @@ func _build_hud() -> void:
 	dr.visible = false
 	ui.add_child(dr)
 	w["drag_icon"] = dr
+	# pergunta que trava o jogo: balão destacado no meio da tela
+	var adim = ColorRect.new()
+	adim.color = Color(0.0, 0.01, 0.04, 0.42)
+	adim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	adim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	adim.visible = false
+	ui.add_child(adim)
+	w["ask_dim"] = adim
+	var ask = PanelContainer.new()
+	var asb = _flat(Color(0.03, 0.05, 0.12, 0.97), Color("#ffab40"), 3, 14, 20)
+	asb.shadow_color = Color(1.0, 0.6, 0.15, 0.35)
+	asb.shadow_size = 18
+	ask.add_theme_stylebox_override("panel", asb)
+	w["ask_sb"] = asb
+	ui.add_child(ask)
+	ask.set_anchors_preset(Control.PRESET_CENTER)
+	ask.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	ask.grow_vertical = Control.GROW_DIRECTION_BOTH
+	ask.z_index = 30
+	ask.visible = false
+	var akv = _vbox(ask, 12)
+	var akh = _label(akv, "SUA DECISÃO", 13, C_GOLD)
+	akh.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	w["ask_head"] = akh
+	w["ask_text"] = _rich(akv, int(min(600.0, vw.x * 0.62)))
+	w["ask_text"].add_theme_font_size_override("normal_font_size", 18 if compact else 19)
+	w["ask_text"].add_theme_font_size_override("bold_font_size", 20 if compact else 21)
+	w["ask_btns"] = _hbox(akv, 10)
+	w["ask_btns"].alignment = BoxContainer.ALIGNMENT_CENTER
+	w["ask"] = ask
 	# faixa de anúncios
 	var bn = Label.new()
 	bn.add_theme_font_size_override("font_size", 64)
@@ -2428,7 +2458,9 @@ func _refresh_actbar() -> void:
 	e.disabled = not mine
 	var hint = ""
 	var pulse = false
-	if not mine:
+	if asking != null:
+		hint = "Responda à pergunta"
+	elif not mine:
 		hint = "Fim de jogo" if game.winner != Game.NONE else ("Vez do " + _opp().to_lower())
 	elif acting:
 		pulse = game.act["actions"] <= 0
@@ -2446,11 +2478,13 @@ func _refresh_actbar() -> void:
 
 
 func _refresh_prompt() -> void:
-	var box: HBoxContainer = w["prompt_btns"]
-	for c in box.get_children():
-		c.queue_free()
+	for bx in [w["prompt_btns"], w["ask_btns"]]:
+		for c in bx.get_children():
+			c.queue_free()
 	var text = ""
 	var is_mull = asking != null and asking["q"].get("kind", "") == "mulligan"
+	var big = asking != null and not is_mull
+	var box: HBoxContainer = w["ask_btns"] if big else w["prompt_btns"]
 	if is_mull:
 		_show_mull(asking["q"]["show"])
 	else:
@@ -2518,8 +2552,71 @@ func _refresh_prompt() -> void:
 	elif tip != null and my_turn():
 		text = "[color=#ffb08a][b]Por quê?[/b][/color] " + tip["l"]
 		_button(box, "Ok", _clear_tip)
-	w["prompt"].visible = text != ""
-	w["prompt_text"].text = text
+	if big:
+		_show_ask(text, asking["q"])
+	else:
+		_hide_ask()
+		w["prompt"].visible = text != ""
+		w["prompt_text"].text = text
+
+
+# mostra a pergunta no centro; se for para clicar numa casa, sobe para não cobrir o tabuleiro
+func _show_ask(text: String, q: Dictionary) -> void:
+	w["prompt"].visible = false
+	w["note"].get_parent().get_parent().visible = false
+	var ask: PanelContainer = w["ask"]
+	var on_board = q["t"] == "hex"
+	var y = 0.2 if on_board else 0.5
+	ask.anchor_top = y
+	ask.anchor_bottom = y
+	w["ask_dim"].visible = not on_board
+	w["ask_head"].text = "ESCOLHA NO TABULEIRO" if on_board else "SUA DECISÃO"
+	w["ask_text"].text = "[center]" + text + "[/center]"
+	var nb = 0
+	for b in w["ask_btns"].get_children():
+		if b is Button and not b.is_queued_for_deletion():
+			if nb == 0 and q["t"] != "hex":
+				_primary(b)
+			nb += 1
+			b.custom_minimum_size = Vector2(max(130.0, b.custom_minimum_size.x), 50)
+			b.add_theme_font_size_override("font_size", 18)
+	var first = not ask.visible or ask.get_meta("q", null) != q
+	ask.set_meta("q", q)
+	ask.visible = true
+	ask.reset_size()
+	ask.offset_left = -ask.size.x / 2.0
+	ask.offset_right = ask.size.x / 2.0
+	ask.offset_top = -ask.size.y / 2.0
+	ask.offset_bottom = ask.size.y / 2.0
+	if first:
+		_recenter_ask.call_deferred()
+		ask.pivot_offset = ask.size / 2.0
+		ask.scale = Vector2(0.85, 0.85)
+		ask.modulate.a = 0.0
+		var tw = create_tween().set_parallel(true)
+		tw.tween_property(ask, "scale", Vector2.ONE, 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tw.tween_property(ask, "modulate:a", 1.0, 0.18)
+		sfx.play("carta", -8.0)
+
+
+func _recenter_ask() -> void:
+	if not w.has("ask") or not is_instance_valid(w["ask"]):
+		return
+	var ask: PanelContainer = w["ask"]
+	ask.reset_size()
+	ask.offset_left = -ask.size.x / 2.0
+	ask.offset_right = ask.size.x / 2.0
+	ask.offset_top = -ask.size.y / 2.0
+	ask.offset_bottom = ask.size.y / 2.0
+	ask.pivot_offset = ask.size / 2.0
+
+
+func _hide_ask() -> void:
+	if w.has("ask") and is_instance_valid(w["ask"]):
+		w["ask"].visible = false
+		w["ask"].set_meta("q", null)
+		w["note"].get_parent().get_parent().visible = true
+		w["ask_dim"].visible = false
 
 
 func _pick_first_reserve() -> void:
@@ -3811,6 +3908,10 @@ func _process(_delta: float) -> void:
 		_update_tags()
 	if game != null and board.visible:
 		_fit_rosters()
+		if w.has("ask") and is_instance_valid(w["ask"]) and w["ask"].visible:
+			var kk = 0.5 + 0.5 * sin(Time.get_ticks_msec() / 200.0)
+			w["ask_sb"].border_color = Color("#ffab40").lerp(Color("#fff2c0"), kk)
+			w["ask_sb"].shadow_color = Color(1.0, 0.6, 0.15, 0.2 + 0.3 * kk)
 		if w.has("end") and is_instance_valid(w["end"]):
 			var eb: Button = w["end"]
 			if eb.get_meta("pulse", false) and not eb.disabled:
