@@ -88,6 +88,7 @@ var tut: bool = false                     # partida do tutorial
 var pre_hex: Variant = null   # casa onde a carta foi solta (arrastar e soltar)
 var tac_fx: Variant = null    # tática esperando o alvo para mostrar o efeito
 const TAC_SELF = ["propulsor", "placas", "lente", "reparo", "camuflagem"]
+var undo: Variant = null        # último movimento que ainda pode ser desfeito
 var core: Variant = null        # núcleo ativo (casa) ou null
 var core_until: int = 0
 var core_next: Variant = null   # onde o próximo núcleo vai surgir (mostrado antes)
@@ -426,6 +427,8 @@ func _send_cmd(c: Array) -> void:
 
 
 func _run(c: Array, f: Callable) -> Variant:
+	if c[0] != "move" and net_depth == 0:
+		undo = null
 	_send_cmd(c)
 	net_depth += 1
 	var r = await f.call()
@@ -462,6 +465,8 @@ func exec_cmd(c: Array) -> void:
 			await act_collect(u)
 		"tactic":
 			await play_tactic(int(c[1]), c[2], c[3])
+		"undo":
+			undo_move()
 	replay -= 1
 
 
@@ -1328,6 +1333,7 @@ func _new_act(u, actions: int, cant: bool) -> Dictionary:
 
 
 func start_activation(u) -> void:
+	undo = null
 	_send_cmd(["start", u.uid])
 	act = _new_act(u, 2, false)
 	log_msg(u.owner, "Ativa %s." % nm(u))
@@ -1418,10 +1424,37 @@ func _act_move(u, h: Vector2i) -> bool:
 		return false
 	if not can_reach(u, h):
 		return false
+	var snap = {"uid": u.uid, "from": u.pos(), "act": act.duplicate(true), "logs": logs.size(), "bn": bananas.size(), "core": core, "hp": u.hp,
+		"fresh": act["actions"] == 2 and not act["tactic"] and not act["attacked"]}
 	act["actions"] -= 1
 	act["moved"] = true
 	await move_unit(u, h, true)
+	# só dá para desfazer se nada aconteceu no caminho (mina, banana, núcleo, dano)
+	if logs.size() == snap["logs"] and bananas.size() == snap["bn"] and core == snap["core"] and u.hp == snap["hp"] and u.st == "field" and net_depth <= 1:
+		undo = snap
+	else:
+		undo = null
 	return true
+
+
+func can_undo() -> bool:
+	return undo != null and act != null and act["uid"] == undo["uid"] and act["moved"] and not act["attacked"]
+
+
+# desfaz o último movimento: a peça volta e as ações voltam como estavam
+func undo_move() -> void:
+	if not can_undo():
+		return
+	_send_cmd(["undo"])
+	var u = by_uid(undo["uid"])
+	var fpos = u.pos()
+	u.q = undo["from"].x
+	u.r = undo["from"].y
+	emitfx({"t": "move", "uid": u.uid, "from": fpos, "to": u.pos()})
+	act = null if undo["fresh"] else undo["act"]
+	log_msg(u.owner, "%s desfez o movimento." % nm(u))
+	undo = null
+	changed.emit()
 
 
 func act_attack(u, t) -> bool:

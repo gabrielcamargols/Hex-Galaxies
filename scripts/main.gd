@@ -655,6 +655,17 @@ func _settings_panel() -> void:
 	close.custom_minimum_size = Vector2(0, 42)
 
 
+func _undo_move() -> void:
+	if game == null or not my_turn() or not game.can_undo():
+		return
+	var uid = game.undo["uid"]
+	sfx.play("clique", -6.0, 0.8)
+	game.undo_move()
+	pend = null
+	sel = uid
+	refresh()
+
+
 func _fast_label() -> String:
 	return "Modo rápido: " + ("LIGADO" if fast_mode else "desligado")
 
@@ -2299,6 +2310,9 @@ func _refresh_actbar() -> void:
 		var bm = _cbtn(box, "Mover" + (" (feito)" if moved else ""), C_MOVE, func(): _set_am("mv"), am == "mv")
 		bm.disabled = not can_mv
 		bm.tooltip_text = "Mover: 1 ação, no máximo 1 vez por turno. Casas VERDES."
+		if game.can_undo() and my_turn():
+			var bu = _cbtn(box, "↶ Desfazer", C_HUD, _undo_move)
+			bu.tooltip_text = "Volta a peça para onde estava e devolve a ação (Ctrl+Z). Só vale se nada aconteceu no caminho e ela ainda não atacou."
 		var ba = _cbtn(box, "Atacar" + (" (feito)" if attacked else ""), C_ATK, func(): _set_am("at"), am == "at")
 		ba.disabled = not can_at
 		ba.tooltip_text = "Atacar: 1 ação, no máximo 1 vez por turno. Inimigos em VERMELHO."
@@ -2947,7 +2961,7 @@ func after() -> void:
 	pend = null
 	am = ""
 	tip = null
-	if game.act != null and game.winner == Game.NONE and not game.cpu[game.act["p"]] and game.act["p"] == me and game.act["actions"] <= 0 and not _any_hand_playable_now():
+	if game.act != null and game.winner == Game.NONE and not game.cpu[game.act["p"]] and game.act["p"] == me and not game.can_undo() and game.act["actions"] <= 0 and not _any_hand_playable_now():
 		ab = false
 		busy = true
 		await get_tree().create_timer(0.35).timeout
@@ -3178,6 +3192,8 @@ func _input(event: InputEvent) -> void:
 		var ke = event as InputEventKey
 		if ke.keycode == KEY_ENTER and pend != null and asking == null:
 			_confirm_pend()
+		elif ke.keycode == KEY_Z and ke.ctrl_pressed:
+			_undo_move()
 		elif ke.keycode == KEY_ESCAPE:
 			if pend != null:
 				pend = null
