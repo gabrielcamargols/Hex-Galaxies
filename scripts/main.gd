@@ -52,6 +52,10 @@ var last_st: Dictionary = {}       # destaques atuais do tabuleiro (sem a carta)
 var dlg: Dictionary = {}           # falas (data/dialogos.json)
 var bubbles: Array = []            # balões de fala ativos
 var plates: Dictionary = {}        # uid -> placa de vida 2D (estilo da HUD)
+var vol = {"Musica": 80.0, "Efeitos": 90.0, "Vozes": 90.0}
+var res_pref: String = "1600x900"
+var fullscreen: bool = false
+var render_q: float = 1.0
 var fast_mode: bool = false      # modo rápido: sem confirmar, prévia ao apontar, animações 2×
 var pend_hover: bool = false
 var intense: bool = false
@@ -147,6 +151,7 @@ func _ready() -> void:
 		if parsed is Dictionary:
 			dlg = parsed
 	_load_prefs()
+	_apply_settings.call_deferred()
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--uiscale="):
 			ui_pref = a.substr(10)
@@ -527,6 +532,8 @@ func _show_menu() -> void:
 	rb.custom_minimum_size = Vector2(180, 40)
 	var sb = _cbtn(row2, _ui_scale_label(), C_HUD, _cycle_ui_scale)
 	sb.custom_minimum_size = Vector2(240, 40)
+	var cfgb = _cbtn(row2, "Configurações", C_HUD, _settings_panel)
+	cfgb.custom_minimum_size = Vector2(170, 40)
 	var fb = _cbtn(row2, _fast_label(), C_HUD, func(): pass)
 	fb.custom_minimum_size = Vector2(210, 40)
 	fb.tooltip_text = "Sem confirmação para mover e atacar, prévia de dano ao apontar o alvo e animações em velocidade 2×."
@@ -539,6 +546,113 @@ func _show_menu() -> void:
 	_ui_fade(1.0, 0.9)
 	if fader.color.a > 0.0:
 		_fade(0.0, 0.7)
+
+
+# ================= configurações: vídeo e som =================
+const RESOLUTIONS = ["1280x720", "1366x768", "1600x900", "1920x1080", "2560x1440"]
+
+
+func _apply_settings() -> void:
+	for b in vol.keys():
+		sfx.set_volume(b, vol[b])
+	get_viewport().scaling_3d_scale = render_q
+	if not OS.has_feature("web") and not OS.has_feature("mobile"):
+		if fullscreen:
+			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+		else:
+			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+			var p = res_pref.split("x")
+			var sz = Vector2i(int(p[0]), int(p[1]))
+			DisplayServer.window_set_size(sz)
+			var scr = DisplayServer.screen_get_usable_rect()
+			DisplayServer.window_set_position(scr.position + (scr.size - sz) / 2)
+
+
+func _settings_panel() -> void:
+	if w.has("settings") and is_instance_valid(w["settings"]):
+		w["settings"].queue_free()
+		return
+	sfx.play("clique", -8.0)
+	var dim = ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.55)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.z_index = 60
+	ui.add_child(dim)
+	w["settings"] = dim
+	var cc = CenterContainer.new()
+	cc.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.add_child(cc)
+	var p = PanelContainer.new()
+	p.add_theme_stylebox_override("panel", _flat(Color(0.03, 0.05, 0.11, 0.97), C_HUD, 2, 12, 22))
+	cc.add_child(p)
+	var v = _vbox(p, 10)
+	v.custom_minimum_size = Vector2(min(480, get_viewport().get_visible_rect().size.x - 40), 0)
+	_label(v, "CONFIGURAÇÕES", 28, C_GOLD)
+	_label(v, "SOM", 13, C_HUD)
+	for b in [["Musica", "Música"], ["Efeitos", "Efeitos sonoros"], ["Vozes", "Vozes"]]:
+		var h = _hbox(v, 10)
+		var l = _label(h, b[1], 16, C_TXT)
+		l.custom_minimum_size = Vector2(150, 0)
+		var sl = HSlider.new()
+		sl.min_value = 0
+		sl.max_value = 100
+		sl.step = 5
+		sl.value = vol[b[0]]
+		sl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		sl.custom_minimum_size = Vector2(0, 32)
+		h.add_child(sl)
+		var pl = _label(h, "%d%%" % int(vol[b[0]]), 15, C_DIM)
+		pl.custom_minimum_size = Vector2(50, 0)
+		var bus = b[0]
+		sl.value_changed.connect(func(x):
+			vol[bus] = x
+			pl.text = "%d%%" % int(x)
+			sfx.set_volume(bus, x)
+			if bus == "Efeitos":
+				sfx.play("clique", -4.0)
+			_save_prefs())
+	_label(v, "VÍDEO", 13, C_HUD)
+	if not OS.has_feature("web") and not OS.has_feature("mobile"):
+		var h2 = _hbox(v, 10)
+		_label(h2, "Resolução", 16, C_TXT).custom_minimum_size = Vector2(150, 0)
+		var ob = OptionButton.new()
+		for r in RESOLUTIONS:
+			ob.add_item(r.replace("x", " × "))
+		ob.selected = max(0, RESOLUTIONS.find(res_pref))
+		ob.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		h2.add_child(ob)
+		ob.item_selected.connect(func(i):
+			res_pref = RESOLUTIONS[i]
+			fullscreen = false
+			_apply_settings()
+			_save_prefs())
+		var fs = CheckButton.new()
+		fs.text = "Tela cheia"
+		fs.button_pressed = fullscreen
+		v.add_child(fs)
+		fs.toggled.connect(func(on):
+			fullscreen = on
+			_apply_settings()
+			_save_prefs())
+	else:
+		var nt = _label(v, "No navegador e no celular o tamanho da tela segue o aparelho. Use a qualidade abaixo para deixar mais leve ou mais nítido.", 13, C_DIM)
+		nt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var h3 = _hbox(v, 10)
+	_label(h3, "Qualidade 3D", 16, C_TXT).custom_minimum_size = Vector2(150, 0)
+	var qb = OptionButton.new()
+	var qs = [[0.5, "Baixa (mais leve)"], [0.75, "Média"], [1.0, "Alta"]]
+	for q in qs:
+		qb.add_item(q[1])
+	qb.selected = 2 if render_q >= 0.99 else (1 if render_q >= 0.7 else 0)
+	qb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	h3.add_child(qb)
+	qb.item_selected.connect(func(i):
+		render_q = qs[i][0]
+		_apply_settings()
+		_save_prefs())
+	var close = _cbtn(v, "Fechar", C_GOLD, func(): dim.queue_free(), true)
+	_primary(close)
+	close.custom_minimum_size = Vector2(0, 42)
 
 
 func _fast_label() -> String:
@@ -1628,6 +1742,7 @@ func _build_hud() -> void:
 	if not compact:
 		_button(topr, "Registro", func(): _toggle_panel("log"))
 	_button(topr, "Regras", func(): _toggle_panel("rules"))
+	_button(topr, "Opções", _settings_panel)
 	_button(topr, "Menu", _show_menu)
 	# câmera: linha compacta acima do painel de fim de turno
 	var camv = _hbox(ui, 4)
@@ -4087,12 +4202,22 @@ func _load_prefs() -> void:
 	if cf.load("user://prefs.cfg") == OK:
 		ui_pref = str(cf.get_value("ui", "scale", "auto"))
 		fast_mode = bool(cf.get_value("ui", "fast", false))
+		for b in vol.keys():
+			vol[b] = float(cf.get_value("som", b, vol[b]))
+		res_pref = str(cf.get_value("video", "res", res_pref))
+		fullscreen = bool(cf.get_value("video", "full", false))
+		render_q = float(cf.get_value("video", "q", 1.0))
 
 
 func _save_prefs() -> void:
 	var cf = ConfigFile.new()
 	cf.set_value("ui", "scale", ui_pref)
 	cf.set_value("ui", "fast", fast_mode)
+	for b in vol.keys():
+		cf.set_value("som", b, vol[b])
+	cf.set_value("video", "res", res_pref)
+	cf.set_value("video", "full", fullscreen)
+	cf.set_value("video", "q", render_q)
 	cf.save("user://prefs.cfg")
 
 

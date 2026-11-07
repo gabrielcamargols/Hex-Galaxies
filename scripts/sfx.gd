@@ -5,7 +5,7 @@ const NAMES = ["golpe", "impacto", "tiro_laser", "tiro_cristal", "tiro_energia",
 	"maldicao", "fenix", "armadilha", "invocar", "derrota", "passo", "explosao", "verme_rumor", "verme_ataque", "dunas",
 	"round", "clique", "confirmar", "carta", "vento_loop", "tempestade_loop", "ilha_loop", "musica_deserto", "musica_galaxia", "musica_valak",
 	"musica_fau", "musica_aby", "musica_kri", "musica_wac", "musica_zuk", "musica_lit", "musica_ter",
-	"entrada_fau", "entrada_aby", "entrada_kri", "entrada_wac", "entrada_zuk", "entrada_lit", "entrada_ter"]
+	"entrada_fau", "entrada_aby", "entrada_kri", "entrada_wac", "entrada_zuk", "entrada_lit", "entrada_ter", "tensao_loop"]
 
 var streams: Dictionary = {}
 var pool: Array = []
@@ -13,7 +13,29 @@ var loops: Dictionary = {}     # nome -> AudioStreamPlayer
 var master_db: float = 0.0
 
 
+# canais de volume: música, efeitos e vozes (ajustados nas Configurações)
+func bus_of(n: String) -> String:
+	if n.begins_with("musica") or n.begins_with("entrada") or n == "tensao_loop":
+		return "Musica"
+	if n.begins_with("v_"):
+		return "Vozes"
+	return "Efeitos"
+
+
+func set_volume(bus: String, pct: float) -> void:
+	var i = AudioServer.get_bus_index(bus)
+	if i < 0:
+		return
+	AudioServer.set_bus_mute(i, pct <= 0.5)
+	AudioServer.set_bus_volume_db(i, linear_to_db(clamp(pct / 100.0, 0.001, 1.5)))
+
+
 func _ready() -> void:
+	for b in ["Musica", "Efeitos", "Vozes"]:
+		if AudioServer.get_bus_index(b) < 0:
+			AudioServer.add_bus()
+			AudioServer.set_bus_name(AudioServer.bus_count - 1, b)
+			AudioServer.set_bus_send(AudioServer.bus_count - 1, "Master")
 	for n in NAMES:
 		var path = "res://sounds/%s.wav" % n
 		if not ResourceLoader.exists(path):
@@ -59,6 +81,7 @@ func play(n: String, vol_db: float = 0.0, pitch: float = 1.0, vary: float = 0.08
 	if p == null:
 		p = pool[0]
 	p.stream = streams[n]
+	p.bus = bus_of(n)
 	p.volume_db = vol_db + master_db
 	p.pitch_scale = pitch * randf_range(1.0 - vary, 1.0 + vary)
 	p.play()
@@ -79,6 +102,7 @@ func loop(n: String, vol_db: float = -8.0, fade: float = 1.5) -> void:
 		p = AudioStreamPlayer.new()
 		add_child(p)
 		p.stream = streams[n]
+		p.bus = bus_of(n)
 		loops[n] = p
 	if not p.playing:
 		p.volume_db = -40.0
