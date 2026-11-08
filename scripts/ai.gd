@@ -15,7 +15,31 @@ static func dmg_on(g, a, t, fpos = null) -> int:
 	return g.preview_damage(a, t, fpos)["dmg"]
 
 
+# Valak: quebrar cristal só vale se o efeito ajudar (roxo perto de inimigos, verde perto de aliados feridos)
+static func crystal_score(g, a, t, fpos = null) -> float:
+	var ap = a.pos() if fpos == null else fpos
+	var s = -0.6
+	for x in g.field():
+		if x.barrier or DB.dist(x.pos(), t.pos()) != 1:
+			continue
+		var mine = x.owner == a.owner
+		var here = x == a
+		match t.crystal:
+			"roxo":
+				if here and DB.dist(ap, t.pos()) != 1:
+					continue
+				s += (-2.5 if mine else (2.0 + (3.0 if x.hp <= 2 else 0.0) + (3.0 if x.is_cmd else 0.0)))
+			"verde":
+				var miss = min(2, x.maxhp - x.hp)
+				s += (0.7 * miss if mine else -0.5 * miss)
+			"azul":
+				s += 0.3 if mine else -0.2
+	return s
+
+
 static func attack_score(g, a, t, fpos = null) -> float:
+	if t.crystal != "":
+		return crystal_score(g, a, t, fpos)
 	var d = dmg_on(g, a, t, fpos)
 	if d <= 0:
 		return 0.1
@@ -78,6 +102,12 @@ static func pos_score(g, u, h: Vector2i) -> float:
 			s -= DB.dist(h, g.core) * 0.25
 	elif g.core_next != null and g.round_no + 1 >= g.core_next_round:
 		s -= DB.dist(h, g.core_next) * 0.15
+	if not g.hole.is_empty():
+		var hd = g.hole_dist(h)
+		if hd <= 1:
+			s -= 2.0 + g.vib * 1.5
+		elif hd <= int(g.vrule("vib_r", 3)):
+			s -= 0.3 * g.vib
 	if g.tremors.has(h):
 		s -= 9.0
 	elif g.tremors.any(func(x): return DB.dist(x, h) == 1):
@@ -187,6 +217,15 @@ static func run(g, u) -> void:
 			var b = best_attack_from(g, u)
 			if b != null and b["s"] > 0.5:
 				await g.act_attack(u, b["t"])
+				continue
+		if g.can_cart(u):
+			var hit_e = false
+			for co in g.cart_opts(u):
+				var ht2 = g.cart_probe(u, co["to"])
+				if ht2 != null and ht2.owner != p:
+					hit_e = true
+			if hit_e:
+				await g.act_cart(u)
 				continue
 		if g.can_collect(u) and not (g.can_attack_now(u) and best_attack_from(g, u) != null):
 			await g.act_collect(u)
@@ -369,7 +408,11 @@ static func answer(g, p: int, q: Dictionary) -> Variant:
 						var cu = g.active_unit()
 						s = g.ult_score(cu if cu != null else g.commander(p), h)
 					"enemy":
-						s = ((50.0 if t3.is_cmd else 0.0) + 20.0 - t3.hp) if t3 != null else 0.0
+						s = ((50.0 if t3.is_cmd else 0.0) + 20.0 - t3.hp - (30.0 if t3.barrier else 0.0)) if t3 != null else 0.0
+					"cart":
+						var cu2 = g.active_unit()
+						var ht = g.cart_probe(cu2, h) if cu2 != null else null
+						s = (6.0 + (5.0 if ht.is_cmd else 0.0)) if (ht != null and ht.owner != p) else (-6.0 if ht != null else 0.0)
 					"blast":
 						for e in g.field():
 							if DB.dist(e.pos(), h) <= 1 and not e.barrier:

@@ -12,7 +12,7 @@ const TDESC = {
 	"ossada": "Ossada baixa. Intransponível, abriga quem está ao lado (-2).", "ossada_c": "Ossada central. Dá para entrar; quem está dentro sofre -1 de tiros.",
 	"buraco": "Buraco de verme. Intransponível enquanto estiver aberto (2 rounds).",
 }
-const RULES = "[b]Objetivo:[/b] derrotar o Comandante inimigo (ele entra no round 4). No fim do round 10 vence quem tiver mais Vida no Comandante; empate: soma da Vida dos aliados.\n\n[b]Turno:[/b] os lados se alternam ativando 1 peça por vez. Cada peça ativada tem [b]2 ações[/b], e cada tipo só pode ser usado [b]1 vez por turno[/b]: mover 1 vez, atacar 1 vez, usar habilidade ativa (ex.: mover + atacar). [b]Táticas não gastam ação:[/b] cada peça ativada pode jogar 1 carta de graça. Arraste a carta e solte no personagem (ou na casa) destacado para escolher quem recebe o efeito. Habilidades passivas não gastam ação. Colocar uma reserva em campo gasta 1 ação. [b]A área de entrada cresce:[/b] a cada 3 rounds (nos rounds 1 a 3 vai até 1 casa da sua base, 4 a 6 até 2 casas...) e, no Tarhut, a cada 2 rounds (1 casa nos rounds 1-2, 2 nos rounds 3-4... até 5), sempre na sua metade do mapa.\n\n[b]Relógio de xadrez:[/b] cada jogador tem 10 minutos no total. O seu relógio só corre enquanto é a sua vez (e para durante as animações); quando você termina, ele para e o do rival começa. Quem ficar sem tempo perde.\n\n[b]Altura:[/b] atacar de cima +1 de dano, de baixo -1. Tiros (alcance 2+) de cima ganham +1 de alcance. Corpo a corpo só com até 1 nível de diferença.\n\n[b]Núcleo:[/b] nos rounds 2, 4, 6 e 8 surge um núcleo de energia que fica 2 rounds. Leve uma peça até ele para capturar: 2 cartas, +2 ATQ ou +4 Vida com defesa. O local do próximo aparece antes, marcado no mapa.\n\n[b]Impulso:[/b] derrubar uma tropa dá 1 casa de movimento grátis (1 vez por ativação).\n\n[b]Linha de tiro:[/b] uma casa no caminho bloqueia se o topo dela for mais alto que o atacante e o alvo.\n\n[b]Abrigo:[/b] -2 de dano se uma rocha/ruína/ossada vizinha ao alvo estiver do lado do atacante.\n\n[b]Tarhut (o mapa mais difícil):[/b] as dunas, com até 5 níveis de altura, mudam inteiras a cada 3 rounds (aviso 1 round antes, nos rounds 4, 7 e 10). Elas bloqueiam tiros e dão vantagem de altura; quem estiver no alto quando a duna baixar despenca: 1 de dano, +1 se cair 3 níveis e +1 se cair 5. A cada 3 rounds o [color=#ff6a4a]Verme Gigante[/color] sai da areia (o \"!\" avisa 1 round antes): quem estiver no buraco sofre 4 de dano e quem estiver ao lado, 1. Fuja das casas marcadas! O deserto é enorme. [color=#ffb14a]Tempestade de areia:[/color] no round em que o vento muda (3, 6, 9) e no round em que as dunas mudam (4, 7, 10), todos os ataques causam 2 a menos de dano.\n\n[b]Escaravelhos Verdes (Tarhut):[/b] coletar um (1 ação) o guarda com você. [b]1 escaravelho[/b] restaura 6 de Vida de uma peça; [b]2 escaravelhos[/b] deixam uma peça usar a ativa mais uma vez; os que sobrarem no fim somam +1 de Vida ao seu comandante na contagem do round 10. Os botões ficam no seu painel de exército.\n\n[b]Online:[/b] na tela do exército, toque em \"⚡ Online\". Um jogador cria a sala e passa o código de 6 letras; o outro digita o código e entra. O mapa é o planeta de quem criou a sala. No app instalado (PC/Android), a sala usa o IP da rede local no lugar do código.\n\n[b]Controles:[/b] clique numa peça sua e depois numa casa verde (mover) ou num inimigo vermelho (atacar), ou arraste a peça e solte. Confirme a prévia. Botão direito gira a câmera, arrastar o fundo move o mapa, a roda aproxima. Q/E giram. Enter confirma, Esc cancela.\n\n[b]Toque (tablet/celular):[/b] toque numa peça e numa casa para agir. 1 dedo arrasta o mapa; pinça com 2 dedos aproxima/afasta; girar os 2 dedos gira a câmera; arrastar os 2 dedos para cima/baixo inclina a visão. \"Tudo\" recentraliza."
+const RULES = "[b]Objetivo:[/b] derrotar o Comandante inimigo (ele entra no round 4). No fim do round 10 vence quem tiver mais Vida no Comandante; empate: soma da Vida dos aliados.\n\n[b]Turno:[/b] os lados se alternam ativando 1 peça por vez. Cada peça ativada tem [b]2 ações[/b], e cada tipo só pode ser usado [b]1 vez por turno[/b]: mover 1 vez, atacar 1 vez, usar habilidade ativa (ex.: mover + atacar). [b]Táticas não gastam ação:[/b] cada peça ativada pode jogar 1 carta de graça. Arraste a carta e solte no personagem (ou na casa) destacado para escolher quem recebe o efeito. Habilidades passivas não gastam ação. Colocar uma reserva em campo gasta 1 ação. [b]A área de entrada cresce:[/b] a cada 3 rounds (nos rounds 1 a 3 vai até 1 casa da sua base, 4 a 6 até 2 casas...) e, no Tarhut, a cada 2 rounds (1 casa nos rounds 1-2, 2 nos rounds 3-4... até 5), sempre na sua metade do mapa.\n\n[b]Relógio de xadrez:[/b] cada jogador tem 10 minutos no total. O seu relógio só corre enquanto é a sua vez (e para durante as animações); quando você termina, ele para e o do rival começa. Quem ficar sem tempo perde.\n\n[b]Altura:[/b] atacar de cima +1 de dano, de baixo -1. Tiros (alcance 2+) de cima ganham +1 de alcance. Corpo a corpo só com até 1 nível de diferença.\n\n[b]Núcleo:[/b] nos rounds 2, 4, 6 e 8 surge um núcleo de energia que fica 2 rounds. Leve uma peça até ele para capturar: 2 cartas, +2 ATQ ou +4 Vida com defesa. O local do próximo aparece antes, marcado no mapa.\n\n[b]Impulso:[/b] derrubar uma tropa dá 1 casa de movimento grátis (1 vez por ativação).\n\n[b]Linha de tiro:[/b] uma casa no caminho bloqueia se o topo dela for mais alto que o atacante e o alvo.\n\n[b]Abrigo:[/b] -2 de dano se uma rocha/ruína/ossada vizinha ao alvo estiver do lado do atacante.\n\n[b]Tarhut (o mapa mais difícil):[/b] as dunas, com até 5 níveis de altura, mudam inteiras a cada 3 rounds (aviso 1 round antes, nos rounds 4, 7 e 10). Elas bloqueiam tiros e dão vantagem de altura; quem estiver no alto quando a duna baixar despenca: 1 de dano, +1 se cair 3 níveis e +1 se cair 5. A cada 3 rounds o [color=#ff6a4a]Verme Gigante[/color] sai da areia (o \"!\" avisa 1 round antes): quem estiver no buraco sofre 4 de dano e quem estiver ao lado, 1. Fuja das casas marcadas! O deserto é enorme.\n\n[b]Valak (caverna de cristais):[/b] um labirinto de cristais que muda a cada partida. Cristais bloqueiam passagem e tiros; um ataque quebra um cristal e o efeito atinge TODOS ao lado: [color=#7dff4a]verde[/color] cura 2, [color=#5ae8ff]azul[/color] dá +1 de Movimento no próximo movimento do round, [color=#ff5ae0]roxo[/color] causa 2 de dano. No centro vive a [color=#ff4ad0]Garra[/color]: andar (+1), atacar ou usar habilidade (+2) a até 3 casas do buraco, ou passar um carrinho por ali (+3), aumenta a VIBRAÇÃO. Em 5, a garra ataca: quem está a 1 casa do buraco é arrastado e morre; a 2 ou 3 casas sofre 2 de dano e é puxado 1 casa. Carrinhos: uma peça ao lado gasta 1 ação para empurrar; ele anda até 3 casas no trilho e o primeiro atingido sofre 3 e é empurrado. [color=#ffb14a]Tempestade de areia:[/color] no round em que o vento muda (3, 6, 9) e no round em que as dunas mudam (4, 7, 10), todos os ataques causam 2 a menos de dano.\n\n[b]Escaravelhos Verdes (Tarhut):[/b] coletar um (1 ação) o guarda com você. [b]1 escaravelho[/b] restaura 6 de Vida de uma peça; [b]2 escaravelhos[/b] deixam uma peça usar a ativa mais uma vez; os que sobrarem no fim somam +1 de Vida ao seu comandante na contagem do round 10. Os botões ficam no seu painel de exército.\n\n[b]Online:[/b] na tela do exército, toque em \"⚡ Online\". Um jogador cria a sala e passa o código de 6 letras; o outro digita o código e entra. O mapa é o planeta de quem criou a sala. No app instalado (PC/Android), a sala usa o IP da rede local no lugar do código.\n\n[b]Controles:[/b] clique numa peça sua e depois numa casa verde (mover) ou num inimigo vermelho (atacar), ou arraste a peça e solte. Confirme a prévia. Botão direito gira a câmera, arrastar o fundo move o mapa, a roda aproxima. Q/E giram. Enter confirma, Esc cancela.\n\n[b]Toque (tablet/celular):[/b] toque numa peça e numa casa para agir. 1 dedo arrasta o mapa; pinça com 2 dedos aproxima/afasta; girar os 2 dedos gira a câmera; arrastar os 2 dedos para cima/baixo inclina a visão. \"Tudo\" recentraliza."
 
 var board
 var game: Game = null
@@ -2145,6 +2145,12 @@ func refresh() -> void:
 		st["labels"][game.core_next] = "próximo núcleo · round %d" % game.core_next_round
 		st["label_colors"][game.core_next] = Color("#9fd8e8")
 	_check_tension()
+	# Valak: área de perigo da garra (mais forte quando a vibração está alta)
+	if not game.hole.is_empty() and game.vib >= int(game.vrule("vib_max", 5)) - 2:
+		for h in DB.hexes:
+			if game.in_zone(h) and not st["hl"].has(h) and not game.hole.has(h):
+				st["hl"][h] = "danger"
+	board.sync_carts(game.carts)
 	for h in game.tremors:
 		st["hl"][h] = "trem"
 		st["labels"][h] = "!"
@@ -2310,6 +2316,9 @@ func _refresh_top() -> void:
 	var tcol = C_GOLD if game.winner != Game.NONE else (C_YOU if game.cur == me else C_CPU)
 	w["title"].add_theme_color_override("font_color", tcol)
 	var ev = []
+	if not game.hole.is_empty():
+		var vm = int(game.vrule("vib_max", 5))
+		ev.append("VIBRAÇÃO %s %d/%d%s" % ["●".repeat(game.vib) + "○".repeat(max(0, vm - game.vib)), game.vib, vm, "  ⚠ A GARRA VAI ATACAR" if game.vib >= vm - 1 else ""])
 	if game.storm_on():
 		ev.append("TEMPESTADE DE AREIA: ATAQUES -2")
 	var def = DB.maps[game.map_id]
@@ -2511,7 +2520,10 @@ func _refresh_ucard() -> void:
 		u = game.by_uid(inspect)
 	var txt = ""
 	if u != null:
-		if u.barrier:
+		if u.crystal != "":
+			var cfx = {"verde": "cura %d de Vida" % int(game.vrule("green_heal", 2)), "azul": "dá +1 de Movimento no próximo movimento (neste round)", "roxo": "causa %d de dano" % int(game.vrule("purple_dmg", 2))}
+			txt = "[b]Cristal %s[/b]\nBloqueia passagem e tiros. Um ataque o quebra (gasta a ação de ataque).\nAo quebrar, %s em TODOS os personagens ao lado, aliados e inimigos." % [u.crystal, cfx.get(u.crystal, "")]
+		elif u.barrier:
 			txt = "[b]Barreira[/b]\nVida %d/%d\nBloqueia passagem e tiros. Pode ser atacada." % [u.hp, u.maxhp]
 		else:
 			var c = DB.cards[u.cid]
@@ -2606,6 +2618,9 @@ func _refresh_actbar() -> void:
 			bu.tooltip_text = "Ativa · 1 vez por %s · 1 ação\n%s" % [per2, DB.cards[u.cid]["ab2"]["text"]]
 			if game.ult_spent(u):
 				why.append("%s: já usada neste %s." % [DB.cards[u.cid]["ab2"]["name"], "round" if per2 == "round" else "jogo"])
+		if live and game.can_cart(u):
+			var bct = _cbtn(box, "Empurrar carrinho", C_ABIL, _on_cart)
+			bct.tooltip_text = "1 ação: o carrinho anda até %d casas no trilho; o primeiro personagem atingido sofre %d e é empurrado." % [int(game.vrule("cart_steps", 3)), int(game.vrule("cart_dmg", 3))]
 		if game.res.has(u.pos()):
 			var bc = _button(box, "Pegar " + DB.res[game.res[u.pos()]]["name"].split(" ")[0], _on_collect)
 			bc.disabled = left <= 0
@@ -3182,6 +3197,20 @@ func _toggle_ab() -> void:
 	am = ""
 	pend = null
 	refresh()
+
+
+func _on_cart() -> void:
+	var u = sel_or_act()
+	if u == null or not my_turn():
+		return
+	pend = null
+	am = ""
+	ab = false
+	busy = true
+	refresh()
+	await game.act_cart(u)
+	busy = false
+	await after()
 
 
 func _on_ult() -> void:
@@ -3991,6 +4020,22 @@ func _on_fx(e: Dictionary) -> void:
 			board.quake()
 			sfx.play("dunas", 0.0)
 			get_tree().create_timer(4.0).timeout.connect(_storm_end)
+		"vib":
+			sfx.play("verme_rumor", -8.0 + float(e["v"]) * 1.5, 1.3)
+			board.shake = max(board.shake, 0.08 + 0.05 * float(e["v"]))
+			board.claw_twitch(float(e["v"]))
+		"claw":
+			banner("A GARRA ATACA!", "quem está perto do buraco é arrastado")
+			if w.has("banner"):
+				w["banner"].add_theme_color_override("font_color", Color("#ff4ad0"))
+			sfx.play("verme_ataque", 0.0, 0.8)
+			board.claw_strike()
+			_comic_pop(_hex_pos(Vector2i(0, 0), 2.0), "KRRAAK!", true)
+			for ch in e["hexes"]:
+				vfx.flip("slash", _hex_pos(ch, 0.9), 2.4, 0.5, Color("#ff7ae0"))
+		"cart":
+			board.move_cart(int(e["i"]), e["to"])
+			sfx.play("passo", -4.0, 0.6)
 		"tremor":
 			sfx.play("verme_rumor", -2.0, 0.7)
 			board.shake = max(board.shake, 0.35)
@@ -4658,7 +4703,7 @@ func _update_plates(delta: float) -> void:
 	var sc = clamp(40.0 / max(board.cam_dist, 1.0), 0.85, 1.15)
 	for uid in board.unit_nodes.keys():
 		var u: Variant = game.by_uid(uid)
-		if u == null:
+		if u == null or u.crystal != "":
 			continue
 		seen[uid] = true
 		if not plates.has(uid) or not is_instance_valid(plates[uid]["panel"]):

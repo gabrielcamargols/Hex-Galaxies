@@ -22,6 +22,7 @@ const PAL = {
 	"quick": ["#8e8040", "#6e6230", "#3e3618"], "stone": ["#8e827c", "#726862", "#4a4240"],
 	"bone": ["#d8ccb0", "#bcae90", "#7e7058"], "cracked": ["#e0a058", "#c4803e", "#6e3a1a"],
 	"hole": ["#3a2418", "#24140c", "#120a04"],
+	"cave": ["#7a64e0", "#5a48c0", "#24186a"], "cave2": ["#6c56d4", "#4e3cb0", "#20145e"], "pit": ["#140a24", "#0c0618", "#05020a"],
 	"rubble_g": ["#6aa040", "#548232", "#2c4a1c"], "sand2": ["#d8903e", "#b8702c", "#6e3a1a"], "grass3": ["#389444", "#2a7434", "#184a22"],
 }
 const ELEV = {"tarhut": "#c0583a", "posto": "#e0c060"}  # tom que as casas altas puxam
@@ -118,6 +119,12 @@ func build(game: Game) -> void:
 	unit_nodes.clear()
 	for c in scenery_root.get_children():
 		c.queue_free()
+	claw = null
+	claw_fingers = []
+	for cn in cart_nodes:
+		if is_instance_valid(cn):
+			cn.queue_free()
+	cart_nodes = []
 	banana_nodes.clear()
 	core_node = null
 	core_next_node = null
@@ -131,10 +138,18 @@ func build(game: Game) -> void:
 	PLAT = far + 2.0
 	RIM = PLAT * 0.68
 	UNDER = PLAT * 1.85
-	_setup_sky()
-	ground.mesh = _planet_mesh(desert)
-	ground.position = Vector3.ZERO
-	ground.material_override = _hq_mat()
+	var cave = DB.maps[g.map_id].get("cave", false)
+	if cave:
+		_setup_cave_env()
+	else:
+		_setup_sky()
+		ground.mesh = _planet_mesh(desert)
+		ground.position = Vector3.ZERO
+		ground.material_override = _hq_mat()
+		sun_light.light_energy = 0.55
+		sun_light.light_color = Color.WHITE
+		env.ambient_light_color = Color(0.85, 0.88, 0.95)
+		env.ambient_light_energy = 0.32
 	for h in DB.hexes:
 		var node = Node3D.new()
 		var wp = world_xz(h)
@@ -159,8 +174,11 @@ func build(game: Game) -> void:
 		lab.visible = false
 		node.add_child(lab)
 		tiles[h] = {"node": node, "disp_h": float(g.h_of(h)), "body": null, "props": null, "hl": hl, "dim": dim, "label": lab, "flash": 0.0, "sig": ""}
-	_build_scenery(desert)
-	_build_far(desert)
+	if cave:
+		_build_cave()
+	else:
+		_build_scenery(desert)
+		_build_far(desert)
 	built_ver = -1
 	refresh_terrain()
 	_build_rails()
@@ -454,6 +472,10 @@ func top_y(h: Vector2i) -> float:
 
 
 func pal_of(t: Dictionary, h: Vector2i) -> String:
+	if DB.maps[g.map_id].get("cave", false):
+		if t["k"] == "fosso":
+			return "pit"
+		return "cave" if (h.x * 3 + h.y * 7) % 5 != 0 else "cave2"
 	var desert = g.map_id == "tarhut"
 	match t["k"]:
 		"duna":
@@ -517,6 +539,8 @@ func refresh_terrain() -> void:
 		body.material_override = tile_mat
 		tile["node"].add_child(body)
 		tile["body"] = body
+		if t["k"] == "fosso":
+			body.visible = false
 		var props = Node3D.new()
 		tile["node"].add_child(props)
 		tile["props"] = props
@@ -680,6 +704,8 @@ func _ribs(parent: Node3D, pos: Vector3, s: float, n: int) -> void:
 
 
 func _add_props(root: Node3D, h: Vector2i, t: Dictionary) -> void:
+	if DB.maps[g.map_id].get("cave", false):
+		return   # caverna: chão de pedra limpo (os cristais são peças)
 	if _cen_tile(root, h, t["k"]):
 		pass
 	else:
@@ -1292,7 +1318,12 @@ func _make_unit(u) -> void:
 	node.add_child(ring)
 	var sprite: Variant = null
 	var body_h = 1.75 * sc
-	if u.barrier:
+	if u.crystal != "":
+		shadow.visible = false
+		ring.visible = false
+		_crystal_cluster(node, u.crystal, u.uid)
+		body_h = 1.6
+	elif u.barrier:
 		_mesh(node, _cyl(0.4, 0.5, 0.7, 6), Color("#6d6250"), Vector3(0, 0.35, 0))
 		body_h = 0.8
 	elif DB.art.has(u.cid):
@@ -1443,6 +1474,8 @@ func _process(delta: float) -> void:
 		if orb != null:
 			orb.position.y = 0.75 + sin(Time.get_ticks_msec() / 300.0) * 0.08
 			orb.rotation.y += delta * 2.0
+	if g != null:
+		_update_claw(delta)
 	if g == null:
 		return
 	_update_camera(delta)
@@ -1594,6 +1627,8 @@ func _apply_overlay(h: Vector2i) -> void:
 			col = Color(1.0, 0.48, 0.24, 0.7)
 		"trem":
 			col = Color(1.0, 0.48, 0.24, 0.45)
+		"danger":
+			col = Color(1.0, 0.12, 0.25, 0.35 + 0.25 * (0.5 + 0.5 * sin(Time.get_ticks_msec() / 160.0)))
 		"dnext":
 			col = Color(0.62, 0.94, 1.0, 0.35)
 		"deploy":
@@ -1932,3 +1967,360 @@ func _unhandled_input(event: InputEvent) -> void:
 			rotate_cam(-1)
 		elif ke.keycode == KEY_E:
 			rotate_cam(1)
+
+
+
+# ================= Valak: caverna de cristais =================
+const CRYSTAL_COL = {"verde": ["#7dff4a", "#2fbf3a"], "azul": ["#5ae8ff", "#2a86e8"], "roxo": ["#ff5ae0", "#a83ae0"]}
+var cart_nodes: Array = []
+var claw: Node3D = null
+var claw_fingers: Array = []
+var claw_t: float = 0.0
+var claw_hit: float = 0.0
+var claw_rest: Vector3 = Vector3.ZERO
+
+
+func _ink() -> StandardMaterial3D:
+	return _outline_thick(0.045)
+
+
+func _glow_mat(c: Color, e: float = 1.2) -> StandardMaterial3D:
+	var m = _mat(c)
+	m.emission_enabled = true
+	m.emission = c
+	m.emission_energy_multiplier = e
+	return m
+
+
+func _setup_cave_env() -> void:
+	# sem céu nem espaço: só a escuridão da caverna, luz roxa e brilho dos cristais
+	env.sky = null
+	env.background_mode = Environment.BG_COLOR
+	env.background_color = Color("#0c0518")
+	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	env.ambient_light_color = Color("#8a90f0")
+	env.ambient_light_energy = 0.55
+	sun_light.light_energy = 0.75
+	sun_light.light_color = Color("#ffe8d0")
+	ground.mesh = _disc(PLAT + 9.0, 48)
+	ground.position = Vector3(0, BASE_Y + 0.01, 0)
+	ground.material_override = _mat(Color("#2a1650"))
+
+
+func _crystal_cluster(parent: Node3D, kind: String, seed_v: int) -> void:
+	var cc = CRYSTAL_COL.get(kind, ["#ffffff", "#999999"])
+	var rng = RandomNumberGenerator.new()
+	rng.seed = seed_v * 31 + 7
+	var base = _mesh(parent, _cyl(0.48, 0.55, 0.22, 6), Color("#3a2468"), Vector3(0, 0.1, 0))
+	base.material_overlay = _ink()
+	var n = 3 + rng.randi() % 3
+	for i in range(n):
+		var hgt = rng.randf_range(0.7, 1.5) * (1.25 if i == 0 else 1.0)
+		var rad = rng.randf_range(0.13, 0.22) * (1.25 if i == 0 else 1.0)
+		var a = TAU * i / n + rng.randf_range(-0.4, 0.4)
+		var off = Vector3(cos(a), 0, sin(a)) * (0.0 if i == 0 else rng.randf_range(0.18, 0.32))
+		var holder = Node3D.new()
+		holder.position = off + Vector3(0, 0.18, 0)
+		holder.rotation = Vector3(rng.randf_range(-0.35, 0.35), rng.randf_range(0, TAU), rng.randf_range(-0.35, 0.35))
+		if i == 0:
+			holder.rotation = Vector3(0, holder.rotation.y, 0)
+		parent.add_child(holder)
+		var col = Color(cc[0]) if i % 2 == 0 else Color(cc[1])
+		var shaft = MeshInstance3D.new()
+		shaft.mesh = _cyl(rad, rad * 1.05, hgt, 6)
+		shaft.material_override = _glow_mat(col, 0.55)
+		shaft.material_overlay = _ink()
+		shaft.position = Vector3(0, hgt * 0.5, 0)
+		holder.add_child(shaft)
+		var tip = MeshInstance3D.new()
+		tip.mesh = _cyl(0.0, rad, rad * 1.6, 6)
+		tip.material_override = _glow_mat(col.lightened(0.35), 0.7)
+		tip.material_overlay = _ink()
+		tip.position = Vector3(0, hgt + rad * 0.8, 0)
+		holder.add_child(tip)
+	var lt = OmniLight3D.new()
+	lt.light_color = Color(cc[0])
+	lt.light_energy = 0.6
+	lt.omni_range = 2.6
+	lt.position = Vector3(0, 0.9, 0)
+	parent.add_child(lt)
+
+
+func _rockwall(pos: Vector3, h: float, w: float, col: Color, rng: RandomNumberGenerator) -> void:
+	var r = MeshInstance3D.new()
+	r.mesh = _cyl(w * rng.randf_range(0.45, 0.8), w, h, rng.randi_range(5, 7))
+	r.material_override = _mat(col)
+	r.material_overlay = _ink()
+	r.position = pos + Vector3(0, h * 0.5, 0)
+	r.rotation = Vector3(rng.randf_range(-0.12, 0.12), rng.randf_range(0, TAU), rng.randf_range(-0.12, 0.12))
+	scenery_root.add_child(r)
+
+
+func _build_cave() -> void:
+	var rng = RandomNumberGenerator.new()
+	rng.seed = 4242
+	var far = PLAT + 0.3
+	var wall_cols = [Color("#3d2280"), Color("#4a2a96"), Color("#2e1a66"), Color("#5a34b0")]
+	# paredes da caverna: anel de rochas altas em volta da arena
+	for i in range(64):
+		var a = TAU * i / 64.0 + rng.randf_range(-0.03, 0.03)
+		var d = far + rng.randf_range(0.3, 2.5)
+		var pos = Vector3(cos(a) * d, BASE_Y, sin(a) * d)
+		# anel de dentro baixo (não esconde o tabuleiro); o de fora, alto, fecha a caverna
+		_rockwall(pos, rng.randf_range(1.2, 3.2), rng.randf_range(1.2, 2.2), wall_cols[rng.randi() % 4], rng)
+	for i in range(40):
+		var a2 = rng.randf() * TAU
+		var d2 = far + 4.5 + rng.randf_range(0.0, 4.0)
+		_rockwall(Vector3(cos(a2) * d2, BASE_Y, sin(a2) * d2), rng.randf_range(8.0, 16.0), rng.randf_range(2.2, 3.6), wall_cols[rng.randi() % 4].darkened(0.25), rng)
+	# cristais de enfeite nas paredes (não são do jogo)
+	var kinds = ["verde", "azul", "roxo"]
+	for i in range(16):
+		var a3 = rng.randf() * TAU
+		var d3 = far + rng.randf_range(0.2, 1.4)
+		var holder = Node3D.new()
+		holder.position = Vector3(cos(a3) * d3, BASE_Y + rng.randf_range(0.0, 1.2), sin(a3) * d3)
+		holder.scale = Vector3.ONE * rng.randf_range(0.9, 1.6)
+		scenery_root.add_child(holder)
+		_crystal_cluster(holder, kinds[rng.randi() % 3], 900 + i)
+	# entradas de mina nas pontas de fora dos trilhos
+	for tr in g.tracks:
+		if tr.size() < 2:
+			continue
+		var end = world_xz(tr[0])
+		var prev = world_xz(tr[1])
+		var dirv = (end - prev).normalized()
+		var p = end + dirv * 1.7
+		_mine_entrance(Vector3(p.x, BASE_Y, p.y), atan2(dirv.x, dirv.y))
+	# andaimes amarelos na parede, entre as entradas
+	for k in range(4):
+		var a4 = PI * 0.5 * k + 0.6
+		var d4 = far + 0.2
+		_scaffold(Vector3(cos(a4) * d4, BASE_Y, sin(a4) * d4), -a4 + PI * 0.5)
+	_build_pit()
+
+
+func _mine_entrance(pos: Vector3, yaw: float) -> void:
+	var root = Node3D.new()
+	root.position = pos
+	root.rotation.y = yaw
+	scenery_root.add_child(root)
+	var dark = _mesh(root, _box(Vector3(2.4, 2.6, 1.2)), Color("#05020a"), Vector3(0, 1.3, 0.4))
+	dark.material_overlay = _ink()
+	var wood = Color("#f2b630")
+	for sx in [-1.25, 1.25]:
+		var post = _mesh(root, _box(Vector3(0.32, 3.0, 0.32)), wood, Vector3(sx, 1.5, -0.2))
+		post.material_overlay = _ink()
+	var beam = _mesh(root, _box(Vector3(3.2, 0.38, 0.4)), wood, Vector3(0, 3.0, -0.2))
+	beam.material_overlay = _ink()
+	for sx2 in [-1.0, 1.0]:
+		var lamp = _mesh(root, SphereMesh.new(), Color("#ffe27a"), Vector3(sx2 * 1.55, 2.4, -0.45))
+		lamp.scale = Vector3.ONE * 0.32
+		lamp.material_override = _glow_mat(Color("#ffd24a"), 2.0)
+		lamp.material_overlay = _ink()
+		var lt = OmniLight3D.new()
+		lt.light_color = Color("#ffc860")
+		lt.light_energy = 1.4
+		lt.omni_range = 6.0
+		lt.position = Vector3(sx2 * 1.55, 2.4, -0.9)
+		root.add_child(lt)
+
+
+func _scaffold(pos: Vector3, yaw: float) -> void:
+	var root = Node3D.new()
+	root.position = pos
+	root.rotation.y = yaw
+	scenery_root.add_child(root)
+	var wood = Color("#e8a828")
+	for x in [-1.2, 1.2]:
+		for z in [-0.5, 0.5]:
+			var p = _mesh(root, _box(Vector3(0.18, 2.4, 0.18)), wood, Vector3(x, 1.2, z))
+			p.material_overlay = _ink()
+	var deck = _mesh(root, _box(Vector3(2.8, 0.16, 1.3)), Color("#c98a2a"), Vector3(0, 2.4, 0))
+	deck.material_overlay = _ink()
+	for x2 in [-1.2, 0.0, 1.2]:
+		var rail = _mesh(root, _box(Vector3(0.1, 0.6, 0.1)), wood, Vector3(x2, 2.75, -0.6))
+		rail.material_overlay = _ink()
+	var top = _mesh(root, _box(Vector3(2.6, 0.1, 0.1)), wood, Vector3(0, 3.05, -0.6))
+	top.material_overlay = _ink()
+
+
+# buraco central e a garra (só a garra aparece: dedos roxos com unhas amarelas)
+func _build_pit() -> void:
+	if g.hole.is_empty():
+		return
+	var c = Vector2.ZERO
+	for h in g.hole:
+		c += world_xz(h)
+	c /= float(g.hole.size())
+	var rad = 0.0
+	for h in g.hole:
+		rad = max(rad, world_xz(h).distance_to(c))
+	rad += 0.9
+	var pit = MeshInstance3D.new()
+	pit.mesh = _cyl(rad, rad * 0.75, 12.0, 24)
+	pit.material_override = _mat(Color("#05020c"), true)
+	pit.position = Vector3(c.x, BASE_Y - 6.0 + 0.05, c.y)
+	scenery_root.add_child(pit)
+	var lip = MeshInstance3D.new()
+	lip.mesh = _disc(rad, 24)
+	lip.material_override = _mat(Color("#030108"), true)
+	lip.position = Vector3(c.x, 0.02, c.y)
+	scenery_root.add_child(lip)
+	# aro de metal amarelo com faixas de perigo
+	var tor = TorusMesh.new()
+	tor.inner_radius = rad
+	tor.outer_radius = rad + 0.32
+	tor.rings = 48
+	var ring = MeshInstance3D.new()
+	ring.mesh = tor
+	ring.material_override = _mat(Color("#f2c22a"))
+	ring.material_overlay = _ink()
+	ring.position = Vector3(c.x, 0.1, c.y)
+	ring.scale = Vector3(1, 0.6, 1)
+	scenery_root.add_child(ring)
+	for i in range(12):
+		var a = TAU * i / 12.0
+		var st = _mesh(scenery_root, _box(Vector3(0.36, 0.2, 0.14)), Color("#1a0a24"), Vector3(c.x + cos(a) * (rad + 0.16), 0.2, c.y + sin(a) * (rad + 0.16)), Vector3(0, -a, 0.6))
+	var glow = OmniLight3D.new()
+	glow.light_color = Color("#d04aff")
+	glow.light_energy = 1.2
+	glow.omni_range = rad * 2.5
+	glow.position = Vector3(c.x, -1.5, c.y)
+	scenery_root.add_child(glow)
+	# a garra: palma escondida no fundo e 4 dedos longos saindo do buraco e se curvando sobre a borda
+	claw = Node3D.new()
+	claw_rest = Vector3(c.x, -1.2, c.y)
+	claw.position = claw_rest
+	scenery_root.add_child(claw)
+	claw_fingers = []
+	var skin = Color("#b03ad8")
+	var nail = Color("#ffd23a")
+	var palm = MeshInstance3D.new()
+	palm.mesh = _sphere_mesh(1.2)
+	palm.scale = Vector3(1.3, 0.7, 1.0)
+	palm.material_override = _mat(skin.darkened(0.25))
+	palm.material_overlay = _ink()
+	claw.add_child(palm)
+	var lens = [1.5, 1.15, 0.85]
+	for f in range(4):
+		var a = -1.05 + f * 0.7
+		var root = Node3D.new()
+		root.rotation = Vector3(0, a, 0)
+		root.position = Vector3(sin(a), 0.3, cos(a)) * 0.75
+		claw.add_child(root)
+		var pivots = []
+		var parent: Node3D = root
+		for k in range(3):
+			var piv = Node3D.new()
+			piv.position = Vector3.ZERO if k == 0 else Vector3(0, lens[k - 1], 0)
+			parent.add_child(piv)
+			var cap = CapsuleMesh.new()
+			cap.radius = 0.3 - k * 0.06
+			cap.height = lens[k] + cap.radius
+			var m = MeshInstance3D.new()
+			m.mesh = cap
+			m.material_override = _mat(skin.lightened(k * 0.06))
+			m.material_overlay = _ink()
+			m.position = Vector3(0, lens[k] * 0.5, 0)
+			piv.add_child(m)
+			# nó do dedo (articulação mais clara)
+			if k > 0:
+				var kn = MeshInstance3D.new()
+				kn.mesh = _sphere_mesh(cap.radius * 1.15)
+				kn.material_override = _mat(skin.lightened(0.15))
+				piv.add_child(kn)
+			pivots.append(piv)
+			parent = piv
+		var tip = MeshInstance3D.new()
+		tip.mesh = _cyl(0.0, 0.17, 0.75, 8)
+		tip.material_override = _glow_mat(nail, 0.35)
+		tip.material_overlay = _ink()
+		tip.position = Vector3(0, lens[2] + 0.3, 0.08)
+		tip.rotation = Vector3(0.5, 0, 0)
+		parent.add_child(tip)
+		claw_fingers.append(pivots)
+
+
+func _sphere_mesh(r: float) -> SphereMesh:
+	var sm = SphereMesh.new()
+	sm.radius = r
+	sm.height = r * 2.0
+	return sm
+
+
+func claw_twitch(v: float) -> void:
+	claw_t = max(claw_t, 0.4 + v * 0.1)
+
+
+func claw_strike() -> void:
+	claw_hit = 1.0
+	shake = max(shake, 0.9)
+
+
+func _update_claw(delta: float) -> void:
+	if claw == null or not is_instance_valid(claw):
+		return
+	var tt = Time.get_ticks_msec() / 1000.0
+	claw_t = max(0.0, claw_t - delta)
+	claw_hit = max(0.0, claw_hit - delta * 0.7)
+	var vibk = float(g.vib) / 5.0 if g != null else 0.0
+	# respira devagar; treme com a vibração; no ataque sobe alto e fecha os dedos
+	var rise = 0.12 * sin(tt * 1.2) + vibk * 0.35 + sin(claw_hit * PI) * 2.6
+	claw.position = claw_rest + Vector3(0, rise, 0) + Vector3(sin(tt * 37.0), 0, cos(tt * 41.0)) * 0.04 * (claw_t + vibk)
+	for f in range(claw_fingers.size()):
+		var open_k = sin(claw_hit * PI)    # no ataque os dedos se abrem e depois fecham
+		var wig = 0.06 * sin(tt * 1.6 + f * 1.3) + vibk * 0.05 * sin(tt * 30.0 + f)
+		claw_fingers[f][0].rotation.x = 0.35 + wig - open_k * 0.25
+		claw_fingers[f][1].rotation.x = 0.75 + wig * 1.5 - open_k * 0.5
+		claw_fingers[f][2].rotation.x = 0.9 + wig * 2.0 - open_k * 0.6
+
+
+func sync_carts(cs: Array) -> void:
+	while cart_nodes.size() > cs.size():
+		var n = cart_nodes.pop_back()
+		if is_instance_valid(n):
+			n.queue_free()
+	for i in range(cs.size()):
+		if i >= cart_nodes.size() or not is_instance_valid(cart_nodes[i]):
+			var node = _make_cart(i)
+			if i >= cart_nodes.size():
+				cart_nodes.append(node)
+			else:
+				cart_nodes[i] = node
+		var h: Vector2i = cs[i]["h"]
+		var wp = world_xz(h)
+		var goal = Vector3(wp.x, top_y(h), wp.y)
+		if not cart_nodes[i].has_meta("moving"):
+			cart_nodes[i].position = goal
+
+
+func _make_cart(i: int) -> Node3D:
+	var root = Node3D.new()
+	add_child(root)
+	var body = _mesh(root, _box(Vector3(0.8, 0.45, 0.6)), Color("#c8642a"), Vector3(0, 0.42, 0))
+	body.material_overlay = _ink()
+	var rim = _mesh(root, _box(Vector3(0.9, 0.08, 0.7)), Color("#7a3a18"), Vector3(0, 0.66, 0))
+	rim.material_overlay = _ink()
+	var kinds = ["roxo", "azul", "verde"]
+	var cc = CRYSTAL_COL[kinds[i % 3]]
+	for k in range(4):
+		var ore = _mesh(root, SphereMesh.new(), Color(cc[k % 2]), Vector3(-0.22 + k * 0.15, 0.72, (k % 2) * 0.12 - 0.06))
+		ore.scale = Vector3.ONE * 0.24
+		ore.material_override = _glow_mat(Color(cc[k % 2]), 0.6)
+	for x in [-0.28, 0.28]:
+		for z in [-0.32, 0.32]:
+			var wh = _mesh(root, _cyl(0.13, 0.13, 0.08, 10), Color("#2a2030"), Vector3(x, 0.14, z), Vector3(PI / 2, 0, 0))
+			wh.material_overlay = _ink()
+	return root
+
+
+func move_cart(i: int, to: Vector2i) -> void:
+	if i >= cart_nodes.size() or not is_instance_valid(cart_nodes[i]):
+		return
+	var n = cart_nodes[i]
+	n.set_meta("moving", true)
+	var wp = world_xz(to)
+	var goal = Vector3(wp.x, top_y(to), wp.y)
+	var tw = create_tween()
+	tw.tween_property(n, "position", goal, 0.22)
+	tw.tween_callback(func(): n.remove_meta("moving"))

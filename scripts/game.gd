@@ -50,6 +50,7 @@ class Unit:
 	var gloria_round: int = 0         # Comandante Krieg: round em que já comprou pela Glória do Clã
 	var venoms: int = 0               # Bayak: marcas de veneno já aplicadas na partida
 	var dose_used: bool = false       # Médico Krieg: Última Dose já usada
+	var crystal: String = ""          # Valak: cristal (verde, azul, roxo) - barreira neutra de 1 de Vida
 
 	func pos() -> Vector2i:
 		return Vector2i(q, r)
@@ -108,6 +109,12 @@ const CLOCK_START = 600.0     # relógio de xadrez: 10 minutos para cada jogador
 var clock_on: bool = false
 var clock: Array = [CLOCK_START, CLOCK_START]
 var flagged: int = NONE       # jogador que estourou o tempo
+# ===== Valak (caverna de cristais) =====
+var hole: Array = []          # casas do buraco da garra
+var vib: int = 0              # medidor de vibração
+var carts: Array = []         # [{"h": Vector2i, "track": int}]
+var tracks: Array = []        # trilhos (listas ordenadas de casas)
+const NEUTRAL = 2             # dono dos cristais (inimigo dos dois lados)
 var fires: Array = []     # Incendiário: [{h, owner, until}] casas em chamas
 var shells: Array = []    # Rádio: [{h, owner, round, src}] artilharia que cai no início do próximo round
 
@@ -124,6 +131,7 @@ func setup(sides: Array, mid: String) -> void:
 		for rr in def["res"]:
 			res[Vector2i(rr[0], rr[1])] = rr[2]
 			res[Vector2i(-rr[0], -rr[1])] = rr[2]
+	_setup_valak()
 	load_map()
 	for p in range(2):
 		var s = sides[p]
@@ -172,6 +180,8 @@ func load_map() -> void:
 				terr_map[h] = {"k": "duna", "h": dh[h]}
 	for b in holes:
 		terr_map[b["h"]] = {"k": "buraco", "h": 0}
+	for hh in hole:
+		terr_map[hh] = {"k": "fosso", "h": 0}
 	for eh in earth.keys():
 		var base_t = terr_map.get(eh, plain)
 		terr_map[eh] = {"k": base_t["k"], "h": clampi(int(base_t["h"]) + int(earth[eh]), 0, max(3, int(base_t["h"])))}
@@ -288,7 +298,7 @@ func top_of(h: Vector2i) -> int:
 
 
 func is_free(h: Vector2i) -> bool:
-	return DB.in_board(h) and not blocks.has(h) and unit_at(h) == null
+	return DB.in_board(h) and not blocks.has(h) and unit_at(h) == null and not cart_at(h)
 
 
 func adj_free(h: Vector2i) -> Array:
@@ -371,6 +381,8 @@ func terra_on(p: int) -> bool:
 
 
 func nm(u) -> String:
+	if u.crystal != "":
+		return "Cristal " + u.crystal
 	return "Barreira" if u.barrier else DB.cards[u.cid]["name"]
 
 
@@ -493,6 +505,8 @@ func exec_cmd(c: Array) -> void:
 			undo_move()
 		"scarab":
 			await act_scarab(int(c[1]), str(c[2]))
+		"cart":
+			await act_cart(u)
 		"flag":
 			if winner == NONE:
 				flagged = int(c[1])
@@ -761,7 +775,7 @@ func _guarded(t, d: int = 99) -> bool:
 
 # ================= movimento =================
 func can_enter(u, h: Vector2i) -> bool:
-	if not DB.in_board(h) or unit_at(h) != null:
+	if not DB.in_board(h) or unit_at(h) != null or cart_at(h):
 		return false
 	if not blocks.has(h):
 		return true
@@ -957,6 +971,11 @@ func settle() -> void:
 		t.eq = ""
 		if not t.barrier:
 			fallen.append(t.uid)
+		if t.crystal != "":
+			emitfx({"t": "die", "uid": t.uid, "h": t.pos()})
+			if _crystal_burst(t):
+				blast = true
+			continue
 		emitfx({"t": "die", "uid": t.uid, "h": t.pos()})
 		log_msg(1 - t.owner, "%s foi derrotado." % nm(t))
 		var killer = by_uid(by) if by > 0 else null
@@ -1071,6 +1090,326 @@ func _shell_tick() -> void:
 	settle()
 
 
+# ================= Valak: cristais, buraco da garra, vibração e carrinhos =================
+func vrule(k: String, d: Variant) -> Variant:
+	return DB.maps[map_id].get("valak_rules", {}).get(k, d)
+
+
+func _setup_valak() -> void:
+	var def = DB.maps[map_id]
+	hole = []
+	tracks = []
+	carts = []
+	vib = 0
+	if def.has("hole"):
+		var c = Vector2i(int(def["hole"]["c"][0]), int(def["hole"]["c"][1]))
+		for h in DB.hexes:
+			if DB.dist(h, c) <= int(def["hole"]["r"]):
+				hole.append(h)
+	for tr in def.get("tracks", []):
+		var a = []
+		var b = []
+		for e in tr:
+			a.append(Vector2i(int(e[0]), int(e[1])))
+			b.append(Vector2i(-int(e[0]), -int(e[1])))
+		tracks.append(a)
+		tracks.append(b)
+	for i in range(def.get("carts", []).size()):
+		var e = def["carts"][i]
+		var h0 = Vector2i(int(e[0]), int(e[1]))
+		for ti in range(tracks.size()):
+			for hh in [h0, -h0]:
+				if tracks[ti].has(hh):
+					carts.append({"h": hh, "track": ti})
+
+
+func hole_dist(h: Vector2i) -> int:
+	var d = 99
+	for x in hole:
+		d = min(d, DB.dist(h, x))
+	return d
+
+
+func in_zone(h: Vector2i) -> bool:
+	return not hole.is_empty() and hole_dist(h) <= int(vrule("vib_r", 3))
+
+
+func cart_at(h: Vector2i) -> bool:
+	for c in carts:
+		if c["h"] == h:
+			return true
+	return false
+
+
+func on_track(h: Vector2i) -> bool:
+	for tr in tracks:
+		if tr.has(h):
+			return true
+	return false
+
+
+# labirinto de cristais: muda a cada partida (pares espelhados), sem prender ninguém
+func _gen_crystals() -> void:
+	var def = DB.maps[map_id]
+	if not def.has("crystals"):
+		return
+	var cfg = def["crystals"]
+	var cand = {}
+	for h in DB.hexes:
+		if hole.has(h) or on_track(h) or cart_at(h) or blocks.has(h) or h == -h:
+			continue
+		if DB.dist(h, DB.entry_c[0]) <= int(cfg.get("keep", 2)) or DB.dist(h, DB.entry_c[1]) <= int(cfg.get("keep", 2)):
+			continue
+		if unit_at(h) != null or unit_at(-h) != null:
+			continue
+		cand[h] = true
+	var colors = ["verde", "azul", "roxo"]
+	var best: Array = []
+	for attempt in range(60):
+		var pick = {}
+		var segs = int(cfg.get("segs", 7))
+		var keys = cand.keys()
+		for sgi in range(segs):
+			var st = keys[rng.randi() % keys.size()]
+			var dirv = DB.DIRS[rng.randi() % 6]
+			var ln = 2 + rng.randi() % 3
+			var cur = st
+			for k in range(ln):
+				if cand.has(cur) and cand.has(-cur):
+					pick[cur] = true
+					pick[-cur] = true
+				cur += dirv
+				if rng.randf() < 0.3:
+					dirv = DB.DIRS[(DB.DIRS.find(dirv) + (1 if rng.randf() < 0.5 else 5)) % 6]
+		if pick.size() < int(cfg.get("min", 20)) or pick.size() > int(cfg.get("max", 34)):
+			continue
+		if _maze_ok(pick):
+			best = pick.keys()
+			break
+	if best.is_empty():
+		return
+	best.sort_custom(func(a, b): return a.x < b.x or (a.x == b.x and a.y < b.y))
+	var col_of = {}
+	for h in best:
+		if col_of.has(h):
+			continue
+		var c = colors[rng.randi() % 3]
+		col_of[h] = c
+		col_of[-h] = c
+	for h in best:
+		var b = Unit.new()
+		b.uid = next_uid
+		next_uid += 1
+		b.cid = "barrier"
+		b.owner = NEUTRAL
+		b.st = "field"
+		b.q = h.x
+		b.r = h.y
+		b.hp = 1
+		b.maxhp = 1
+		b.barrier = true
+		b.activated = true
+		b.crystal = col_of[h]
+		units.append(b)
+	log_msg(-1, "Valak: %d cristais formam o labirinto desta partida." % best.size())
+
+
+# todas as casas livres continuam ligadas entre si e às duas entradas
+func _maze_ok(pick: Dictionary) -> bool:
+	var open = {}
+	for h in DB.hexes:
+		if hole.has(h) or blocks.has(h) or pick.has(h) or cart_at(h):
+			continue
+		open[h] = true
+	if not open.has(DB.entry_c[0]) or not open.has(DB.entry_c[1]):
+		return false
+	var seen = {DB.entry_c[0]: true}
+	var q = [DB.entry_c[0]]
+	while not q.is_empty():
+		var h = q.pop_back()
+		for n in DB.nbrs(h):
+			if open.has(n) and not seen.has(n):
+				seen[n] = true
+				q.append(n)
+	return seen.size() == open.size()
+
+
+# cristal quebrado: efeito em todos os personagens ao lado (aliados e inimigos)
+func _crystal_burst(t) -> bool:
+	var hit = false
+	var who = units.filter(func(x): return x.st == "field" and not x.barrier and DB.dist(x.pos(), t.pos()) == 1)
+	abfx("crystal", t.pos(), t.uid)
+	match t.crystal:
+		"verde":
+			for x in who:
+				heal(x, int(vrule("green_heal", 2)))
+			log_msg(-1, "Cristal verde quebrado: +%d de Vida para quem estava ao lado." % int(vrule("green_heal", 2)))
+		"azul":
+			for x in who:
+				x.fx = x.fx.filter(func(f): return not f.get("once", false))
+				x.fx.append({"k": "mov", "v": 1, "until": "end", "once": true})
+				emitfx({"t": "passive", "kind": "power", "uid": x.uid})
+			log_msg(-1, "Cristal azul quebrado: +1 de Movimento no próximo movimento (neste round).")
+		"roxo":
+			for x in who:
+				damage(x, int(vrule("purple_dmg", 2)), null)
+				hit = true
+			log_msg(-1, "Cristal roxo quebrado: %d de dano em quem estava ao lado." % int(vrule("purple_dmg", 2)))
+	return hit
+
+
+# bônus azul: vale só para o próximo movimento
+func _use_blue(u) -> void:
+	if u.fx.any(func(f): return f.get("once", false)):
+		u.fx = u.fx.filter(func(f): return not f.get("once", false))
+
+
+func vibrate(n: int, why: String) -> void:
+	if hole.is_empty() or n <= 0 or winner != NONE:
+		return
+	vib += n
+	log_msg(-1, "Vibração +%d (%s): %d/%d." % [n, why, vib, int(vrule("vib_max", 5))])
+	emitfx({"t": "vib", "v": vib})
+	if vib >= int(vrule("vib_max", 5)):
+		await claw_attack()
+
+
+# a garra ataca todos a até 3 casas do buraco (distância medida antes do ataque)
+func claw_attack() -> void:
+	vib = 0
+	var r = int(vrule("vib_r", 3))
+	var victims = []
+	for u in field():
+		if u.barrier:
+			continue
+		var d = hole_dist(u.pos())
+		if d <= r:
+			victims.append({"u": u, "d": d})
+	victims.sort_custom(func(a, b): return a["d"] < b["d"] or (a["d"] == b["d"] and a["u"].uid < b["u"].uid))
+	log_msg(-1, "A GARRA ATACA! Ninguém a até %d casas do buraco escapa." % r)
+	emitfx({"t": "claw", "hexes": victims.map(func(v): return v["u"].pos())})
+	await pace()
+	await pace()
+	for v in victims:
+		var u = v["u"]
+		if u.st != "field":
+			continue
+		if v["d"] <= 1:
+			log_msg(-1, "%s foi arrastado para o buraco!" % nm(u))
+			emitfx({"t": "passive", "kind": "curse", "uid": u.uid})
+			damage(u, 999, null)
+		else:
+			damage(u, int(vrule("claw_dmg", 2)), null)
+			if u.hp > 0:
+				var ops = DB.nbrs(u.pos()).filter(func(n): return is_free(n) and hole_dist(n) == v["d"] - 1)
+				ops.sort_custom(func(a, b): return a.x < b.x or (a.x == b.x and a.y < b.y))
+				if not ops.is_empty():
+					log_msg(-1, "%s foi puxado em direção ao buraco." % nm(u))
+					var fpos = u.pos()
+					u.q = ops[0].x
+					u.r = ops[0].y
+					emitfx({"t": "move", "uid": u.uid, "from": fpos, "to": ops[0]})
+	settle()
+	await pace()
+	changed.emit()
+
+
+# carrinhos de mina: empurrar gasta 1 ação; anda até 3 casas no trilho
+func cart_opts(u) -> Array:
+	var out = []
+	if not is_live(u) or act["actions"] < 1 or u.barrier:
+		return out
+	for i in range(carts.size()):
+		if DB.dist(carts[i]["h"], u.pos()) == 1:
+			for nx in _cart_next(i):
+				if nx != u.pos():
+					out.append({"cart": i, "to": nx})
+	return out
+
+
+func _cart_next(i: int) -> Array:
+	var tr = tracks[carts[i]["track"]]
+	var k = tr.find(carts[i]["h"])
+	var out = []
+	for j in [k - 1, k + 1]:
+		if j >= 0 and j < tr.size():
+			out.append(tr[j])
+	return out
+
+
+# quem o carrinho atingiria se fosse empurrado para "to" (para a CPU e a prévia)
+func cart_probe(u, to: Vector2i) -> Variant:
+	for o in cart_opts(u):
+		if o["to"] != to:
+			continue
+		var i = o["cart"]
+		var tr = tracks[carts[i]["track"]]
+		var k = tr.find(carts[i]["h"])
+		var step = 1 if tr.find(to) > k else -1
+		for n in range(int(vrule("cart_steps", 3))):
+			k += step
+			if k < 0 or k >= tr.size():
+				return null
+			var t = unit_at(tr[k])
+			if t != null:
+				return null if t.barrier else t
+			if blocks.has(tr[k]) or cart_at(tr[k]):
+				return null
+	return null
+
+
+func can_cart(u) -> bool:
+	return not cart_opts(u).is_empty()
+
+
+func act_cart(u) -> bool:
+	return await _run(["cart", u.uid], func(): return await _act_cart(u))
+
+
+func _act_cart(u) -> bool:
+	var ops = cart_opts(u)
+	if ops.is_empty():
+		return false
+	var h = await pick_hex(u.owner, "Carrinho: para onde empurrar? (anda até %d casas no trilho)" % int(vrule("cart_steps", 3)), ops.map(func(o): return o["to"]), "cart", true)
+	if h == null:
+		return false
+	var o = ops.filter(func(x): return x["to"] == h)[0]
+	act["actions"] -= 1
+	var i = o["cart"]
+	var tr = tracks[carts[i]["track"]]
+	var k = tr.find(carts[i]["h"])
+	var step = 1 if tr.find(h) > k else -1
+	var shook = in_zone(carts[i]["h"])
+	log_msg(u.owner, "%s empurrou um carrinho." % nm(u))
+	for n in range(int(vrule("cart_steps", 3))):
+		var j = tr.find(carts[i]["h"]) + step
+		if j < 0 or j >= tr.size():
+			break
+		var nx = tr[j]
+		var t = unit_at(nx)
+		if t != null and not t.barrier:
+			emitfx({"t": "boom", "h": nx})
+			log_msg(u.owner, "O carrinho atropelou %s (%d)." % [nm(t), int(vrule("cart_dmg", 3))])
+			damage(t, int(vrule("cart_dmg", 3)), u)
+			var push = nx + (nx - carts[i]["h"])
+			if t.hp > 0 and is_free(push) and can_step(nx, push, true):
+				await move_unit(t, push)
+			break
+		if t != null or blocks.has(nx) or cart_at(nx):
+			break
+		var fh = carts[i]["h"]
+		carts[i]["h"] = nx
+		emitfx({"t": "cart", "i": i, "from": fh, "to": nx})
+		await pace()
+		if in_zone(nx):
+			shook = true
+	settle()
+	if shook and winner == NONE:
+		await vibrate(int(vrule("cart", 3)), "um carrinho passou perto do buraco")
+	changed.emit()
+	return true
+
+
 func check_win() -> void:
 	if winner != NONE:
 		return
@@ -1129,6 +1468,8 @@ func take_card(p: int, id: String) -> bool:
 
 # ================= rounds =================
 func begin_game() -> void:
+	if not tut:
+		_gen_crystals()
 	if tut:
 		# tutorial: mão combinada para os passos, sem troca de mão
 		var pl0 = P[0]
@@ -1308,7 +1649,7 @@ func _escape_ok(h: Vector2i) -> bool:
 func _core_spot() -> Variant:
 	var c0 = DB.entry_c[0]
 	var c1 = DB.entry_c[1]
-	var cand = DB.hexes.filter(func(h): return not blocks.has(h) and tt_of(terr(h)["k"]).get("pass", 0) and terr(h)["k"] != "movedica" and abs(DB.dist(h, c0) - DB.dist(h, c1)) <= 1 and DB.dist(h, c0) >= 3 and DB.dist(h, c1) >= 3 and h != core and not tremors.has(h))
+	var cand = DB.hexes.filter(func(h): return not blocks.has(h) and not barrier_at(h) and not cart_at(h) and tt_of(terr(h)["k"]).get("pass", 0) and terr(h)["k"] != "movedica" and abs(DB.dist(h, c0) - DB.dist(h, c1)) <= 1 and DB.dist(h, c0) >= 3 and DB.dist(h, c1) >= 3 and h != core and not tremors.has(h))
 	if cand.is_empty():
 		return null
 	return _pick(cand)
@@ -1639,7 +1980,11 @@ func _act_move(u, h: Vector2i) -> bool:
 		"fresh": act["actions"] == 2 and not act["tactic"] and not act["attacked"]}
 	act["actions"] -= 1
 	act["moved"] = true
+	var from_h = u.pos()
 	await move_unit(u, h, true)
+	_use_blue(u)
+	if u.st == "field" and (in_zone(from_h) or in_zone(u.pos())):
+		await vibrate(int(vrule("move", 1)), "%s andou perto do buraco" % nm(u))
 	# só dá para desfazer se nada aconteceu no caminho (mina, banana, núcleo, dano)
 	if logs.size() == snap["logs"] and bananas.size() == snap["bn"] and core == snap["core"] and u.hp == snap["hp"] and u.st == "field" and net_depth <= 1:
 		undo = snap
@@ -1676,7 +2021,10 @@ func _act_attack(u, t) -> bool:
 	if not can_attack_now(u) or not attack_targets(u).has(t):
 		return false
 	act["actions"] -= 1
+	var zone = in_zone(u.pos())
 	await resolve_attack(u, t)
+	if zone and winner == NONE:
+		await vibrate(int(vrule("act", 2)), "%s atacou perto do buraco" % nm(u))
 	return true
 
 
@@ -1692,7 +2040,11 @@ func _act_move_attack(u, h, t) -> bool:
 	if h != null and h != u.pos() and not rooted(u) and not act["moved"]:
 		act["moved"] = true
 		abfx("dash", u.pos(), u.uid)
+		var from_m = u.pos()
 		await move_unit(u, h, true)
+		_use_blue(u)
+		if u.st == "field" and (in_zone(from_m) or in_zone(u.pos())):
+			await vibrate(int(vrule("move", 1)), "%s avançou perto do buraco" % nm(u))
 	if u.st != "field" or winner != NONE:
 		return true
 	if t == null:
@@ -1701,8 +2053,11 @@ func _act_move_attack(u, h, t) -> bool:
 			var hh = await pick_hex(u.owner, "Escolha o alvo do ataque.", ts, "enemy", true)
 			if hh != null:
 				t = unit_at(hh)
-	if t != null and can_attack_any(u) and attack_targets(u).has(t):
+	if t != null and can_attack_any(u) and attack_targets(u).has(t) and winner == NONE:
+		var zone2 = in_zone(u.pos())
 		await resolve_attack(u, t)
+		if zone2 and winner == NONE:
+			await vibrate(int(vrule("act", 2)), "%s atacou perto do buraco" % nm(u))
 	return true
 
 
@@ -1719,7 +2074,11 @@ func _act_tunnel(u, h: Vector2i) -> bool:
 	act["moved"] = true
 	abfx("burrow", u.pos(), u.uid)
 	abfx("burrow", h, u.uid)
+	var from_t = u.pos()
 	await move_unit(u, h, true)
+	_use_blue(u)
+	if u.st == "field" and (in_zone(from_t) or in_zone(u.pos())):
+		await vibrate(int(vrule("move", 1)), "%s cavou perto do buraco" % nm(u))
 	return true
 
 
@@ -1926,6 +2285,7 @@ func _act_ult(u) -> bool:
 	if h == null:
 		return false
 	act["actions"] -= 1
+	var ult_zone = in_zone(u.pos())
 	if K(u).has("ultRound"):
 		u.ult_round = round_no
 	else:
@@ -2046,6 +2406,8 @@ func _act_ult(u) -> bool:
 				if e3 != null and e3.owner != p and not e3.barrier:
 					damage(e3, 2, u)
 			settle()
+	if ult_zone and winner == NONE:
+		await vibrate(int(vrule("act", 2)), "%s usou uma habilidade perto do buraco" % nm(u))
 	changed.emit()
 	return true
 
@@ -2293,6 +2655,8 @@ func resolve_attack(a, t) -> void:
 	var red = reduction_of(target)
 	var storm_pen = 2 if storm_on() else 0
 	var dealt = max(0, packet - red - react_red - int(tm2["cover"]) - int(tm2["forest"]) - storm_pen)
+	if target.crystal != "":
+		dealt = max(dealt, 1)   # um ataque normal sempre quebra o cristal
 	if storm_pen > 0:
 		log_msg(p, "Tempestade de areia: -2 de dano.")
 	if (red > 0 or react_red > 0) and not target.barrier:
