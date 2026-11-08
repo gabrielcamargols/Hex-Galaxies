@@ -503,7 +503,7 @@ func _planet_of_map(m: String) -> String:
 
 
 func _stop_battle_loops() -> void:
-	for n in ["vento_loop", "musica_deserto", "ilha_loop", "caverna_loop", "tempestade_loop", "musica_valak"]:
+	for n in ["vento_loop", "musica_deserto", "ilha_loop", "caverna_loop", "tempestade_loop", "musica_valak", "musica_abnara", "musica_goraida"]:
 		sfx.stop_loop(n, 0.8)
 	_fac_music("")
 
