@@ -4028,11 +4028,26 @@ func _on_fx(e: Dictionary) -> void:
 			banner("A GARRA ATACA!", "quem está perto do buraco é arrastado")
 			if w.has("banner"):
 				w["banner"].add_theme_color_override("font_color", Color("#ff4ad0"))
-			sfx.play("verme_ataque", 0.0, 0.8)
+			sfx.play("garra_ataque", 2.0, 1.0, 0.03)
 			board.claw_strike()
+			var pc = _hex_pos(Vector2i(0, 0), 0.3)
 			_comic_pop(_hex_pos(Vector2i(0, 0), 2.0), "KRRAAK!", true)
+			# onda de choque saindo do buraco + poeira e pedras
+			vfx.flip("ring", pc, 11.0, 0.7, Color("#ff5ae0"), true)
+			vfx.flip("ring", pc, 7.0, 0.55, Color("#ffd23a"), true, 0.12)
+			vfx.flip("smoke", pc + Vector3(0, 0.6, 0), 6.0, 1.0, Color("#b07ae8"))
+			vfx.flip("rock", pc + Vector3(0, 0.4, 0), 4.0, 0.8)
+			vfx.flip("curse", pc + Vector3(0, 1.0, 0), 5.0, 0.9)
 			for ch in e["hexes"]:
-				vfx.flip("slash", _hex_pos(ch, 0.9), 2.4, 0.5, Color("#ff7ae0"))
+				vfx.flip("slash", _hex_pos(ch, 0.9), 2.6, 0.5, Color("#ff7ae0"), false, 0.15)
+		"claw_grab":
+			# um dedo enorme sai do buraco, agarra o personagem e puxa
+			sfx.play("garra_puxa", 0.0, 1.0, 0.06)
+			board.claw_reach(e["h"], bool(e["kill"]))
+			var gp = _hex_pos(e["h"], 0.9)
+			vfx.flip("hit", gp, 2.6, 0.45, Color("#ff7ae0"))
+			vfx.flip("dash", gp, 2.4, 0.4, Color("#b03ad8"))
+			_comic_pop(gp, "NHAC!" if bool(e["kill"]) else ["PUXA!", "VEM!", "GRAB!"].pick_random(), bool(e["kill"]))
 		"cart":
 			board.move_cart(int(e["i"]), e["to"])
 			sfx.play("passo", -4.0, 0.6)

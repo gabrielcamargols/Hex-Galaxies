@@ -114,6 +114,7 @@ var hole: Array = []          # casas do buraco da garra
 var vib: int = 0              # medidor de vibração
 var carts: Array = []         # [{"h": Vector2i, "track": int}]
 var tracks: Array = []        # trilhos (listas ordenadas de casas)
+var track_loop: Array = []    # true = trilho fechado (anel): o carrinho dá a volta
 const NEUTRAL = 2             # dono dos cristais (inimigo dos dois lados)
 var fires: Array = []     # Incendiário: [{h, owner, until}] casas em chamas
 var shells: Array = []    # Rádio: [{h, owner, round, src}] artilharia que cai no início do próximo round
@@ -1099,6 +1100,7 @@ func _setup_valak() -> void:
 	var def = DB.maps[map_id]
 	hole = []
 	tracks = []
+	track_loop = []
 	carts = []
 	vib = 0
 	if def.has("hole"):
@@ -1114,6 +1116,21 @@ func _setup_valak() -> void:
 			b.append(Vector2i(-int(e[0]), -int(e[1])))
 		tracks.append(a)
 		tracks.append(b)
+		track_loop.append(false)
+		track_loop.append(false)
+	if def.has("track_ring"):
+		# trilho circular em volta do mapa todo (anel de casas a uma distância do centro)
+		var rr = int(def["track_ring"])
+		var ring = []
+		var hcur = Vector2i(0, 0) + DB.DIRS[4] * rr
+		for side in range(6):
+			for k in range(rr):
+				ring.append(hcur)
+				hcur += DB.DIRS[side]
+		tracks.append(ring)
+		track_loop.append(true)
+		for ci in def.get("carts_ring", []):
+			carts.append({"h": ring[int(ci) % ring.size()], "track": tracks.size() - 1})
 	for i in range(def.get("carts", []).size()):
 		var e = def["carts"][i]
 		var h0 = Vector2i(int(e[0]), int(e[1]))
@@ -1296,7 +1313,8 @@ func claw_attack() -> void:
 			continue
 		if v["d"] <= 1:
 			log_msg(-1, "%s foi arrastado para o buraco!" % nm(u))
-			emitfx({"t": "passive", "kind": "curse", "uid": u.uid})
+			emitfx({"t": "claw_grab", "h": u.pos(), "kill": true, "uid": u.uid})
+			await pace()
 			damage(u, 999, null)
 		else:
 			damage(u, int(vrule("claw_dmg", 2)), null)
@@ -1305,6 +1323,7 @@ func claw_attack() -> void:
 				ops.sort_custom(func(a, b): return a.x < b.x or (a.x == b.x and a.y < b.y))
 				if not ops.is_empty():
 					log_msg(-1, "%s foi puxado em direção ao buraco." % nm(u))
+					emitfx({"t": "claw_grab", "h": u.pos(), "kill": false, "uid": u.uid})
 					var fpos = u.pos()
 					u.q = ops[0].x
 					u.r = ops[0].y
@@ -1327,12 +1346,28 @@ func cart_opts(u) -> Array:
 	return out
 
 
+# próxima casa do trilho (dá a volta no trilho circular); -1 = fim da linha
+func _track_idx(ti: int, k: int) -> int:
+	var n = tracks[ti].size()
+	if track_loop[ti]:
+		return posmod(k, n)
+	return k if (k >= 0 and k < n) else -1
+
+
+func _track_dir(ti: int, from: Vector2i, to: Vector2i) -> int:
+	var tr = tracks[ti]
+	var k = tr.find(from)
+	return 1 if _track_idx(ti, k + 1) == tr.find(to) else -1
+
+
 func _cart_next(i: int) -> Array:
-	var tr = tracks[carts[i]["track"]]
+	var ti = carts[i]["track"]
+	var tr = tracks[ti]
 	var k = tr.find(carts[i]["h"])
 	var out = []
-	for j in [k - 1, k + 1]:
-		if j >= 0 and j < tr.size():
+	for d in [-1, 1]:
+		var j = _track_idx(ti, k + d)
+		if j >= 0:
 			out.append(tr[j])
 	return out
 
@@ -1343,12 +1378,13 @@ func cart_probe(u, to: Vector2i) -> Variant:
 		if o["to"] != to:
 			continue
 		var i = o["cart"]
-		var tr = tracks[carts[i]["track"]]
+		var ti = carts[i]["track"]
+		var tr = tracks[ti]
 		var k = tr.find(carts[i]["h"])
-		var step = 1 if tr.find(to) > k else -1
+		var step = _track_dir(ti, carts[i]["h"], to)
 		for n in range(int(vrule("cart_steps", 3))):
-			k += step
-			if k < 0 or k >= tr.size():
+			k = _track_idx(ti, k + step)
+			if k < 0:
 				return null
 			var t = unit_at(tr[k])
 			if t != null:
@@ -1376,14 +1412,14 @@ func _act_cart(u) -> bool:
 	var o = ops.filter(func(x): return x["to"] == h)[0]
 	act["actions"] -= 1
 	var i = o["cart"]
-	var tr = tracks[carts[i]["track"]]
-	var k = tr.find(carts[i]["h"])
-	var step = 1 if tr.find(h) > k else -1
+	var ti = carts[i]["track"]
+	var tr = tracks[ti]
+	var step = _track_dir(ti, carts[i]["h"], h)
 	var shook = in_zone(carts[i]["h"])
 	log_msg(u.owner, "%s empurrou um carrinho." % nm(u))
 	for n in range(int(vrule("cart_steps", 3))):
-		var j = tr.find(carts[i]["h"]) + step
-		if j < 0 or j >= tr.size():
+		var j = _track_idx(ti, tr.find(carts[i]["h"]) + step)
+		if j < 0:
 			break
 		var nx = tr[j]
 		var t = unit_at(nx)

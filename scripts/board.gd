@@ -1139,12 +1139,15 @@ func _build_scenery(desert: bool) -> void:
 # trilhos da mina (Valak): ligam as bases ao poço central
 func _build_rails() -> void:
 	var rails = DB.maps[g.map_id].get("rails", [])
-	if rails.is_empty():
-		return
 	var set = {}
 	for e in rails:
 		set[Vector2i(int(e[0]), int(e[1]))] = true
 		set[Vector2i(-int(e[0]), -int(e[1]))] = true
+	for tr in g.tracks:
+		for th in tr:
+			set[th] = true
+	if set.is_empty():
+		return
 	var wood = Color("#6e4a2a")
 	var steel = Color("#9aa2ae")
 	for h in set.keys():
@@ -2083,8 +2086,17 @@ func _build_cave() -> void:
 		scenery_root.add_child(holder)
 		_crystal_cluster(holder, kinds[rng.randi() % 3], 900 + i)
 	# entradas de mina nas pontas de fora dos trilhos
-	for tr in g.tracks:
+	for ti in range(g.tracks.size()):
+		var tr = g.tracks[ti]
 		if tr.size() < 2:
+			continue
+		if g.track_loop[ti]:
+			# trilho circular: duas entradas de mina na parede, de lados opostos
+			for k in [tr.size() / 12, tr.size() / 12 + tr.size() / 2]:
+				var wp = world_xz(tr[k])
+				var ov = wp.normalized()
+				var pe = ov * (PLAT + 0.6)
+				_mine_entrance(Vector3(pe.x, BASE_Y, pe.y), atan2(ov.x, ov.y))
 			continue
 		var end = world_xz(tr[0])
 		var prev = world_xz(tr[1])
@@ -2246,6 +2258,57 @@ func _sphere_mesh(r: float) -> SphereMesh:
 	sm.radius = r
 	sm.height = r * 2.0
 	return sm
+
+
+# um dedo da garra se estica do buraco até a casa do personagem, agarra e recolhe
+func claw_reach(h: Vector2i, kill: bool) -> void:
+	if claw == null or not is_instance_valid(claw):
+		return
+	var c = Vector3(claw_rest.x, 0.25, claw_rest.z)
+	var wp = world_xz(h)
+	var tgt = Vector3(wp.x, top_y(h) + 0.6, wp.y)
+	var dirv = tgt - c
+	var dist = dirv.length()
+	var root = Node3D.new()
+	scenery_root.add_child(root)
+	root.position = c
+	root.look_at_from_position(c, tgt, Vector3.UP)
+	var arm = Node3D.new()      # cresce ao longo de -Z (para onde olha)
+	root.add_child(arm)
+	var skin = Color("#b03ad8")
+	var seg = MeshInstance3D.new()
+	seg.mesh = _cyl(0.2, 0.34, 1.0, 10)
+	seg.material_override = _mat(skin)
+	seg.material_overlay = _ink()
+	seg.rotation = Vector3(-PI / 2, 0, 0)
+	seg.position = Vector3(0, 0, -0.5)
+	arm.add_child(seg)
+	for k in range(3):
+		var kn = MeshInstance3D.new()
+		kn.mesh = _sphere_mesh(0.3 - k * 0.04)
+		kn.material_override = _mat(skin.lightened(0.15))
+		kn.position = Vector3(0, 0, -0.25 - k * 0.3)
+		arm.add_child(kn)
+	var tip = MeshInstance3D.new()
+	tip.mesh = _cyl(0.0, 0.2, 0.7, 8)
+	tip.material_override = _glow_mat(Color("#ffd23a"), 0.4)
+	tip.material_overlay = _ink()
+	tip.rotation = Vector3(-PI / 2 - 0.6, 0, 0)
+	var tip_h = Node3D.new()     # a unha anda na ponta (sem esticar)
+	root.add_child(tip_h)
+	tip.position = Vector3(0, 0.15, 0)
+	tip_h.add_child(tip)
+	arm.scale = Vector3(1, 1, 0.05)
+	tip_h.position = Vector3(0, 0, -0.05)
+	var tw = create_tween()
+	tw.tween_property(arm, "scale", Vector3(1, 1, dist), 0.16).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.parallel().tween_property(tip_h, "position", Vector3(0, 0, -dist), 0.16).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_callback(func(): shake = max(shake, 0.35))
+	tw.tween_interval(0.25 if kill else 0.15)
+	tw.tween_property(arm, "scale", Vector3(1, 1, 0.05), 0.35 if kill else 0.28).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tw.parallel().tween_property(tip_h, "position", Vector3(0, 0, -0.05), 0.35 if kill else 0.28).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tw.tween_callback(root.queue_free)
+	claw_t = max(claw_t, 1.0)
 
 
 func claw_twitch(v: float) -> void:
