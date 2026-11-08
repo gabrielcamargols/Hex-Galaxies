@@ -3207,13 +3207,39 @@ func _wild_props(root: Node3D, h: Vector2i, k: String) -> bool:
 		"ponte":
 			_bridge(root, h)
 		"ruina_alta":
+			# ruína de templo na selva: pórtico com colunas quebradas, muro de blocos, entulho e musgo
 			var hb = Node3D.new()
 			hb.rotation = Vector3(0, int(_rnd(h, 2) * 6) * PI / 3.0, 0)
 			root.add_child(hb)
-			_inked(_mesh(hb, _box(Vector3(1.1, 0.7, 0.95)), Color("#9a96aa"), Vector3(0, 0.35, 0)))
-			_inked(_mesh(hb, _box(Vector3(0.75, 0.6, 0.7)), Color("#b0acbe"), Vector3(-0.08, 0.98, 0.04), Vector3(0, 0.25, 0.08)))
-			_inked(_mesh(hb, _cyl(0.17, 0.2, 1.2, 8), Color("#c4c0d0"), Vector3(0.38, 1.25, -0.25)))
-			_mesh(hb, _box(Vector3(0.6, 0.06, 0.5)), Color("#4ea844"), Vector3(-0.1, 1.31, 0.05), Vector3(0, 0.25, 0.08))
+			var st_m = _pincel_custom("pedra_ruina", Color("#6e6c90"), Color("#8582a6"), Color("#a29fc0"), 0.0, 2.0)
+			var mo_m = _pincel_custom("musgo", Color("#1f4a2a"), Color("#3f8a3a"), Color("#8abf4a"), 0.15, 6.0)
+			var parts = []
+			# base de degraus
+			parts.append([_box(Vector3(1.5, 0.14, 1.25)), Vector3(0, 0.07, 0), Vector3.ZERO, st_m])
+			parts.append([_box(Vector3(1.25, 0.14, 1.0)), Vector3(0, 0.21, 0), Vector3.ZERO, st_m])
+			# colunas: duas inteiras com lintel (pórtico) e uma quebrada
+			for cx in [-0.42, 0.42]:
+				parts.append([_cyl(0.15, 0.17, 1.15, 8), Vector3(cx, 0.78, -0.15), Vector3.ZERO, st_m])
+				parts.append([_box(Vector3(0.4, 0.1, 0.4)), Vector3(cx, 1.4, -0.15), Vector3.ZERO, st_m])
+			parts.append([_box(Vector3(1.25, 0.2, 0.34)), Vector3(0, 1.55, -0.15), Vector3(0, 0, 0.05), st_m])
+			parts.append([_cyl(0.14, 0.17, 0.6, 8), Vector3(0.05, 0.5, 0.4), Vector3.ZERO, st_m])
+			parts.append([_box(Vector3(0.22, 0.14, 0.18)), Vector3(0.1, 0.84, 0.42), Vector3(0.3, 0.5, 0.2), st_m])
+			# muro de blocos (duas fileiras desencontradas)
+			for i in range(3):
+				parts.append([_box(Vector3(0.36, 0.2, 0.28)), Vector3(-0.55 + i * 0.37, 0.38, 0.42), Vector3.ZERO, st_m])
+			for i in range(2):
+				parts.append([_box(Vector3(0.36, 0.2, 0.28)), Vector3(-0.36 + i * 0.37, 0.58, 0.42), Vector3(0, 0.05, 0), st_m])
+			# entulho caído
+			parts.append([_box(Vector3(0.26, 0.2, 0.22)), Vector3(0.62, 0.3, 0.2), Vector3(0.2, 0.7, 0.1), st_m])
+			parts.append([_box(Vector3(0.2, 0.16, 0.2)), Vector3(-0.7, 0.28, -0.4), Vector3(0.1, 0.3, 0.3), st_m])
+			# musgo no topo e cipós descendo das colunas
+			parts.append([_sph(0.34, 0.14), Vector3(0, 1.7, -0.15), Vector3.ZERO, mo_m])
+			parts.append([_sph(0.26, 0.12), Vector3(0.0, 0.7, 0.42), Vector3.ZERO, mo_m])
+			for cx in [-0.42, 0.42]:
+				parts.append([_cyl(0.025, 0.03, 0.9, 4), Vector3(cx + 0.14, 1.0, -0.02), Vector3(0.1, 0, 0.1), mo_m])
+			for pt in parts:
+				var mi = _mesh(hb, pt[0], Color.WHITE, pt[1], pt[2])
+				mi.material_override = pt[3]
 		"planta":
 			for i in range(4):
 				var a2 = TAU / 4.0 * i + _rnd(h, 1)
