@@ -2004,7 +2004,7 @@
    "id": "l_general",
    "f": "LIT",
    "cmd": true,
-   "name": "Lithari General",
+   "name": "Lithari Líder",
    "role": "Comandante",
    "atk": 5,
    "int": 12,
@@ -2033,7 +2033,7 @@
   {
    "id": "l_lider",
    "f": "LIT",
-   "name": "Lithari Líder",
+   "name": "Lithari General",
    "role": "Coordenador",
    "atk": 3,
    "int": 8,
