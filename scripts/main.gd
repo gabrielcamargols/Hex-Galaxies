@@ -562,43 +562,26 @@ func _show_menu() -> void:
 	else:
 		var t = _label(col, "HEX GALAXIES", 62 if compact else 86, C_GOLD)
 		t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	var s = _label(col, "Estratégia por turnos em hexágonos", 16, C_DIM)
-	s.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var sp = Control.new()
-	sp.custom_minimum_size = Vector2(0, 26)
+	sp.custom_minimum_size = Vector2(0, 22)
 	col.add_child(sp)
 	var row = _hbox(col, 14)
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	var play = _cbtn(row, "JOGAR", C_GOLD, _on_play, true)
 	_primary(play)
-	play.custom_minimum_size = Vector2(280, 66)
-	play.add_theme_font_size_override("font_size", 26)
+	play.custom_minimum_size = Vector2(320, 70)
+	play.add_theme_font_size_override("font_size", 28)
+	var sp2 = Control.new()
+	sp2.custom_minimum_size = Vector2(0, 6)
+	col.add_child(sp2)
 	var row2 = _hbox(col, 10)
 	row2.alignment = BoxContainer.ALIGNMENT_CENTER
 	var tb = _cbtn(row2, "Tutorial", C_DEPLOY, _start_tutorial)
-	tb.custom_minimum_size = Vector2(150, 40)
+	tb.custom_minimum_size = Vector2(150, 44)
 	var rb = _cbtn(row2, "Como jogar", C_HUD, _rules_popup)
-	rb.custom_minimum_size = Vector2(180, 40)
-	var sb = _cbtn(row2, _ui_scale_label(), C_HUD, _cycle_ui_scale)
-	sb.custom_minimum_size = Vector2(240, 40)
+	rb.custom_minimum_size = Vector2(160, 44)
 	var cfgb = _cbtn(row2, "Configurações", C_HUD, _settings_panel)
-	cfgb.custom_minimum_size = Vector2(170, 40)
-	var fb = _cbtn(row2, _fast_label(), C_HUD, func(): pass)
-	fb.custom_minimum_size = Vector2(210, 40)
-	fb.tooltip_text = "Sem confirmação para mover e atacar, prévia de dano ao apontar o alvo e animações em velocidade 2×."
-	fb.pressed.connect(func():
-		fast_mode = not fast_mode
-		_save_prefs()
-		fb.text = _fast_label())
-	var hb2 = _cbtn(row2, "Filtro HQ (pesado): " + ("LIGADO" if hq_on else "desligado"), C_HUD, func(): pass)
-	hb2.custom_minimum_size = Vector2(200, 40)
-	hb2.tooltip_text = "Contorno de tinta, retícula e cores de quadrinho no mapa. Desligue se o aparelho ficar lento."
-	hb2.pressed.connect(func():
-		hq_on = not hq_on
-		if hq_rect != null:
-			hq_rect.visible = hq_on
-		_save_prefs()
-		hb2.text = "Filtro HQ (pesado): " + ("LIGADO" if hq_on else "desligado"))
+	cfgb.custom_minimum_size = Vector2(180, 44)
 	var ver = _label(ui, "protótipo · Godot 4.7", 12, C_DIM)
 	_place(ver, Control.PRESET_BOTTOM_RIGHT, 12)
 	_ui_fade(1.0, 0.9)
@@ -622,8 +605,8 @@ func _apply_settings() -> void:
 			var p = res_pref.split("x")
 			var sz = Vector2i(int(p[0]), int(p[1]))
 			DisplayServer.window_set_size(sz)
-			var scr = DisplayServer.screen_get_usable_rect()
-			DisplayServer.window_set_position(scr.position + (scr.size - sz) / 2)
+			var scr2 = DisplayServer.screen_get_usable_rect()
+			DisplayServer.window_set_position(scr2.position + (scr2.size - sz) / 2)
 
 
 func _settings_panel() -> void:
@@ -643,9 +626,17 @@ func _settings_panel() -> void:
 	var p = PanelContainer.new()
 	p.add_theme_stylebox_override("panel", _flat(Color(0.03, 0.05, 0.11, 0.97), C_HUD, 2, 12, 22))
 	cc.add_child(p)
-	var v = _vbox(p, 10)
-	v.custom_minimum_size = Vector2(min(480, get_viewport().get_visible_rect().size.x - 40), 0)
-	_label(v, "CONFIGURAÇÕES", 28, C_GOLD)
+	var outer = _vbox(p, 10)
+	outer.custom_minimum_size = Vector2(min(480, get_viewport().get_visible_rect().size.x - 40), 0)
+	_label(outer, "CONFIGURAÇÕES", 28, C_GOLD)
+	var scr = ScrollContainer.new()
+	scr.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scr.custom_minimum_size = Vector2(0, min(520.0, get_viewport().get_visible_rect().size.y * 0.66))
+	outer.add_child(scr)
+	var v = VBoxContainer.new()
+	v.add_theme_constant_override("separation", 10)
+	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scr.add_child(v)
 	_label(v, "SOM", 13, C_HUD)
 	for b in [["Musica", "Música"], ["Efeitos", "Efeitos sonoros"], ["Vozes", "Vozes"]]:
 		var h = _hbox(v, 10)
@@ -708,7 +699,31 @@ func _settings_panel() -> void:
 		render_q = qs[i][0]
 		_apply_settings()
 		_save_prefs())
-	var close = _cbtn(v, "Fechar", C_GOLD, func(): dim.queue_free(), true)
+	var hq = CheckButton.new()
+	hq.text = "Filtro HQ (pesado)"
+	hq.button_pressed = hq_on
+	hq.tooltip_text = "Contorno de tinta, retícula e cores de quadrinho no mapa. Desligue se o aparelho ficar lento."
+	v.add_child(hq)
+	hq.toggled.connect(func(on):
+		hq_on = on
+		if hq_rect != null:
+			hq_rect.visible = hq_on
+		_save_prefs())
+	_label(v, "JOGO", 13, C_HUD)
+	var fb = _cbtn(v, _fast_label(), C_HUD, func(): pass)
+	fb.custom_minimum_size = Vector2(0, 40)
+	fb.tooltip_text = "Sem confirmação para mover e atacar, prévia de dano ao apontar o alvo e animações em velocidade 2×."
+	fb.pressed.connect(func():
+		fast_mode = not fast_mode
+		_save_prefs()
+		fb.text = _fast_label())
+	var ub = _cbtn(v, _ui_scale_label(), C_HUD, func(): pass)
+	ub.custom_minimum_size = Vector2(0, 40)
+	ub.tooltip_text = "Tamanho dos botões e textos."
+	ub.pressed.connect(func():
+		_cycle_ui_scale(false)
+		ub.text = _ui_scale_label())
+	var close = _cbtn(outer, "Fechar", C_GOLD, func(): dim.queue_free(), true)
 	_primary(close)
 	close.custom_minimum_size = Vector2(0, 42)
 
@@ -4872,12 +4887,13 @@ func _apply_ui_scale() -> void:
 		refresh()
 
 
-func _cycle_ui_scale() -> void:
+func _cycle_ui_scale(rebuild: bool = true) -> void:
 	var opts = ["auto", "100", "125", "150", "175"]
 	ui_pref = opts[(opts.find(ui_pref) + 1) % opts.size()]
 	_save_prefs()
 	_apply_ui_scale()
-	_show_menu()
+	if rebuild:
+		_show_menu()
 
 
 func _ui_scale_label() -> String:
