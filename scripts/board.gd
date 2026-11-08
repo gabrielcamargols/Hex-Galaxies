@@ -686,6 +686,26 @@ func _box(s: Vector3) -> BoxMesh:
 	return b
 
 
+var crack_mats: Array = []
+
+
+func _crack_mat(i: int) -> Material:
+	if crack_mats.is_empty():
+		for k in range(3):
+			var path = "res://ui/terreno/rachadura_%d.png" % k
+			if not ResourceLoader.exists(path):
+				crack_mats.append(null)
+				continue
+			var m = StandardMaterial3D.new()
+			m.albedo_texture = load(path)
+			m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+			m.alpha_scissor_threshold = 0.4
+			m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+			m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+			crack_mats.append(m)
+	return crack_mats[i]
+
+
 func _rnd(h: Vector2i, i: int) -> float:
 	var v = (h.x * 73856093) ^ (h.y * 19349663) ^ (i * 83492791)
 	return float(abs(v) % 1000) / 1000.0
@@ -793,8 +813,18 @@ func _add_props_old(root: Node3D, h: Vector2i, t: Dictionary) -> void:
 			tor.outer_radius = 0.33
 			_mesh(root, tor, Color("#8a5a2a"), Vector3(0, 0.03, 0))
 		"instavel":
-			for i in range(3):
-				_mesh(root, _box(Vector3(0.7, 0.02, 0.04)), Color("#8a5a28"), Vector3(-0.1 + i * 0.1, 0.02, -0.3 + i * 0.28), Vector3(0, _rnd(h, i) * 2.0, 0))
+			# rachadura pintada no estilo HQ do jogo (tools/rachadura.py): 3 variações, giradas em passos de 60°
+			var cm = _crack_mat(int(_rnd(h, 21) * 3) % 3)
+			if cm != null:
+				var qd = MeshInstance3D.new()
+				var pm2 = PlaneMesh.new()
+				pm2.size = Vector2(1.96, 1.96)
+				qd.mesh = pm2
+				qd.material_override = cm
+				qd.position = Vector3(0, 0.025, 0)
+				qd.rotation = Vector3(0, int(_rnd(h, 22) * 6) * PI / 3.0, 0)
+				qd.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+				root.add_child(qd)
 		"buraco":
 			_mesh(root, _cyl(0.62, 0.62, 0.03, 20), Color("#120804"), Vector3(0, 0.02, 0))
 			for i in range(10):
