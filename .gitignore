@@ -7,3 +7,4 @@ export/
 tools/__pycache__/
 tools/sons_novos.zip
 *.zip
+data/version.json

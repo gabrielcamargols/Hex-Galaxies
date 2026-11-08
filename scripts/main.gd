@@ -527,6 +527,16 @@ func _leave_battle() -> void:
 
 
 # ================= menu: galáxia =================
+# versão gravada pela publicação web (data/version.json); no editor aparece "dev"
+func _version_text() -> String:
+	var path = "res://data/version.json"
+	if FileAccess.file_exists(path):
+		var v = JSON.parse_string(FileAccess.get_file_as_string(path))
+		if v is Dictionary:
+			return "Versão %s · %s · %s" % [str(v.get("n", "?")), str(v.get("date", "")), str(v.get("sha", ""))]
+	return "Versão dev (local)"
+
+
 func _show_menu() -> void:
 	tut = false
 	if online:
@@ -550,6 +560,15 @@ func _show_menu() -> void:
 	col.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	col.offset_top = get_viewport().get_visible_rect().size.y * 0.16
 	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var vlab = _label(ui, _version_text(), 13, C_TXT)
+	vlab.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+	vlab.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	vlab.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	vlab.offset_right = -14
+	vlab.offset_bottom = -10
+	vlab.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	vlab.modulate.a = 0.8
+	vlab.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var k = _label(col, "U M A   G A L Á X I A   E M   G U E R R A", 14, C_TXT)
 	k.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	if ResourceLoader.exists("res://ui/logo.png"):

@@ -35,6 +35,8 @@ jobs:
           mv templates/* ~/.local/share/godot/export_templates/${V}.stable/
       - name: Importar e exportar para a web
         run: |
+          echo "{\"n\": \"${{ github.run_number }}\", \"sha\": \"${GITHUB_SHA::7}\", \"date\": \"$(TZ=America/Sao_Paulo date '+%d/%m %H:%M')\"}" > data/version.json
+          cat data/version.json
           ./godot --headless --path . --import || true
           mkdir -p build/web
           ./godot --headless --path . --export-release "Web" build/web/index.html
