@@ -5563,9 +5563,9 @@ func _map_music() -> void:
 	if game.map_id == "tarhut":
 		sfx.loop("musica_deserto", -9.0, 3.0)
 	elif game.map_id == "abnara":
-		sfx.loop("musica_aby", -9.0, 3.0)
+		sfx.loop("musica_abnara", -8.0, 3.0)
 	elif game.map_id == "goraida":
-		sfx.loop("musica_wac", -9.0, 3.0)
+		sfx.loop("musica_goraida", -8.0, 3.0)
 	else:
 		sfx.loop("musica_valak", -7.0, 3.0)
 
