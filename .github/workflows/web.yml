@@ -26,8 +26,8 @@ jobs:
       - name: Baixar Godot e modelos de exportação
         run: |
           V=${GODOT_VERSION}
-          wget -q https://github.com/godotengine/godot/releases/download/${V}-stable/Godot_v${V}-stable_linux.x86_64.zip
-          wget -q https://github.com/godotengine/godot/releases/download/${V}-stable/Godot_v${V}-stable_export_templates.tpz
+          wget -nv --tries=6 --retry-connrefused --retry-on-http-error=502,503,504,429 --waitretry=10 --timeout=60 https://github.com/godotengine/godot/releases/download/${V}-stable/Godot_v${V}-stable_linux.x86_64.zip
+          wget -nv --tries=6 --retry-connrefused --retry-on-http-error=502,503,504,429 --waitretry=10 --timeout=60 https://github.com/godotengine/godot/releases/download/${V}-stable/Godot_v${V}-stable_export_templates.tpz
           unzip -q Godot_v${V}-stable_linux.x86_64.zip
           mv Godot_v${V}-stable_linux.x86_64 godot
           mkdir -p ~/.local/share/godot/export_templates/${V}.stable
