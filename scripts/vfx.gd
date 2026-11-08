@@ -448,7 +448,7 @@ func flip(fname: String, pos: Vector3, size: float = 1.8, dur: float = 0.55, tin
 		var now = Time.get_ticks_msec()
 		if now - int(last_snd.get(fname, -1000)) > 70:
 			last_snd[fname] = now
-			sfx.play("vfx_" + fname, clamp(-10.0 + (size - 2.0) * 2.5, -14.0, -2.0), 1.0, 0.1)
+			sfx.play("vfx_" + ("hit" if fname.begins_with("imp_") else fname), clamp(-10.0 + (size - 2.0) * 2.5, -14.0, -2.0), 1.0, 0.1)
 	var s = Sprite3D.new()
 	s.texture = tex
 	s.hframes = FLIP_FRAMES

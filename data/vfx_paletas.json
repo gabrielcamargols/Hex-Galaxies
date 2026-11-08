@@ -1,0 +1,10 @@
+{
+  "_nota": "Manual de VFX e Sombras v0.1 (07/11/2026). HEX propostos; Krieg e Abyssais confirmados. Cores funcionais (cura, dano, movimento, discos do Zaboo) nunca são substituídas por estas.",
+  "KRI": {"primary": "#2864B4", "secondary": "#FF751F", "shadow": "#182A4D", "outline": "#303744", "highlight": "#FFB15A", "extra": "#777F8E", "pattern": "hachura"},
+  "WAC": {"primary": "#DDA85D", "secondary": "#82B8A1", "shadow": "#202B28", "outline": "#30443D", "highlight": "#E7D6B4", "extra": "#4B5844", "pattern": "entalhe"},
+  "ZUK": {"primary": "#27DDF4", "secondary": "#5778FF", "shadow": "#222A63", "outline": "#122038", "highlight": "#D9FCFF", "extra": "#9C7FFD", "pattern": "pixel"},
+  "ABY": {"primary": "#F438A9", "secondary": "#A957EC", "shadow": "#301342", "outline": "#1B102D", "highlight": "#FF91D8", "extra": "#F89ACD", "pattern": "reticula"},
+  "TER": {"primary": "#FFAC45", "secondary": "#4CD4BD", "shadow": "#493D3D", "outline": "#292C35", "highlight": "#B8FFDF", "extra": "#E6BD85", "pattern": "poeira"},
+  "LIT": {"primary": "#62E6CF", "secondary": "#B18DFF", "shadow": "#29334D", "outline": "#171C33", "highlight": "#F4FBFF", "extra": "#AEF476", "pattern": "facetas"},
+  "FAU": {"primary": "#FF8236", "secondary": "#9BE348", "shadow": "#263E49", "outline": "#122634", "highlight": "#FFD12E", "extra": "#55D7EB", "pattern": "pop"}
+}

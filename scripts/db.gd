@@ -2,6 +2,7 @@ extends Node
 ## Dados do jogo (cartas, táticas, mapas, terrenos). Carregado automaticamente (autoload "DB").
 
 var factions: Dictionary = {}
+var vfx_pal: Dictionary = {}       # paletas de VFX por facção (data/vfx_paletas.json, Manual de VFX)
 var clans: Dictionary = {}
 var cards: Dictionary = {}        # id -> carta
 var card_list: Array = []
@@ -32,6 +33,11 @@ const TCOL = {"Manobra": Color("#2f7d9a"), "Comando": Color("#8a5a2a"), "Reaçã
 func _ready() -> void:
 	var c = _ints(JSON.parse_string(FileAccess.get_file_as_string("res://data/cards.json")))
 	factions = c["factions"]
+	var pf = FileAccess.open("res://data/vfx_paletas.json", FileAccess.READ)
+	if pf != null:
+		var pj = JSON.parse_string(pf.get_as_text())
+		if pj is Dictionary:
+			vfx_pal = pj
 	clans = c["clans"]
 	card_list = c["cards"]
 	for card in card_list:
@@ -143,3 +149,12 @@ func card_name(cid: String) -> String:
 	if cid == "barrier":
 		return "Barreira"
 	return cards[cid]["name"]
+
+
+# cor de VFX da facção ("primary", "secondary", "shadow", "outline", "highlight", "extra")
+func pal(fac: String, key: String = "primary", fallback: Color = Color.WHITE) -> Color:
+	if vfx_pal.has(fac) and vfx_pal[fac].has(key):
+		return Color(vfx_pal[fac][key])
+	if factions.has(fac) and key == "primary":
+		return Color(factions[fac]["color"])
+	return fallback
