@@ -611,7 +611,7 @@ func _tile_mesh(c0: Color, c1: Color, cs: Color) -> ArrayMesh:
 		_tri(st, Vector3(o1.x, 1, o1.y), rim, Vector3(i2.x, 1, i2.y), rim, Vector3(i1.x, 1, i1.y), rim)
 	# tinta: aro externo do topo e quinas verticais (contorno de HQ nas arestas)
 	var ink = Color("#1a0e14")
-	var rim_ink = cs.darkened(0.45)
+	var rim_ink = cs.darkened(0.32)
 	for k in range(6):
 		var o1b = pts_o[k]
 		var o2b = pts_o[(k + 1) % 6]

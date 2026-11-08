@@ -560,6 +560,16 @@ func _show_menu() -> void:
 	col.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	col.offset_top = get_viewport().get_visible_rect().size.y * 0.16
 	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# raios de HQ atrás do logo (mesma linguagem da tela do exército), bem suaves
+	if ResourceLoader.exists("res://ui/rays.png"):
+		var mr = TextureRect.new()
+		mr.texture = load("res://ui/rays.png")
+		mr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		mr.stretch_mode = TextureRect.STRETCH_SCALE
+		mr.set_anchors_preset(Control.PRESET_FULL_RECT)
+		mr.modulate = Color(1, 1, 1, 0.55)
+		mr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		ui.add_child(mr)
 	var vlab = _label(ui, _version_text(), 13, C_TXT)
 	vlab.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
 	vlab.grow_horizontal = Control.GROW_DIRECTION_BEGIN
@@ -596,14 +606,13 @@ func _show_menu() -> void:
 	col.add_child(sp2)
 	var row2 = _hbox(col, 10)
 	row2.alignment = BoxContainer.ALIGNMENT_CENTER
-	var tb = _cbtn(row2, "Tutorial", C_DEPLOY, _start_tutorial)
-	tb.custom_minimum_size = Vector2(150, 44)
-	var rb = _cbtn(row2, "Como jogar", C_HUD, _rules_popup)
-	rb.custom_minimum_size = Vector2(160, 44)
-	var cfgb = _cbtn(row2, "Configurações", C_HUD, _settings_panel)
-	cfgb.custom_minimum_size = Vector2(180, 44)
-	var ver = _label(ui, "protótipo · Godot 4.7", 12, C_DIM)
-	_place(ver, Control.PRESET_BOTTOM_RIGHT, 12)
+	# três botões iguais, mesma altura e largura, em cores do jogo
+	var tb = _cbtn(row2, "TUTORIAL", C_DEPLOY, _start_tutorial)
+	var rb = _cbtn(row2, "COMO JOGAR", Color("#7a4cff"), _rules_popup)
+	var cfgb = _cbtn(row2, "CONFIGURAÇÕES", Color("#ff3d9a"), _settings_panel)
+	for mb in [tb, rb, cfgb]:
+		mb.custom_minimum_size = Vector2(196, 52)
+		mb.add_theme_font_size_override("font_size", 17)
 	_ui_fade(1.0, 0.9)
 	if fader.color.a > 0.0:
 		_fade(0.0, 0.7)
@@ -2511,15 +2520,31 @@ func _refresh_party() -> void:
 		var nsc = game.scarabs_of(p)
 		if nsc > 0 or (p == me and DB.maps[game.map_id].has("res") and DB.maps[game.map_id]["res"].any(func(r): return r[2] == "escaravelho")):
 			var sp = PanelContainer.new()
-			sp.add_theme_stylebox_override("panel", _flat(Color(0.05, 0.2, 0.1, 0.92), Color("#46e06a"), 1, 6, 5))
+			var ssb = StyleBoxFlat.new()
+			ssb.bg_color = Color("#0c2a16")
+			ssb.border_color = Color("#0a0410")
+			ssb.set_border_width_all(3)
+			ssb.set_corner_radius_all(2)
+			ssb.shadow_color = Color("#2fd66a")
+			ssb.shadow_size = 1
+			ssb.shadow_offset = Vector2(4, 4)
+			ssb.set_content_margin_all(6)
+			sp.add_theme_stylebox_override("panel", ssb)
 			box.add_child(sp)
-			var sv = _vbox(sp, 2)
-			_label(sv, "ESCARAVELHOS · %d" % nsc, 13, Color("#8dff9f"))
+			var sv = _vbox(sp, 4)
+			var sh = _label(sv, "ESCARAVELHOS · %d" % nsc, 15, Color("#8dff9f"))
+			if font_btn != null:
+				sh.add_theme_font_override("font", font_btn)
 			if p == me:
-				var b1 = _cbtn(sv, "Curar 6 (1)", Color("#2f9c4a"), func(): _on_scarab("heal"))
+				var shb = _hbox(sv, 4)
+				var b1 = _cbtn(shb, "CURAR +6 ·1", Color("#2fb85a"), func(): _on_scarab("heal"))
+				b1.custom_minimum_size = Vector2((_roster_w() - 20) / 2.0, 36)
+				b1.add_theme_font_size_override("font_size", 12)
 				b1.disabled = not game.can_scarab(p, "heal") or busy or not my_turn()
 				b1.tooltip_text = "Gasta 1 escaravelho: uma peça sua restaura 6 de Vida."
-				var b2 = _cbtn(sv, "Ativa +1 (2)", Color("#2f9c4a"), func(): _on_scarab("ult"))
+				var b2 = _cbtn(shb, "ATIVA +1 ·2", Color("#2fb85a"), func(): _on_scarab("ult"))
+				b2.custom_minimum_size = Vector2((_roster_w() - 20) / 2.0, 36)
+				b2.add_theme_font_size_override("font_size", 12)
 				b2.disabled = not game.can_scarab(p, "ult") or busy or not my_turn()
 				b2.tooltip_text = "Gasta 2 escaravelhos: uma peça que já usou a ativa pode usá-la mais uma vez."
 				var tl = _label(sv, "Sobrando no fim: +1 de Vida\nno comandante por escaravelho", 10, Color("#a8d8b4"))
@@ -3251,26 +3276,60 @@ func _make_card(id: String) -> Control:
 	var react = t["type"] == "Reação" or id == "retirada" or id == "reforco"
 	var card = PanelContainer.new()
 	card.custom_minimum_size = Vector2(118, 150) if compact else Vector2(128, 172)
-	card.add_theme_stylebox_override("panel", _tex_box("res://ui/card.png", 20, col if (ok or react) else col.darkened(0.55), 9, 7))
+	# moldura de HQ por tipo (tools/cartas_hq.py): faixa do tipo, retícula e sombra dura
+	var fpath = "res://ui/cartas/carta_%s.png" % t["type"].to_lower().replace("ç", "c").replace("ã", "a")
+	if ResourceLoader.exists(fpath):
+		var fs = StyleBoxTexture.new()
+		fs.texture = load(fpath)
+		fs.content_margin_left = 7
+		fs.content_margin_right = 13
+		fs.content_margin_top = 2
+		fs.content_margin_bottom = 12
+		card.add_theme_stylebox_override("panel", fs)
+	else:
+		card.add_theme_stylebox_override("panel", _tex_box("res://ui/card.png", 20, col if (ok or react) else col.darkened(0.55), 9, 7))
 	var v = VBoxContainer.new()
 	v.add_theme_constant_override("separation", 2)
 	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card.add_child(v)
-	var cost = _label(v, "%s · %s" % [t["type"].to_upper(), ("%d AÇÃO" % int(t["cost"])) if int(t["cost"]) > 0 else "GRÁTIS"], 9, col.lightened(0.6))
+	# na faixa cabe só o tipo; o custo aparece apenas quando a carta gasta ação
+	var cost = _label(v, t["type"].to_upper() + ((" · %d AÇÃO" % int(t["cost"])) if int(t["cost"]) > 0 else ""), 10, Color("#0a0410"))
+	cost.add_theme_constant_override("outline_size", 0)
+	if font_btn != null:
+		cost.add_theme_font_override("font", font_btn)
 	if compact:
 		cost.add_theme_font_size_override("font_size", 10)
+	cost.clip_text = true
 	cost.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	cost.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# selo de explosão na cor do tipo, com o ícone em tinta por cima
+	var ih = 38 if compact else 50
+	var iw = Control.new()
+	iw.custom_minimum_size = Vector2(0, ih + 4)
+	iw.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	v.add_child(iw)
+	if ResourceLoader.exists("res://ui/cartas/estouro.png"):
+		var bst = TextureRect.new()
+		bst.texture = load("res://ui/cartas/estouro.png")
+		bst.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		bst.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		bst.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		bst.modulate = col.lightened(0.2)
+		bst.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		iw.add_child(bst)
 	var ic = TextureRect.new()
-	ic.custom_minimum_size = Vector2(0, 30 if compact else 40)
 	ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	ic.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	ic.offset_top = ih * 0.22
+	ic.offset_bottom = -ih * 0.22
 	ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var ipath = "res://ui/icons/%s.png" % id
+	var ipath = "res://ui/cartas/ic/%s.png" % id
+	if not ResourceLoader.exists(ipath):
+		ipath = "res://ui/icons/%s.png" % id
 	if ResourceLoader.exists(ipath):
 		ic.texture = load(ipath)
-	ic.modulate = col
-	v.add_child(ic)
+	iw.add_child(ic)
 	var nm = _label(v, t["name"], 13 if compact else 11, Color.WHITE)
 	nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	nm.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -3278,7 +3337,7 @@ func _make_card(id: String) -> Control:
 	if font_btn != null:
 		nm.add_theme_font_override("font", font_btn)
 	var tg = _card_targets(id)
-	var af = _label(v, tg["txt"], 10, col.lightened(0.6))
+	var af = _label(v, tg["txt"], 10, col.lightened(0.75))
 	if compact:
 		af.add_theme_font_size_override("font_size", 11)
 	af.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -5308,7 +5367,20 @@ func _entrance_side(p: int, layer: Control) -> void:
 	sfx.play(FAC_ENTRY.get(fac, ""), -1.0, 1.0, 0.0)
 	# cartão da facção: retrato do comandante, nome e quem é
 	var card = PanelContainer.new()
-	card.add_theme_stylebox_override("panel", _flat(Color(0.02, 0.04, 0.09, 0.9), fcol, 3, 12, 14))
+	# faixa de HQ: inclinada, fundo no tom escuro da facção, contorno de tinta e sombra dura na cor da facção
+	var fb = StyleBoxFlat.new()
+	fb.bg_color = fcol.darkened(0.72)
+	fb.border_color = Color("#0a0410")
+	fb.set_border_width_all(4)
+	fb.set_corner_radius_all(2)
+	fb.shadow_color = fcol
+	fb.shadow_size = 1
+	fb.shadow_offset = Vector2(9, 8)
+	fb.skew = Vector2(-0.14, 0)
+	fb.set_content_margin_all(14)
+	fb.content_margin_left = 30
+	fb.content_margin_right = 34
+	card.add_theme_stylebox_override("panel", fb)
 	layer.add_child(card)
 	var h = _hbox(card, 14)
 	var cid = game.P[p].get("cmd", DB.factions[fac]["cmd"])
@@ -5316,7 +5388,10 @@ func _entrance_side(p: int, layer: Control) -> void:
 		h.add_child(_tex_rect(DB.portraits[cid], Vector2(110, 110)))
 	var v = _vbox(h, 2)
 	_label(v, "VOCÊ" if p == me else "ADVERSÁRIO", 13, C_YOU if p == me else C_CPU)
-	_label(v, "EXÉRCITO MISTO" if game.P[p].get("mix", false) else DB.factions[fac]["name"].to_upper(), 34, fcol.lightened(0.35))
+	var fn = _label(v, "EXÉRCITO MISTO" if game.P[p].get("mix", false) else DB.factions[fac]["name"].to_upper(), 40, fcol.lightened(0.35))
+	if font_title != null:
+		fn.add_theme_font_override("font", font_title)
+	fn.add_theme_constant_override("outline_size", 10)
 	_label(v, "Comandante: %s · chega no round 4" % DB.cards[cid]["name"], 15, C_DIM)
 	card.position = Vector2(-700, 70) if p == me else Vector2(get_viewport().get_visible_rect().size.x + 100, 70)
 	var goal_x = 40.0 if p == me else get_viewport().get_visible_rect().size.x - 40.0
