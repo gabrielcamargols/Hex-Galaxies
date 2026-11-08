@@ -3081,7 +3081,7 @@ func _bridge(root: Node3D, h: Vector2i) -> void:
 			if sc2 > fbest:
 				fbest = sc2
 				axis = ax2
-		span = 2.0
+		span = 3.0   # a margem começa a 2,6 do centro: tabuleiro de 3 casas de comprimento
 	var br = Node3D.new()
 	br.rotation = Vector3(0, atan2(axis.x, axis.y), 0)
 	br.scale = Vector3(HX, 1, HX)
