@@ -723,6 +723,13 @@ func _settings_panel() -> void:
 	ub.pressed.connect(func():
 		_cycle_ui_scale(false)
 		ub.text = _ui_scale_label())
+	if stage == "battle" and game != null:
+		_label(v, "TESTE DE EFEITOS", 13, C_HUD)
+		var gb = _cbtn(v, "Galeria de impactos das facções", C_HUD, func():
+			dim.queue_free()
+			_vfx_gallery())
+		gb.custom_minimum_size = Vector2(0, 40)
+		gb.tooltip_text = "Dispara o impacto de cada facção lado a lado no mapa atual, para conferir cor e leitura."
 	var close = _cbtn(outer, "Fechar", C_GOLD, func(): dim.queue_free(), true)
 	_primary(close)
 	close.custom_minimum_size = Vector2(0, 42)
@@ -2471,6 +2478,8 @@ func _tick_clock(delta: float) -> void:
 		return
 	var p = game.cur
 	if game.cpu[p] and not online:
+		# a CPU gasta tempo no turno dela (inclusive nas animações), mas nunca perde por tempo
+		game.clock[p] = max(1.0, float(game.clock[p]) - delta)
 		return
 	if busy and asking == null:
 		return
@@ -3913,6 +3922,55 @@ func _hex_pos(h: Vector2i, lift: float = 0.9) -> Vector3:
 	return Vector3(wp.x, board.top_y(h) + lift, wp.y)
 
 
+var hit_fac: Dictionary = {}    # uid do alvo -> facção de quem acabou de atacar (assinatura do impacto)
+
+
+func _unit_fac(uid: int) -> String:
+	var u: Variant = game.by_uid(uid) if game != null else null
+	if u == null or u.barrier:
+		return ""
+	return DB.cards[u.cid]["f"]
+
+
+# cor do efeito de ataque: a paleta de VFX da facção (manual), não a cor da interface
+func _vfx_color(uid: int) -> Color:
+	var f = _unit_fac(uid)
+	return DB.pal(f) if f != "" else Color("#d9c9a8")
+
+
+# galeria do Manual de VFX: os 7 impactos em fila no meio do mapa, repetindo 3 vezes
+func _vfx_gallery() -> void:
+	if game == null:
+		return
+	var facs = ["KRI", "WAC", "ZUK", "ABY", "TER", "LIT", "FAU"]
+	# fila horizontal na tela: casas com a mesma profundidade, uma sim outra não
+	var cands = []
+	for h in board.tiles.keys():
+		var wp = board.world_xz(h)
+		if abs(wp.y - 2.6) < 0.6:
+			cands.append([wp.x, h])
+	cands.sort_custom(func(a, b): return a[0] < b[0])
+	var mid = cands.size() / 2
+	var row = []
+	for i in range(-3, 4):
+		var j = clamp(mid + i * 2, 0, cands.size() - 1)
+		row.append(cands[j][1] if not cands.is_empty() else Vector2i(i, 0))
+	for rep in range(3):
+		for i in range(facs.size()):
+			var h = row[i]
+			if not board.tiles.has(h):
+				continue
+			var p = _hex_pos(h, 0.9)
+			var f = facs[i]
+			if rep == 0:
+				board.float_text(h, DB.factions[f]["short"], DB.pal(f, "highlight"))
+			vfx.impact(p, DB.pal(f, "secondary"), 1.0)
+			vfx.flip("imp_" + f.to_lower(), p - Vector3(0, 0.75, 0), 3.0, 0.55)
+			vfx.flip("ring", _hex_pos(h, 0.0), 2.4, 0.5, DB.pal(f, "primary"), true)
+			await get_tree().create_timer(0.12).timeout
+		await get_tree().create_timer(1.1).timeout
+
+
 func _unit_color(uid: int) -> Color:
 	var u: Variant = game.by_uid(uid) if game != null else null
 	if u == null or u.barrier:
@@ -3949,10 +4007,18 @@ func _fx_dmg(h: Vector2i, amt: int, uid: int) -> void:
 	if p == null:
 		p = _hex_pos(h)
 	var k = _fx_scale()
+	var hf = hit_fac.get(uid, "")
+	hit_fac.erase(uid)
 	if amt > 0:
-		vfx.impact(p, Color("#ff9a5a"), clamp(amt / 4.0, 0.6, 1.8) * k)
-		vfx.flip("hit", p - Vector3(0, 0.75, 0), clamp(2.1 + amt * 0.22, 2.3, 3.8), 0.6)
-		vfx.flip("ring", _hex_pos(h, 0.0), 2.4, 0.5, Color("#ff8a3a"), true)
+		if hf != "":
+			# assinatura de impacto da facção atacante (Manual de VFX)
+			vfx.impact(p, DB.pal(hf, "secondary"), clamp(amt / 4.0, 0.6, 1.8) * k)
+			vfx.flip("imp_" + hf.to_lower(), p - Vector3(0, 0.75, 0), clamp(2.3 + amt * 0.22, 2.5, 4.0), 0.55)
+			vfx.flip("ring", _hex_pos(h, 0.0), 2.4, 0.5, DB.pal(hf, "primary"), true)
+		else:
+			vfx.impact(p, Color("#ff9a5a"), clamp(amt / 4.0, 0.6, 1.8) * k)
+			vfx.flip("hit", p - Vector3(0, 0.75, 0), clamp(2.1 + amt * 0.22, 2.3, 3.8), 0.6)
+			vfx.flip("ring", _hex_pos(h, 0.0), 2.4, 0.5, Color("#ff8a3a"), true)
 		if amt >= 4:
 			vfx.flip("boom", _hex_pos(h, 0.0), 2.0, 0.6, Color(1, 0.85, 0.7))
 		board.shake = max(board.shake, clamp(amt * 0.08, 0.15, 0.5))
@@ -4087,7 +4153,8 @@ func _on_fx(e: Dictionary) -> void:
 			board.lunge(e["from"])
 			var a: Variant = _unit_pos(e["from"], 1.0)
 			var tgt: Variant = _unit_pos(e["to"], 0.9)
-			var col = _unit_color(e["from"])
+			var col = _vfx_color(e["from"])
+			hit_fac[e["to"]] = _unit_fac(e["from"])
 			if a == null or tgt == null:
 				return
 			var k = _fx_scale()
