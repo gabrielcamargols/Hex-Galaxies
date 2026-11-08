@@ -102,22 +102,32 @@
   ]
  },
  "banker": {
-  "nucleo": "#ffe27a",
-  "motivo": "ouro de moeda",
-  "ataque": "aby_garra",
-  "proposta": true
+  "nucleo": "#ffc83a",
+  "motivo": "ouro, âncora e moedas",
+  "ataque": "aby_banker_ancora",
+  "proposta": true,
+  "habilidades": [
+   "aby_banker_ganancia"
+  ]
  },
  "a_lumina": {
   "nucleo": "#5cf2ff",
-  "motivo": "isca luminosa",
-  "ataque": "aby_tiro",
-  "proposta": true
+  "motivo": "isca luminosa do peixe-pescador",
+  "ataque": "aby_lumina_feixe",
+  "proposta": true,
+  "habilidades": [
+   "aby_lumina_isca"
+  ]
  },
  "a_medusa": {
   "nucleo": "#b6ff3c",
-  "motivo": "choque verde-limão",
-  "ataque": "aby_garra",
-  "proposta": true
+  "motivo": "choque lima nos tentáculos rosa",
+  "ataque": "aby_medusa_chicote",
+  "proposta": true,
+  "habilidades": [
+   "aby_medusa_toque",
+   "aby_medusa_olhar"
+  ]
  },
  "a_garra": {
   "nucleo": "#3cdc8c",

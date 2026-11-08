@@ -9,7 +9,7 @@ const FUNDOS = {
 	"Neutro": [Color("#8c909e"), Color("#6c7080"), Color("#2a2c36")],
 	"Claro": [Color("#e9e4d8"), Color("#cfc8b6"), Color("#7d8794")],
 }
-const LADOS = [["rhazur", "k_tank"], ["rayak", "k_tank"], ["strahl", "k_tank"], ["bayak", "k_tank"], ["sapturne", "k_tank"], ["balu", "k_tank"], ["oncus", "k_tank"], ["moby", "k_tank"], ["sterina", "k_front"], ["klang", "k_tank"], ["kling", "k_tank"], ["inkshadow", "k_tank"]]
+const LADOS = [["rhazur", "k_tank"], ["rayak", "k_tank"], ["strahl", "k_tank"], ["bayak", "k_tank"], ["sapturne", "k_tank"], ["balu", "k_tank"], ["oncus", "k_tank"], ["moby", "k_tank"], ["sterina", "k_front"], ["klang", "k_tank"], ["kling", "k_tank"], ["inkshadow", "k_tank"], ["banker", "k_tank"], ["a_lumina", "k_tank"], ["a_medusa", "k_tank"]]
 const EXTRAS = ["k_front", "k_sniper"]     # inimigos vizinhos do alvo (descargas, áreas)
 
 var vfx: Node3D

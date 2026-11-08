@@ -642,6 +642,37 @@ def tentaculo():
     return np.asarray(Image.fromarray((v * 255).astype(np.uint8)).resize((N, N), Image.LANCZOS)).astype(np.float32) / 255
 
 
+def ancora():
+    """âncora de frente: argola em cima, haste, travessa e braços curvos com patas pontudas"""
+    S = N * 4
+    c = S / 2
+    im = Image.new("L", (S, S), 0)
+    d = ImageDraw.Draw(im)
+    d.ellipse([c - S * 0.085, S * 0.04, c + S * 0.085, S * 0.2], outline=255, width=int(S * 0.035))        # argola
+    d.rectangle([c - S * 0.045, S * 0.18, c + S * 0.045, S * 0.86], fill=255)                                # haste
+    d.rounded_rectangle([c - S * 0.2, S * 0.27, c + S * 0.2, S * 0.33], radius=int(S * 0.025), fill=255)   # travessa
+    d.arc([c - S * 0.36, S * 0.34, c + S * 0.36, S * 0.98], -22, 202, fill=255, width=int(S * 0.085))        # braços
+    for sgn in (-1, 1):                                                                                    # patas (pontas de seta)
+        tx, ty = c + sgn * S * 0.335, S * 0.56
+        d.polygon([(tx + sgn * S * 0.03, ty - S * 0.24), (tx - S * 0.1, ty + S * 0.04), (tx + S * 0.1, ty + S * 0.04)], fill=255)
+    d.ellipse([c - S * 0.05, S * 0.82, c + S * 0.05, S * 0.92], fill=255)
+    m = np.asarray(im).astype(np.float32) / 255 > 0.5
+    v = _soft(m, 7.0, 0.3, 4)
+    return np.asarray(Image.fromarray((v * 255).astype(np.uint8)).resize((N, N), Image.LANCZOS)).astype(np.float32) / 255
+
+
+def feixe():
+    """feixe de luz de lado, 256x64: halo largo, miolo fino muito brilhante, ponta afunilando à direita"""
+    W, H = 256, 64
+    y, x = np.mgrid[0:H, 0:W].astype(np.float32)
+    u = x / (W - 1)
+    dy = np.abs(y - 31.5) / 31.5
+    w = np.where(u < 0.82, 0.35 + 0.65 * np.clip(u / 0.12, 0, 1) ** 0.6, np.clip(1 - (u - 0.82) / 0.18, 0, 1) * 0.95 + 0.02)
+    halo = np.clip(1 - dy / np.maximum(w, 1e-3), 0, 1) ** 1.4 * 0.55
+    nuc = np.clip(1 - dy / np.maximum(w * 0.22, 1e-3), 0, 1) ** 0.8
+    return np.clip(halo + nuc * 0.7, 0, 1) * np.clip(u / 0.05, 0, 1)
+
+
 def bolha():
     """bolha: anel fino + brilho no canto (intensidade alta no brilho)"""
     x, y = grid()
@@ -698,7 +729,7 @@ def veu():
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     for nm, fn in [("brilho", brilho), ("anel", anel), ("estrela", estrela), ("faisca", faisca), ("fumaca", fumaca),
-                   ("estilhaco", estilhaco), ("respingo", respingo), ("rasgo", rasgo), ("gota", gota), ("seta", seta), ("corrente", corrente), ("voronoi", voronoi), ("ponto", ponto), ("retalho", retalho), ("racha", racha), ("arpao", arpao), ("raio", raio), ("pinca_a", pinca_a), ("punho", punho), ("onda", onda), ("garras_chao", garras_chao), ("moeda", moeda), ("espinhos", espinhos), ("agulha", agulha), ("chifre", chifre), ("espeto", espeto), ("mandibula", mandibula), ("jato", jato), ("estrela_mar", estrela_mar), ("arco_som", arco_som), ("engrenagem", engrenagem), ("chave", chave), ("hexa", hexa), ("tentaculo", tentaculo), ("bolha", bolha), ("mina", mina), ("veu", veu)]:
+                   ("estilhaco", estilhaco), ("respingo", respingo), ("rasgo", rasgo), ("gota", gota), ("seta", seta), ("corrente", corrente), ("voronoi", voronoi), ("ponto", ponto), ("retalho", retalho), ("racha", racha), ("arpao", arpao), ("raio", raio), ("pinca_a", pinca_a), ("punho", punho), ("onda", onda), ("garras_chao", garras_chao), ("moeda", moeda), ("espinhos", espinhos), ("agulha", agulha), ("chifre", chifre), ("espeto", espeto), ("mandibula", mandibula), ("jato", jato), ("estrela_mar", estrela_mar), ("arco_som", arco_som), ("engrenagem", engrenagem), ("chave", chave), ("hexa", hexa), ("tentaculo", tentaculo), ("ancora", ancora), ("feixe", feixe), ("bolha", bolha), ("mina", mina), ("veu", veu)]:
         v = fn()
         if nm == "faisca":
             v = v[::-1]          # cabeça em cima: o topo da textura segue a velocidade
