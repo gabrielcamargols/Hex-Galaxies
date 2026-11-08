@@ -1529,7 +1529,7 @@ func _process(delta: float) -> void:
 	if g != null:
 		_update_claw(delta)
 	if not cz_nodes.is_empty():
-		var pulse = 0.26 + 0.12 * sin(Time.get_ticks_msec() / 350.0)
+		var pulse = 0.35 + 0.15 * sin(Time.get_ticks_msec() / 350.0)
 		for nd in cz_nodes.values():
 			if is_instance_valid(nd) and nd.has_meta("disk"):
 				nd.get_meta("disk").albedo_color.a = pulse
@@ -1669,10 +1669,9 @@ func _build_czone(h: Vector2i) -> Node3D:
 	var disk = MeshInstance3D.new()
 	disk.mesh = _cyl(0.78, 0.78, 0.02, 6)
 	var dm = StandardMaterial3D.new()
-	dm.albedo_color = Color(0.45, 0.92, 1.0, 0.30)
+	dm.albedo_color = Color(0.1, 0.55, 1.0, 0.30)
 	dm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	dm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	dm.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
 	disk.material_override = dm
 	disk.position = Vector3(0, 0.04, 0)
 	root.add_child(disk)
@@ -1683,14 +1682,32 @@ func _build_czone(h: Vector2i) -> Node3D:
 		var hh = 0.32 + _rnd(h, i + 60) * 0.42
 		var sh = MeshInstance3D.new()
 		sh.mesh = _cyl(0.0, 0.11 + _rnd(h, i + 70) * 0.06, hh, 5)
+		var purple = _rnd(h, i + 80) > 0.6
 		var m = StandardMaterial3D.new()
-		m.albedo_color = Color(0.55, 0.93, 1.0, 0.82).lerp(Color(0.72, 0.62, 1.0, 0.82), _rnd(h, i + 80) * 0.5)
+		m.albedo_color = Color("#1fb8e8") if not purple else Color("#8a4cf0")
 		m.emission_enabled = true
-		m.emission = Color(0.3, 0.85, 1.0)
-		m.emission_energy_multiplier = 1.6
-		m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		m.roughness = 0.15
+		m.emission = Color("#0a7fc0") if not purple else Color("#5a22c8")
+		m.emission_energy_multiplier = 0.9
+		m.diffuse_mode = BaseMaterial3D.DIFFUSE_TOON
+		m.roughness = 0.2
 		sh.material_override = m
+		# contorno escuro (casca invertida) para destacar em qualquer chão
+		var ol = StandardMaterial3D.new()
+		ol.albedo_color = Color("#0b1030")
+		ol.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		ol.cull_mode = BaseMaterial3D.CULL_FRONT
+		ol.grow = true
+		ol.grow_amount = 0.025
+		m.next_pass = ol
+		# brilho interno mais claro na ponta
+		var tip = MeshInstance3D.new()
+		tip.mesh = _cyl(0.0, 0.05, hh * 0.45, 5)
+		var tm = StandardMaterial3D.new()
+		tm.albedo_color = Color("#d8f8ff")
+		tm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		tip.material_override = tm
+		tip.position = Vector3(0, hh * 0.2, 0.03)
+		sh.add_child(tip)
 		sh.position = Vector3(cos(a) * rr, hh * 0.5, sin(a) * rr)
 		sh.rotation = Vector3((_rnd(h, i + 90) - 0.5) * 0.35, a, (_rnd(h, i + 100) - 0.5) * 0.35)
 		root.add_child(sh)
@@ -1798,12 +1815,12 @@ func _apply_overlay(h: Vector2i) -> void:
 
 
 # ================= efeitos =================
-func float_text(h: Vector2i, text: String, col: Color) -> void:
+func float_text(h: Vector2i, text: String, col: Color, scale: float = 1.0) -> void:
 	var l = Label3D.new()
 	l.text = text
 	l.font_size = 96
 	l.outline_size = 24
-	l.pixel_size = 0.007
+	l.pixel_size = 0.007 * scale
 	l.modulate = col
 	l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	l.no_depth_test = true

@@ -3883,19 +3883,28 @@ func _vfx_gallery() -> void:
 	if game == null:
 		return
 	var facs = ["KRI", "WAC", "ZUK", "ABY", "TER", "LIT", "FAU"]
-	# fila horizontal na tela: casas com a mesma profundidade, uma sim outra não
+	# fila horizontal de 7 casas (uma sim, outra não) passando pelo centro do mapa
+	var c = Vector2i.ZERO
+	var cw = board.world_xz(c)
 	var cands = []
 	for h in board.tiles.keys():
 		var wp = board.world_xz(h)
-		if abs(wp.y - 2.6) < 0.6:
+		if abs(wp.y - cw.y) < 0.5:
 			cands.append([wp.x, h])
 	cands.sort_custom(func(a, b): return a[0] < b[0])
-	var mid = cands.size() / 2
+	var mid = 0
+	for k in range(cands.size()):
+		if cands[k][1] == c:
+			mid = k
 	var row = []
 	for i in range(-3, 4):
 		var j = clamp(mid + i * 2, 0, cands.size() - 1)
 		row.append(cands[j][1] if not cands.is_empty() else Vector2i(i, 0))
+	var span = board.world_xz(row[6]).x - board.world_xz(row[0]).x
+	board.cam_goal = {"yaw": 0.0, "pitch": 0.85, "dist": max(12.0, span * 1.05), "target": Vector3(cw.x, 0.5, cw.y)}
+	await get_tree().create_timer(1.2).timeout
 	for rep in range(3):
+		# os 7 ao mesmo tempo, para comparar lado a lado
 		for i in range(facs.size()):
 			var h = row[i]
 			if not board.tiles.has(h):
@@ -3903,12 +3912,11 @@ func _vfx_gallery() -> void:
 			var p = _hex_pos(h, 0.9)
 			var f = facs[i]
 			if rep == 0:
-				board.float_text(h, DB.factions[f]["short"], DB.pal(f, "highlight"))
+				board.float_text(h, DB.factions[f]["short"], DB.pal(f, "highlight"), 0.38)
 			vfx.impact(p, DB.pal(f, "secondary"), 1.0)
 			vfx.flip("imp_" + f.to_lower(), p - Vector3(0, 0.75, 0), 3.0, 0.55)
 			vfx.flip("ring", _hex_pos(h, 0.0), 2.4, 0.5, DB.pal(f, "primary"), true)
-			await get_tree().create_timer(0.12).timeout
-		await get_tree().create_timer(1.1).timeout
+		await get_tree().create_timer(1.3).timeout
 
 
 func _unit_color(uid: int) -> Color:
