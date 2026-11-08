@@ -21,6 +21,6 @@ void vertex() {
 void fragment() {
 	float l = dot(base, vec3(0.299, 0.587, 0.114));
 	// mesmo tom do objeto, mais escuro e mais saturado
-	vec3 c = mix(vec3(l), base, 1.35) * 0.32;
+	vec3 c = mix(vec3(l), base, 1.7) * 0.6;
 	ALBEDO = clamp(c, 0.0, 1.0);
 }
