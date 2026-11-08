@@ -20,17 +20,20 @@ var ui: Control
 var w: Dictionary = {}
 
 # código de cores: o mesmo em botões, casas do tabuleiro e legenda
+# paleta oficial do universo: Azul espacial #10145A, Branco estelar #F8FAFF, Ciano cósmico #27DDF4,
+# Roxo galáctico #A957EC, Magenta HQ #F438A9, Amarelo solar #FFD12E (as facções expandem a partir dela)
+const C_SPACE = Color("#10145A")
 const C_MOVE = Color("#4cff6a")     # andar
 const C_ATK = Color("#ff3b4d")      # atacar / inimigo atacável
-const C_ABIL = Color("#b05cff")     # habilidade / escolher alvo de efeito
+const C_ABIL = Color("#A957EC")     # habilidade / escolher alvo de efeito
 const C_CARD = Color("#3da0ff")     # cartas táticas
-const C_DEPLOY = Color("#22f0e0")   # colocar reserva em campo
+const C_DEPLOY = Color("#27DDF4")   # colocar reserva em campo
 const C_YOU = Color("#2fa8ff")      # seu lado
 const C_CPU = Color("#ff7a1a")      # lado da CPU
-const C_GOLD = Color("#ffe14d")     # títulos e destaque
-const C_END = Color("#e8f6ff")      # encerrar / passar
-const C_HUD = Color("#ff3ea5")      # molduras da HUD
-const C_TXT = Color("#ffffff")      # texto principal
+const C_GOLD = Color("#FFD12E")     # títulos e destaque
+const C_END = Color("#F8FAFF")      # encerrar / passar
+const C_HUD = Color("#F438A9")      # molduras da HUD
+const C_TXT = Color("#F8FAFF")      # texto principal
 const C_DIM = Color("#cbbdff")      # texto secundário
 var font_title: Font = null
 var font_btn: Font = null
@@ -608,8 +611,8 @@ func _show_menu() -> void:
 	row2.alignment = BoxContainer.ALIGNMENT_CENTER
 	# três botões iguais, mesma altura e largura, em cores do jogo
 	var tb = _cbtn(row2, "TUTORIAL", C_DEPLOY, _start_tutorial)
-	var rb = _cbtn(row2, "COMO JOGAR", Color("#7a4cff"), _rules_popup)
-	var cfgb = _cbtn(row2, "CONFIGURAÇÕES", Color("#ff3d9a"), _settings_panel)
+	var rb = _cbtn(row2, "COMO JOGAR", C_ABIL, _rules_popup)
+	var cfgb = _cbtn(row2, "CONFIGURAÇÕES", C_HUD, _settings_panel)
 	for mb in [tb, rb, cfgb]:
 		mb.custom_minimum_size = Vector2(196, 52)
 		mb.add_theme_font_size_override("font_size", 17)
@@ -899,7 +902,7 @@ func _show_select() -> void:
 	_vignette()
 	# título em faixa de HQ inclinada
 	var tb = PanelContainer.new()
-	tb.add_theme_stylebox_override("panel", _hq_box(Color("#1c0b33"), C_GOLD, 8))
+	tb.add_theme_stylebox_override("panel", _hq_box(C_SPACE, C_GOLD, 8))
 	tb.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ui.add_child(tb)
 	var tl = _label(tb, "ESCOLHA O PLANETA", 30 if compact else 38, C_GOLD)
@@ -921,7 +924,7 @@ func _show_select() -> void:
 			tag.add_theme_font_override("font", font_title)
 		var ac: Color = d["atm"]
 		for st in ["normal", "hover", "pressed", "focus"]:
-			tag.add_theme_stylebox_override(st, _hq_box(Color("#120624") if st != "hover" else Color("#2a1048"), Color(ac.r, ac.g, ac.b, 1.0), 7))
+			tag.add_theme_stylebox_override(st, _hq_box(C_SPACE.darkened(0.25) if st != "hover" else C_SPACE.lightened(0.12), Color(ac.r, ac.g, ac.b, 1.0), 7))
 		tag.add_theme_color_override("font_color", Color(ac.r, ac.g, ac.b).lightened(0.35))
 		tag.add_theme_color_override("font_hover_color", Color.WHITE)
 		tag.add_theme_color_override("font_outline_color", Color("#0a0410"))
@@ -967,7 +970,7 @@ func _planet_info(id: String) -> void:
 	var ac: Color = d["atm"]
 	ac.a = 1.0
 	var panel = PanelContainer.new()
-	var pb = _hq_box(Color("#140728").lerp(ac.darkened(0.8), 0.25), ac, 10)
+	var pb = _hq_box(C_SPACE.lerp(ac.darkened(0.8), 0.25), ac, 10)
 	pb.content_margin_left = 34
 	pb.content_margin_right = 34
 	pb.content_margin_top = 22
