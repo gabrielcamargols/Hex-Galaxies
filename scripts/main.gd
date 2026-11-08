@@ -4010,6 +4010,128 @@ func _comic_pop(world: Variant, word: String, big: bool = false) -> void:
 	tw.tween_callback(root.queue_free)
 
 
+var splash_until: int = 0          # um letreiro grande por vez
+var low_warned: Dictionary = {}    # uid -> já mostrou NO LIMITE nesta vida
+
+
+# alvo sobreviveu com pouca Vida: letreiro NO LIMITE! (uma vez por vida do personagem)
+func _check_low_hp(uid: int, amt: int, world: Variant) -> void:
+	if game == null:
+		return
+	var u: Variant = game.by_uid(uid)
+	if u == null or u.barrier or u.hp <= 0:
+		return
+	var thr = max(2, int(ceil(u.maxhp * 0.3)))
+	if u.hp > thr:
+		low_warned.erase(uid)
+		return
+	if low_warned.has(uid) or u.hp + amt <= thr:
+		return
+	low_warned[uid] = true
+	_hq_splash("limite", world)
+
+
+# letreiro de impacto estilo anime de luta: linhas de velocidade, estouro e palavra com retícula
+func _hq_splash(kind: String, world: Variant) -> void:
+	var now = Time.get_ticks_msec()
+	if now < splash_until and kind != "nocaute":
+		return
+	var tex_w = load("res://ui/splash/%s.png" % kind) if ResourceLoader.exists("res://ui/splash/%s.png" % kind) else null
+	if tex_w == null:
+		return
+	var vs: Vector2 = get_viewport().get_visible_rect().size
+	var big = kind == "nocaute"
+	var low = kind == "limite"
+	splash_until = now + (1500 if big else 1000)
+	var center = vs * 0.5
+	if not big and world != null and board != null and board.cam != null and not board.cam.is_position_behind(world):
+		center = board.cam.unproject_position(world) + Vector2(0, -vs.y * 0.08)
+	var ww = vs.x * (0.72 if big else (0.40 if low else 0.34))
+	ww = min(ww, vs.y * (1.3 if big else 0.75))
+	var hw = ww * 0.5 / max(1.0, float(tex_w.get_width()) / float(tex_w.get_height()))
+	center.x = clamp(center.x, ww * 0.5 + 12, vs.x - ww * 0.5 - 12)
+	center.y = clamp(center.y, hw + 70, vs.y - hw - 120)
+	var root = Control.new()
+	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	ui.add_child(root)
+	# clarão
+	if not low:
+		var fl = ColorRect.new()
+		fl.color = Color(1, 1, 1, 0.55) if not big else Color(1, 0.95, 0.8, 0.75)
+		fl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		fl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		root.add_child(fl)
+		var tf = fl.create_tween().set_ignore_time_scale(true)
+		tf.tween_property(fl, "color:a", 0.0, 0.18)
+	if big:
+		var dim = ColorRect.new()
+		dim.color = Color(0.06, 0.02, 0.12, 0.0)
+		dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		root.add_child(dim)
+		dim.move_to_front()
+		var td = dim.create_tween().set_ignore_time_scale(true)
+		td.tween_property(dim, "color:a", 0.45, 0.12)
+		td.tween_interval(1.0)
+		td.tween_property(dim, "color:a", 0.0, 0.3)
+	# linhas de velocidade convergindo no alvo
+	var stage = Node2D.new()
+	stage.position = center
+	root.add_child(stage)
+	if ResourceLoader.exists("res://ui/splash/linhas.png"):
+		var ln = Sprite2D.new()
+		ln.texture = load("res://ui/splash/linhas.png")
+		var lsc = vs.length() * (2.2 if big else 1.4) / 1024.0
+		ln.scale = Vector2.ONE * lsc * 1.3
+		ln.modulate = Color(1, 0.55, 0.75, 0.0) if low else Color(1, 1, 1, 0.0)
+		stage.add_child(ln)
+		var tl = ln.create_tween().set_ignore_time_scale(true)
+		tl.tween_property(ln, "modulate:a", 0.95, 0.08)
+		tl.parallel().tween_property(ln, "scale", Vector2.ONE * lsc, 0.25).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
+		tl.parallel().tween_property(ln, "rotation", 0.12, 1.2)
+		tl.tween_interval(0.6 if not big else 0.9)
+		tl.tween_property(ln, "modulate:a", 0.0, 0.25)
+	# estouro atrás da palavra
+	var bpath = "res://ui/splash/estouro_limite.png" if low else "res://ui/splash/estouro_ko.png"
+	if ResourceLoader.exists(bpath):
+		var bs = Sprite2D.new()
+		bs.texture = load(bpath)
+		var bsc = ww * (0.62 if not big else 0.5) / 900.0
+		bs.scale = Vector2.ONE * bsc * 0.2
+		bs.rotation = randf_range(-0.4, 0.4)
+		bs.position = Vector2(randf_range(-ww * 0.12, ww * 0.12), hw * 0.15)
+		stage.add_child(bs)
+		var tb = bs.create_tween().set_ignore_time_scale(true)
+		tb.tween_property(bs, "scale", Vector2.ONE * bsc * 1.1, 0.14).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tb.parallel().tween_property(bs, "rotation", bs.rotation + 0.35, 1.1)
+		tb.tween_interval(0.65 if not big else 0.95)
+		tb.tween_property(bs, "scale", Vector2.ONE * bsc * 1.5, 0.22)
+		tb.parallel().tween_property(bs, "modulate:a", 0.0, 0.22)
+	# a palavra: entra gigante, bate, treme e some crescendo
+	var wd = Sprite2D.new()
+	wd.texture = tex_w
+	var wsc = ww / float(tex_w.get_width())
+	wd.scale = Vector2.ONE * wsc * 2.6
+	wd.modulate.a = 0.0
+	wd.rotation = randf_range(-0.12, -0.03) if randf() < 0.5 else randf_range(0.03, 0.1)
+	stage.add_child(wd)
+	var tw = wd.create_tween().set_ignore_time_scale(true)
+	tw.tween_property(wd, "modulate:a", 1.0, 0.05)
+	tw.parallel().tween_property(wd, "scale", Vector2.ONE * wsc * 0.92, 0.11).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tw.tween_property(wd, "scale", Vector2.ONE * wsc, 0.12).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	for i in range(4):
+		var amp = (12.0 if big else 7.0) * (1.0 - i * 0.22)
+		tw.tween_property(wd, "position", Vector2(randf_range(-amp, amp), randf_range(-amp, amp)), 0.035)
+	tw.tween_property(wd, "position", Vector2.ZERO, 0.04)
+	tw.tween_interval(0.62 if not big else 0.85)
+	tw.tween_property(wd, "scale", Vector2.ONE * wsc * 1.15, 0.2)
+	tw.parallel().tween_property(wd, "modulate:a", 0.0, 0.2)
+	tw.tween_callback(root.queue_free)
+	if big:
+		board.shake = max(board.shake, 0.6)
+
+
 func _hex_pos(h: Vector2i, lift: float = 0.9) -> Vector3:
 	var wp = board.world_xz(h)
 	return Vector3(wp.x, board.top_y(h) + lift, wp.y)
@@ -4124,6 +4246,7 @@ func _fx_dmg(h: Vector2i, amt: int, uid: int) -> void:
 			vfx.flip("boom", _hex_pos(h, 0.0), 2.0, 0.6, Color(1, 0.85, 0.7))
 		board.shake = max(board.shake, clamp(amt * 0.08, 0.15, 0.5))
 		_voice(uid, "dor", -1.0, 0.06)
+		_check_low_hp(uid, amt, p)
 	else:
 		vfx.block(p)
 		vfx.flip("shield", p - Vector3(0, 0.9, 0), 1.9, 0.55, Color("#bfe8ff"))
@@ -4295,13 +4418,14 @@ func _on_fx(e: Dictionary) -> void:
 			var du2 = game.by_uid(e["uid"])
 			if du2 != null and not du2.barrier:
 				var big = du2.is_cmd
-				_comic_pop(_hex_pos(e["h"], 1.2), "K.O.!", true)
+				_later(d, _hq_splash.bind("nocaute" if big else "ko", _hex_pos(e["h"], 1.2)))
 				_later(d + 0.05, func():
 					_hitstop(0.22 if big else 0.09)
 					board.quake()
 					sfx.play("vfx_boom", -1.0 if big else -4.0, 0.7 if big else 0.85, 0.0))
 				if big:
-					_later(d + 0.3, func(): banner("COMANDANTE DERROTADO", game.nm(du2)))
+					_later(d + 1.7, func(): banner("COMANDANTE DERROTADO", game.nm(du2)))
+			low_warned.erase(e["uid"])
 			_banter_death(e["uid"])
 			var hp = _hex_pos(e["h"], 0.2)
 			var dc = _unit_color(e["uid"])
