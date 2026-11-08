@@ -273,7 +273,7 @@ func _make_theme() -> Theme:
 	th.set_stylebox("normal", "Button", _tex_box("res://ui/btn.png", 14, C_HUD, 16, 9))
 	th.set_stylebox("hover", "Button", _tex_box("res://ui/btn_on.png", 14, C_HUD.darkened(0.25), 16, 9))
 	th.set_stylebox("pressed", "Button", _tex_box("res://ui/btn_on.png", 14, C_HUD, 16, 9))
-	th.set_stylebox("disabled", "Button", _tex_box("res://ui/btn.png", 14, Color(0.35, 0.42, 0.5), 16, 9))
+	th.set_stylebox("disabled", "Button", _tex_box("res://ui/btn.png", 14, Color(0.2, 0.22, 0.3), 16, 9))
 	th.set_stylebox("focus", "Button", StyleBoxEmpty.new())
 	th.set_color("font_color", "Button", C_TXT)
 	th.set_color("font_outline_color", "Button", Color.BLACK)
@@ -283,7 +283,7 @@ func _make_theme() -> Theme:
 	th.set_color("font_outline_color", "RichTextLabel", Color(0.03, 0.0, 0.08))
 	th.set_constant("outline_size", "RichTextLabel", 3)
 	th.set_color("font_hover_color", "Button", Color.WHITE)
-	th.set_color("font_disabled_color", "Button", Color(0.45, 0.52, 0.6))
+	th.set_color("font_disabled_color", "Button", Color(0.82, 0.86, 0.92))
 	th.set_color("font_color", "Label", C_TXT)
 	th.set_color("default_color", "RichTextLabel", C_TXT)
 	th.set_color("font_color", "OptionButton", C_TXT)
@@ -376,11 +376,11 @@ func _style_btn(b: Button, col: Color, active: bool = false) -> void:
 	b.add_theme_stylebox_override("hover", _tex_box("res://ui/btn_on.png", 14, col.lightened(0.2), 16, 9))
 	b.add_theme_stylebox_override("pressed", _tex_box("res://ui/btn_on.png", 14, col, 16, 9))
 	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
-	b.add_theme_stylebox_override("disabled", _tex_box("res://ui/btn.png", 14, Color(0.34, 0.32, 0.42), 16, 9))
+	b.add_theme_stylebox_override("disabled", _tex_box("res://ui/btn.png", 14, Color(0.2, 0.18, 0.28), 16, 9))
 	b.add_theme_color_override("font_color", Color.WHITE)
 	b.add_theme_color_override("font_hover_color", Color.WHITE)
 	b.add_theme_color_override("font_pressed_color", Color("#fff6a0"))
-	b.add_theme_color_override("font_disabled_color", Color(0.62, 0.6, 0.7))
+	b.add_theme_color_override("font_disabled_color", Color(0.86, 0.84, 0.95))
 	b.add_theme_color_override("font_outline_color", Color.BLACK)
 	b.add_theme_constant_override("outline_size", 6)
 
@@ -398,8 +398,8 @@ func _cbtn(parent: Control, text: String, col: Color, cb: Callable, active: bool
 
 func _chip(parent: Control, col: Color, text: String) -> void:
 	var hb = _hbox(parent, 5)
-	var sw = ColorRect.new()
-	sw.color = col
+	var sw = Panel.new()
+	sw.add_theme_stylebox_override("panel", _flat(col, Color(0.95, 0.95, 1.0), 1, 3, 0))
 	sw.custom_minimum_size = Vector2(16, 16)
 	sw.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	hb.add_child(sw)
@@ -549,7 +549,7 @@ func _show_menu() -> void:
 	col.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	col.offset_top = get_viewport().get_visible_rect().size.y * 0.16
 	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var k = _label(col, "U M A   G A L Á X I A   E M   G U E R R A", 13, C_HUD)
+	var k = _label(col, "U M A   G A L Á X I A   E M   G U E R R A", 14, C_TXT)
 	k.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	if ResourceLoader.exists("res://ui/logo.png"):
 		var lg = _tex_rect(load("res://ui/logo.png"), Vector2(0, 170 if compact else 250))
@@ -1386,11 +1386,11 @@ func _primary(b: Button) -> void:
 	b.add_theme_stylebox_override("normal", _tex_box("res://ui/btn_on.png", 14, Color("#ffd21f"), 18, 10))
 	b.add_theme_stylebox_override("hover", _tex_box("res://ui/btn_on.png", 14, Color("#ffe76a"), 18, 10))
 	b.add_theme_stylebox_override("pressed", _tex_box("res://ui/btn_on.png", 14, Color("#ff9d1f"), 18, 10))
-	b.add_theme_stylebox_override("disabled", _tex_box("res://ui/btn.png", 14, Color(0.34, 0.32, 0.42), 18, 10))
+	b.add_theme_stylebox_override("disabled", _tex_box("res://ui/btn.png", 14, Color(0.2, 0.18, 0.28), 18, 10))
 	b.add_theme_color_override("font_color", Color.WHITE)
 	b.add_theme_color_override("font_hover_color", Color.WHITE)
 	b.add_theme_color_override("font_pressed_color", Color.WHITE)
-	b.add_theme_color_override("font_disabled_color", Color(0.62, 0.6, 0.7))
+	b.add_theme_color_override("font_disabled_color", Color(0.86, 0.84, 0.95))
 	b.add_theme_color_override("font_outline_color", Color("#2a0838"))
 	b.add_theme_constant_override("outline_size", 8)
 
@@ -2394,7 +2394,7 @@ func _refresh_party() -> void:
 		for c in box.get_children():
 			c.queue_free()
 		var col = Color("#4f9be0") if p == me else Color("#e0563f")
-		_label(box, ("VOCÊ · " if p == me else (_opp().to_upper() + " · ")) + ("Mix" if game.P[p].get("mix", false) else DB.factions[game.P[p]["fac"]]["short"]), 13, col)
+		_label(box, ("VOCÊ · " if p == me else (_opp().to_upper() + " · ")) + ("Mix" if game.P[p].get("mix", false) else DB.factions[game.P[p]["fac"]]["short"]), 14, col.lightened(0.4))
 		if game.clock_on:
 			w["clock%d" % p] = _label(box, "", 18, col)
 		var res = []
@@ -3139,7 +3139,7 @@ func _refresh_hand() -> void:
 		c.queue_free()
 	for id in pl["hand"]:
 		box.add_child(_make_card(id))
-	var info = _label(box, "  Baralho\n  %d" % pl["deck"].size(), 12, C_DIM)
+	var info = _label(box, "  Baralho\n  %d" % pl["deck"].size(), 13, C_TXT)
 	info.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 
@@ -3155,7 +3155,7 @@ func _make_card(id: String) -> Control:
 	v.add_theme_constant_override("separation", 2)
 	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card.add_child(v)
-	var cost = _label(v, "%s · %s" % [t["type"].to_upper(), ("%d AÇÃO" % int(t["cost"])) if int(t["cost"]) > 0 else "GRÁTIS"], 9, col.lightened(0.4))
+	var cost = _label(v, "%s · %s" % [t["type"].to_upper(), ("%d AÇÃO" % int(t["cost"])) if int(t["cost"]) > 0 else "GRÁTIS"], 9, col.lightened(0.6))
 	if compact:
 		cost.add_theme_font_size_override("font_size", 10)
 	cost.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -3177,7 +3177,7 @@ func _make_card(id: String) -> Control:
 	if font_btn != null:
 		nm.add_theme_font_override("font", font_btn)
 	var tg = _card_targets(id)
-	var af = _label(v, tg["txt"], 9, col.lightened(0.35))
+	var af = _label(v, tg["txt"], 10, col.lightened(0.6))
 	if compact:
 		af.add_theme_font_size_override("font_size", 11)
 	af.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
