@@ -1638,7 +1638,7 @@ func _apply_overlay(h: Vector2i) -> void:
 		"at":
 			col = Color(1.0, 0.30, 0.30, 0.68)
 		"pk":
-			col = Color(0.69, 0.42, 1.0, 0.66)
+			col = Color(0.02, 0.0, 0.05, 0.82)
 		"sel":
 			col = Color(0.31, 0.82, 1.0, 0.6)
 		"prev":
