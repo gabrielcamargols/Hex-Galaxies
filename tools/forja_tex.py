@@ -228,10 +228,44 @@ def retalho():
     return dots * caco
 
 
+def racha():
+    """rachadura no chão (decalque): linhas ramificadas; miolo da linha = intensidade alta (vira brilho magenta)"""
+    S = N * 2
+    im = Image.new("L", (S, S), 0)
+    d = ImageDraw.Draw(im)
+    rr = random.Random(13)
+
+    def ramo(x, y, a, L, w, prof):
+        pts = [(x, y)]
+        n = int(6 + L / 8)
+        for i in range(n):
+            a += rr.uniform(-0.5, 0.5)
+            x += math.cos(a) * L / n
+            y += math.sin(a) * L / n
+            pts.append((x, y))
+            if prof < 2 and rr.random() < 0.18:
+                ramo(x, y, a + rr.choice([-1, 1]) * rr.uniform(0.5, 1.1), L * 0.45, w * 0.6, prof + 1)
+        for i in range(len(pts) - 1):
+            ww = max(1, int(w * (1 - i / len(pts))))
+            d.line([pts[i], pts[i + 1]], fill=255, width=ww)
+    for k in range(7):
+        a = k / 7 * 2 * math.pi + rr.uniform(-0.3, 0.3)
+        ramo(S / 2, S / 2, a, S * rr.uniform(0.28, 0.45), 9, 0)
+    d.ellipse([S / 2 - 16, S / 2 - 16, S / 2 + 16, S / 2 + 16], fill=255)
+    m = np.asarray(im).astype(np.float32) / 255
+    core = ndi.gaussian_filter(m, 1.2)
+    halo = ndi.gaussian_filter(m, 4.0) * 0.6
+    v = np.clip(np.maximum(core, halo * 0.45), 0, 1)
+    v = np.asarray(Image.fromarray((v * 255).astype(np.uint8)).resize((N, N), Image.LANCZOS)).astype(np.float32) / 255
+    v = np.clip((v - 0.14) / 0.86, 0, 1)      # fundo zerado: só as linhas e um halo curto
+    x, y = grid()
+    return v * np.clip((1.0 - np.hypot(x, y)) * 4, 0, 1)
+
+
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     for nm, fn in [("brilho", brilho), ("anel", anel), ("estrela", estrela), ("faisca", faisca), ("fumaca", fumaca),
-                   ("estilhaco", estilhaco), ("respingo", respingo), ("rasgo", rasgo), ("gota", gota), ("seta", seta), ("corrente", corrente), ("voronoi", voronoi), ("ponto", ponto), ("retalho", retalho)]:
+                   ("estilhaco", estilhaco), ("respingo", respingo), ("rasgo", rasgo), ("gota", gota), ("seta", seta), ("corrente", corrente), ("voronoi", voronoi), ("ponto", ponto), ("retalho", retalho), ("racha", racha)]:
         v = fn()
         if nm == "faisca":
             v = v[::-1]          # cabeça em cima: o topo da textura segue a velocidade

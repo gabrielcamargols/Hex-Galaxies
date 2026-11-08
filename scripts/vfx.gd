@@ -565,6 +565,9 @@ func play_fx(id: String, at: Vector3, from: Variant = null, tint: Color = Color.
 	for L in r.get("layers", []):
 		var dl = _rnd(L.get("delay", 0.0))
 		var at2 = _em(L, at, from)
+		if L.has("luz"):
+			_fx_after(dl, _fx_light.bind(L, at2))
+			continue
 		if L.has("corrente"):
 			_fx_after(dl, _fx_chain.bind(L, at, from, tint, follow))
 			continue
@@ -744,7 +747,7 @@ func _part_shader(blend: String) -> Shader:
 
 func _fx_part_node(L: Dictionary, tint: Color) -> CPUParticles3D:
 	var path = "res://vfx/tex/%s.png" % str(L["p"])
-	if not ResourceLoader.exists(path):
+	if not L.has("caco") and not ResourceLoader.exists(path):
 		return null
 	var mode = {"bill": 0, "vel": 1, "chao": 2}.get(str(L.get("mode", "bill")), 0)
 	var blend = str(L.get("blend", "add"))
@@ -757,6 +760,25 @@ func _fx_part_node(L: Dictionary, tint: Color) -> CPUParticles3D:
 	if mode == 2:
 		q.orientation = PlaneMesh.FACE_Y
 	cp.mesh = q
+	if L.has("caco"):
+		# pedaços 3D (aula de impacto com destroços): malha sólida, cor chapada com sombra
+		var pm = PrismMesh.new() if str(L["caco"]) == "prisma" else BoxMesh.new()
+		var cs = float(L.get("size", 0.2))
+		pm.size = Vector3(cs, cs * 1.3, cs * 0.8)
+		cp.mesh = pm
+		var sm = StandardMaterial3D.new()
+		sm.vertex_color_use_as_albedo = true
+		sm.albedo_color = Color(str(L.get("cor", "#301342")))
+		sm.roughness = 1.0
+		cp.material_override = sm
+		cp.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	else:
+		cp.material_override = _part_mat(L, blend, mode, path)
+	cp.amount = max(1, int(L.get("amount", 1)))
+	return _fx_part_setup(cp, L, mode, tint)
+
+
+func _part_mat(L: Dictionary, blend: String, mode: int, path: String) -> ShaderMaterial:
 	var m = ShaderMaterial.new()
 	m.shader = _part_shader(blend)
 	m.render_priority = 22 if blend == "add" else (21 if blend == "mix" else 3)
@@ -767,12 +789,14 @@ func _fx_part_node(L: Dictionary, tint: Color) -> CPUParticles3D:
 	m.set_shader_parameter("erode", float(L.get("erode", 0.0)))
 	m.set_shader_parameter("erode_pow", float(L.get("erode_pow", 1.5)))
 	m.set_shader_parameter("soft", float(L.get("soft", 0.12)))
+	m.set_shader_parameter("cut", float(L.get("cut", 0.12 if mode == 2 else 0.0)))
 	m.set_shader_parameter("halftone", float(L.get("halftone", 0.0)))
 	m.set_shader_parameter("dot_px", float(L.get("dot", 7.0)))
 	m.set_shader_parameter("stretch", float(L.get("stretch", 1.0)))
-	cp.material_override = m
-	cp.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	cp.amount = max(1, int(L.get("amount", 1)))
+	return m
+
+
+func _fx_part_setup(cp: CPUParticles3D, L: Dictionary, mode: int, tint: Color) -> CPUParticles3D:
 	cp.lifetime = max(0.05, _rnd(L.get("life", 0.5), 0.5))
 	cp.lifetime_randomness = float(L.get("life_rand", 0.3))
 	cp.one_shot = true
@@ -1055,3 +1079,17 @@ func _fx_rastro_mesh(R: Dictionary) -> MeshInstance3D:
 	mi.material_override = m
 	mi.extra_cull_margin = 4.0
 	return mi
+
+
+# clarão de luz real: ilumina chão e personagens por um instante
+func _fx_light(L: Dictionary, at: Vector3) -> void:
+	var li = OmniLight3D.new()
+	li.light_color = Color(str(L["luz"]))
+	li.omni_range = float(L.get("alcance", 4.0)) * cam_k
+	li.light_energy = float(L.get("energia", 3.0))
+	li.shadow_enabled = false
+	li.position = at + Vector3(0, float(L.get("y", 1.0)), 0)
+	add_child(li)
+	var tw = li.create_tween()
+	tw.tween_property(li, "light_energy", 0.0, float(L.get("dur", 0.3))).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_callback(li.queue_free)

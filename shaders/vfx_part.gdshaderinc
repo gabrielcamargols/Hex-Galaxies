@@ -7,6 +7,7 @@ uniform float boost = 1.0;       // > 1 estoura para o branco (brilho)
 uniform float erode = 0.0;       // 0 sem erosão .. 1 some tudo no fim da vida
 uniform float erode_pow = 1.5;
 uniform float soft = 0.12;
+uniform float cut = 0.0;          // intensidade mínima (evita o quadrado das mipmaps em chão visto de lado)
 uniform float halftone = 0.0;    // 0 liso .. 1 borda vira pontos de retícula
 uniform float dot_px = 7.0;
 uniform float stretch = 1.0;     // modo 1: alonga no sentido da velocidade
@@ -31,7 +32,7 @@ void vertex() {
 
 void fragment() {
 	float v = texture(tex, UV).r;
-	float thr = pow(age, erode_pow) * erode;
+	float thr = max(pow(age, erode_pow) * erode, cut);
 	float a = smoothstep(thr, thr + soft, v);
 	if (halftone > 0.0) {
 		vec2 g = FRAGCOORD.xy / dot_px;
