@@ -3228,42 +3228,75 @@ func _wild_props(root: Node3D, h: Vector2i, k: String) -> bool:
 		"ponte":
 			_bridge(root, h)
 		"ruina_alta":
-			# ruína de templo na selva: pórtico com colunas quebradas, muro de blocos, entulho e musgo
+			# ruínas esquecidas: restos de templo, quebrados e tombados, ligados às ruínas vizinhas por muros caídos
 			var hb = Node3D.new()
 			hb.rotation = Vector3(0, int(_rnd(h, 2) * 6) * PI / 3.0, 0)
 			root.add_child(hb)
-			var st_m = _pincel_custom("pedra_ruina", Color("#6e6c90"), Color("#8582a6"), Color("#a29fc0"), 0.0, 2.0)
+			var st_m = _pincel_custom("pedra_ruina", Color("#5f5d80"), Color("#76739a"), Color("#938fb4"), 0.0, 2.0)
 			var mo_m = _pincel_custom("musgo", Color("#1f4a2a"), Color("#3f8a3a"), Color("#8abf4a"), 0.15, 6.0)
-			var parts = []
-			# base de degraus
-			parts.append([_box(Vector3(1.5, 0.14, 1.25)), Vector3(0, 0.07, 0), Vector3.ZERO, st_m])
-			parts.append([_box(Vector3(1.25, 0.14, 1.0)), Vector3(0, 0.21, 0), Vector3.ZERO, st_m])
-			# colunas: duas inteiras com lintel (pórtico) e uma quebrada
-			for cx in [-0.42, 0.42]:
-				parts.append([_cyl(0.15, 0.17, 1.15, 8), Vector3(cx, 0.78, -0.15), Vector3.ZERO, st_m])
-				parts.append([_box(Vector3(0.4, 0.1, 0.4)), Vector3(cx, 1.4, -0.15), Vector3.ZERO, st_m])
-			parts.append([_box(Vector3(1.25, 0.2, 0.34)), Vector3(0, 1.55, -0.15), Vector3(0, 0, 0.05), st_m])
-			parts.append([_cyl(0.14, 0.17, 0.6, 8), Vector3(0.05, 0.5, 0.4), Vector3.ZERO, st_m])
-			parts.append([_box(Vector3(0.22, 0.14, 0.18)), Vector3(0.1, 0.84, 0.42), Vector3(0.3, 0.5, 0.2), st_m])
-			# muro de blocos (duas fileiras desencontradas)
-			for i in range(3):
-				parts.append([_box(Vector3(0.36, 0.2, 0.28)), Vector3(-0.55 + i * 0.37, 0.38, 0.42), Vector3.ZERO, st_m])
-			for i in range(2):
-				parts.append([_box(Vector3(0.36, 0.2, 0.28)), Vector3(-0.36 + i * 0.37, 0.58, 0.42), Vector3(0, 0.05, 0), st_m])
-			# entulho caído
-			parts.append([_box(Vector3(0.26, 0.2, 0.22)), Vector3(0.62, 0.3, 0.2), Vector3(0.2, 0.7, 0.1), st_m])
-			parts.append([_box(Vector3(0.2, 0.16, 0.2)), Vector3(-0.7, 0.28, -0.4), Vector3(0.1, 0.3, 0.3), st_m])
-			# musgo no topo e cipós descendo das colunas
 			var sh_m = _moss_mat()
-			parts.append([_box(Vector3(1.0, 0.06, 0.3)), Vector3(0, 1.68, -0.15), Vector3(0, 0, 0.05), sh_m])
-			parts.append([_box(Vector3(0.9, 0.05, 0.22)), Vector3(0, 0.67, 0.42), Vector3(0, 0.05, 0), sh_m])
-			parts.append([_box(Vector3(1.1, 0.05, 0.7)), Vector3(0, 0.3, 0.02), Vector3.ZERO, sh_m])
-			parts.append([_sph(0.32, 0.12), Vector3(0.05, 0.84, 0.4), Vector3.ZERO, sh_m])
-			for cx in [-0.42, 0.42]:
-				parts.append([_cyl(0.025, 0.03, 0.9, 4), Vector3(cx + 0.14, 1.0, -0.02), Vector3(0.1, 0, 0.1), mo_m])
+			var parts = []
+			# laje afundada e torta
+			parts.append([_box(Vector3(1.45, 0.12, 1.2)), Vector3(0, 0.04, 0), Vector3(0.03, 0.1, -0.03), st_m])
+			parts.append([_box(Vector3(1.0, 0.1, 0.8)), Vector3(0.1, 0.13, 0.0), Vector3(-0.04, -0.15, 0.05), st_m])
+			# colunas quebradas em alturas diferentes (uma tombada, uma só tocos)
+			parts.append([_cyl(0.15, 0.17, 0.95, 8), Vector3(-0.42, 0.62, -0.15), Vector3(0.06, 0, 0.08), st_m])
+			parts.append([_box(Vector3(0.36, 0.1, 0.36)), Vector3(-0.42, 1.14, -0.15), Vector3(0.1, 0.3, 0.2), st_m])
+			parts.append([_cyl(0.15, 0.17, 0.42, 8), Vector3(0.42, 0.3, -0.15), Vector3(0, 0, -0.05), st_m])
+			parts.append([_cyl(0.13, 0.15, 0.7, 8), Vector3(0.3, 0.2, 0.42), Vector3(0.0, 0.5, PI / 2.0 - 0.1), st_m])
+			parts.append([_cyl(0.1, 0.13, 0.28, 7), Vector3(-0.15, 0.22, 0.4), Vector3(0.1, 0.0, 0.5), st_m])
+			# verga partida: metade caída no chão, metade ainda apoiada
+			parts.append([_box(Vector3(0.55, 0.18, 0.32)), Vector3(-0.32, 1.28, -0.15), Vector3(0, 0.0, 0.35), st_m])
+			parts.append([_box(Vector3(0.5, 0.18, 0.32)), Vector3(0.2, 0.18, -0.55), Vector3(0.12, 0.6, 0.15), st_m])
+			# fragmentos de muro e entulho espalhado
+			for i in range(3):
+				parts.append([_box(Vector3(0.34, 0.2, 0.26)), Vector3(-0.5 + i * 0.38, 0.22, 0.46), Vector3(0, 0.08 * i, 0.04 * i), st_m])
+			parts.append([_box(Vector3(0.34, 0.2, 0.26)), Vector3(-0.3, 0.42, 0.46), Vector3(0.1, 0.15, 0.25), st_m])
+			for i in range(4):
+				var rx = (_rnd(h, 40 + i) - 0.5) * 1.5
+				var rz = (_rnd(h, 50 + i) - 0.5) * 1.3
+				var sz = 0.1 + _rnd(h, 60 + i) * 0.16
+				parts.append([_box(Vector3(sz * 1.3, sz, sz)), Vector3(rx, 0.1 + sz * 0.4, rz), Vector3(_rnd(h, 70 + i), _rnd(h, 80 + i) * 3.0, _rnd(h, 90 + i)), st_m])
+			# musgo cobrindo o que sobrou
+			parts.append([_box(Vector3(0.6, 0.04, 0.4)), Vector3(0.1, 0.2, 0.02), Vector3(0.03, 0.1, -0.03), sh_m])
+			parts.append([_cyl(0.17, 0.19, 0.12, 8), Vector3(-0.42, 1.08, -0.15), Vector3(0.06, 0, 0.08), sh_m])
+			parts.append([_cyl(0.17, 0.19, 0.08, 8), Vector3(0.42, 0.52, -0.15), Vector3(0, 0, -0.05), sh_m])
+			parts.append([_cyl(0.025, 0.03, 0.8, 4), Vector3(-0.28, 0.7, -0.02), Vector3(0.1, 0, 0.1), mo_m])
+			parts.append([_cyl(0.025, 0.03, 0.5, 4), Vector3(0.5, 0.3, -0.05), Vector3(-0.1, 0, -0.1), mo_m])
 			for pt in parts:
 				var mi = _mesh(hb, pt[0], Color.WHITE, pt[1], pt[2])
 				mi.material_override = pt[3]
+			# ligação com as ruínas vizinhas: calçada rachada e muro caído até a divisa da casa
+			var c0 = world_xz(h)
+			for di in range(6):
+				var nb = h + DB.DIRS[di]
+				if not tiles.has(nb) or g.terr(nb)["k"] != "ruina_alta":
+					continue
+				var dv = world_xz(nb) - c0
+				var dist = dv.length()
+				var d = dv / dist
+				var yaw = atan2(-d.y, d.x)
+				var half = dist * 0.5 + 0.06
+				var lp = []
+				lp.append([_box(Vector3(half, 0.07, 0.62)), Vector3(d.x * half * 0.5, 0.06, d.y * half * 0.5), Vector3(0, yaw + 0.04, 0.02), st_m])
+				var nbk = int(half / 0.34)
+				for j in range(nbk + 1):
+					var t = 0.38 + j * 0.34
+					if j == nbk:
+						t = half - 0.12
+					var r0 = _rnd(h + DB.DIRS[di], 100 + j)
+					if j < nbk and r0 < 0.42:
+						continue   # buraco no muro
+					var side = 0.34 if (j % 2 == 0) else -0.34
+					var bh = 0.12 + r0 * 0.32
+					var base = Vector3(d.x * t - d.y * side * 0.0, 0.0, d.y * t)
+					var off = Vector3(-d.y, 0, d.x) * side
+					lp.append([_box(Vector3(0.34, bh, 0.24)), base + off + Vector3(0, bh * 0.5 + 0.06, 0), Vector3(r0 * 0.3, yaw + (r0 - 0.5) * 0.8, (r0 - 0.5) * 0.5), st_m])
+					if r0 > 0.85:
+						lp.append([_box(Vector3(0.34, 0.04, 0.24)), base + off + Vector3(0, bh + 0.08, 0), Vector3(r0 * 0.3, yaw + (r0 - 0.5) * 0.8, (r0 - 0.5) * 0.5), sh_m])
+				for pt in lp:
+					var mi2 = _mesh(root, pt[0], Color.WHITE, pt[1], pt[2])
+					mi2.material_override = pt[3]
 		"planta":
 			for i in range(4):
 				var a2 = TAU / 4.0 * i + _rnd(h, 1)

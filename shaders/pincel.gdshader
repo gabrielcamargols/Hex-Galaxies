@@ -47,7 +47,9 @@ void fragment() {
 		float mc = h21(hexid(mu));
 		float md = hexd(mu) / 0.5;
 		vec3 mcol = mix(vec3(0.12, 0.32, 0.18), vec3(0.58, 0.78, 0.28), clamp(mc * 0.8 + (0.6 - md) * 0.5, 0.0, 1.0));
-		col = mcol;
+		// musgo só em manchas: o resto é pedra nua
+		float mp = vnoise(wp.xz * 1.8 + wp.y * 2.0 + seed);
+		col = mix(col, mcol, step(0.58, mp));
 	}
 	ALBEDO = col;
 	// borda esfarelada: perto do contorno da silhueta o pincel "falha"
