@@ -398,10 +398,84 @@ def moeda():
     return np.clip(face * 0.7 + aro * 0.3 + np.clip(0.4 - np.hypot(x + 0.3, y + 0.3), 0, 1), 0, 1)
 
 
+def espinhos():
+    """bola de espinhos (baiacu): corpo redondo + espinhos triangulares; miolo alto, borda baixa (contorno)"""
+    S = N * 2
+    c = S / 2
+    im = Image.new("L", (S, S), 0)
+    d = ImageDraw.Draw(im)
+    rr = random.Random(3)
+    for k in range(14):
+        a = k / 14 * 2 * math.pi + rr.uniform(-0.1, 0.1)
+        L = S * rr.uniform(0.40, 0.47)
+        w = 0.16
+        d.polygon([(c + math.cos(a - w) * S * 0.26, c + math.sin(a - w) * S * 0.26), (c + math.cos(a) * L, c + math.sin(a) * L),
+                   (c + math.cos(a + w) * S * 0.26, c + math.sin(a + w) * S * 0.26)], fill=255)
+    d.ellipse([c - S * 0.29, c - S * 0.29, c + S * 0.29, c + S * 0.29], fill=255)
+    m = np.asarray(im).astype(np.float32) / 255 > 0.5
+    v = np.clip(ndi.distance_transform_edt(m) / 22.0, 0, 1) * 0.85 + m * 0.15
+    y, x = np.mgrid[0:S, 0:S]
+    v = np.clip(v + np.clip(1 - np.hypot(x - c * 0.82, y - c * 0.8) / (S * 0.1), 0, 1) * 0.3 * m, 0, 1)
+    return np.asarray(Image.fromarray((v * 255).astype(np.uint8)).resize((N, N), Image.LANCZOS)).astype(np.float32) / 255
+
+
+def bolha():
+    """bolha: anel fino + brilho no canto (intensidade alta no brilho)"""
+    x, y = grid()
+    r = np.hypot(x, y)
+    aro = np.clip(1 - np.abs(r - 0.8) / 0.09, 0, 1) * 0.7
+    dentro = np.clip(0.8 - r, 0, 1) * 0.25
+    brilho = np.clip(1 - np.hypot(x + 0.35, y + 0.38) / 0.18, 0, 1)
+    return np.clip(aro + dentro + brilho, 0, 1)
+
+
+def mina():
+    """mina marinha: esfera com pinos; intensidade: borda baixa (contorno), miolo médio, brilho alto"""
+    S = N * 2
+    c = S / 2
+    im = Image.new("L", (S, S), 0)
+    d = ImageDraw.Draw(im)
+    for k in range(8):
+        a = k / 8 * 2 * math.pi
+        x1, y1 = c + math.cos(a) * S * 0.36, c + math.sin(a) * S * 0.36
+        d.line([(c, c), (x1, y1)], fill=255, width=14)
+        d.ellipse([x1 - 14, y1 - 14, x1 + 14, y1 + 14], fill=255)
+    d.ellipse([c - S * 0.27, c - S * 0.27, c + S * 0.27, c + S * 0.27], fill=255)
+    m = np.asarray(im).astype(np.float32) / 255 > 0.5
+    v = np.clip(ndi.distance_transform_edt(m) / 14.0, 0, 1) * 0.6 + m * 0.12
+    y, x = np.mgrid[0:S, 0:S]
+    v = np.clip(v + np.clip(1 - np.hypot(x - c * 0.85, y - c * 0.82) / (S * 0.09), 0, 1) * 0.5 * m, 0, 1)
+    return np.asarray(Image.fromarray((v * 255).astype(np.uint8)).resize((N, N), Image.LANCZOS)).astype(np.float32) / 255
+
+
+def veu():
+    """véu-fantasma encapuzado (guarda do Balu): capuz com rosto escuro e barra esfiapada"""
+    S = N * 2
+    im = Image.new("L", (S, S), 0)
+    d = ImageDraw.Draw(im)
+    pts = [(S * 0.5, S * 0.06), (S * 0.8, S * 0.28), (S * 0.86, S * 0.7)]
+    for k in range(7):
+        x = S * (0.86 - k * 0.12)
+        pts.append((x, S * (0.94 if k % 2 == 0 else 0.8)))
+    pts += [(S * 0.14, S * 0.7), (S * 0.2, S * 0.28)]
+    d.polygon(pts, fill=255)
+    m = np.asarray(im).astype(np.float32) / 255 > 0.5
+    v = np.clip(ndi.distance_transform_edt(m) / 26.0, 0, 1) * 0.8 + m * 0.2
+    face = Image.new("L", (S, S), 0)
+    ImageDraw.Draw(face).ellipse([S * 0.36, S * 0.24, S * 0.64, S * 0.5], fill=255)
+    fm = np.asarray(face).astype(np.float32) / 255
+    v = np.where(fm > 0.5, 0.08, v)
+    for ex in (0.44, 0.56):
+        ey = Image.new("L", (S, S), 0)
+        ImageDraw.Draw(ey).ellipse([S * (ex - 0.025), S * 0.35, S * (ex + 0.025), S * 0.39], fill=255)
+        v = np.where(np.asarray(ey) > 128, 1.0, v)
+    return np.asarray(Image.fromarray((v * 255).astype(np.uint8)).resize((N, N), Image.LANCZOS)).astype(np.float32) / 255
+
+
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     for nm, fn in [("brilho", brilho), ("anel", anel), ("estrela", estrela), ("faisca", faisca), ("fumaca", fumaca),
-                   ("estilhaco", estilhaco), ("respingo", respingo), ("rasgo", rasgo), ("gota", gota), ("seta", seta), ("corrente", corrente), ("voronoi", voronoi), ("ponto", ponto), ("retalho", retalho), ("racha", racha), ("arpao", arpao), ("raio", raio), ("pinca_a", pinca_a), ("punho", punho), ("onda", onda), ("garras_chao", garras_chao), ("moeda", moeda)]:
+                   ("estilhaco", estilhaco), ("respingo", respingo), ("rasgo", rasgo), ("gota", gota), ("seta", seta), ("corrente", corrente), ("voronoi", voronoi), ("ponto", ponto), ("retalho", retalho), ("racha", racha), ("arpao", arpao), ("raio", raio), ("pinca_a", pinca_a), ("punho", punho), ("onda", onda), ("garras_chao", garras_chao), ("moeda", moeda), ("espinhos", espinhos), ("bolha", bolha), ("mina", mina), ("veu", veu)]:
         v = fn()
         if nm == "faisca":
             v = v[::-1]          # cabeça em cima: o topo da textura segue a velocidade

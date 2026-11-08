@@ -9,7 +9,7 @@ const FUNDOS = {
 	"Neutro": [Color("#8c909e"), Color("#6c7080"), Color("#2a2c36")],
 	"Claro": [Color("#e9e4d8"), Color("#cfc8b6"), Color("#7d8794")],
 }
-const LADOS = [["rhazur", "k_tank"], ["rayak", "k_tank"], ["strahl", "k_tank"], ["sterina", "k_front"]]
+const LADOS = [["rhazur", "k_tank"], ["rayak", "k_tank"], ["strahl", "k_tank"], ["bayak", "k_tank"], ["sapturne", "k_tank"], ["balu", "k_tank"], ["sterina", "k_front"]]
 const EXTRAS = ["k_front", "k_sniper"]     # inimigos vizinhos do alvo (descargas, áreas)
 
 var vfx: Node3D
@@ -203,6 +203,11 @@ func tocar(id: String) -> void:
 		ctx["nucleo"] = Color(str(pers[atk]["nucleo"]))
 	if alvo == "self":
 		vfx.play_fx(id, _pa(), null, Color.WHITE, null, ctx)
+	elif alvo == "meio":
+		vfx.play_fx(id, Vector3(0, 0, 0), _pa(), Color.WHITE, null, ctx)
+	elif alvo == "aliado":
+		var side = 1.0 if not trocado else -1.0
+		vfx.play_fx(id, _pa() + Vector3(0.87 * side, 0, 1.5), _pa(), Color.WHITE, null, ctx)
 	elif r.has("puxa"):
 		# puxões: o alvo é arrastado (até o lado do atacante, ou N casas) e depois volta ao lugar
 		var fig: Node3D = figs[1]

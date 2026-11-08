@@ -4,7 +4,6 @@
   "nucleo": "#ff9f1a",
   "motivo": "manopla dourada",
   "ataque": "aby_rhazur_pinca",
-  "proposta": true,
   "habilidades": [
    "aby_rhazur_mare",
    "aby_rhazur_abraco"
@@ -13,7 +12,7 @@
  "bayak": {
   "nucleo": "#2ddaf6",
   "motivo": "olhos ciano",
-  "ataque": "aby_tiro",
+  "ataque": "aby_bayak_espinho",
   "proposta": true
  },
  "strahl": {
@@ -24,8 +23,12 @@
  "sapturne": {
   "nucleo": "#b9f3ff",
   "motivo": "gelo / foca",
-  "ataque": "aby_tiro",
-  "proposta": true
+  "ataque": "aby_sapturne_bolha",
+  "proposta": true,
+  "habilidades": [
+   "aby_sapturne_mina",
+   "aby_sapturne_mina_explode"
+  ]
  },
  "rayak": {
   "nucleo": "#2f9bff",
@@ -35,8 +38,11 @@
  "balu": {
   "nucleo": "#5fd66a",
   "motivo": "capuz verde",
-  "ataque": "aby_garra",
-  "proposta": true
+  "ataque": "aby_balu_golpe",
+  "proposta": true,
+  "habilidades": [
+   "aby_balu_guarda"
+  ]
  },
  "oncus": {
   "nucleo": "#e9f6ff",
