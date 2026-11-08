@@ -551,7 +551,7 @@ func _screen_angle(a: Vector3, b: Vector3) -> float:
 
 
 ## toca uma receita. at = onde acontece; from = de onde veio (ataque/tiro). Devolve o tempo até o impacto.
-func play_fx(id: String, at: Vector3, from: Variant = null, tint: Color = Color.WHITE) -> float:
+func play_fx(id: String, at: Vector3, from: Variant = null, tint: Color = Color.WHITE, follow: Node3D = null) -> float:
 	_receitas_load()
 	if not receitas.has(id):
 		return 0.0
@@ -564,14 +564,18 @@ func play_fx(id: String, at: Vector3, from: Variant = null, tint: Color = Color.
 		return hit_t
 	for L in r.get("layers", []):
 		var dl = _rnd(L.get("delay", 0.0))
+		var at2 = _em(L, at, from)
+		if L.has("corrente"):
+			_fx_after(dl, _fx_chain.bind(L, at, from, tint, follow))
+			continue
 		if L.has("sub"):
-			_fx_after(dl, play_fx.bind(str(L["sub"]), at, from, tint))
+			_fx_after(dl, play_fx.bind(str(L["sub"]), at2, from, tint))
 		elif L.has("drops"):
-			_fx_after(dl, _fx_drops.bind(L, at, from))
+			_fx_after(dl, _fx_drops.bind(L, at2, from))
 		elif L.has("p"):
-			_fx_after(dl, _fx_part.bind(L, at, from, tint))
+			_fx_after(dl, _fx_part.bind(L, at2, from, tint, follow))
 		else:
-			_fx_after(dl, _fx_layer.bind(L, at, from, tint))
+			_fx_after(dl, _fx_layer.bind(L, at2, from, tint))
 	if r.has("shake") and board != null:
 		_fx_after(_rnd(r.get("shake_delay", 0.0)), func(): board.shake = max(board.shake, float(r["shake"])))
 	return float(r.get("hit_t", 0.0))
@@ -799,6 +803,12 @@ func _fx_part_node(L: Dictionary, tint: Color) -> CPUParticles3D:
 		cp.particle_flag_align_y = true
 	if mode == 2:
 		cp.particle_flag_rotate_y = true
+	if L.has("radial"):
+		cp.radial_accel_min = float(L["radial"][0])
+		cp.radial_accel_max = float(L["radial"][1])
+	if L.has("tangential"):
+		cp.tangential_accel_min = float(L["tangential"][0])
+		cp.tangential_accel_max = float(L["tangential"][1])
 	if float(L.get("ring", 0.0)) > 0.0:
 		cp.emission_shape = CPUParticles3D.EMISSION_SHAPE_RING
 		cp.emission_ring_axis = Vector3.UP
@@ -823,7 +833,7 @@ func _fx_part_node(L: Dictionary, tint: Color) -> CPUParticles3D:
 	return cp
 
 
-func _fx_part(L: Dictionary, at: Vector3, from: Variant, tint: Color) -> void:
+func _fx_part(L: Dictionary, at: Vector3, from: Variant, tint: Color, follow: Node3D = null) -> void:
 	var cp = _fx_part_node(L, tint)
 	if cp == null:
 		return
@@ -848,6 +858,19 @@ func _fx_part(L: Dictionary, at: Vector3, from: Variant, tint: Color) -> void:
 	cp.position = pos
 	add_child(cp)
 	cp.emitting = true
+	if L.has("segue") and follow != null and is_instance_valid(follow):
+		# emite continuamente grudado em quem está sendo puxado
+		cp.one_shot = false
+		cp.explosiveness = 0.0
+		var dy = pos.y - at.y
+		var dur = float(L["segue"])
+		var tw = cp.create_tween()
+		tw.tween_method(func(_u):
+			if is_instance_valid(follow):
+				cp.position = follow.global_position + Vector3(0, dy, 0), 0.0, 1.0, dur)
+		tw.tween_callback(func(): cp.emitting = false)
+		get_tree().create_timer(dur + cp.lifetime + 0.4).timeout.connect(cp.queue_free)
+		return
 	get_tree().create_timer(cp.lifetime * (1.0 + cp.lifetime_randomness) / max(0.01, cp.speed_scale) + 0.3).timeout.connect(cp.queue_free)
 
 
@@ -862,6 +885,14 @@ func _fx_proj2(P: Dictionary, from: Vector3, to: Vector3, tint: Color) -> float:
 	holder.position = a
 	add_child(holder)
 	var emitters: Array = []
+	if P.has("orbe"):
+		holder.add_child(_fx_orbe(P["orbe"]))
+	if P.has("rastro"):
+		var tr = _fx_rastro_mesh(P["rastro"])
+		holder.add_child(tr)
+	var dir0 = (b - a).normalized()
+	if abs(dir0.dot(Vector3.UP)) < 0.99:
+		holder.look_at_from_position(a, a + dir0, Vector3.UP)
 	for L in P["parts"]:
 		var cp = _fx_part_node(L, tint)
 		if cp == null:
@@ -879,6 +910,9 @@ func _fx_proj2(P: Dictionary, from: Vector3, to: Vector3, tint: Color) -> float:
 	var tw = holder.create_tween()
 	tw.tween_method(func(u):
 		var p = a.lerp(b, u) + Vector3(0, sin(u * PI) * arc, 0)
+		var nxt = a.lerp(b, min(1.0, u + 0.02)) + Vector3(0, sin(min(1.0, u + 0.02) * PI) * arc, 0)
+		if (nxt - p).length() > 0.0001 and abs((nxt - p).normalized().dot(Vector3.UP)) < 0.99:
+			holder.look_at_from_position(p, nxt, Vector3.UP)
 		holder.position = p
 		for e in emitters:
 			if e[1]:
@@ -890,3 +924,133 @@ func _fx_proj2(P: Dictionary, from: Vector3, to: Vector3, tint: Color) -> float:
 			get_tree().create_timer(life).timeout.connect(e[0].queue_free)
 		get_tree().create_timer(1.5).timeout.connect(holder.queue_free))
 	return t
+
+
+# posição de uma camada: "em": "from" (no atacante), "dest" (casa ao lado do atacante, para onde o puxado chega)
+func _em(L: Dictionary, at: Vector3, from: Variant) -> Vector3:
+	var em = str(L.get("em", ""))
+	if em == "" or from == null:
+		return at
+	if em == "from":
+		return from
+	if em == "dest":
+		var d = (at - from) * Vector3(1, 0, 1)
+		return from + (d.normalized() * 1.73 if d.length() > 0.01 else Vector3.ZERO)
+	return at
+
+
+# CORRENTE: voa do atacante até o alvo, prende, recolhe junto com o alvo puxado (follow) e some
+func _fx_chain(L: Dictionary, at: Vector3, from: Variant, tint: Color, follow: Node3D) -> void:
+	if from == null:
+		return
+	var tex_path = "res://vfx/tex/%s.png" % str(L["corrente"])
+	if not ResourceLoader.exists(tex_path):
+		return
+	var tex = load(tex_path)
+	var meshes: Array = []
+	for layer in [["mix", L.get("ramp_sombra", ["#12061c", "#301342"]), 1.7, 1.0], ["add", L.get("ramp", ["#a957ec", "#f438a9", "#ffffff"]), 1.0, float(L.get("boost", 1.4))]]:
+		var mi = MeshInstance3D.new()
+		var q = QuadMesh.new()
+		q.size = Vector2(1, 1)
+		mi.mesh = q
+		mi.extra_cull_margin = 16.0
+		var m = ShaderMaterial.new()
+		m.shader = load("res://shaders/vfx_beam_%s.gdshader" % layer[0])
+		m.render_priority = 20 if layer[0] == "mix" else 23
+		m.set_shader_parameter("tex", tex)
+		m.set_shader_parameter("ramp", _ramp_tex(layer[1]))
+		m.set_shader_parameter("width", float(L.get("width", 0.4)) * layer[2] * cam_k)
+		m.set_shader_parameter("tile", float(L.get("tile", 0.7)) * cam_k)
+		m.set_shader_parameter("boost", layer[3])
+		m.set_shader_parameter("halftone", float(L.get("halftone", 0.5)))
+		m.set_shader_parameter("tint", tint)
+		mi.material_override = m
+		add_child(mi)
+		meshes.append([mi, m])
+	var y0 = float(L.get("y_from", 1.1))
+	var y1 = float(L.get("y_to", 0.9))
+	var p0 = from + Vector3(0, y0, 0)
+	var ida = float(L.get("ida", 0.22))
+	var seg = float(L.get("segura", 0.18))
+	var vol = float(L.get("volta", 0.42))
+	var tot = ida + seg + vol + 0.18
+	var tw = create_tween()
+	tw.tween_method(func(t):
+		var tgt = at + Vector3(0, y1, 0)
+		if follow != null and is_instance_valid(follow):
+			tgt = follow.global_position + Vector3(0, y1, 0)
+		var end = tgt
+		var fade = 1.0
+		var scroll = 0.0
+		if t < ida:
+			var k = 1.0 - pow(1.0 - t / ida, 3.0)
+			end = p0.lerp(tgt, k)
+		elif t > ida + seg + vol:
+			var k = (t - ida - seg - vol) / 0.18
+			end = tgt.lerp(p0, k)
+			fade = 1.0 - k
+		if t > ida + seg:
+			scroll = (t - ida - seg) * float(L.get("recolhe", 3.0))
+		var ax = end - p0
+		for mm in meshes:
+			var mi: MeshInstance3D = mm[0]
+			mi.transform = Transform3D(Basis(ax, Vector3.UP, Vector3.BACK), p0)
+			mm[1].set_shader_parameter("fade", fade)
+			mm[1].set_shader_parameter("scroll", scroll), 0.0, tot, tot)
+	tw.tween_callback(func():
+		for mm in meshes:
+			mm[0].queue_free())
+
+
+# esfera do projétil (ruído celular rolando + borda brilhante)
+func _fx_orbe(O: Dictionary) -> MeshInstance3D:
+	var mi = MeshInstance3D.new()
+	var sm = SphereMesh.new()
+	var r = float(O.get("size", 0.4)) * cam_k
+	sm.radius = r
+	sm.height = r * 2.0
+	sm.radial_segments = 24
+	sm.rings = 12
+	mi.mesh = sm
+	var m = ShaderMaterial.new()
+	m.shader = load("res://shaders/vfx_orbe.gdshader")
+	m.render_priority = 24
+	m.set_shader_parameter("noise", load("res://vfx/tex/voronoi.png"))
+	m.set_shader_parameter("ramp", _ramp_tex(O.get("ramp", ["#301342", "#a957ec", "#f438a9", "#ffffff"])))
+	m.set_shader_parameter("boost", float(O.get("boost", 1.3)))
+	mi.material_override = m
+	return mi
+
+
+# rastro em malha: língua de chama para trás (-Z), dois planos cruzados
+func _fx_rastro_mesh(R: Dictionary) -> MeshInstance3D:
+	var L = float(R.get("len", 1.8)) * cam_k
+	var w = float(R.get("width", 0.45)) * cam_k
+	var st = SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var segs = 14
+	for plane in range(2):
+		for i in range(segs):
+			var u0 = float(i) / segs
+			var u1 = float(i + 1) / segs
+			var w0 = w * pow(1.0 - u0, 0.6) * (1.0 + 0.35 * sin(u0 * PI))
+			var w1 = w * pow(1.0 - u1, 0.6) * (1.0 + 0.35 * sin(u1 * PI))
+			var ax = Vector3(1, 0, 0) if plane == 0 else Vector3(0, 1, 0)
+			var a0 = Vector3(0, 0, u0 * L) + ax * w0
+			var b0 = Vector3(0, 0, u0 * L) - ax * w0
+			var a1 = Vector3(0, 0, u1 * L) + ax * w1
+			var b1 = Vector3(0, 0, u1 * L) - ax * w1
+			for v in [[a0, Vector2(u0, 0)], [b0, Vector2(u0, 1)], [a1, Vector2(u1, 0)], [b0, Vector2(u0, 1)], [b1, Vector2(u1, 1)], [a1, Vector2(u1, 0)]]:
+				st.set_uv(v[1])
+				st.add_vertex(v[0])
+	var mi = MeshInstance3D.new()
+	mi.mesh = st.commit()
+	var m = ShaderMaterial.new()
+	m.shader = load("res://shaders/vfx_rastro.gdshader")
+	m.render_priority = 22
+	m.set_shader_parameter("noise", load("res://vfx/tex/voronoi.png"))
+	m.set_shader_parameter("ramp", _ramp_tex(R.get("ramp", ["#a957ec", "#f438a9", "#ff91d8", "#ffffff"])))
+	m.set_shader_parameter("boost", float(R.get("boost", 1.3)))
+	mi.material_override = m
+	mi.extra_cull_margin = 4.0
+	return mi

@@ -148,12 +148,12 @@ func _pb() -> Vector3:
 
 
 func _cam_place(delta: float) -> void:
-	var tgt = Vector3(-1.5, 0.7, 0)   # palco deslocado: o painel fica à esquerda
+	var tgt = Vector3(-1.1, 0.7, 0)   # palco deslocado: o painel fica à esquerda
 	if shake > 0.0:
 		var t = Time.get_ticks_msec() / 1000.0
 		tgt += Vector3(sin(t * 43.0), cos(t * 31.0) * 0.5, 0) * 0.18 * shake
 		shake = max(0.0, shake - delta * 1.4)
-	cam.position = tgt + Vector3(0, 4.6, 7.0)
+	cam.position = tgt + Vector3(0, 5.3, 8.2)
 	cam.look_at(tgt)
 
 
@@ -173,6 +173,18 @@ func tocar(id: String) -> void:
 	var alvo = str(r.get("alvo", "outro"))
 	if alvo == "self":
 		vfx.play_fx(id, _pa(), null)
+	elif r.has("puxa"):
+		# Abraço: o alvo é arrastado até a casa ao lado do atacante e depois volta ao lugar
+		var fig: Node3D = figs[1]
+		var ini = _pb()
+		var dest = _pa() + (ini - _pa()).normalized() * 1.73
+		vfx.play_fx(id, ini, _pa(), Color.WHITE, fig)
+		var pz = r["puxa"]
+		var tw = fig.create_tween()
+		tw.tween_interval(float(pz.get("inicio", 0.4)))
+		tw.tween_property(fig, "position", dest, float(pz.get("dur", 0.4))).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		tw.tween_interval(1.1)
+		tw.tween_property(fig, "position", ini, 0.01)
 	else:
 		vfx.play_fx(id, _pb(), _pa())
 	if info != null:

@@ -161,10 +161,49 @@ def seta():
     return np.clip(v * (1.1 - np.abs(x) * 0.5), 0, 1)
 
 
+def corrente():
+    """elos de corrente em tira repetível (256x64): elo de frente (anel) e elo de lado (barra), alternados"""
+    W, H = 256, 64
+    y, x = np.mgrid[0:H, 0:W].astype(np.float32)
+    v = np.zeros((H, W), np.float32)
+    cy = H / 2
+    for i in range(4):
+        cx = 32 + i * 64
+        if i % 2 == 0:
+            dx, dy = (x - cx) / 30, (y - cy) / 17
+            r = np.hypot(dx, dy)
+            v = np.maximum(v, np.clip(1 - np.abs(r - 0.78) / 0.24, 0, 1))
+        else:
+            dx, dy = (x - cx) / 46, (y - cy) / 7
+            r = np.hypot(dx, dy)
+            v = np.maximum(v, np.clip(1 - r, 0, 1) ** 0.5 * 0.9)
+    # brilho de metal no topo de cada elo
+    v = np.clip(v * (0.75 + 0.35 * np.clip((cy - y) / cy, -1, 1)), 0, 1)
+    return v
+
+
+def voronoi():
+    """ruído celular repetível (para a esfera do projétil rolar)"""
+    rng = np.random.default_rng(7)
+    n = N
+    pts = rng.random((14, 2)) * n
+    y, x = np.mgrid[0:n, 0:n].astype(np.float32)
+    d1 = np.full((n, n), 1e9, np.float32)
+    d2 = np.full((n, n), 1e9, np.float32)
+    for px, py in pts:
+        for ox in (-n, 0, n):
+            for oy in (-n, 0, n):
+                d = np.hypot(x - px - ox, y - py - oy)
+                d2 = np.where(d < d1, d1, np.minimum(d2, d))
+                d1 = np.minimum(d1, d)
+    v = (d2 - d1) / (n * 0.18)
+    return np.clip(1 - v, 0, 1) ** 1.5
+
+
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     for nm, fn in [("brilho", brilho), ("anel", anel), ("estrela", estrela), ("faisca", faisca), ("fumaca", fumaca),
-                   ("estilhaco", estilhaco), ("respingo", respingo), ("rasgo", rasgo), ("gota", gota), ("seta", seta)]:
+                   ("estilhaco", estilhaco), ("respingo", respingo), ("rasgo", rasgo), ("gota", gota), ("seta", seta), ("corrente", corrente), ("voronoi", voronoi)]:
         v = fn()
         if nm == "faisca":
             v = v[::-1]          # cabeça em cima: o topo da textura segue a velocidade
