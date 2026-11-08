@@ -853,136 +853,41 @@ func _show_select() -> void:
 	stage = "select"
 	_clear_ui()
 	galaxy.set_mode("select")
-	galaxy.visible = false   # a tela é toda 2D (estilo HQ); a galáxia 3D volta no mergulho
 	ui.modulate.a = 0.0
-	var bg = TextureRect.new()
-	bg.texture = load("res://ui/sel/bg.jpg")
-	bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	bg.mouse_filter = Control.MOUSE_FILTER_STOP
-	ui.add_child(bg)
-	# quadro de 1600x900 escalado para caber na tela
-	var fr = Control.new()
-	fr.size = Vector2(1600, 900)
-	fr.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	ui.add_child(fr)
-	w["selfr"] = fr
-	bg.resized.connect(_fit_sel)
-	_fit_sel()
-	var sun = _sel_img(fr, "sun.png", Vector2(642, 173))
-	sun.pivot_offset = Vector2(210, 210)
-	var stw = sun.create_tween().set_loops()
-	stw.tween_property(sun, "rotation", TAU, 90.0).from(0.0)
-	var ban = _sel_img(fr, "banner.png", Vector2(310, 4))
-	var t1 = _sel_text(ban, "ESCOLHA O PLANETA DA BATALHA", 46, C_GOLD, Vector2(110, 22), Vector2(760, 70), true)
-	t1.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	var t2 = _sel_text(ban, "Toque num planeta para ver as tropas e montar seu exército", 18, Color.WHITE, Vector2(190, 98), Vector2(600, 36))
-	t2.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	# Tarhut em cima à esquerda (rosa), Valak embaixo à direita (ciano)
-	var slots = {
-		"tarhut": {"card": "card_pink.png", "cpos": Vector2(330, 190), "planet": "planet_tarhut.png", "ppos": Vector2(118, 239),
-			"sub": C_GOLD, "name": Vector2(52, 50), "w": 370, "btn": Vector2(50, 190)},
-		"valak": {"card": "card_cyan.png", "cpos": Vector2(775, 478), "planet": "planet_valak.png", "ppos": Vector2(508, 499),
-			"sub": Color("#3ee6ff"), "name": Vector2(58, 44), "w": 370, "btn": Vector2(68, 218)},
-	}
-	var k = 0
-	for id in slots.keys():
-		if not galaxy.pickable().has(id):
-			continue
+	_vignette()
+	var top = VBoxContainer.new()
+	top.add_theme_constant_override("separation", 2)
+	ui.add_child(top)
+	_place(top, Control.PRESET_CENTER_TOP, 26)
+	top.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var l1 = _label(top, "ESCOLHA O PLANETA DA BATALHA", 26, C_GOLD)
+	l1.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var l2 = _label(top, "Toque num planeta para ver as tropas e montar seu exército", 14, C_DIM)
+	l2.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var back = _cbtn(ui, "◀  Voltar", C_HUD, _back_title)
+	_place(back, Control.PRESET_BOTTOM_LEFT, 22)
+	w["tags"] = {}
+	for id in galaxy.pickable():
 		var d = galaxy.data(id)
-		var sl = slots[id]
-		var card = _sel_img(fr, sl["card"], sl["cpos"])
-		card.pivot_offset = card.size * 0.5
-		var nm = _sel_text(card, d["name"].to_upper(), 56 if compact else 46, C_GOLD, sl["name"], Vector2(380, 60), true)
-		nm.clip_text = true
-		_sel_text(card, d["sub"].to_upper(), 22 if compact else 17, sl["sub"], sl["name"] + Vector2(4, 54), Vector2(400, 26), true)
-		var ds = _sel_text(card, d["desc"], 16, Color.WHITE, sl["name"] + Vector2(10, 84), Vector2(sl["w"], 90))
-		ds.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		ds.custom_minimum_size = Vector2(sl["w"], 0)
-		ds.size = Vector2(sl["w"], 90)
-		ds.visible = not compact
-		var bt = TextureButton.new()
-		bt.texture_normal = load("res://ui/sel/btn_yellow.png")
-		bt.position = sl["btn"]
-		bt.pivot_offset = Vector2(170, 33)
-		card.add_child(bt)
-		var bl = _sel_text(bt, "BATALHAR AQUI", 30 if compact else 24, Color.WHITE, Vector2(30, 6), Vector2(290, 48), true)
-		bl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		bl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		bt.pressed.connect(_choose_planet.bind(id))
-		bt.mouse_entered.connect(func():
-			sfx.play("clique", -14.0, 1.4)
-			bt.create_tween().tween_property(bt, "scale", Vector2(1.06, 1.06), 0.12))
-		bt.mouse_exited.connect(func(): bt.create_tween().tween_property(bt, "scale", Vector2.ONE, 0.12))
-		var pl = _sel_img(fr, sl["planet"], sl["ppos"])
-		pl.pivot_offset = pl.size * 0.5
-		pl.mouse_filter = Control.MOUSE_FILTER_STOP
-		pl.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-		pl.gui_input.connect(func(ev):
-			if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
-				_choose_planet(id))
-		pl.mouse_entered.connect(func():
-			sfx.play("clique", -14.0, 1.4)
-			pl.create_tween().tween_property(pl, "scale", Vector2(1.08, 1.08), 0.15))
-		pl.mouse_exited.connect(func(): pl.create_tween().tween_property(pl, "scale", Vector2.ONE, 0.15))
-		# entrada: o quadro "estoura" e o planeta flutua
-		card.scale = Vector2(0.8, 0.8)
-		var ct = card.create_tween()
-		ct.tween_interval(0.35 + k * 0.15)
-		ct.tween_property(card, "scale", Vector2.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-		var y0 = pl.position.y
-		var bob = pl.create_tween().set_loops()
-		bob.tween_property(pl, "position:y", y0 - 7.0, 1.6 + k * 0.3).set_trans(Tween.TRANS_SINE)
-		bob.tween_property(pl, "position:y", y0 + 5.0, 1.6 + k * 0.3).set_trans(Tween.TRANS_SINE)
-		k += 1
-	var back = TextureButton.new()
-	back.texture_normal = load("res://ui/sel/back.png")
-	back.position = Vector2(18, 800)
-	fr.add_child(back)
-	var vb = _sel_text(back, "◀  Voltar", 30, Color.WHITE, Vector2(40, 14), Vector2(200, 50), true)
-	vb.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	vb.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	back.pressed.connect(_back_title)
-	await get_tree().create_timer(0.3).timeout
+		var tag = PanelContainer.new()
+		tag.add_theme_stylebox_override("panel", _tex_box("res://ui/panel.png", 30, d["atm"].lightened(0.1), 18, 12))
+		ui.add_child(tag)
+		var v = _vbox(tag, 3)
+		_label(v, d["name"].to_upper(), 26, C_GOLD)
+		_label(v, d["sub"].to_upper(), 12, d["atm"].lightened(0.2))
+		var dl = _label(v, d["desc"], 13, C_DIM)
+		dl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		dl.custom_minimum_size = Vector2(250, 0)
+		dl.visible = not compact
+		var b = _cbtn(v, "BATALHAR AQUI", C_GOLD, _choose_planet.bind(id))
+		_primary(b)
+		b.custom_minimum_size = Vector2(0, 40)
+		tag.custom_minimum_size = Vector2(230 if compact else 286, 0)
+		tag.position = Vector2(-1000, -1000)
+		w["tags"][id] = tag
+	await get_tree().create_timer(0.55).timeout
 	if stage == "select":
-		_ui_fade(1.0, 0.5)
-
-
-func _fit_sel() -> void:
-	if not w.has("selfr") or not is_instance_valid(w["selfr"]):
-		return
-	var fr: Control = w["selfr"]
-	var vp = get_viewport().get_visible_rect().size / max(0.01, ui.scale.x)
-	var sc = min(vp.x / 1600.0, vp.y / 900.0)
-	fr.scale = Vector2(sc, sc)
-	fr.position = (vp - Vector2(1600, 900) * sc) * 0.5
-
-
-func _sel_img(parent: Control, file: String, pos: Vector2) -> TextureRect:
-	var t = TextureRect.new()
-	t.texture = load("res://ui/sel/" + file)
-	t.position = pos
-	t.size = t.texture.get_size()
-	t.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	parent.add_child(t)
-	return t
-
-
-func _sel_text(parent: Control, txt: String, size: int, col: Color, pos: Vector2, box: Vector2, heavy: bool = false) -> Label:
-	var l = Label.new()
-	l.text = txt
-	l.position = pos
-	l.size = box
-	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	l.add_theme_font_size_override("font_size", size)
-	l.add_theme_color_override("font_color", col)
-	l.add_theme_color_override("font_outline_color", Color(0.04, 0.02, 0.1))
-	l.add_theme_constant_override("outline_size", 9 if heavy else 4)
-	if heavy and font_title != null:
-		l.add_theme_font_override("font", font_title)
-	parent.add_child(l)
-	return l
+		_ui_fade(1.0, 0.6)
 
 
 func _back_title() -> void:
@@ -991,7 +896,6 @@ func _back_title() -> void:
 	stage = "to_title"
 	sfx.play("clique", -8.0)
 	await _ui_fade(0.0, 0.35)
-	galaxy.visible = true
 	_show_menu()
 
 
@@ -1042,7 +946,6 @@ func _choose_planet(id: String) -> void:
 	setup_cfg["map"] = galaxy.data(id)["map"]
 	sfx.play("confirmar", -6.0)
 	sfx.play("vfx_portal", -12.0)
-	galaxy.visible = true
 	_ui_fade(0.0, 0.35)
 	galaxy.set_mode("focus", id)
 	await get_tree().create_timer(0.75).timeout
