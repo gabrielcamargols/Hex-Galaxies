@@ -2379,39 +2379,52 @@ func _build_cave() -> void:
 		var a2 = rng.randf() * TAU
 		var d2 = far + 4.5 + rng.randf_range(0.0, 4.0)
 		_rockwall(Vector3(cos(a2) * d2, BASE_Y, sin(a2) * d2), rng.randf_range(8.0, 16.0), rng.randf_range(2.2, 3.6), wall_cols[rng.randi() % 4].darkened(0.25), rng)
-	# cristais de enfeite nas paredes (não são do jogo)
-	var kinds = ["verde", "azul", "roxo"]
-	for i in range(16):
-		var a3 = rng.randf() * TAU
-		var d3 = far + rng.randf_range(0.2, 1.4)
-		var holder = Node3D.new()
-		holder.position = Vector3(cos(a3) * d3, BASE_Y + rng.randf_range(0.0, 1.2), sin(a3) * d3)
-		holder.scale = Vector3.ONE * rng.randf_range(0.9, 1.6)
-		scenery_root.add_child(holder)
-		_crystal_cluster(holder, kinds[rng.randi() % 3], 900 + i)
-	# entradas de mina nas pontas de fora dos trilhos
+	# cenário organizado: só duas entradas de mina, de lados opostos; cada uma ladeada por
+	# um andaime; os cristais de enfeite ficam em dois grupos, nos lados livres entre elas
+	var cands = []
 	for ti in range(g.tracks.size()):
 		var tr = g.tracks[ti]
 		if tr.size() < 2:
 			continue
 		if g.track_loop[ti]:
-			# trilho circular: duas entradas de mina na parede, de lados opostos
 			for k in [tr.size() / 12, tr.size() / 12 + tr.size() / 2]:
-				var wp = world_xz(tr[k])
-				var ov = wp.normalized()
-				var pe = ov * (PLAT + 0.6)
-				_mine_entrance(Vector3(pe.x, BASE_Y, pe.y), atan2(ov.x, ov.y))
-			continue
-		var end = world_xz(tr[0])
-		var prev = world_xz(tr[1])
-		var dirv = (end - prev).normalized()
-		var p = end + dirv * 1.7
-		_mine_entrance(Vector3(p.x, BASE_Y, p.y), atan2(dirv.x, dirv.y))
-	# andaimes amarelos na parede, entre as entradas
-	for k in range(4):
-		var a4 = PI * 0.5 * k + 0.6
-		var d4 = far + 0.2
-		_scaffold(Vector3(cos(a4) * d4, BASE_Y, sin(a4) * d4), -a4 + PI * 0.5)
+				cands.append(world_xz(tr[k]).normalized())
+		else:
+			var end = world_xz(tr[0])
+			cands.append((end - world_xz(tr[1])).normalized())
+	if cands.is_empty():
+		cands = [Vector2(0, 1), Vector2(0, -1)]
+	var pa = cands[0]
+	var pb = cands[0]
+	var best = -2.0
+	for x in cands:
+		for y in cands:
+			var dd = -x.dot(y)
+			if dd > best:
+				best = dd
+				pa = x
+				pb = y
+	if cands.size() == 1:
+		pb = -pa
+	for ov in [pa, pb]:
+		var ang = atan2(ov.y, ov.x)
+		var pe = ov * (PLAT + 0.6)
+		_mine_entrance(Vector3(pe.x, BASE_Y, pe.y), atan2(ov.x, ov.y))
+		for side in [-0.32, 0.32]:
+			var a4 = ang + side
+			var d4 = far + 0.2
+			_scaffold(Vector3(cos(a4) * d4, BASE_Y, sin(a4) * d4), -a4 + PI * 0.5)
+	var kinds = ["verde", "azul", "roxo"]
+	var mid = atan2(pa.y, pa.x) + PI * 0.5
+	for grp in [mid, mid + PI]:
+		for i in range(7):
+			var a3 = grp + rng.randf_range(-0.55, 0.55)
+			var d3 = far + rng.randf_range(0.2, 1.4)
+			var holder = Node3D.new()
+			holder.position = Vector3(cos(a3) * d3, BASE_Y + rng.randf_range(0.0, 1.2), sin(a3) * d3)
+			holder.scale = Vector3.ONE * rng.randf_range(0.9, 1.7)
+			scenery_root.add_child(holder)
+			_crystal_cluster(holder, kinds[i % 3], 900 + i + (0 if grp == mid else 50))
 	_build_pit()
 
 

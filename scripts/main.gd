@@ -979,14 +979,14 @@ func _planet_info(id: String) -> void:
 	if font_title != null:
 		nm.add_theme_font_override("font", font_title)
 	nm.add_theme_constant_override("outline_size", 12)
-	_label(v, d.get("sub", "").to_upper(), 14, C_GOLD)
-	var dl = _label(v, d.get("desc", ""), 15, C_TXT)
+	_label(v, d.get("sub", "").to_upper(), 17, C_GOLD)
+	var dl = _label(v, d.get("desc", ""), 20 if compact else 19, C_TXT)
 	dl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	dl.custom_minimum_size = Vector2(320 if compact else 400, 0)
+	dl.custom_minimum_size = Vector2(360 if compact else 440, 0)
 	var sp = Control.new()
 	sp.custom_minimum_size = Vector2(0, 6)
 	v.add_child(sp)
-	var ah = _label(v, "ARENAS", 18, ac.lightened(0.3))
+	var ah = _label(v, "ARENAS", 22, ac.lightened(0.3))
 	if font_btn != null:
 		ah.add_theme_font_override("font", font_btn)
 	for ar in d.get("arenas", [{"name": d["name"], "map": d["map"], "desc": ""}]):
@@ -994,16 +994,17 @@ func _planet_info(id: String) -> void:
 		row.add_theme_stylebox_override("panel", _flat(Color(0, 0, 0, 0.35), ac.darkened(0.2), 2, 3, 10))
 		v.add_child(row)
 		var rv = _vbox(row, 4)
-		var an = _label(rv, ar["name"].to_upper(), 20, Color.WHITE)
+		var an = _label(rv, ar["name"].to_upper(), 24, Color.WHITE)
 		if font_btn != null:
 			an.add_theme_font_override("font", font_btn)
 		if ar.get("desc", "") != "":
-			var ad = _label(rv, ar["desc"], 13, C_DIM)
+			var ad = _label(rv, ar["desc"], 17, C_TXT.darkened(0.1))
 			ad.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			ad.custom_minimum_size = Vector2(300 if compact else 380, 0)
+			ad.custom_minimum_size = Vector2(340 if compact else 420, 0)
 		var bb = _cbtn(rv, "BATALHAR AQUI", C_GOLD, _choose_planet.bind(id, ar["map"]))
 		_primary(bb)
-		bb.custom_minimum_size = Vector2(0, 46)
+		bb.custom_minimum_size = Vector2(0, 56)
+		bb.add_theme_font_size_override("font_size", 22)
 	panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER_RIGHT, Control.PRESET_MODE_MINSIZE, 40)
 	panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	panel.grow_vertical = Control.GROW_DIRECTION_BOTH

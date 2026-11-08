@@ -344,7 +344,8 @@ func _cam_goal() -> Array:
 			var yaw = clock * 0.025 + 0.6
 			return [Vector3(sin(yaw) * 96.0, 34.0, cos(yaw) * 96.0), Vector3(0, -15, 0), 0.0]
 		"select":
-			return [Vector3(0, 74, 58), Vector3(0, 0, 6), 0.0]
+			# mais perto: os planetas jogáveis ocupam boa parte da tela
+			return [Vector3(0, 50, 44), Vector3(0, 0, 4), 0.0]
 		"focus", "dive":
 			var pp = planet_pos(focus_id)
 			var r = planet_size(focus_id)
@@ -387,7 +388,10 @@ func _process(delta: float) -> void:
 		if mode == "select" and n["data"].get("pick", false):
 			base_a = 0.25
 		(sel.material_override as StandardMaterial3D).albedo_color.a = max(base_a, n["hl"] * pulse)
-		var sc = 1.0 + n["hl"] * 0.08
+		# na escolha, os planetas jogáveis crescem para mostrar o que são
+		var big_goal = 2.1 if (mode == "select" and n["data"].get("pick", false)) else 1.0
+		n["big"] = lerp(float(n.get("big", 1.0)), big_goal, min(1.0, delta * 3.0))
+		var sc = n["big"] * (1.0 + n["hl"] * 0.08)
 		n["body"].scale = Vector3.ONE * sc
 	# câmera
 	if mode == "dive":
@@ -418,7 +422,7 @@ func _pick(screen: Vector2) -> String:
 	var best_t = 1e9
 	for id in pickable():
 		var c = planet_pos(id)
-		var r = planet_size(id) * 1.6
+		var r = planet_size(id) * 1.6 * float(nodes[id].get("big", 1.0))
 		var oc = o - c
 		var b = oc.dot(d)
 		var cc = oc.dot(oc) - r * r
