@@ -799,7 +799,13 @@ func _fx_part_node(L: Dictionary, tint: Color) -> CPUParticles3D:
 		cp.particle_flag_align_y = true
 	if mode == 2:
 		cp.particle_flag_rotate_y = true
-	if float(L.get("radius", 0.0)) > 0.0:
+	if float(L.get("ring", 0.0)) > 0.0:
+		cp.emission_shape = CPUParticles3D.EMISSION_SHAPE_RING
+		cp.emission_ring_axis = Vector3.UP
+		cp.emission_ring_radius = float(L["ring"]) * cam_k
+		cp.emission_ring_inner_radius = float(L["ring"]) * 0.8 * cam_k
+		cp.emission_ring_height = float(L.get("ring_h", 0.1))
+	elif float(L.get("radius", 0.0)) > 0.0:
 		cp.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
 		cp.emission_sphere_radius = float(L["radius"]) * cam_k
 	# cor e alfa ao longo da vida

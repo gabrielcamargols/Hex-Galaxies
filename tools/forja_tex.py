@@ -153,10 +153,18 @@ def gota():
     return np.clip(np.maximum(corpo, rabo), 0, 1)
 
 
+def seta():
+    """divisa (^) para efeitos de ajuda: sobe pelo corpo"""
+    x, y = grid()
+    d = np.abs(y + 0.15 + np.abs(x) * 0.9 - 0.25)
+    v = np.clip(1 - d / 0.2, 0, 1) * (np.abs(x) < 0.75)
+    return np.clip(v * (1.1 - np.abs(x) * 0.5), 0, 1)
+
+
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     for nm, fn in [("brilho", brilho), ("anel", anel), ("estrela", estrela), ("faisca", faisca), ("fumaca", fumaca),
-                   ("estilhaco", estilhaco), ("respingo", respingo), ("rasgo", rasgo), ("gota", gota)]:
+                   ("estilhaco", estilhaco), ("respingo", respingo), ("rasgo", rasgo), ("gota", gota), ("seta", seta)]:
         v = fn()
         if nm == "faisca":
             v = v[::-1]          # cabeça em cima: o topo da textura segue a velocidade
