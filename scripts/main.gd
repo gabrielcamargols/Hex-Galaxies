@@ -4881,18 +4881,27 @@ func _talk_voice(u, text: String, mood: String) -> void:
 func _make_plate(u) -> Dictionary:
 	var col = C_YOU if u.owner == me else C_CPU
 	var border = C_GOLD if u.is_cmd else col
-	var W = 128.0
-	var H = 40.0
-	# placa com layout fixo (sem contêineres): fundo, nome, número e barra segmentada
+	var W = 132.0
+	var H = 42.0
+	# placa de HQ: fundo no tom escuro do lado, contorno de tinta e sombra dura na cor do lado (impressão deslocada)
 	var p = Panel.new()
 	p.size = Vector2(W, H)
-	p.add_theme_stylebox_override("panel", _flat(Color(0.025, 0.045, 0.1, 0.92), border, 2, 5, 0))
+	var sb = StyleBoxFlat.new()
+	sb.bg_color = col.darkened(0.78)
+	sb.border_color = Color("#0a0410")
+	sb.set_border_width_all(3)
+	sb.set_corner_radius_all(2)
+	sb.shadow_color = (C_GOLD if u.is_cmd else col).darkened(0.1)
+	sb.shadow_size = 1
+	sb.shadow_offset = Vector2(4, 4)
+	sb.skew = Vector2(-0.12, 0)
+	p.add_theme_stylebox_override("panel", sb)
 	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	w["plates"].add_child(p)
 	var strip = ColorRect.new()
 	strip.color = border
 	strip.position = Vector2(0, 0)
-	strip.size = Vector2(5, H)
+	strip.size = Vector2(6, H)
 	strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	p.add_child(strip)
 	var nl = Label.new()
@@ -4909,13 +4918,13 @@ func _make_plate(u) -> Dictionary:
 	nl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	p.add_child(nl)
 	var hl = Label.new()
-	hl.add_theme_font_size_override("font_size", 18)
+	hl.add_theme_font_size_override("font_size", 21)
 	if font_title != null:
 		hl.add_theme_font_override("font", font_title)
 	hl.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
-	hl.add_theme_constant_override("outline_size", 4)
+	hl.add_theme_constant_override("outline_size", 6)
 	hl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	hl.position = Vector2(W - 40, -2)
+	hl.position = Vector2(W - 42, -4)
 	hl.size = Vector2(34, 22)
 	hl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	p.add_child(hl)
@@ -4925,7 +4934,7 @@ func _make_plate(u) -> Dictionary:
 	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	p.add_child(bar)
 	var bg = ColorRect.new()
-	bg.color = Color(1, 1, 1, 0.12)
+	bg.color = Color(0, 0, 0, 0.55)
 	bg.size = bar.size
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	bar.add_child(bg)
@@ -4991,7 +5000,9 @@ func _update_plates(delta: float) -> void:
 		var frac = clamp(pl["shown"] / max(1.0, float(u.maxhp)), 0.0, 1.0)
 		pl["fill"].size.x = pl["bw"] * frac
 		pl["ghost"].size.x = pl["bw"] * clamp(pl["ghost_v"] / max(1.0, float(u.maxhp)), 0.0, 1.0)
-		var hc = Color("#4cd964") if frac > 0.6 else (Color("#ffcf3a") if frac > 0.34 else Color("#ff3b3b"))
+		# barra na cor do lado; só vira amarelo e vermelho quando a vida cai
+		var side_c = (C_YOU if u.owner == me else C_CPU).lightened(0.15)
+		var hc = side_c if frac > 0.6 else (Color("#ffcf3a") if frac > 0.34 else Color("#ff3b3b"))
 		pl["flash"] = max(0.0, pl["flash"] - delta * 3.0)
 		var fcol = hc.lerp(Color.WHITE, pl["flash"] * 0.8)
 		if pl["fill"].color != fcol:

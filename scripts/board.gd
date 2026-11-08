@@ -129,6 +129,7 @@ func build(game: Game) -> void:
 		if is_instance_valid(cn):
 			cn.queue_free()
 	cart_nodes = []
+	swirl_nodes = []
 	banana_nodes.clear()
 	core_node = null
 	core_next_node = null
@@ -161,8 +162,18 @@ func build(game: Game) -> void:
 		node.position = Vector3(wp.x, 0, wp.y)
 		add_child(node)
 		var hl = MeshInstance3D.new()
-		hl.mesh = _disc(INNER, 6)
-		hl.material_override = _overlay_mat(Color(0, 0, 0, 0))
+		# marca de HQ (borda grossa + retícula), tingida pela cor do destaque
+		if mark_tex == null and ResourceLoader.exists("res://ui/terreno/marca.png"):
+			mark_tex = load("res://ui/terreno/marca.png")
+		var hom = _overlay_mat(Color(0, 0, 0, 0))
+		if mark_tex != null:
+			var pq = PlaneMesh.new()
+			pq.size = Vector2(INNER * 2.0 / 0.97, INNER * 2.0 / 0.97)
+			hl.mesh = pq
+			hom.albedo_texture = mark_tex
+		else:
+			hl.mesh = _disc(INNER, 6)
+		hl.material_override = hom
 		hl.visible = false
 		node.add_child(hl)
 		var dim = MeshInstance3D.new()
@@ -741,6 +752,23 @@ func _box(s: Vector3) -> BoxMesh:
 
 
 var crack_mats: Array = []
+var terr_mats: Dictionary = {}
+var swirl_nodes: Array = []
+var mark_tex: Texture2D = null
+
+
+func _terr_mat(path: String) -> Material:
+	if not terr_mats.has(path):
+		if not ResourceLoader.exists(path):
+			terr_mats[path] = null
+		else:
+			var m = StandardMaterial3D.new()
+			m.albedo_texture = load(path)
+			m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+			m.alpha_scissor_threshold = 0.4
+			m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+			terr_mats[path] = m
+	return terr_mats[path]
 
 
 func _crack_mat(i: int) -> Material:
@@ -861,11 +889,20 @@ func _add_props_old(root: Node3D, h: Vector2i, t: Dictionary) -> void:
 		"ossada_c":
 			_ribs(root, Vector3(0, 0, -0.1), 1.5, 3)
 		"movedica":
-			_mesh(root, _cyl(0.55, 0.55, 0.02, 20), Color("#6b4520"), Vector3(0, 0.02, 0))
-			var tor = TorusMesh.new()
-			tor.inner_radius = 0.25
-			tor.outer_radius = 0.33
-			_mesh(root, tor, Color("#8a5a2a"), Vector3(0, 0.03, 0))
+			# redemoinho pintado no estilo HQ (tools/marcas.py), girando devagar
+			var qm = _terr_mat("res://ui/terreno/movedica.png")
+			if qm != null:
+				var qd2 = MeshInstance3D.new()
+				var pm3 = PlaneMesh.new()
+				pm3.size = Vector2(1.96, 1.96)
+				qd2.mesh = pm3
+				qd2.material_override = qm
+				qd2.position = Vector3(0, 0.025, 0)
+				qd2.rotation = Vector3(0, _rnd(h, 23) * TAU, 0)
+				qd2.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+				root.add_child(qd2)
+				swirl_nodes = swirl_nodes.filter(func(x): return is_instance_valid(x))
+				swirl_nodes.append(qd2)
 		"instavel":
 			# rachadura pintada no estilo HQ do jogo (tools/rachadura.py): 3 variações, giradas em passos de 60°
 			var cm = _crack_mat(int(_rnd(h, 21) * 3) % 3)
@@ -986,7 +1023,7 @@ func _build_beetle(root: Node3D) -> void:
 	if halo_tex == null:
 		halo_tex = GradientTexture2D.new()
 		var gr = Gradient.new()
-		gr.set_color(0, Color(0.35, 1.0, 0.5, 0.75))
+		gr.set_color(0, Color(0.35, 1.0, 0.5, 0.5))
 		gr.set_color(1, Color(0.1, 0.9, 0.35, 0.0))
 		gr.set_offset(0, 0.0)
 		halo_tex.gradient = gr
@@ -997,7 +1034,7 @@ func _build_beetle(root: Node3D) -> void:
 		halo_tex.height = 128
 	var halo = MeshInstance3D.new()
 	var q = QuadMesh.new()
-	q.size = Vector2(2.2, 2.2)
+	q.size = Vector2(1.25, 1.25)
 	halo.mesh = q
 	var hm = StandardMaterial3D.new()
 	hm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -1012,7 +1049,7 @@ func _build_beetle(root: Node3D) -> void:
 	holder.add_child(halo)
 	# pulsa o brilho e balança o besouro
 	var tw = halo.create_tween().set_loops()
-	tw.tween_property(halo, "scale", Vector3(1.25, 1.25, 1.25), 0.9).set_trans(Tween.TRANS_SINE)
+	tw.tween_property(halo, "scale", Vector3(1.12, 1.12, 1.12), 0.9).set_trans(Tween.TRANS_SINE)
 	tw.tween_property(halo, "scale", Vector3(0.85, 0.85, 0.85), 0.9).set_trans(Tween.TRANS_SINE)
 	var tw2 = holder.create_tween().set_loops()
 	tw2.tween_property(holder, "rotation_degrees:y", 14.0, 1.6).set_trans(Tween.TRANS_SINE)
@@ -1632,6 +1669,10 @@ func _process(delta: float) -> void:
 			orb.rotation.y += delta * 2.0
 	if g != null:
 		_update_claw(delta)
+	if not swirl_nodes.is_empty():
+		for sw in swirl_nodes:
+			if is_instance_valid(sw):
+				sw.rotation.y -= delta * 0.35
 	if not cz_nodes.is_empty():
 		var pulse = 0.35 + 0.15 * sin(Time.get_ticks_msec() / 350.0)
 		for nd in cz_nodes.values():
