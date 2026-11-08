@@ -71,8 +71,6 @@ var vol = {"Musica": 80.0, "Efeitos": 90.0, "Vozes": 90.0}
 var res_pref: String = "1600x900"
 var fullscreen: bool = false
 var render_q: float = 1.0
-var hq_on: bool = false         # filtro de quadrinho na tela (pesado; desligado por padrão)
-var hq_rect: ColorRect = null
 var voice_on: bool = true       # líderes leem as falas em voz alta (voz do aparelho)
 var fast_mode: bool = false      # modo rápido: sem confirmar, prévia ao apontar, animações 2×
 var pend_hover: bool = false
@@ -142,19 +140,6 @@ func _ready() -> void:
 	add_child(sfx)
 	vfx.sfx = sfx
 	get_tree().create_timer(1.5).timeout.connect(func(): sfx.warm())
-	# filtro de quadrinho sobre o 3D (fica abaixo da interface)
-	var hq_layer = CanvasLayer.new()
-	hq_layer.layer = -1
-	add_child(hq_layer)
-	hq_rect = ColorRect.new()
-	hq_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
-	hq_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	if ResourceLoader.exists("res://shaders/hq.gdshader"):
-		var hm = ShaderMaterial.new()
-		hm.shader = load("res://shaders/hq.gdshader")
-		hq_rect.material = hm
-	hq_layer.add_child(hq_rect)
-	hq_rect.visible = hq_on
 	var layer = CanvasLayer.new()
 	add_child(layer)
 	ui = Control.new()
@@ -183,8 +168,6 @@ func _ready() -> void:
 		if parsed is Dictionary:
 			dlg = parsed
 	_load_prefs()
-	if hq_rect != null:
-		hq_rect.visible = hq_on
 	_apply_settings.call_deferred()
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--uiscale="):
@@ -757,16 +740,6 @@ func _settings_panel() -> void:
 	qb.item_selected.connect(func(i):
 		render_q = qs[i][0]
 		_apply_settings()
-		_save_prefs())
-	var hq = CheckButton.new()
-	hq.text = "Filtro HQ (pesado)"
-	hq.button_pressed = hq_on
-	hq.tooltip_text = "Contorno de tinta, retícula e cores de quadrinho no mapa. Desligue se o aparelho ficar lento."
-	v.add_child(hq)
-	hq.toggled.connect(func(on):
-		hq_on = on
-		if hq_rect != null:
-			hq_rect.visible = hq_on
 		_save_prefs())
 	_label(v, "JOGO", 13, C_HUD)
 	var fb = _cbtn(v, _fast_label(), C_HUD, func(): pass)
@@ -4851,9 +4824,6 @@ func _perf_guard(delta: float) -> void:
 		perf_done = true
 		var fps = perf_n / max(0.01, perf_t - 1.0)
 		if fps < 28.0:
-			if hq_on and hq_rect != null:
-				hq_rect.visible = false
-				hq_on = false
 			if render_q > 0.75:
 				render_q = 0.75
 				get_viewport().scaling_3d_scale = render_q
@@ -5426,7 +5396,6 @@ func _load_prefs() -> void:
 		ui_pref = str(cf.get_value("ui", "scale", "auto"))
 		fast_mode = bool(cf.get_value("ui", "fast", false))
 		voice_on = bool(cf.get_value("ui", "voice", true))
-		hq_on = bool(cf.get_value("video", "hq2", false))
 		for b in vol.keys():
 			vol[b] = float(cf.get_value("som", b, vol[b]))
 		res_pref = str(cf.get_value("video", "res", res_pref))
@@ -5444,7 +5413,6 @@ func _save_prefs() -> void:
 	cf.set_value("video", "res", res_pref)
 	cf.set_value("video", "full", fullscreen)
 	cf.set_value("video", "q", render_q)
-	cf.set_value("video", "hq2", hq_on)
 	cf.save("user://prefs.cfg")
 
 
