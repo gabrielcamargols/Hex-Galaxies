@@ -168,6 +168,7 @@ func build(game: Game) -> void:
 		env.ambient_light_color = Color(0.85, 0.88, 0.95)
 		env.ambient_light_energy = 0.32
 	_apply_planet_tint()
+	_apply_atmosphere()
 	for h in DB.hexes:
 		var node = Node3D.new()
 		var wp = world_xz(h)
@@ -762,8 +763,20 @@ func _overlay_mat(c: Color) -> StandardMaterial3D:
 
 
 # sombra de cada planeta (mesma em chão, cenário e modelos): Tarhut vinho-violeta, Valak azul-violeta
-const PLANET_SHADOW = {"tarhut": Color(0.62, 0.32, 0.46), "valak": Color(0.36, 0.30, 0.72), "abnara": Color(0.22, 0.40, 0.46), "goraida": Color(0.42, 0.52, 0.82)}
+const PLANET_SHADOW = {"tarhut": Color(0.62, 0.32, 0.46), "valak": Color(0.36, 0.30, 0.72), "abnara": Color(0.30, 0.34, 0.62), "goraida": Color(0.42, 0.52, 0.82)}
 var tex_mats: Dictionary = {}
+
+
+# perspectiva atmosférica (guache): o fundo esfria e some numa névoa azul-violeta; só em planetas com ar
+func _apply_atmosphere() -> void:
+	var fog = {"abnara": [Color("#6f7bb8"), 0.0085]}
+	if g != null and fog.has(g.map_id):
+		env.fog_enabled = true
+		env.fog_light_color = fog[g.map_id][0]
+		env.fog_density = fog[g.map_id][1]
+		env.fog_sky_affect = 0.0
+	else:
+		env.fog_enabled = false
 
 
 func _planet_shadow() -> Color:
@@ -3110,11 +3123,39 @@ func _arrow(root: Node3D, dir: Vector2, col: Color, y: float, s: float = 1.0) ->
 	_mesh(arrow, _cyl(0.0, 0.17 * s, 0.04, 3), col, Vector3(0.24 * s, y, 0), Vector3(0, PI / 2, 0))
 
 
+var pincel_mats: Dictionary = {}
+
+
+# copa pintada (shader pincel): cada árvore usa uma de 3 variações de verde para não repetir
+func _pincel_mat(i: int) -> ShaderMaterial:
+	var k = i % 3
+	if not pincel_mats.has(k):
+		var m = ShaderMaterial.new()
+		m.shader = load("res://shaders/pincel.gdshader")
+		m.set_shader_parameter("seed", float(k) * 4.7)
+		var sets = [[Color("#1f4a3a"), Color("#3f6f32"), Color("#86a63c")],
+			[Color("#27503a"), Color("#4a7a38"), Color("#9cb445")],
+			[Color("#1a4448"), Color("#35703c"), Color("#7ea840")]]
+		m.set_shader_parameter("c_dark", sets[k][0])
+		m.set_shader_parameter("c_mid", sets[k][1])
+		m.set_shader_parameter("c_light", sets[k][2])
+		m.set_shader_parameter("shadow_tint", _planet_shadow())
+		pincel_mats[k] = m
+	return pincel_mats[k]
+
+
 func _jungle_tree(root: Node3D, pos: Vector3, s: float, h: Vector2i, i: int) -> void:
-	_inked(_mesh(root, _cyl(0.06 * s, 0.1 * s, 0.7 * s, 6), Color("#6b4426"), pos + Vector3(0, 0.35 * s, 0)))
-	var greens = [Color("#2f8a3e"), Color("#3fa04a"), Color("#57b552")]
-	_inked(_mesh(root, _sph(0.42 * s, 0.6 * s), greens[i % 3], pos + Vector3(0, 0.82 * s, 0)))
-	_inked(_mesh(root, _sph(0.3 * s, 0.44 * s), greens[(i + 1) % 3], pos + Vector3((_rnd(h, i + 40) - 0.5) * 0.3 * s, 1.12 * s, (_rnd(h, i + 41) - 0.5) * 0.3 * s)))
+	# tronco e galhos escuros e finos, como no guache; copa em três manchas sobrepostas
+	_mesh(root, _cyl(0.05 * s, 0.1 * s, 0.7 * s, 6), Color("#2a1a1c"), pos + Vector3(0, 0.35 * s, 0))
+	for j in range(2):
+		var a = _rnd(h, i + 50 + j) * TAU
+		_mesh(root, _cyl(0.02 * s, 0.04 * s, 0.5 * s, 4), Color("#2a1a1c"), pos + Vector3(cos(a) * 0.1 * s, 0.78 * s, sin(a) * 0.1 * s), Vector3(sin(a) * 0.7, 0, -cos(a) * 0.7))
+	var mat = _pincel_mat(i)
+	var blobs = [[Vector3(0, 0.86, 0), 0.46, 0.58], [Vector3(-0.2, 1.02, 0.1), 0.3, 0.4], [Vector3(0.2, 1.1, -0.1), 0.32, 0.42]]
+	for b in blobs:
+		var jit = Vector3((_rnd(h, i + 40) - 0.5) * 0.12, 0, (_rnd(h, i + 41) - 0.5) * 0.12)
+		var mi = _mesh(root, _sph(b[1] * s, b[2] * s), Color.WHITE, pos + b[0] * s + jit * s)
+		mi.material_override = mat
 
 
 func _wild_props(root: Node3D, h: Vector2i, k: String) -> bool:
