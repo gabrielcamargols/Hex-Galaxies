@@ -154,6 +154,7 @@ func build(game: Game) -> void:
 		sun_light.light_color = Color.WHITE
 		env.ambient_light_color = Color(0.85, 0.88, 0.95)
 		env.ambient_light_energy = 0.32
+	_apply_planet_tint()
 	for h in DB.hexes:
 		var node = Node3D.new()
 		var wp = world_xz(h)
@@ -597,6 +598,30 @@ func _tile_mesh(c0: Color, c1: Color, cs: Color) -> ArrayMesh:
 		var i2 = pts_i[(k + 1) % 6]
 		_tri(st, Vector3(o1.x, 1, o1.y), rim, Vector3(o2.x, 1, o2.y), rim, Vector3(i2.x, 1, i2.y), rim)
 		_tri(st, Vector3(o1.x, 1, o1.y), rim, Vector3(i2.x, 1, i2.y), rim, Vector3(i1.x, 1, i1.y), rim)
+	# tinta: aro externo do topo e quinas verticais (contorno de HQ nas arestas)
+	var ink = Color("#1a0e14")
+	var rim_ink = cs.darkened(0.45)
+	for k in range(6):
+		var o1b = pts_o[k]
+		var o2b = pts_o[(k + 1) % 6]
+		# aro fino e no tom escuro do próprio chão: o tabuleiro fica calmo, sem virar grade
+		var e1 = o1b * 0.978
+		var e2 = o2b * 0.978
+		_tri(st, Vector3(o1b.x, 1.002, o1b.y), rim_ink, Vector3(o2b.x, 1.002, o2b.y), rim_ink, Vector3(e2.x, 1.002, e2.y), rim_ink)
+		_tri(st, Vector3(o1b.x, 1.002, o1b.y), rim_ink, Vector3(e2.x, 1.002, e2.y), rim_ink, Vector3(e1.x, 1.002, e1.y), rim_ink)
+	for k in range(6):
+		var a3 = pts_o[k]
+		var b3 = pts_o[(k + 1) % 6]
+		var c3 = pts_o[(k + 5) % 6]
+		var nm = Vector3(a3.x, 0, a3.y).normalized()
+		st.set_normal(nm)
+		var w1 = a3 + (b3 - a3) * 0.04 + Vector2(nm.x, nm.z) * 0.004
+		var w2 = a3 + (c3 - a3) * 0.04 + Vector2(nm.x, nm.z) * 0.004
+		var a4 = a3 + Vector2(nm.x, nm.z) * 0.006
+		for wv in [w1, w2]:
+			_tri(st, Vector3(a4.x, 1, a4.y), ink, Vector3(wv.x, 1, wv.y), ink, Vector3(wv.x, 0, wv.y), ink)
+			_tri(st, Vector3(a4.x, 1, a4.y), ink, Vector3(wv.x, 0, wv.y), ink, Vector3(a4.x, 0, a4.y), ink)
+	st.set_normal(Vector3.UP)
 	# centro (leque com cor do centro para a borda)
 	for k in range(6):
 		var i1b = pts_i[k]
@@ -635,6 +660,35 @@ func _overlay_mat(c: Color) -> StandardMaterial3D:
 	m.albedo_color = c
 	m.render_priority = 1
 	return m
+
+
+# sombra de cada planeta (mesma em chão, cenário e modelos): Tarhut vinho-violeta, Valak azul-violeta
+const PLANET_SHADOW = {"tarhut": Color(0.62, 0.32, 0.46), "valak": Color(0.36, 0.30, 0.72)}
+var tex_mats: Dictionary = {}
+
+
+func _planet_shadow() -> Color:
+	return PLANET_SHADOW.get(g.map_id if g != null else "", Color(0.5, 0.4, 0.68))
+
+
+# aplica a sombra do planeta em todos os materiais de quadrinho já criados
+func _apply_planet_tint() -> void:
+	var c = _planet_shadow()
+	var mats = [tile_mat, ground.material_override if ground != null else null, prop_mat, paint_mat]
+	mats.append_array(tex_mats.values())
+	for m in mats:
+		if m is ShaderMaterial:
+			m.set_shader_parameter("shadow_tint", c)
+
+
+func _tex_mat(t: Texture2D) -> ShaderMaterial:
+	if not tex_mats.has(t):
+		var m = ShaderMaterial.new()
+		m.shader = load("res://shaders/hq_tex.gdshader")
+		m.set_shader_parameter("tex", t)
+		m.set_shader_parameter("shadow_tint", _planet_shadow())
+		tex_mats[t] = m
+	return tex_mats[t]
 
 
 func _hq_mat() -> Material:
@@ -974,7 +1028,7 @@ const PROPS = {
 	"valak": [["cen_valak_pinheiro", 3.2, 1.2, true], ["cen_valak_rocha", 2.0, 1.3, true], ["cen_valak_barril", 1.2, 0.55, true], ["cen_valak_caixa", 1.0, 0.8, true],
 		["cen_valak_vagonete", 0.6, 1.0, false], ["cen_valak_domo", 0.8, 2.2, false], ["valak_torre", 0.6, 1.6, false], ["valak_guindaste", 0.4, 2.4, false]],
 }
-var prop_mat: StandardMaterial3D = null
+var prop_mat: Material = null
 var paint_mat: ShaderMaterial = null
 var outline_cache: Dictionary = {}
 
@@ -983,6 +1037,7 @@ func _paint_mat() -> ShaderMaterial:
 	if paint_mat == null:
 		paint_mat = ShaderMaterial.new()
 		paint_mat.shader = load("res://shaders/pintado.gdshader")
+		paint_mat.set_shader_parameter("shadow_tint", _planet_shadow())
 	return paint_mat
 
 
@@ -1050,15 +1105,17 @@ func _model(parent: Node3D, mname: String, pos: Vector3, footprint: float, yaw: 
 	var meshes = inst.find_children("*", "MeshInstance3D", true, false)
 	if toon and TEXTURED.has(_swap_name(mname)):
 		toon = false
+		for mi in meshes:
+			for si in range(mi.mesh.get_surface_count()):
+				var sm = mi.mesh.surface_get_material(si)
+				if sm is BaseMaterial3D and sm.albedo_texture != null:
+					mi.set_surface_override_material(si, _tex_mat(sm.albedo_texture))
 	if toon:
 		if prop_mat == null:
-			prop_mat = StandardMaterial3D.new()
-			prop_mat.vertex_color_use_as_albedo = true
-			prop_mat.vertex_color_is_srgb = true
-			prop_mat.diffuse_mode = BaseMaterial3D.DIFFUSE_TOON
-			prop_mat.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
-			prop_mat.roughness = 1.0
-			prop_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+			prop_mat = _hq_mat()
+			if prop_mat is ShaderMaterial:
+				prop_mat.set_shader_parameter("gamma", 2.2)
+				prop_mat.set_shader_parameter("shadow_tint", _planet_shadow())
 		var pm: Material = prop_mat
 		if mname.begins_with("cen_"):
 			pm = _paint_mat()
