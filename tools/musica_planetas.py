@@ -11,13 +11,15 @@ ABNARA - "Coração da Selva" (Ré dório, 100 BPM, 32 compassos)
   25-32 pulso das raízes: taikos, trompa no tema; o piano só solta notas; o refrão volta baixinho
 
 GOR'AIDA - "Gelo Instável" (Si menor/frígio, 6/8, 168 colcheias/min, 32 compassos)
-  Gelo que canta e racha: sinos de vidro em ostinato de 6/8 (passos que escorregam), vento,
-  estalos de gelo, um tema largo e frio no violoncelo/trompa, glissandos que deslizam como o
-  gelo liso, e uma avalanche de taikos e metais antes de voltar ao silêncio branco.
-  1-8   planalto branco: sinos de vidro, vento, gemidos graves do gelo, estalos
-  9-16  a marcha no frio: taikos distantes, baixo longo, violoncelo com o tema
-  17-24 gelo liso (Ré maior): arpejos rápidos, melodia que desliza (glissando), chocalho
-  25-32 avalanche: rufos de taiko, metais no acorde frígio (Dó sobre Si), e volta ao vento
+  Planalto gelado: uma cítara dedilhada e uma gaita de fole com seus bordões, com o vento ao
+  fundo; depois a marcha no frio e o gelo liso; taikos acelerando e violinos agressivos em
+  tremolo AVISAM que a avalanche vem; a avalanche desaba e a gaita volta sozinha no vento.
+  1-8   planalto: vento, cítara, bordões e lamento da gaita de fole, estalos e gemidos do gelo
+  9-16  marcha no frio: taikos distantes, baixo longo, violoncelo e trompa com o tema
+  17-20 gelo liso (Ré maior): sinos de vidro rápidos e melodia que desliza (glissando)
+  21-24 AVISO: taikos acelerando e violinos em tremolo subindo, cada vez mais forte
+  25-30 AVALANCHE: violinos agressivos em ostinato, taikos, metais frígios, trompa no tema
+  31-32 silêncio branco: vento, cítara e a gaita sozinha (emenda com o começo)
 
 Uso: python tools/musica_planetas.py [pasta_sounds] [abnara,goraida]   (precisa de ffmpeg)
 """
@@ -244,64 +246,168 @@ def abnara(dst):
 # =====================================================================
 # GOR'AIDA - Gelo Instável (6/8: cada "beat" é uma colcheia)
 # =====================================================================
+def citara(tr, t0, m, g=0.06, pan=0.0, dur=2.6):
+    """cítara (corda dedilhada): harmônicos de corda beliscada perto da ponta, brilho no ataque,
+    duas cordas levemente desafinadas que fazem o som "cantar" """
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    f = hz(m)
+    y = np.zeros(n)
+    pos = 0.18                      # ponto onde a corda é beliscada
+    for k in range(1, 13):
+        a = abs(np.sin(k * np.pi * pos)) / k
+        fk = f * k * (1 + 0.0002 * k * k)
+        for det in (1.0, 1.0025):
+            y += a * np.sin(2 * np.pi * fk * det * t + k) * np.exp(-t * (1.4 + 0.55 * k))
+    y *= np.minimum(1, t / 0.002)
+    y += filt(tr.rng.normal(size=n), "high", 3000) * np.exp(-t * 120) * 0.2      # unha na corda
+    tr.add(y * 0.5, t0, g, pan, 0.55)
+
+
+def gaita_drone(tr, t0, dur, g=0.05):
+    """bordões da gaita de fole: Si grave + Fá# + Si, zumbido contínuo de palheta"""
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    y = np.zeros(n)
+    for m, a in ((35, 1.0), (42, 0.55), (47, 0.7)):
+        y += tr.saw(hz(m), n, 0.02) * a
+    y = filt(y, "low", 1600) + filt(y, "band", [900, 2400]) * 0.4
+    y *= np.minimum(1, t / 1.5) * np.minimum(1, (dur - t) / 1.5)
+    tr.add(np.tanh(y * 0.8), t0, g, 0.0, 0.5)
+
+
+def gaita(tr, notes, t0, g=0.06, pan=0.2):
+    """ponteira da gaita de fole: som anasalado e contínuo, sem vibrato, com ornamentos rápidos
+    (uma nota aguda bem curta antes de cada nota nova, como os gaiteiros fazem)"""
+    seq = []
+    prev = None
+    for m, d in notes:
+        if prev is not None and m != prev and d >= 1.0:
+            seq.append((83, 0.12))               # ornamento (Si agudo)
+            seq.append((m, d - 0.12))
+        else:
+            seq.append((m, d))
+        prev = m
+    total = sum(d for _, d in seq)
+    n = int((total * tr.beat + 0.5) * SR)
+    f = np.zeros(n)
+    pos = 0
+    for m, d in seq:
+        k = int(d * tr.beat * SR)
+        f[pos:pos + k] = hz(m)
+        pos += k
+    f[pos:] = f[pos - 1] if pos > 0 else hz(notes[0][0])
+    ph = np.cumsum(f) / SR
+    duty = 0.28
+    y = np.where((ph % 1.0) < duty, 1.0, -0.4)                   # pulso estreito = nasal
+    y = filt(y, "low", 4200) * 0.6 + filt(y, "band", [1000, 2800]) * 0.7
+    t = np.arange(n) / SR
+    amp = np.minimum(1, t / 0.08) * np.clip((n / SR - t) / 0.3, 0, 1)
+    tr.add(np.tanh(y * 1.2) * amp, t0, g, pan, 0.55)
+
+
+def violinos(tr, t0, m, dur, g=0.05, tremolo=False, cresc=False, pan=None):
+    """seção de violinos agressiva: 4 vozes desafinadas, arco forte no ataque, tremolo opcional"""
+    n = int((dur + 0.15) * SR)
+    t = np.arange(n) / SR
+    y = np.zeros(n)
+    for det in (-0.006, -0.002, 0.003, 0.007):
+        ph = 2 * np.pi * np.cumsum(np.full(n, hz(m) * (1 + det)) * (1 + 0.004 * np.sin(2 * np.pi * 6 * t + det * 900))) / SR
+        y += sum(np.sin(ph * k) / k for k in range(1, 18))
+    y = filt(y, "low", 5200) + filt(y, "band", [2200, 3600]) * 0.5
+    env = np.minimum(1, t / 0.012) * (0.75 + 0.6 * np.exp(-t * 12))          # arco cravado (marcato)
+    env *= np.clip((dur + 0.15 - t) / 0.12, 0, 1)
+    if tremolo:
+        env *= 0.65 + 0.35 * np.abs(np.sin(2 * np.pi * 7.5 * t))
+    if cresc:
+        env *= 0.25 + 0.75 * (t / (dur + 0.15)) ** 1.5
+    tr.add(np.tanh(y * env * 0.5), t0, g, tr.rng.uniform(-0.5, 0.5) if pan is None else pan, 0.45)
+
+
 def goraida(dst):
     tr = Track(168, 32, beats=6, seed=3310)
     cold = [(35, [59, 62, 66, 73]), (31, [55, 59, 62, 66]), (33, [57, 61, 64, 69]), (30, [54, 57, 61, 66])]   # Sim(add9) - Sol - Lá - Fá#m
     smooth = [(38, [62, 66, 69, 76]), (33, [57, 61, 64, 69]), (40, [55, 59, 64, 67]), (35, [59, 62, 66, 73])]  # Ré - Lá - Mim - Sim
     q = 3   # uma semínima pontuada = 3 colcheias
+    # o planalto: vento sempre ao fundo (mais forte no começo e no fim)
+    for bar in range(0, tr.bars, 4):
+        wind(tr, tr.T(bar), tr.bar * 4.2, 0.09 if bar < 8 or bar >= 28 else 0.05)
+    # bordões da gaita de fole no começo e no fim (o fim emenda com o começo no loop)
+    gaita_drone(tr, tr.T(0), tr.bar * 9, 0.05)
+    gaita_drone(tr, tr.T(30), tr.bar * 2.6, 0.045)
     for bar in range(tr.bars):
         sec = bar // 8
         prog = smooth if sec == 2 else cold
         root, ch = prog[(bar // 2) % 4]
-        last = bar == tr.bars - 1
-        # ---------- sinos de vidro (ostinato 6/8): sempre ----------
-        pat = [0, 2, 1, 3, 2, 1]
-        gg = [0.055, 0.04, 0.035, 0.04][sec]
-        for i, k in enumerate(pat):
-            if sec == 0 and bar % 2 == 1 and i in (1, 4):
-                continue
-            tr.glass(tr.T(bar, i), ch[k] + 12, gg * (1.25 if i in (0, 3) else 1.0), -0.5 + 0.2 * i, 3.5)
-        if sec == 2:
-            # gelo liso: arpejo rápido por cima, deslizando
+        last = bar >= tr.bars - 2
+        warn = 20 <= bar <= 23          # aviso de avalanche
+        aval = 24 <= bar <= 29          # avalanche
+        # ---------- cítara (dedilhado em 6/8) ----------
+        if sec != 3 or last:
+            pat = [0, 2, 1, 3, 2, 1]
+            cg = [0.07, 0.05, 0.035, 0.05][sec]
+            for i, k in enumerate(pat):
+                if (sec == 1 and i in (1, 4)) or (sec == 2 and i % 2 == 1):
+                    continue
+                citara(tr, tr.T(bar, i), ch[k] + (12 if sec == 0 and i == 3 else 0), cg * (1.25 if i in (0, 3) else 1.0), -0.5 + 0.2 * i)
+        if sec == 2 and not warn:
+            # gelo liso: sinos de vidro rápidos por cima, deslizando
             for i in range(6):
-                tr.arp(ch[(i + bar) % 4] + 24, tr.T(bar, i + 0.5), 0.022, 0.5 - 0.2 * i, 4200, 12, echo=True)
+                tr.arp(ch[(i + bar) % 4] + 24, tr.T(bar, i + 0.5), 0.02, 0.5 - 0.2 * i, 4200, 12, echo=True)
+                if i % 2 == 0:
+                    tr.glass(tr.T(bar, i), ch[(i // 2 + bar) % 4] + 12, 0.03, 0.4 - 0.3 * i, 3.5)
         # ---------- fundo ----------
-        if bar % 2 == 0:
-            tr.pad([n - 12 for n in ch[:3]], tr.T(bar), tr.bar * 2, [0.03, 0.03, 0.035, 0.035][sec], cut=1300, det=0.12, shimmer=0.15)
-        if bar % 4 == 0:
-            wind(tr, tr.T(bar), tr.bar * 4, [0.06, 0.04, 0.035, 0.05][sec])
-        if tr.rng.random() < (0.5 if sec != 2 else 0.25):
-            crack(tr, tr.T(bar, tr.rng.uniform(0, 6)), 0.05)
-        if sec == 0:
+        if bar % 2 == 0 and sec >= 1 and not last:
+            tr.pad([n - 12 for n in ch[:3]], tr.T(bar), tr.bar * 2, 0.03, cut=1300, det=0.12, shimmer=0.15)
+        if tr.rng.random() < (0.3 if sec == 0 else (0.8 if warn or aval else 0.35)):
+            crack(tr, tr.T(bar, tr.rng.uniform(0, 6)), 0.045 if sec == 0 else 0.06)
+        if sec == 0 or last:
             if bar % 4 == 0:
-                groan(tr, tr.T(bar, 0), tr.bar * 1.8, 0.09)
-            tr.heart(tr.T(bar, 0), 0.12)
-            continue
-        if last:
+                groan(tr, tr.T(bar, 0), tr.bar * 1.8, 0.07)
             continue
         # ---------- marcha no frio ----------
-        tr.taiko(tr.T(bar, 0), 0.2 if sec != 1 else 0.15, sec == 3)
-        tr.taiko(tr.T(bar, q), 0.13)
-        if sec >= 2:
-            tr.kick(tr.T(bar, 0), 0.32, 40)
+        if not warn:
+            tr.taiko(tr.T(bar, 0), 0.24 if aval else 0.15, aval)
+            tr.taiko(tr.T(bar, q), 0.17 if aval else 0.12)
+        for b, o, d in ((0, 0, 2.6), (3, 7, 1.4), (4.5, 12, 1.2)):
+            tr.bass(tr.T(bar, b), root + o, tr.beat * d, 0.17 if not aval else 0.2, cut=480, dist=0.05 if not aval else 0.25)
+        if sec == 2 and not warn:
+            tr.kick(tr.T(bar, 0), 0.3, 40)
             tr.kick(tr.T(bar, 4), 0.2, 40)
             for i in (1, 2, 4, 5):
                 tr.shaker(tr.T(bar, i), 0.02, 0.6 if i < 3 else -0.6)
-            tr.hat(tr.T(bar, 3), 0.03, 0.2, open_=True)
-        for b, o, d in ((0, 0, 2.6), (3, 7, 1.4), (4.5, 12, 1.2)):
-            tr.bass(tr.T(bar, b), root + o, tr.beat * d, 0.17, cut=480, dist=0.05)
-        if sec == 3:
-            # avalanche: rufos e metais no acorde frígio (Dó maior sobre Si)
+        # ---------- AVISO: taikos acelerando + violinos em tremolo subindo ----------
+        if warn:
+            k = bar - 20
+            hits = [[0, 3], [0, 2, 3, 5], [0, 1, 2, 3, 4, 5], [x * 0.5 for x in range(12)]][k]
+            for i, b in enumerate(hits):
+                tr.taiko(tr.T(bar, b), 0.1 + 0.035 * k + (0.06 if b in (0, 3) else 0.0), b == 0)
+            for m in ([59, 47], [60, 48], [62, 50], [65, 53])[k]:
+                violinos(tr, tr.T(bar), m, tr.bar, 0.035 + 0.01 * k, tremolo=True, cresc=True)
+            tr.kick(tr.T(bar, 0), 0.3 + 0.05 * k, 40)
+        # ---------- AVALANCHE: violinos agressivos em ostinato + taikos + metais ----------
+        if aval:
+            ost = [59, 59, 60, 59, 62, 60]
+            for i, m in enumerate(ost):
+                acc = 1.3 if i in (0, 3) else 1.0
+                violinos(tr, tr.T(bar, i), m, tr.beat * 0.6, 0.045 * acc, pan=-0.35)
+                violinos(tr, tr.T(bar, i), m + 12, tr.beat * 0.6, 0.03 * acc, pan=0.35)
+            tr.kick(tr.T(bar, 0), 0.4, 38)
+            tr.kick(tr.T(bar, 3), 0.3, 38)
+            tr.snare(tr.T(bar, 3), 0.08)
             for i in range(6):
-                tr.taiko(tr.T(bar, 4.5 + i * 0.25), 0.05 + 0.015 * i)
-            if bar % 2 == 0:
-                for m in (48, 52, 55):
-                    tr.brass(m, tr.T(bar, 0), tr.beat * 2.5, 0.05, 2400)
-            else:
-                for m in (47, 50, 54):
-                    tr.brass(m, tr.T(bar, 0), tr.beat * 2.5, 0.05, 2400)
-            crack(tr, tr.T(bar, 2), 0.07)
-    # ---------- tema largo e frio (violoncelo e trompa) ----------
+                tr.taiko(tr.T(bar, 4.5 + i * 0.25), 0.05 + 0.02 * i)
+            chord = (48, 52, 55) if bar % 2 == 0 else (47, 50, 54)        # Dó maior sobre Si (frígio)
+            for m in chord:
+                tr.brass(m, tr.T(bar, 0), tr.beat * 2.5, 0.055, 2600)
+    # ---------- melodias ----------
+    # gaita de fole: lamento lento no começo (o planalto)
+    lamento = [(71, 3.0), (73, 1.5), (74, 1.5), (76, 4.5), (74, 1.5),
+               (73, 3.0), (71, 3.0), (66, 6.0),
+               (71, 3.0), (74, 1.5), (76, 1.5), (78, 4.5), (76, 1.5),
+               (74, 3.0), (73, 3.0), (71, 6.0)]
+    gaita(tr, lamento, tr.T(2), 0.055, 0.2)
+    # tema largo e frio (violoncelo e trompa)
     theme = [(71, 3.0), (73, 1.5), (74, 1.5), (76, 3.0), (74, 3.0),
              (73, 3.0), (71, 1.5), (69, 1.5), (66, 6.0),
              (71, 3.0), (73, 1.5), (74, 1.5), (78, 3.0), (76, 3.0),
@@ -312,23 +418,23 @@ def goraida(dst):
         tr.horn(m - 12, t, d * tr.beat * 0.95, 0.06)
         t += d * tr.beat
     # gelo liso: melodia que desliza (glissando longo entre as notas)
-    slide = [(78, 3.0), (81, 3.0), (85, 4.5), (83, 1.5), (81, 3.0), (78, 3.0), (76, 6.0),
-             (78, 3.0), (81, 3.0), (86, 4.5), (85, 1.5), (83, 3.0), (81, 3.0), (78, 6.0)]
-    tr.lead(slide, tr.T(17), 0.05, "sine", vib=0.004, glide=0.22, cut=5000, pan=0.15, rev=0.75)
-    tr.lead(slide, tr.T(21), 0.045, "square", vib=0.003, glide=0.22, cut=3200, pan=-0.15, rev=0.75)
-    # avalanche: o tema volta forte na trompa
-    t = tr.T(25)
-    for m, d in theme[:9]:
+    slide = [(78, 3.0), (81, 3.0), (85, 4.5), (83, 1.5), (81, 3.0), (78, 3.0), (76, 6.0)]
+    tr.lead(slide, tr.T(16), 0.05, "sine", vib=0.004, glide=0.22, cut=5000, pan=0.15, rev=0.75)
+    tr.lead(slide, tr.T(18), 0.045, "square", vib=0.003, glide=0.22, cut=3200, pan=-0.15, rev=0.75)
+    # avalanche: o tema volta forte na trompa, por cima dos violinos
+    t = tr.T(24)
+    for m, d in theme[:9] + theme[9:13]:
         tr.horn(m - 12, t, d * tr.beat * 0.95, 0.085)
         t += d * tr.beat
-    tr.lead([(71, 12.0), (66, 12.0)], tr.T(29), 0.03, "saw", vib=0.005, glide=0.3, cut=1600, pan=0.0, rev=0.9)
-    tr.riser(tr.T(8), tr.bar, 0.03)
-    tr.riser(tr.T(24), tr.bar * 1.0, 0.05)
+    # depois da avalanche: a gaita volta sozinha no vento (emenda com o começo)
+    gaita(tr, [(71, 3.0), (73, 1.5), (74, 1.5), (71, 6.0)], tr.T(30), 0.045, 0.2)
+    tr.riser(tr.T(22), tr.bar * 2.0, 0.06)
     tr.boom(tr.T(9), 0.1)
-    tr.boom(tr.T(17), 0.08)
-    tr.boom(tr.T(25), 0.15)
-    tr.boom(tr.T(27), 0.12)
-    return tr.render(dst, 4.5, 0.6, 1.25)
+    tr.boom(tr.T(24), 0.18)
+    tr.boom(tr.T(26), 0.13)
+    tr.boom(tr.T(28), 0.12)
+    tr.boom(tr.T(30), 0.1)
+    return tr.render(dst, 4.5, 0.55, 1.25)
 
 
 if __name__ == "__main__":
