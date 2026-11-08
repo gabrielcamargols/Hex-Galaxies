@@ -673,6 +673,64 @@ def feixe():
     return np.clip(halo + nuc * 0.7, 0, 1) * np.clip(u / 0.05, 0, 1)
 
 
+def craca():
+    """cacho de cracas: cones brancos amontoados, cada um com boca escura no topo"""
+    S = N * 4
+    rr = random.Random(31)
+    im = Image.new("L", (S, S), 0)
+    d = ImageDraw.Draw(im)
+    pos = [(0.5, 0.58, 0.20), (0.3, 0.64, 0.14), (0.72, 0.66, 0.15), (0.4, 0.4, 0.12), (0.64, 0.42, 0.11), (0.5, 0.3, 0.08), (0.2, 0.46, 0.08)]
+    for cx, cy, r in pos:
+        cx, cy, r = cx * S, cy * S, r * S
+        d.polygon([(cx - r, cy + r * 0.8), (cx - r * 0.55, cy - r * 0.9), (cx + r * 0.55, cy - r * 0.9), (cx + r, cy + r * 0.8)], fill=255)
+        d.ellipse([cx - r * 0.5, cy - r * 1.15, cx + r * 0.5, cy - r * 0.6], fill=255)
+    m = np.asarray(im).astype(np.float32) / 255 > 0.5
+    v = _soft(m, 7.0, 0.3, 4)
+    holes = Image.new("L", (S, S), 0)
+    hd = ImageDraw.Draw(holes)
+    for cx, cy, r in pos:
+        cx, cy, r = cx * S, cy * S, r * S
+        hd.ellipse([cx - r * 0.32, cy - r * 1.05, cx + r * 0.32, cy - r * 0.72], fill=255)
+    h = np.asarray(holes).astype(np.float32) / 255 > 0.5
+    v = np.where(h, v * 0.15, v)
+    return np.asarray(Image.fromarray((v * 255).astype(np.uint8)).resize((N, N), Image.LANCZOS)).astype(np.float32) / 255
+
+
+def crescente():
+    """lua crescente grossa (corte de lâmina): bojo para a direita, pontas finas para a esquerda"""
+    S = N * 4
+    im = Image.new("L", (S, S), 0)
+    d = ImageDraw.Draw(im)
+    c = S / 2
+    d.ellipse([S * 0.14, S * 0.06, S * 0.98, S * 0.94], fill=255)
+    d.ellipse([S * -0.12, S * 0.0, S * 0.80, S * 1.0], fill=0)
+    m = np.asarray(im.filter(ImageFilter.GaussianBlur(S * 0.004))).astype(np.float32) / 255 > 0.5
+    v = _soft(m, 9.0, 0.3, 4)
+    out = np.asarray(Image.fromarray((v * 255).astype(np.uint8)).resize((N, N), Image.LANCZOS)).astype(np.float32) / 255
+    return np.roll(out, -int(N * 0.2), axis=1)       # centraliza o crescente no quadro
+
+
+def garra_grande():
+    """garra de caranguejo vista de frente apontando para baixo: palma larga e duas pinças serrilhadas abertas"""
+    S = N * 4
+    c = S / 2
+    im = Image.new("L", (S, S), 0)
+    d = ImageDraw.Draw(im)
+    d.ellipse([c - S * 0.3, S * 0.02, c + S * 0.3, S * 0.5], fill=255)
+    for sgn in (-1, 1):
+        pts = [(c + sgn * S * 0.05, S * 0.4), (c + sgn * S * 0.3, S * 0.4), (c + sgn * S * 0.34, S * 0.62), (c + sgn * S * 0.2, S * 0.96), (c + sgn * S * 0.14, S * 0.66)]
+        d.polygon(pts, fill=255)
+        for k in range(4):                                  # dentes da parte interna
+            yy = S * (0.5 + 0.1 * k)
+            xx = c + sgn * S * (0.09 + 0.005 * k)
+            d.polygon([(xx, yy - S * 0.03), (xx - sgn * S * 0.05, yy + S * 0.01), (xx, yy + S * 0.04)], fill=255)
+    m = np.asarray(im).astype(np.float32) / 255 > 0.5
+    v = _soft(m, 8.0, 0.3, 4)
+    y, x = np.mgrid[0:S, 0:S]
+    v = np.where(m, np.clip(v - np.clip(1 - np.abs(x - c) / (S * 0.006), 0, 1) * 0.2, 0, 1), v)
+    return np.asarray(Image.fromarray((v * 255).astype(np.uint8)).resize((N, N), Image.LANCZOS)).astype(np.float32) / 255
+
+
 def bolha():
     """bolha: anel fino + brilho no canto (intensidade alta no brilho)"""
     x, y = grid()
@@ -729,7 +787,7 @@ def veu():
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     for nm, fn in [("brilho", brilho), ("anel", anel), ("estrela", estrela), ("faisca", faisca), ("fumaca", fumaca),
-                   ("estilhaco", estilhaco), ("respingo", respingo), ("rasgo", rasgo), ("gota", gota), ("seta", seta), ("corrente", corrente), ("voronoi", voronoi), ("ponto", ponto), ("retalho", retalho), ("racha", racha), ("arpao", arpao), ("raio", raio), ("pinca_a", pinca_a), ("punho", punho), ("onda", onda), ("garras_chao", garras_chao), ("moeda", moeda), ("espinhos", espinhos), ("agulha", agulha), ("chifre", chifre), ("espeto", espeto), ("mandibula", mandibula), ("jato", jato), ("estrela_mar", estrela_mar), ("arco_som", arco_som), ("engrenagem", engrenagem), ("chave", chave), ("hexa", hexa), ("tentaculo", tentaculo), ("ancora", ancora), ("feixe", feixe), ("bolha", bolha), ("mina", mina), ("veu", veu)]:
+                   ("estilhaco", estilhaco), ("respingo", respingo), ("rasgo", rasgo), ("gota", gota), ("seta", seta), ("corrente", corrente), ("voronoi", voronoi), ("ponto", ponto), ("retalho", retalho), ("racha", racha), ("arpao", arpao), ("raio", raio), ("pinca_a", pinca_a), ("punho", punho), ("onda", onda), ("garras_chao", garras_chao), ("moeda", moeda), ("espinhos", espinhos), ("agulha", agulha), ("chifre", chifre), ("espeto", espeto), ("mandibula", mandibula), ("jato", jato), ("estrela_mar", estrela_mar), ("arco_som", arco_som), ("engrenagem", engrenagem), ("chave", chave), ("hexa", hexa), ("tentaculo", tentaculo), ("ancora", ancora), ("feixe", feixe), ("craca", craca), ("crescente", crescente), ("garra_grande", garra_grande), ("bolha", bolha), ("mina", mina), ("veu", veu)]:
         v = fn()
         if nm == "faisca":
             v = v[::-1]          # cabeça em cima: o topo da textura segue a velocidade

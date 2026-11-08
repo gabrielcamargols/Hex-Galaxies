@@ -130,15 +130,23 @@
   ]
  },
  "a_garra": {
-  "nucleo": "#3cdc8c",
-  "motivo": "cracas / algas",
-  "ataque": "aby_garra",
-  "proposta": true
+  "nucleo": "#fff1d6",
+  "motivo": "cracas brancas sobre carapaça roxa",
+  "ataque": "aby_garra_esmaga",
+  "proposta": true,
+  "habilidades": [
+   "aby_garra_casca",
+   "aby_garra_mare"
+  ]
  },
  "a_vespertina": {
   "nucleo": "#d81c3e",
-  "motivo": "carmim do crepúsculo",
-  "ataque": "aby_garra",
-  "proposta": true
+  "motivo": "carmesim de peixe-leão e adagas douradas",
+  "ataque": "aby_vesper_corte",
+  "proposta": true,
+  "habilidades": [
+   "aby_vesper_sombra",
+   "aby_vesper_passo"
+  ]
  }
 }
