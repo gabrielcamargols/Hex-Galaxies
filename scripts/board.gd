@@ -1276,6 +1276,10 @@ func _model(parent: Node3D, mname: String, pos: Vector3, footprint: float, yaw: 
 			if prop_mat is ShaderMaterial:
 				prop_mat.set_shader_parameter("gamma", 2.2)
 				prop_mat.set_shader_parameter("shadow_tint", _planet_shadow())
+				if ResourceLoader.exists("res://shaders/tinta.gdshader"):
+					var im = ShaderMaterial.new()
+					im.shader = load("res://shaders/tinta.gdshader")
+					prop_mat.next_pass = im
 		var pm: Material = prop_mat
 		if mname.begins_with("cen_"):
 			pm = _paint_mat()
