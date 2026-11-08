@@ -11,9 +11,11 @@ uniform vec3 shadow_tint : source_color = vec3(0.30, 0.34, 0.62);
 uniform float seed = 0.0;
 uniform float edge = 1.0;     // 0 = borda lisa, 1 = bem esfarelada
 uniform float patch_scale = 4.5;
+uniform float moss_top = 0.0;   // 1 = faces voltadas pra cima ganham musgo em tufos hexagonais
 
 varying vec3 wp;
 varying vec3 lp;
+varying vec3 wn;
 
 float h21(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
@@ -29,15 +31,24 @@ float vnoise(vec2 p) {
 void vertex() {
 	wp = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	lp = VERTEX;
+	wn = normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz);
 }
 
 void fragment() {
-	// pinceladas: três ruídos em escalas diferentes escolhem o verde de cada mancha
+	// pinceladas em tufos hexagonais: cada célula escolhe um dos três tons, claro no meio e escuro na borda
 	vec3 q = lp * patch_scale + seed;
-	float n1 = vnoise(q.xy + q.z * 0.7);
-	float n2 = vnoise(q.yz * 1.7 + vec2(seed, 3.1));
-	float patch = n1 * 0.6 + n2 * 0.4;
-	vec3 col = patch < 0.38 ? c_dark : (patch < 0.62 ? c_mid : c_light);
+	vec2 uv = vec2(q.x + q.z * 0.6, q.y + q.z * 0.35);
+	float cell = h21(hexid(uv));
+	float dd = hexd(uv) / 0.5;
+	float patch = clamp(cell * 0.85 + (0.55 - dd) * 0.3, 0.0, 1.0);
+	vec3 col = patch < 0.36 ? c_dark : (patch < 0.66 ? c_mid : c_light);
+	if (moss_top > 0.5 && wn.y > 0.55) {
+		vec2 mu = wp.xz * 7.0 + wp.y * 3.0;
+		float mc = h21(hexid(mu));
+		float md = hexd(mu) / 0.5;
+		vec3 mcol = mix(vec3(0.12, 0.32, 0.18), vec3(0.58, 0.78, 0.28), clamp(mc * 0.8 + (0.6 - md) * 0.5, 0.0, 1.0));
+		col = mcol;
+	}
 	ALBEDO = col;
 	// borda esfarelada: perto do contorno da silhueta o pincel "falha"
 	float rim = 1.0 - clamp(abs(dot(NORMAL, VIEW)), 0.0, 1.0);

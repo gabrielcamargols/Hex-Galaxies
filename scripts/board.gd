@@ -3170,6 +3170,7 @@ func _pincel_custom(key: String, dark: Color, mid: Color, light: Color, edge: fl
 		var m = ShaderMaterial.new()
 		m.shader = load("res://shaders/pincel.gdshader")
 		m.set_shader_parameter("seed", float(key.hash() % 97))
+		m.set_shader_parameter("moss_top", 1.0 if key == "pedra_ruina" else 0.0)
 		m.set_shader_parameter("c_dark", dark)
 		m.set_shader_parameter("c_mid", mid)
 		m.set_shader_parameter("c_light", light)
