@@ -42,6 +42,9 @@ void fragment() {
 	float dd = hexd(uv) / 0.5;
 	float patch = clamp(cell * 0.85 + (0.55 - dd) * 0.3, 0.0, 1.0);
 	vec3 col = patch < 0.36 ? c_dark : (patch < 0.66 ? c_mid : c_light);
+	// hexágonos maiores e menores sobre a pincelada
+	col *= 0.92 + h21(hexid(uv * 0.42 + 3.0)) * 0.16;
+	col *= 0.96 + h21(hexid(uv * 2.1 + 9.0)) * 0.08;
 	if (moss_top > 0.5 && wn.y > 0.55) {
 		vec2 mu = wp.xz * 7.0 + wp.y * 3.0;
 		float mc = h21(hexid(mu));

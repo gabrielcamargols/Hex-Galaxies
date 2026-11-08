@@ -543,7 +543,7 @@ func pal_of(t: Dictionary, h: Vector2i) -> String:
 		"ponte":
 			return "ponte"
 		"ruina_alta":
-			return "pedra"
+			return "trilha"
 		"neve", "parede_gelo":
 			return "neve"
 		"neve_base":
@@ -639,6 +639,18 @@ func _disp_of(h: Vector2i) -> float:
 		v -= PIT_DEPTH
 	elif kk == "correnteza":
 		v -= RIVER_DROP   # o rio corre num leito afundado
+	elif kk == "ruina_alta":
+		# a ruína fica rente à grama em volta (média das vizinhas de chão)
+		var sm = 0.0
+		var cn = 0
+		for n in DB.DIRS:
+			var nb = h + n
+			if tiles.has(nb):
+				var k2 = g.terr(nb)["k"]
+				if k2 in ["trilha", "clareira", "mata", "raiz", "planta"]:
+					sm += float(g.h_of(nb))
+					cn += 1
+		v = round(sm / cn) if cn > 0 else min(v, 1.0)
 	return v
 
 

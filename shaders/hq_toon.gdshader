@@ -29,6 +29,15 @@ void fragment() {
 	vec3 base = COLOR.rgb;
 	// grama/musgo: o chão verde vira tufos hexagonais (um tom por tufo, claro no meio e escuro na borda)
 	float greenish = step(1.12, base.g / max(base.r, 0.02)) * step(1.05, base.g / max(base.b, 0.02)) * step(0.6, wnrm_t.y);
+	// manchas de hexágonos de vários tamanhos em todo chão virado para cima
+	if (wnrm_t.y > 0.6) {
+		vec2 g1 = wpos_t.xz * 0.55;
+		vec2 g2 = wpos_t.xz * 1.15 + 7.3;
+		vec2 g3 = wpos_t.xz * 2.6 + 3.1;
+		base *= 0.94 + h21t(hexid(g1)) * 0.12;
+		base *= 0.96 + h21t(hexid(g2)) * 0.08;
+		base *= 0.97 + h21t(hexid(g3)) * 0.06;
+	}
 	if (greenish > 0.5) {
 		// poucos tufos pequenos e espaçados, o resto do chão fica chapado
 		vec2 uv = wpos_t.xz * tuft_scale;
