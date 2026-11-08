@@ -200,10 +200,38 @@ def voronoi():
     return np.clip(1 - v, 0, 1) ** 1.5
 
 
+def ponto():
+    """ponto de retícula: círculo chapado de borda nítida"""
+    x, y = grid()
+    r = np.hypot(x, y)
+    return np.clip((0.9 - r) * 20, 0, 1)
+
+
+def retalho():
+    """pedaço de retícula: pontos que diminuem numa direção, dentro de um caco irregular"""
+    x, y = grid()
+    rr = random.Random(9)
+    im = Image.new("L", (N, N), 0)
+    pts = []
+    for k in range(9):
+        a = k / 9 * 2 * math.pi
+        rad = rr.uniform(0.55, 0.95) * N / 2
+        pts.append((N / 2 + math.cos(a) * rad, N / 2 + math.sin(a) * rad))
+    ImageDraw.Draw(im).polygon(pts, fill=255)
+    caco = np.asarray(im).astype(np.float32) / 255
+    passo = 2 / 7.0
+    u = (x + y) * 0.7071 / passo
+    v = (x - y) * 0.7071 / passo
+    d = np.hypot(u - np.round(u), v - np.round(v))
+    raio = 0.12 + 0.36 * np.clip((1 - (x + 1) / 2) * 1.1, 0, 1)
+    dots = np.clip((raio - d) * 14, 0, 1)
+    return dots * caco
+
+
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     for nm, fn in [("brilho", brilho), ("anel", anel), ("estrela", estrela), ("faisca", faisca), ("fumaca", fumaca),
-                   ("estilhaco", estilhaco), ("respingo", respingo), ("rasgo", rasgo), ("gota", gota), ("seta", seta), ("corrente", corrente), ("voronoi", voronoi)]:
+                   ("estilhaco", estilhaco), ("respingo", respingo), ("rasgo", rasgo), ("gota", gota), ("seta", seta), ("corrente", corrente), ("voronoi", voronoi), ("ponto", ponto), ("retalho", retalho)]:
         v = fn()
         if nm == "faisca":
             v = v[::-1]          # cabeça em cima: o topo da textura segue a velocidade

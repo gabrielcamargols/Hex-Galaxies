@@ -918,6 +918,7 @@ func _fx_proj2(P: Dictionary, from: Vector3, to: Vector3, tint: Color) -> float:
 			if e[1]:
 				e[0].position = p, 0.0, 1.0, t)
 	tw.tween_callback(func():
+		holder.visible = false          # a esfera some no impacto; o estouro assume
 		for e in emitters:
 			e[0].emitting = false
 			var life = e[0].lifetime + 0.4
