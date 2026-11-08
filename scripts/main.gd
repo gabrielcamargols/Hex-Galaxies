@@ -2128,7 +2128,10 @@ func _build_hud() -> void:
 	# ficha da peça
 	var uc = _panel(ui)
 	_place(uc, Control.PRESET_BOTTOM_LEFT, 8)
-	w["ucard_text"] = _rich(uc, 260 if compact else 320)
+	w["ucard_text"] = _rich(uc, 200 if compact else 232)
+	w["ucard_text"].add_theme_font_size_override("normal_font_size", 12)
+	w["ucard_text"].add_theme_font_size_override("bold_font_size", 12)
+	w["ucard_text"].add_theme_font_size_override("italics_font_size", 12)
 	w["ucard"] = uc
 	# embaixo: mão de cartas + botões de ação
 	var botcol = _vbox(ui, 6)
@@ -2805,13 +2808,32 @@ func _field_row(u) -> Button:
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	b.add_theme_font_size_override("font_size", 13)
 	b.add_theme_constant_override("icon_max_width", 30)
-	b.custom_minimum_size = Vector2(_roster_w(), 36)
+	b.custom_minimum_size = Vector2(_roster_w(), 42)
 	b.tooltip_text = "%s · Vida %d/%d · %s" % [DB.cards[u.cid]["name"], max(0, u.hp), u.maxhp, "já agiu neste round" if used else "pronto para agir"]
 	if u.is_cmd:
 		b.text = "★ " + b.text
 	var hp_frac = float(max(0, u.hp)) / max(1.0, float(u.maxhp))
 	var fc = Color("#7fe08a") if hp_frac > 0.6 else (Color("#ffcf5a") if hp_frac > 0.3 else Color("#ff6a5a"))
 	b.add_theme_color_override("font_color", fc)
+	# barra de vida embaixo do avatar/nome
+	var tr = ColorRect.new()
+	tr.color = Color(0, 0, 0, 0.55)
+	tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tr.anchor_left = 0.0
+	tr.anchor_right = 1.0
+	tr.anchor_top = 1.0
+	tr.anchor_bottom = 1.0
+	tr.offset_left = 4
+	tr.offset_right = -4
+	tr.offset_top = -8
+	tr.offset_bottom = -3
+	b.add_child(tr)
+	var fl = ColorRect.new()
+	fl.color = fc
+	fl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	fl.anchor_right = hp_frac
+	fl.anchor_bottom = 1.0
+	tr.add_child(fl)
 	if used and not (u.uid == sel or u.uid == inspect):
 		b.modulate = Color(0.62, 0.62, 0.66)
 	return b
@@ -2831,7 +2853,7 @@ func _refresh_ucard() -> void:
 		else:
 			var c = DB.cards[u.cid]
 			var fcol = DB.factions[c["f"]]["color"]
-			txt = "[color=%s]%s[/color] · %s\n[font_size=24][b]%s[/b][/font_size]\n" % [fcol, DB.factions[c["f"]]["name"].to_upper(), "Você" if u.owner == me else _opp(), c["name"]]
+			txt = "[color=%s]%s[/color] · %s\n[font_size=16][b]%s[/b][/font_size]\n" % [fcol, DB.factions[c["f"]]["name"].to_upper(), "Você" if u.owner == me else _opp(), c["name"]]
 			txt += "%s\n[b]Vida[/b] %d/%d   [b]Ataque[/b] %d   [b]Movimento[/b] %d   [b]Alcance[/b] %d\n" % [c["role"], max(0, u.hp), u.maxhp, game.atk_of(u, null), game.mov_of(u), game.alc_of(u)]
 			if u.st == "field":
 				txt += "[i]%s[/i]\n" % game.t_name(u.pos())
@@ -5342,6 +5364,12 @@ func _make_plate(u) -> Dictionary:
 
 func _update_plates(delta: float) -> void:
 	if not w.has("plates") or not is_instance_valid(w["plates"]):
+		return
+	# as placas de vida no campo foram removidas: a vida aparece no painel da esquerda
+	for k in plates.keys():
+		if is_instance_valid(plates[k]["panel"]):
+			plates[k]["panel"].visible = false
+	if true:
 		return
 	var seen = {}
 	var sc = clamp(40.0 / max(board.cam_dist, 1.0), 0.7, 1.15)   # de longe as barras encolhem e não se amontoam
