@@ -292,6 +292,27 @@ func _fill_list() -> void:
 		_btn(lista, nome, Color("#F438A9"), tocar.bind(id))
 
 
+var legenda_lb: Label = null
+
+
+## legenda grande no alto da tela (para vídeos de revisão)
+func legenda(txt: String, sub: String = "") -> void:
+	if legenda_lb == null:
+		legenda_lb = Label.new()
+		if font != null:
+			legenda_lb.add_theme_font_override("font", font)
+		legenda_lb.add_theme_font_size_override("font_size", 38)
+		legenda_lb.add_theme_color_override("font_color", Color("#FFD12E"))
+		legenda_lb.add_theme_color_override("font_outline_color", Color("#12061c"))
+		legenda_lb.add_theme_constant_override("outline_size", 12)
+		legenda_lb.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		legenda_lb.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+		legenda_lb.offset_top = 18
+		legenda_lb.offset_left = 380
+		ui.add_child(legenda_lb)
+	legenda_lb.text = txt + ("\n" + sub if sub != "" else "")
+
+
 ## roteiro automático (revisão/gravação): toca cada receita da facção n vezes
 func auto(n: int = 2, pausa: float = 2.2, fundos: Array = [0, 1]) -> void:
 	var ids = []
