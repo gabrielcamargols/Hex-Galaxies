@@ -68,7 +68,14 @@
     "name": "Banquete dos Clãs",
     "text": "Quando entra em campo, espalha 6 bananas pelo mapa (até 6 casas dele): 2 de cura (+3 Vida), 2 de força (+2 ATQ no round) e 2 de mira (+1 alcance no round). Os aliados ganham o bônus ao passar pelas casas onde elas estão."
    },
-   "k": {"entry": {"t": "bananas", "n": 2, "r": 6}, "climbAll": true},
+   "k": {
+    "entry": {
+     "t": "bananas",
+     "n": 2,
+     "r": 6
+    },
+    "climbAll": true
+   },
    "ab2": {
     "name": "Escalada Primepata",
     "text": "Sobe em qualquer superfície: rochas, ruínas, ossadas, galpões e penhascos de qualquer altura. Sempre ligada, não gasta ação.",
@@ -109,7 +116,9 @@
     "name": "Caçada em Sequência",
     "text": "Após atacar um inimigo, avança automaticamente (até 3 casas) até o outro inimigo mais próximo e também o ataca. Uma vez por ativação."
    },
-   "k": {"hunt": 3}
+   "k": {
+    "hunt": 3
+   }
   },
   {
    "id": "rhombo",
@@ -183,7 +192,9 @@
     "name": "Set dos Quatro Discos",
     "text": "Tem 4 discos, cada um com uma música e um efeito (ATQ, cura, Movimento ou defesa). Pode tocar 2 por partida, ao fim da sua ativação. Nos rounds 1-3 só beneficia Zaboo; nos rounds 4-6, também aliados a 1 casa; depois, aliados a 2 casas."
    },
-   "k": {"discs": 2}
+   "k": {
+    "discs": 2
+   }
   },
   {
    "id": "caninus_black",
@@ -240,7 +251,10 @@
     "name": "Soco Bomba",
     "text": "A cada round carrega o soco. Ao atacar, pode liberar a carga: +3 de dano, mas Tork perde 2 de Vida. A carga é consumida ao usar e não se acumula entre rounds."
    },
-   "k": {"charge": 3, "chargeCost": 2}
+   "k": {
+    "charge": 3,
+    "chargeCost": 2
+   }
   },
   {
    "id": "astrax",
@@ -318,7 +332,9 @@
     "name": "Campo Minado Clandestino",
     "text": "Sempre que sua equipe derrota um inimigo, pode esconder uma bomba (3 de dano) invisível ao adversário numa casa a até 14 casas de Rappy."
    },
-   "k": {"bombs": 14}
+   "k": {
+    "bombs": 14
+   }
   },
   {
    "id": "cameo",
@@ -402,7 +418,9 @@
     "name": "Chamando Reforços",
     "text": "Na primeira vez que ficar com metade da Vida ou menos, pode chamar até dois aliados para casas ao seu lado, reposicionando-os."
    },
-   "k": {"rally": 2}
+   "k": {
+    "rally": 2
+   }
   },
   {
    "id": "skarp",
@@ -418,7 +436,9 @@
     "name": "Retaliação Espinhosa",
     "text": "Ao ser atacado, devolve 1 de dano ao atacante e, se sobreviver e tiver alcance, contra-ataca. Um contra-ataque por inimigo a cada round; o dano de retorno vale em todos os ataques."
    },
-   "k": {"spiky": 1}
+   "k": {
+    "spiky": 1
+   }
   },
   {
    "id": "brakka",
@@ -434,7 +454,10 @@
     "name": "Superioridade Aérea",
     "text": "Aéreo: ignora elevações ao se mover e não recebe ataques corpo a corpo de unidades terrestres. Porém, recebe +2 de dano de atiradores e snipers (alcance 3 ou mais)."
    },
-   "k": {"air": 2, "climbAll": true}
+   "k": {
+    "air": 2,
+    "climbAll": true
+   }
   },
   {
    "id": "muggo",
@@ -471,7 +494,9 @@
     "name": "Última Resistência",
     "text": "Enquanto houver 3 ou menos personagens da sua equipe em campo, contando Boro, ele pode rolar até 3 casas (Movimento 3)."
    },
-   "k": {"lastStand": 3}
+   "k": {
+    "lastStand": 3
+   }
   },
   {
    "id": "drako",
@@ -487,7 +512,9 @@
     "name": "Veneno Transfusor",
     "text": "Sempre que ataca, envenena o inimigo. A cada round, o alvo envenenado perde 1 de Vida e um aliado escolhido a até 5 casas de Drako recupera 1 de Vida. Se não houver aliado ferido nesse alcance, Drako recebe a cura."
    },
-   "k": {"after": "toxin"}
+   "k": {
+    "after": "toxin"
+   }
   },
   {
    "id": "rhazur",
@@ -776,94 +803,94 @@
     "killHeal": 1
    }
   },
- {
-  "id": "a_lumina",
-  "f": "ABY",
-  "clan": "ABY",
-  "name": "Lumina",
-  "role": "Atiradora",
-  "atk": 3,
-  "int": 5,
-  "mov": 2,
-  "alc": 4,
-  "src": "novo",
-  "ab": {
-   "name": "Isca Ofuscante",
-   "text": "Ao entrar, ofusque 1 inimigo a até 3 casas: -2 ATQ até o fim do round. Alvos ofuscados não têm abrigo contra ataques à distância dos Abyssais."
-  },
-  "k": {
-   "entry": {
-    "t": "debuff",
-    "r": 3,
-    "n": 2
+  {
+   "id": "a_lumina",
+   "f": "ABY",
+   "clan": "ABY",
+   "name": "Lumina",
+   "role": "Atiradora",
+   "atk": 3,
+   "int": 5,
+   "mov": 2,
+   "alc": 4,
+   "src": "novo",
+   "ab": {
+    "name": "Isca Ofuscante",
+    "text": "Ao entrar, ofusque 1 inimigo a até 3 casas: -2 ATQ até o fim do round. Alvos ofuscados não têm abrigo contra ataques à distância dos Abyssais."
    },
-   "dazeCover": true
-  }
- },
- {
-  "id": "a_medusa",
-  "f": "ABY",
-  "clan": "ABY",
-  "name": "Medusa",
-  "role": "Controle",
-  "atk": 2,
-  "int": 6,
-  "mov": 2,
-  "alc": 1,
-  "src": "novo",
-  "ab": {
-   "name": "Toque Elétrico",
-   "text": "Quem a atacar corpo a corpo sofre 2 de dano depois do ataque. Olhar Petrificante: ao entrar, 1 inimigo a até 3 casas não pode se mover até o fim do próximo round."
-  },
-  "k": {
-   "thorns": 2,
-   "entry": {
-    "t": "root",
-    "r": 3,
-    "n": 1
+   "k": {
+    "entry": {
+     "t": "debuff",
+     "r": 3,
+     "n": 2
+    },
+    "dazeCover": true
    }
-  }
- },
- {
-  "id": "a_garra",
-  "f": "ABY",
-  "clan": "ABY",
-  "name": "Garra-Funda",
-  "role": "Tanque",
-  "atk": 3,
-  "int": 9,
-  "mov": 1,
-  "alc": 1,
-  "src": "novo",
-  "ab": {
-   "name": "Carapaça de Cracas",
-   "text": "Sofre 1 a menos de dano de cada ataque. Maré Alta: enquanto houver outro Abyssal adjacente a ela, inimigos adjacentes a ela têm -1 de MOV."
   },
-  "k": {
-   "selfRed": 1,
-   "slowAura": true
-  }
- },
- {
-  "id": "a_vespertina",
-  "f": "ABY",
-  "clan": "ABY",
-  "name": "Vespertina",
-  "role": "Assassina",
-  "atk": 4,
-  "int": 5,
-  "mov": 3,
-  "alc": 1,
-  "src": "novo",
-  "ab": {
-   "name": "Manto da Penumbra",
-   "text": "Após atacar, pode mover 1 casa livre sem gastar ação. Golpe nas Sombras: +2 ATQ contra um alvo sem nenhum aliado adjacente a ele."
+  {
+   "id": "a_medusa",
+   "f": "ABY",
+   "clan": "ABY",
+   "name": "Medusa",
+   "role": "Controle",
+   "atk": 2,
+   "int": 6,
+   "mov": 2,
+   "alc": 1,
+   "src": "novo",
+   "ab": {
+    "name": "Toque Elétrico",
+    "text": "Quem a atacar corpo a corpo sofre 2 de dano depois do ataque. Olhar Petrificante: ao entrar, 1 inimigo a até 3 casas não pode se mover até o fim do próximo round."
+   },
+   "k": {
+    "thorns": 2,
+    "entry": {
+     "t": "root",
+     "r": 3,
+     "n": 1
+    }
+   }
   },
-  "k": {
-   "after": "freeMove",
-   "atkIsolated": 2
-  }
- },
+  {
+   "id": "a_garra",
+   "f": "ABY",
+   "clan": "ABY",
+   "name": "Garra-Funda",
+   "role": "Tanque",
+   "atk": 3,
+   "int": 9,
+   "mov": 1,
+   "alc": 1,
+   "src": "novo",
+   "ab": {
+    "name": "Carapaça de Cracas",
+    "text": "Sofre 1 a menos de dano de cada ataque. Maré Alta: enquanto houver outro Abyssal adjacente a ela, inimigos adjacentes a ela têm -1 de MOV."
+   },
+   "k": {
+    "selfRed": 1,
+    "slowAura": true
+   }
+  },
+  {
+   "id": "a_vespertina",
+   "f": "ABY",
+   "clan": "ABY",
+   "name": "Vespertina",
+   "role": "Assassina",
+   "atk": 4,
+   "int": 5,
+   "mov": 3,
+   "alc": 1,
+   "src": "novo",
+   "ab": {
+    "name": "Manto da Penumbra",
+    "text": "Após atacar, pode mover 1 casa livre sem gastar ação. Golpe nas Sombras: +2 ATQ contra um alvo sem nenhum aliado adjacente a ele."
+   },
+   "k": {
+    "after": "freeMove",
+    "atkIsolated": 2
+   }
+  },
   {
    "id": "k_cmd",
    "f": "KRI",
@@ -1114,184 +1141,184 @@
     }
    }
   },
- {
-  "id": "k_estandarte",
-  "f": "KRI",
-  "clan": "KRI",
-  "name": "Krieg Porta-Estandarte",
-  "role": "Suporte",
-  "atk": 2,
-  "int": 7,
-  "mov": 2,
-  "alc": 1,
-  "src": "novo",
-  "ab": {
-   "name": "Estandarte do Clã",
-   "text": "Unidades Krieg aliadas adjacentes recebem +1 ATQ. Vingança do Clã: se for derrotado, as unidades Krieg a até 2 casas recebem +2 ATQ até o fim do round."
-  },
-  "k": {
-   "allyAtk": {
-    "r": 1,
-    "n": 1,
-    "who": "KRI"
+  {
+   "id": "k_estandarte",
+   "f": "KRI",
+   "clan": "KRI",
+   "name": "Krieg Porta-Estandarte",
+   "role": "Suporte",
+   "atk": 2,
+   "int": 7,
+   "mov": 2,
+   "alc": 1,
+   "src": "novo",
+   "ab": {
+    "name": "Estandarte do Clã",
+    "text": "Unidades Krieg aliadas adjacentes recebem +1 ATQ. Vingança do Clã: se for derrotado, as unidades Krieg a até 2 casas recebem +2 ATQ até o fim do round."
    },
-   "vengeance": {
-    "r": 2,
-    "n": 2
+   "k": {
+    "allyAtk": {
+     "r": 1,
+     "n": 1,
+     "who": "KRI"
+    },
+    "vengeance": {
+     "r": 2,
+     "n": 2
+    }
    }
-  }
- },
- {
-  "id": "k_morteiro",
-  "f": "KRI",
-  "clan": "KRI",
-  "name": "Krieg Morteiro",
-  "role": "Artilheiro",
-  "atk": 3,
-  "int": 5,
-  "mov": 1,
-  "alc": 5,
-  "src": "novo",
-  "ab": {
-   "name": "Barragem Coordenada",
-   "text": "Pode atacar a até 5 casas. Ao atacar, cause 1 dano a cada outro inimigo adjacente ao alvo. Recebe +2 ATQ contra um alvo que outra unidade Krieg já atacou neste round."
   },
-  "k": {
-   "after": "splash",
-   "atkFocus": 2
-  }
- },
- {
-  "id": "k_escudeiro",
-  "f": "KRI",
-  "clan": "KRI",
-  "name": "Krieg Escudeiro",
-  "role": "Guardião",
-  "atk": 2,
-  "int": 9,
-  "mov": 2,
-  "alc": 1,
-  "src": "novo",
-  "ab": {
-   "name": "Escudo-Torre",
-   "text": "1 vez por round, pode receber o ataque destinado a um aliado adjacente. Contragolpe: ao proteger, devolve ao atacante (a até 2 casas) um golpe com o seu ATQ."
-  },
-  "k": {
-   "guard": true,
-   "guardOnce": true,
-   "counter": 2
-  }
- },
- {
-  "id": "k_batedor",
-  "f": "KRI",
-  "clan": "KRI",
-  "name": "Krieg Batedora",
-  "role": "Explorador",
-  "atk": 3,
-  "int": 5,
-  "mov": 3,
-  "alc": 2,
-  "src": "novo",
-  "ab": {
-   "name": "Reconhecimento",
-   "text": "Ao entrar, marque 1 inimigo a até 4 casas: ataques contra ele causam +1 dano até o fim do round. Observador Avançado: enquanto a Batedora estiver em campo, ataques à distância das unidades Krieg contra um alvo marcado ignoram a linha de visão."
-  },
-  "k": {
-   "entry": {
-    "t": "mark",
-    "r": 4,
-    "n": 1
+  {
+   "id": "k_morteiro",
+   "f": "KRI",
+   "clan": "KRI",
+   "name": "Krieg Morteiro",
+   "role": "Artilheiro",
+   "atk": 3,
+   "int": 5,
+   "mov": 1,
+   "alc": 5,
+   "src": "novo",
+   "ab": {
+    "name": "Barragem Coordenada",
+    "text": "Pode atacar a até 5 casas. Ao atacar, cause 1 dano a cada outro inimigo adjacente ao alvo. Recebe +2 ATQ contra um alvo que outra unidade Krieg já atacou neste round."
+   },
+   "k": {
+    "after": "splash",
+    "atkFocus": 2
    }
-  }
- },
- {
-  "id": "k_radio",
-  "f": "KRI",
-  "clan": "KRI",
-  "name": "Krieg Operador de Rádio",
-  "role": "Estrategista",
-  "atk": 2,
-  "int": 6,
-  "mov": 2,
-  "alc": 1,
-  "src": "novo",
-  "ab": {
-   "name": "Chamar Artilharia",
-   "text": "Ao entrar, chama a artilharia: cause 2 de dano a 1 inimigo a até 4 casas."
   },
-  "k": {
-   "entry": {
-    "t": "dmg",
-    "r": 4,
-    "n": 2
+  {
+   "id": "k_escudeiro",
+   "f": "KRI",
+   "clan": "KRI",
+   "name": "Krieg Escudeiro",
+   "role": "Guardião",
+   "atk": 2,
+   "int": 9,
+   "mov": 2,
+   "alc": 1,
+   "src": "novo",
+   "ab": {
+    "name": "Escudo-Torre",
+    "text": "1 vez por round, pode receber o ataque destinado a um aliado adjacente. Contragolpe: ao proteger, devolve ao atacante (a até 2 casas) um golpe com o seu ATQ."
    },
-   "ult": "artillery",
-   "ultRound": true
+   "k": {
+    "guard": true,
+    "guardOnce": true,
+    "counter": 2
+   }
   },
-  "ab2": {
-   "name": "Artilharia Pesada",
-   "text": "1 vez por round, 1 ação: marque uma casa a até 5. No início do próximo round ela sofre 3 de dano e as peças ao redor sofrem 1, inclusive as aliadas.",
-   "kind": "ativa",
-   "per": "round"
-  }
- },
- {
-  "id": "k_sapador",
-  "f": "KRI",
-  "clan": "KRI",
-  "name": "Krieg Sapadora",
-  "role": "Engenheiro",
-  "atk": 3,
-  "int": 6,
-  "mov": 2,
-  "alc": 1,
-  "src": "novo",
-  "ab": {
-   "name": "Campo Minado",
-   "text": "Ao entrar, arme uma mina numa casa livre adjacente: o primeiro inimigo que entrar sofre 3 de dano. Pode ter 2 minas em campo e arma uma nova no local onde cada unidade Krieg aliada é derrotada."
-  },
-  "k": {
-   "entry": {
-    "t": "mine",
-    "n": 3
+  {
+   "id": "k_batedor",
+   "f": "KRI",
+   "clan": "KRI",
+   "name": "Krieg Batedora",
+   "role": "Explorador",
+   "atk": 3,
+   "int": 5,
+   "mov": 3,
+   "alc": 2,
+   "src": "novo",
+   "ab": {
+    "name": "Reconhecimento",
+    "text": "Ao entrar, marque 1 inimigo a até 4 casas: ataques contra ele causam +1 dano até o fim do round. Observador Avançado: enquanto a Batedora estiver em campo, ataques à distância das unidades Krieg contra um alvo marcado ignoram a linha de visão."
    },
-   "mineCap": 2,
-   "deathMine": 3
-  }
- },
- {
-  "id": "k_granadeiro",
-  "f": "KRI",
-  "clan": "KRI",
-  "name": "Krieg Granadeiro",
-  "role": "Lutador",
-  "atk": 4,
-  "int": 6,
-  "mov": 2,
-  "alc": 2,
-  "src": "novo",
-  "ab": {
-   "name": "Saraivada",
-   "text": "Ao entrar, cause 1 de dano a cada inimigo adjacente. Seus ataques são granadas: passam por cima de obstáculos (sem linha de visão, ignorando abrigo). Se for derrotado, lança uma última granada: 1 de dano nos inimigos adjacentes."
+   "k": {
+    "entry": {
+     "t": "mark",
+     "r": 4,
+     "n": 1
+    }
+   }
   },
-  "k": {
-   "entry": {
-    "t": "dmgAdj",
-    "n": 1
+  {
+   "id": "k_radio",
+   "f": "KRI",
+   "clan": "KRI",
+   "name": "Krieg Operador de Rádio",
+   "role": "Estrategista",
+   "atk": 2,
+   "int": 6,
+   "mov": 2,
+   "alc": 1,
+   "src": "novo",
+   "ab": {
+    "name": "Chamar Artilharia",
+    "text": "Ao entrar, chama a artilharia: cause 2 de dano a 1 inimigo a até 4 casas."
    },
-   "lob": true,
-   "deathGrenade": 1,
-   "ult": "grenade",
-   "ultRound": true
+   "k": {
+    "entry": {
+     "t": "dmg",
+     "r": 4,
+     "n": 2
+    },
+    "ult": "artillery",
+    "ultRound": true
+   },
+   "ab2": {
+    "name": "Artilharia Pesada",
+    "text": "1 vez por round, 1 ação: marque uma casa a até 5. No início do próximo round ela sofre 3 de dano e as peças ao redor sofrem 1, inclusive as aliadas.",
+    "kind": "ativa",
+    "per": "round"
+   }
   },
-  "ab2": {
-   "name": "Granada",
-   "text": "1 vez por round, 1 ação: lance uma granada num inimigo a até 3 casas, por cima de obstáculos. Ele sofre 2 de dano e os outros inimigos adjacentes a ele sofrem 1.",
-   "kind": "ativa",
-   "per": "round"
-  }
- },
+  {
+   "id": "k_sapador",
+   "f": "KRI",
+   "clan": "KRI",
+   "name": "Krieg Sapadora",
+   "role": "Engenheiro",
+   "atk": 3,
+   "int": 6,
+   "mov": 2,
+   "alc": 1,
+   "src": "novo",
+   "ab": {
+    "name": "Campo Minado",
+    "text": "Ao entrar, arme uma mina numa casa livre adjacente: o primeiro inimigo que entrar sofre 3 de dano. Pode ter 2 minas em campo e arma uma nova no local onde cada unidade Krieg aliada é derrotada."
+   },
+   "k": {
+    "entry": {
+     "t": "mine",
+     "n": 3
+    },
+    "mineCap": 2,
+    "deathMine": 3
+   }
+  },
+  {
+   "id": "k_granadeiro",
+   "f": "KRI",
+   "clan": "KRI",
+   "name": "Krieg Granadeiro",
+   "role": "Lutador",
+   "atk": 4,
+   "int": 6,
+   "mov": 2,
+   "alc": 2,
+   "src": "novo",
+   "ab": {
+    "name": "Saraivada",
+    "text": "Ao entrar, cause 1 de dano a cada inimigo adjacente. Seus ataques são granadas: passam por cima de obstáculos (sem linha de visão, ignorando abrigo). Se for derrotado, lança uma última granada: 1 de dano nos inimigos adjacentes."
+   },
+   "k": {
+    "entry": {
+     "t": "dmgAdj",
+     "n": 1
+    },
+    "lob": true,
+    "deathGrenade": 1,
+    "ult": "grenade",
+    "ultRound": true
+   },
+   "ab2": {
+    "name": "Granada",
+    "text": "1 vez por round, 1 ação: lance uma granada num inimigo a até 3 casas, por cima de obstáculos. Ele sofre 2 de dano e os outros inimigos adjacentes a ele sofrem 1.",
+    "kind": "ativa",
+    "per": "round"
+   }
+  },
   {
    "id": "w_lobo",
    "f": "WAC",
@@ -1513,140 +1540,140 @@
    },
    "k": {}
   },
- {
-  "id": "w_urso",
-  "f": "WAC",
-  "clan": "WAC",
-  "name": "Wächter Urso",
-  "role": "Tanque",
-  "atk": 3,
-  "int": 9,
-  "mov": 2,
-  "alc": 1,
-  "src": "novo",
-  "ab": {
-   "name": "Couraça de Urso",
-   "text": "Sofre 1 a menos de dano de cada ataque."
+  {
+   "id": "w_urso",
+   "f": "WAC",
+   "clan": "WAC",
+   "name": "Wächter Urso",
+   "role": "Tanque",
+   "atk": 3,
+   "int": 9,
+   "mov": 2,
+   "alc": 1,
+   "src": "novo",
+   "ab": {
+    "name": "Couraça de Urso",
+    "text": "Sofre 1 a menos de dano de cada ataque."
+   },
+   "k": {
+    "selfRed": 1
+   }
   },
-  "k": {
-   "selfRed": 1
-  }
- },
- {
-  "id": "w_javali",
-  "f": "WAC",
-  "clan": "WAC",
-  "name": "Wächter Javali",
-  "role": "Investida",
-  "atk": 4,
-  "int": 7,
-  "mov": 3,
-  "alc": 1,
-  "src": "novo",
-  "ab": {
-   "name": "Investida",
-   "text": "1 ação: mova até seu MOV e faça 1 ataque normal. Conta no limite de 1 ataque por ativação."
+  {
+   "id": "w_javali",
+   "f": "WAC",
+   "clan": "WAC",
+   "name": "Wächter Javali",
+   "role": "Investida",
+   "atk": 4,
+   "int": 7,
+   "mov": 3,
+   "alc": 1,
+   "src": "novo",
+   "ab": {
+    "name": "Investida",
+    "text": "1 ação: mova até seu MOV e faça 1 ataque normal. Conta no limite de 1 ataque por ativação."
+   },
+   "k": {
+    "action": "moveAttack"
+   }
   },
-  "k": {
-   "action": "moveAttack"
-  }
- },
- {
-  "id": "w_gorila",
-  "f": "WAC",
-  "clan": "WAC",
-  "name": "Wächter Gorila",
-  "role": "Brutamontes",
-  "atk": 4,
-  "int": 8,
-  "mov": 2,
-  "alc": 1,
-  "src": "novo",
-  "ab": {
-   "name": "Arremesso",
-   "text": "Após atacar, empurre o alvo 1 casa para longe, se o destino estiver livre."
+  {
+   "id": "w_gorila",
+   "f": "WAC",
+   "clan": "WAC",
+   "name": "Wächter Gorila",
+   "role": "Brutamontes",
+   "atk": 4,
+   "int": 8,
+   "mov": 2,
+   "alc": 1,
+   "src": "novo",
+   "ab": {
+    "name": "Arremesso",
+    "text": "Após atacar, empurre o alvo 1 casa para longe, se o destino estiver livre."
+   },
+   "k": {
+    "after": "knock"
+   }
   },
-  "k": {
-   "after": "knock"
-  }
- },
- {
-  "id": "w_serpente",
-  "f": "WAC",
-  "clan": "WAC",
-  "name": "Wächter Serpente",
-  "role": "Emboscada",
-  "atk": 4,
-  "int": 6,
-  "mov": 2,
-  "alc": 1,
-  "src": "novo",
-  "ab": {
-   "name": "Veneno de Naja",
-   "text": "Se o ataque causar dano, o alvo sofre mais 1 dano no fim do round."
+  {
+   "id": "w_serpente",
+   "f": "WAC",
+   "clan": "WAC",
+   "name": "Wächter Serpente",
+   "role": "Emboscada",
+   "atk": 4,
+   "int": 6,
+   "mov": 2,
+   "alc": 1,
+   "src": "novo",
+   "ab": {
+    "name": "Veneno de Naja",
+    "text": "Se o ataque causar dano, o alvo sofre mais 1 dano no fim do round."
+   },
+   "k": {
+    "after": "pending"
+   }
   },
-  "k": {
-   "after": "pending"
-  }
- },
- {
-  "id": "w_alce",
-  "f": "WAC",
-  "clan": "WAC",
-  "name": "Wächter Alce",
-  "role": "Guardião",
-  "atk": 3,
-  "int": 8,
-  "mov": 2,
-  "alc": 1,
-  "src": "novo",
-  "ab": {
-   "name": "Galhada Protetora",
-   "text": "1 vez por round, pode receber o ataque destinado a um aliado adjacente."
+  {
+   "id": "w_alce",
+   "f": "WAC",
+   "clan": "WAC",
+   "name": "Wächter Alce",
+   "role": "Guardião",
+   "atk": 3,
+   "int": 8,
+   "mov": 2,
+   "alc": 1,
+   "src": "novo",
+   "ab": {
+    "name": "Galhada Protetora",
+    "text": "1 vez por round, pode receber o ataque destinado a um aliado adjacente."
+   },
+   "k": {
+    "guard": true,
+    "guardOnce": true
+   }
   },
-  "k": {
-   "guard": true,
-   "guardOnce": true
-  }
- },
- {
-  "id": "w_lince",
-  "f": "WAC",
-  "clan": "WAC",
-  "name": "Wächter Lince",
-  "role": "Assassina",
-  "atk": 5,
-  "int": 6,
-  "mov": 3,
-  "alc": 1,
-  "src": "novo",
-  "ab": {
-   "name": "Bote Solitário",
-   "text": "+2 ATQ contra um inimigo sem aliados adjacentes."
+  {
+   "id": "w_lince",
+   "f": "WAC",
+   "clan": "WAC",
+   "name": "Wächter Lince",
+   "role": "Assassina",
+   "atk": 5,
+   "int": 6,
+   "mov": 3,
+   "alc": 1,
+   "src": "novo",
+   "ab": {
+    "name": "Bote Solitário",
+    "text": "+2 ATQ contra um inimigo sem aliados adjacentes."
+   },
+   "k": {
+    "atkIsolated": 2
+   }
   },
-  "k": {
-   "atkIsolated": 2
-  }
- },
- {
-  "id": "w_morcego",
-  "f": "WAC",
-  "clan": "WAC",
-  "name": "Wächter Morcego",
-  "role": "Batedora",
-  "atk": 3,
-  "int": 6,
-  "mov": 3,
-  "alc": 1,
-  "src": "novo",
-  "ab": {
-   "name": "Asas de Varetas",
-   "text": "Voa: sobe em qualquer superfície, de qualquer altura."
+  {
+   "id": "w_morcego",
+   "f": "WAC",
+   "clan": "WAC",
+   "name": "Wächter Morcego",
+   "role": "Batedora",
+   "atk": 3,
+   "int": 6,
+   "mov": 3,
+   "alc": 1,
+   "src": "novo",
+   "ab": {
+    "name": "Asas de Varetas",
+    "text": "Voa: sobe em qualquer superfície, de qualquer altura."
+   },
+   "k": {
+    "climbAll": true
+   }
   },
-  "k": {
-   "climbAll": true
-  }
- },
   {
    "id": "z_vang",
    "f": "ZUK",
@@ -1958,75 +1985,73 @@
     "after": "pending"
    }
   },
- {
-  "id": "z_drone",
-  "f": "ZUK",
-  "clan": "ZUK",
-  "name": "Zukunft Drone-Sentinela",
-  "role": "Atirador",
-  "atk": 3,
-  "int": 5,
-  "mov": 2,
-  "alc": 4,
-  "src": "novo",
-  "ab": {
-   "name": "Voo",
-   "text": "Voa: sobe em qualquer superfície, de qualquer altura. Pode atacar a até 4 casas com linha de visão."
-  },
-  "k": {
-   "climbAll": true
-  }
- },
- {
-  "id": "z_escudo",
-  "f": "ZUK",
-  "clan": "ZUK",
-  "name": "Zukunft Engenheira de Escudos",
-  "role": "Suporte",
-  "atk": 2,
-  "int": 8,
-  "mov": 2,
-  "alc": 2,
-  "src": "novo",
-  "ab": {
-   "name": "Matriz Hexagonal",
-   "text": "Outros Zukunft a até 2 casas sofrem 1 a menos de dano de ataques."
-  },
-  "k": {
-   "auraRed": {
-    "r": 2,
-    "n": 1,
-    "who": "ZUK"
+  {
+   "id": "z_drone",
+   "f": "ZUK",
+   "clan": "ZUK",
+   "name": "Zukunft Drone-Sentinela",
+   "role": "Atirador",
+   "atk": 3,
+   "int": 5,
+   "mov": 2,
+   "alc": 4,
+   "src": "novo",
+   "ab": {
+    "name": "Voo",
+    "text": "Voa: sobe em qualquer superfície, de qualquer altura. Pode atacar a até 4 casas com linha de visão."
+   },
+   "k": {
+    "climbAll": true
    }
-  }
- },
+  },
+  {
+   "id": "z_escudo",
+   "f": "ZUK",
+   "clan": "ZUK",
+   "name": "Zukunft Engenheira de Escudos",
+   "role": "Suporte",
+   "atk": 2,
+   "int": 8,
+   "mov": 2,
+   "alc": 2,
+   "src": "novo",
+   "ab": {
+    "name": "Matriz Hexagonal",
+    "text": "Outros Zukunft a até 2 casas sofrem 1 a menos de dano de ataques."
+   },
+   "k": {
+    "auraRed": {
+     "r": 2,
+     "n": 1,
+     "who": "ZUK"
+    }
+   }
+  },
   {
    "id": "l_general",
    "f": "LIT",
    "cmd": true,
    "name": "Lithari Líder",
    "role": "Comandante",
-   "atk": 5,
+   "atk": 4,
    "int": 12,
    "mov": 2,
    "alc": 1,
    "src": "novo",
    "ab": {
     "name": "Formação Cristalina",
-    "text": "Outros Lithari a até 2 casas sofrem 1 a menos de dano de ataques. Fora do campo, meça desde o centro da sua entrada."
+    "text": "Inimigos a até 2 casas dele ficam Lentos (-1 MOV). Fora do campo, meça desde o centro da sua entrada."
    },
    "k": {
-    "auraRed": {
+    "slowNear": {
      "r": 2,
-     "n": 1,
-     "who": "LIT",
      "cmd": true
     },
     "ult": "prison"
    },
    "ab2": {
     "name": "Prisão de Cristal",
-    "text": "1 vez por partida, 1 ação: prenda 1 inimigo a até 4 casas até o fim do próximo round. Ele não anda, não ataca e não pode ser atacado.",
+    "text": "1 vez por partida, 1 ação: prenda 1 inimigo a até 4 casas até o fim do próximo round (não anda, não ataca e não pode ser atacado). Os outros inimigos adjacentes a ele ficam Lentos.",
     "kind": "ativa"
    }
   },
@@ -2042,10 +2067,10 @@
    "src": "novo",
    "ab": {
     "name": "Ressonância",
-    "text": "No fim do round, restaure 1 de Vida de outro aliado adjacente."
+    "text": "Aliados Lithari causam +1 de dano em alvos Lentos ou Enraizados a até 3 casas dele."
    },
    "k": {
-    "endHeal": 1
+    "resDmg": 1
    }
   },
   {
@@ -2059,11 +2084,11 @@
    "alc": 1,
    "src": "novo",
    "ab": {
-    "name": "Casca de Cristal",
-    "text": "Sofre 1 a menos de dano de ataques."
+    "name": "Âncora",
+    "text": "Inimigos adjacentes a ele só podem mover 1 casa."
    },
    "k": {
-    "selfRed": 1
+    "anchor": true
    }
   },
   {
@@ -2078,10 +2103,10 @@
    "src": "novo",
    "ab": {
     "name": "Chuva de Cristais",
-    "text": "Ao atacar, cause 1 dano a cada outro inimigo adjacente ao alvo."
+    "text": "Ao causar dano com um ataque, o alvo fica Lento até o fim do round."
    },
    "k": {
-    "after": "splash"
+    "after": "slowHit"
    }
   },
   {
@@ -2091,15 +2116,15 @@
    "role": "Batedor",
    "atk": 3,
    "int": 4,
-   "mov": 4,
+   "mov": 3,
    "alc": 1,
    "src": "novo",
    "ab": {
-    "name": "Velocidade Cristalina",
-    "text": "Após atacar, pode mover 1 casa livre sem gastar ação."
+    "name": "Rastro Cristalino",
+    "text": "A casa onde termina cada movimento vira Zona de Cristal até o fim do round."
    },
    "k": {
-    "after": "freeMove"
+    "trail": true
    }
   },
   {
@@ -2113,15 +2138,14 @@
    "alc": 1,
    "src": "novo",
    "ab": {
-    "name": "Regeneração Cristalina",
-    "text": "Ao entrar, restaure 3 de Vida de 1 aliado a até 2 casas. Pode escolher a si mesmo."
+    "name": "Cristal Curativo",
+    "text": "Ao entrar, restaure 3 de Vida de 1 aliado a até 2 casas (+1 se ele estiver numa Zona de Cristal). Pode escolher a si mesmo."
    },
    "k": {
     "entry": {
-     "t": "heal",
+     "t": "healZ",
      "r": 2,
-     "n": 3,
-     "self": true
+     "n": 3
     }
    }
   },
@@ -2137,12 +2161,12 @@
    "src": "novo",
    "ab": {
     "name": "Obelisco",
-    "text": "Ao entrar, crie uma Barreira com 4 de Vida numa casa livre adjacente."
+    "text": "Ao entrar, crie uma Barreira com 3 de Vida numa casa livre adjacente; as casas ao redor dela viram Zona de Cristal por 2 rounds."
    },
    "k": {
     "entry": {
-     "t": "barrier",
-     "n": 4
+     "t": "barrierZone",
+     "n": 3
     }
    }
   },
@@ -2151,17 +2175,19 @@
    "f": "LIT",
    "name": "Lithari Assassino",
    "role": "Assassino",
-   "atk": 6,
+   "atk": 5,
    "int": 4,
    "mov": 3,
    "alc": 1,
    "src": "novo",
    "ab": {
     "name": "Lâminas do Corpo",
-    "text": "Recebe +2 ATQ ao atacar um alvo com 5 de Vida restantes ou menos."
+    "text": "Recebe +2 ATQ ao atacar um alvo Lento/Enraizado ou com 3 de Vida restantes ou menos."
    },
    "k": {
-    "atkVsLow": 2
+    "atkVsLow": 2,
+    "lowHp": 3,
+    "atkVsHeld": 2
    }
   },
   {
@@ -2169,16 +2195,18 @@
    "f": "LIT",
    "name": "Lithari Sniper",
    "role": "Atirador",
-   "atk": 5,
+   "atk": 4,
    "int": 4,
    "mov": 2,
    "alc": 6,
    "src": "novo",
    "ab": {
-    "name": "Fragmento Perfurante",
-    "text": "Pode atacar a até 6 casas. Precisa de linha de visão."
+    "name": "Fragmento Gélido",
+    "text": "Pode atacar a até 6 casas (precisa de linha de visão). Ao causar dano, o alvo fica Lento até o fim do round."
    },
-   "k": {}
+   "k": {
+    "after": "slowHit"
+   }
   },
   {
    "id": "l_colosso",
@@ -2186,7 +2214,7 @@
    "name": "Lithari Colosso",
    "role": "Bastião",
    "atk": 3,
-   "int": 12,
+   "int": 11,
    "mov": 1,
    "alc": 1,
    "src": "novo",
@@ -2203,17 +2231,18 @@
    "f": "LIT",
    "name": "Lithari Fera",
    "role": "Fera",
-   "atk": 6,
+   "atk": 5,
    "int": 7,
    "mov": 2,
    "alc": 1,
    "src": "novo",
    "ab": {
     "name": "Fúria Selvagem",
-    "text": "1 ação: mova até seu MOV e faça 1 ataque normal. Conta no limite de 1 ataque por ativação."
+    "text": "1 ação: mova até seu MOV e faça 1 ataque normal. Se andou 2 ou mais casas antes de atacar e causar dano, o alvo fica Enraizado até o fim do próximo round."
    },
    "k": {
-    "action": "moveAttack"
+    "action": "moveAttack",
+    "after": "rootCharge"
    }
   },
   {
@@ -2227,13 +2256,13 @@
    "alc": 1,
    "src": "novo",
    "ab": {
-    "name": "Invocar Cristal",
-    "text": "Ao entrar, crie uma Barreira de cristal com 4 de Vida numa casa livre adjacente."
+    "name": "Invocar Zona",
+    "text": "Ao entrar, crie uma Zona de Cristal (raio 1) centrada numa casa a até 3 casas, por 2 rounds."
    },
    "k": {
     "entry": {
-     "t": "barrier",
-     "n": 4
+     "t": "czone",
+     "r": 3
     }
    }
   },
@@ -2248,12 +2277,13 @@
    "alc": 1,
    "src": "novo",
    "ab": {
-    "name": "Refração",
-    "text": "Ao entrar, não pode ser alvo de ataques até o início do próximo round."
+    "name": "Prisma",
+    "text": "Ao entrar, troque de lugar com qualquer peça a até 4 casas. Se for inimigo, ele fica Enraizado até o fim do próximo round."
    },
    "k": {
     "entry": {
-     "t": "veil"
+     "t": "prism",
+     "r": 4
     }
    }
   },
@@ -2263,18 +2293,19 @@
    "name": "Lithari Guardião",
    "role": "Guardião",
    "atk": 3,
-   "int": 10,
+   "int": 9,
    "mov": 1,
    "alc": 1,
    "src": "novo",
    "ab": {
     "name": "Orbes Protetores",
-    "text": "Aliados adjacentes sofrem 1 a menos de dano de ataques."
+    "text": "Aliados adjacentes sofrem 1 a menos de dano de ataques à distância."
    },
    "k": {
     "auraRed": {
      "r": 1,
-     "n": 1
+     "n": 1,
+     "ranged": true
     }
    }
   },
@@ -2289,11 +2320,12 @@
    "alc": 1,
    "src": "novo",
    "ab": {
-    "name": "Punhos Cristalinos",
-    "text": "Se seu ataque causar dano, o alvo sofre mais 1 dano no fim deste round."
+    "name": "Quebra-gelo",
+    "text": "Causa +2 de dano em alvo Enraizado e, ao atacar, desfaz o enraizamento dele."
    },
    "k": {
-    "after": "pending"
+    "atkVsRoot": 2,
+    "after": "breakRoot"
    }
   },
   {
@@ -2301,7 +2333,7 @@
    "f": "LIT",
    "name": "Lithari Leviathan",
    "role": "Monstro",
-   "atk": 7,
+   "atk": 6,
    "int": 12,
    "mov": 1,
    "alc": 2,
@@ -2320,16 +2352,16 @@
    "name": "Lithari Behemot",
    "role": "Monstro",
    "atk": 5,
-   "int": 14,
+   "int": 13,
    "mov": 1,
    "alc": 1,
    "src": "novo",
    "ab": {
     "name": "Massa Cristalina",
-    "text": "Sofre 1 a menos de dano de ataques."
+    "text": "As casas adjacentes a ele são Zona de Cristal: inimigos que entram nelas ficam Lentos."
    },
    "k": {
-    "selfRed": 1
+    "zoneAura": 1
    }
   },
   {
@@ -2533,147 +2565,147 @@
     "selfRedHome": 1
    }
   },
- {
-  "id": "t_dinamite",
-  "f": "TER",
-  "clan": "TER",
-  "name": "Dinamitador",
-  "role": "Demolidor",
-  "atk": 4,
-  "int": 6,
-  "mov": 2,
-  "alc": 2,
-  "src": "novo",
-  "ab": {
-   "name": "Pavio Curto",
-   "text": "Quando é derrotado, explode: 2 de dano em cada peça adjacente, inclusive aliados."
+  {
+   "id": "t_dinamite",
+   "f": "TER",
+   "clan": "TER",
+   "name": "Dinamitador",
+   "role": "Demolidor",
+   "atk": 4,
+   "int": 6,
+   "mov": 2,
+   "alc": 2,
+   "src": "novo",
+   "ab": {
+    "name": "Pavio Curto",
+    "text": "Quando é derrotado, explode: 2 de dano em cada peça adjacente, inclusive aliados."
+   },
+   "k": {
+    "deathBlast": 2
+   }
   },
-  "k": {
-   "deathBlast": 2
-  }
- },
- {
-  "id": "t_basalto",
-  "f": "TER",
-  "clan": "TER",
-  "name": "Golem de Basalto",
-  "role": "Tanque",
-  "atk": 3,
-  "int": 13,
-  "mov": 1,
-  "alc": 1,
-  "src": "novo",
-  "ab": {
-   "name": "Pele de Basalto",
-   "text": "Sofre 1 a menos de dano de cada ataque."
+  {
+   "id": "t_basalto",
+   "f": "TER",
+   "clan": "TER",
+   "name": "Golem de Basalto",
+   "role": "Tanque",
+   "atk": 3,
+   "int": 13,
+   "mov": 1,
+   "alc": 1,
+   "src": "novo",
+   "ab": {
+    "name": "Pele de Basalto",
+    "text": "Sofre 1 a menos de dano de cada ataque."
+   },
+   "k": {
+    "selfRed": 1
+   }
   },
-  "k": {
-   "selfRed": 1
-  }
- },
- {
-  "id": "t_lanterna",
-  "f": "TER",
-  "clan": "TER",
-  "name": "Lanterneira",
-  "role": "Suporte",
-  "atk": 2,
-  "int": 7,
-  "mov": 2,
-  "alc": 2,
-  "src": "novo",
-  "ab": {
-   "name": "Facho de Carbureto",
-   "text": "Ao entrar, ilumine 1 inimigo a até 3 casas: ataques contra ele causam +1 dano até o fim do round."
+  {
+   "id": "t_lanterna",
+   "f": "TER",
+   "clan": "TER",
+   "name": "Lanterneira",
+   "role": "Suporte",
+   "atk": 2,
+   "int": 7,
+   "mov": 2,
+   "alc": 2,
+   "src": "novo",
+   "ab": {
+    "name": "Facho de Carbureto",
+    "text": "Ao entrar, ilumine 1 inimigo a até 3 casas: ataques contra ele causam +1 dano até o fim do round."
+   },
+   "k": {
+    "entry": {
+     "t": "mark",
+     "r": 3,
+     "n": 1
+    }
+   }
   },
-  "k": {
-   "entry": {
-    "t": "mark",
-    "r": 3,
-    "n": 1
+  {
+   "id": "t_carrinho",
+   "f": "TER",
+   "clan": "TER",
+   "name": "Carrinho de Minério",
+   "role": "Transporte",
+   "atk": 2,
+   "int": 10,
+   "mov": 2,
+   "alc": 1,
+   "src": "novo",
+   "ab": {
+    "name": "Carona na Caçamba",
+    "text": "Ao entrar, traga 1 aliado a até 3 casas para uma casa livre ao lado do carrinho."
+   },
+   "k": {
+    "entry": {
+     "t": "pullAlly",
+     "r": 3
+    }
+   }
+  },
+  {
+   "id": "t_britadeira",
+   "f": "TER",
+   "clan": "TER",
+   "name": "Britadeira",
+   "role": "Lutador",
+   "atk": 5,
+   "int": 8,
+   "mov": 2,
+   "alc": 1,
+   "src": "novo",
+   "ab": {
+    "name": "Quebra-Rocha",
+    "text": "+2 ATQ contra Barreiras e contra peças com 10 ou mais de Vida inicial."
+   },
+   "k": {
+    "atkBig": 2
+   }
+  },
+  {
+   "id": "t_fundidor",
+   "f": "TER",
+   "clan": "TER",
+   "name": "Fundidora",
+   "role": "Atirador",
+   "atk": 4,
+   "int": 7,
+   "mov": 2,
+   "alc": 3,
+   "src": "novo",
+   "ab": {
+    "name": "Metal Derretido",
+    "text": "Ao atacar, cause 1 dano a cada outro inimigo adjacente ao alvo."
+   },
+   "k": {
+    "after": "splash"
+   }
+  },
+  {
+   "id": "t_sentinela",
+   "f": "TER",
+   "clan": "TER",
+   "name": "Sentinela de Pedra",
+   "role": "Guardião",
+   "atk": 3,
+   "int": 9,
+   "mov": 2,
+   "alc": 1,
+   "src": "novo",
+   "ab": {
+    "name": "Guarda de Cristal",
+    "text": "1 vez por round, pode receber o ataque destinado a um aliado adjacente."
+   },
+   "k": {
+    "guard": true,
+    "guardOnce": true
    }
   }
- },
- {
-  "id": "t_carrinho",
-  "f": "TER",
-  "clan": "TER",
-  "name": "Carrinho de Minério",
-  "role": "Transporte",
-  "atk": 2,
-  "int": 10,
-  "mov": 2,
-  "alc": 1,
-  "src": "novo",
-  "ab": {
-   "name": "Carona na Caçamba",
-   "text": "Ao entrar, traga 1 aliado a até 3 casas para uma casa livre ao lado do carrinho."
-  },
-  "k": {
-   "entry": {
-    "t": "pullAlly",
-    "r": 3
-   }
-  }
- },
- {
-  "id": "t_britadeira",
-  "f": "TER",
-  "clan": "TER",
-  "name": "Britadeira",
-  "role": "Lutador",
-  "atk": 5,
-  "int": 8,
-  "mov": 2,
-  "alc": 1,
-  "src": "novo",
-  "ab": {
-   "name": "Quebra-Rocha",
-   "text": "+2 ATQ contra Barreiras e contra peças com 10 ou mais de Vida inicial."
-  },
-  "k": {
-   "atkBig": 2
-  }
- },
- {
-  "id": "t_fundidor",
-  "f": "TER",
-  "clan": "TER",
-  "name": "Fundidora",
-  "role": "Atirador",
-  "atk": 4,
-  "int": 7,
-  "mov": 2,
-  "alc": 3,
-  "src": "novo",
-  "ab": {
-   "name": "Metal Derretido",
-   "text": "Ao atacar, cause 1 dano a cada outro inimigo adjacente ao alvo."
-  },
-  "k": {
-   "after": "splash"
-  }
- },
- {
-  "id": "t_sentinela",
-  "f": "TER",
-  "clan": "TER",
-  "name": "Sentinela de Pedra",
-  "role": "Guardião",
-  "atk": 3,
-  "int": 9,
-  "mov": 2,
-  "alc": 1,
-  "src": "novo",
-  "ab": {
-   "name": "Guarda de Cristal",
-   "text": "1 vez por round, pode receber o ataque destinado a um aliado adjacente."
-  },
-  "k": {
-   "guard": true,
-   "guardOnce": true
-  }
- }
  ],
  "tactics": [
   {
@@ -2844,75 +2876,75 @@
    "cost": 0,
    "text": "O ativo e cada aliado a até 2 casas dele recuperam 2 de Vida, até o valor inicial."
   },
- {
-  "id": "ultimo",
-  "name": "Último Fôlego",
-  "type": "Comando",
-  "cost": 0,
-  "text": "Só se o personagem ativo estiver com metade da Vida ou menos: +3 de dano no próximo ataque desta ativação."
- },
- {
-  "id": "revide",
-  "name": "Revide",
-  "type": "Reação",
-  "cost": 0,
-  "text": "Quando um aliado sobreviver a um ataque corpo a corpo: ele causa 2 de dano no atacante."
- },
- {
-  "id": "resgate",
-  "name": "Teletransporte de Resgate",
-  "type": "Manobra",
-  "cost": 0,
-  "text": "Troque de lugar o personagem ativo com um aliado a até 4 casas dele."
- },
- {
-  "id": "quantica",
-  "name": "Troca Quântica",
-  "type": "Manobra",
-  "cost": 0,
-  "text": "Troque de lugar um aliado e um inimigo, ambos a até 3 casas do personagem ativo."
- },
- {
-  "id": "interceptar",
-  "name": "Interceptar Suprimentos",
-  "type": "Comando",
-  "cost": 0,
-  "text": "Roube 1 carta aleatória da mão do oponente."
- },
- {
-  "id": "grito",
-  "name": "Grito de Guerra",
-  "type": "Comando",
-  "cost": 0,
-  "text": "Todos os seus personagens em campo recebem +1 ATQ até o fim do round."
- },
- {
-  "id": "evacuacao",
-  "name": "Evacuação Médica",
-  "type": "Comando",
-  "cost": 0,
-  "text": "O último aliado derrotado (exceto o comandante) volta para a sua reserva com metade da Vida."
- },
- {
-  "id": "execucao",
-  "name": "Golpe de Misericórdia",
-  "type": "Comando",
-  "cost": 0,
-  "text": "Um inimigo adjacente ao ativo com 3 de Vida ou menos é derrotado na hora. Não funciona em comandantes."
- },
- {
-  "id": "contra",
-  "name": "Contraofensiva",
-  "type": "Comando",
-  "cost": 0,
-  "text": "Só se você tiver menos personagens em campo que o oponente: +1 ação nesta ativação e compre 1 carta."
- },
- {
-  "id": "rede",
-  "name": "Rede de Contenção",
-  "type": "Comando",
-  "cost": 0,
-  "text": "Um inimigo a até 3 casas do ativo, com linha de visão, não pode se mover até o fim do próximo round."
- }
+  {
+   "id": "ultimo",
+   "name": "Último Fôlego",
+   "type": "Comando",
+   "cost": 0,
+   "text": "Só se o personagem ativo estiver com metade da Vida ou menos: +3 de dano no próximo ataque desta ativação."
+  },
+  {
+   "id": "revide",
+   "name": "Revide",
+   "type": "Reação",
+   "cost": 0,
+   "text": "Quando um aliado sobreviver a um ataque corpo a corpo: ele causa 2 de dano no atacante."
+  },
+  {
+   "id": "resgate",
+   "name": "Teletransporte de Resgate",
+   "type": "Manobra",
+   "cost": 0,
+   "text": "Troque de lugar o personagem ativo com um aliado a até 4 casas dele."
+  },
+  {
+   "id": "quantica",
+   "name": "Troca Quântica",
+   "type": "Manobra",
+   "cost": 0,
+   "text": "Troque de lugar um aliado e um inimigo, ambos a até 3 casas do personagem ativo."
+  },
+  {
+   "id": "interceptar",
+   "name": "Interceptar Suprimentos",
+   "type": "Comando",
+   "cost": 0,
+   "text": "Roube 1 carta aleatória da mão do oponente."
+  },
+  {
+   "id": "grito",
+   "name": "Grito de Guerra",
+   "type": "Comando",
+   "cost": 0,
+   "text": "Todos os seus personagens em campo recebem +1 ATQ até o fim do round."
+  },
+  {
+   "id": "evacuacao",
+   "name": "Evacuação Médica",
+   "type": "Comando",
+   "cost": 0,
+   "text": "O último aliado derrotado (exceto o comandante) volta para a sua reserva com metade da Vida."
+  },
+  {
+   "id": "execucao",
+   "name": "Golpe de Misericórdia",
+   "type": "Comando",
+   "cost": 0,
+   "text": "Um inimigo adjacente ao ativo com 3 de Vida ou menos é derrotado na hora. Não funciona em comandantes."
+  },
+  {
+   "id": "contra",
+   "name": "Contraofensiva",
+   "type": "Comando",
+   "cost": 0,
+   "text": "Só se você tiver menos personagens em campo que o oponente: +1 ação nesta ativação e compre 1 carta."
+  },
+  {
+   "id": "rede",
+   "name": "Rede de Contenção",
+   "type": "Comando",
+   "cost": 0,
+   "text": "Um inimigo a até 3 casas do ativo, com linha de visão, não pode se mover até o fim do próximo round."
+  }
  ]
 }

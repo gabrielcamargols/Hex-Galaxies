@@ -417,6 +417,8 @@ static func answer(g, p: int, q: Dictionary) -> Variant:
 						for e in g.field():
 							if DB.dist(e.pos(), h) <= 1 and not e.barrier:
 								s += (3.0 + (2.0 if e.hp == 1 else 0.0)) if e.owner != p else -4.0
+					"prism":
+						s = (((30.0 if t3.is_cmd else 8.0) + float(g.atk_of(t3, null)) - 0.2 * t3.hp) if t3.owner != p else -5.0) if t3 != null else -9.0
 					"ally":
 						s = ((t3.maxhp - t3.hp) + (3.0 if t3.is_cmd else 0.0)) if t3 != null else 0.0
 					"place":

@@ -116,6 +116,7 @@ var carts: Array = []         # [{"h": Vector2i, "track": int}]
 var tracks: Array = []        # trilhos (listas ordenadas de casas)
 var track_loop: Array = []    # true = trilho fechado (anel): o carrinho dá a volta
 const NEUTRAL = 2             # dono dos cristais (inimigo dos dois lados)
+var czones: Array = []    # Zonas de Cristal (Lithari): [{h, owner, until}] inimigos que entram ficam Lentos
 var fires: Array = []     # Incendiário: [{h, owner, until}] casas em chamas
 var shells: Array = []    # Rádio: [{h, owner, round, src}] artilharia que cai no início do próximo round
 
@@ -367,6 +368,80 @@ func rooted(u) -> bool:
 	return false
 
 
+# ---- controle Lithari: Lento, Enraizado e Zona de Cristal ----
+func slow_aura_hit(u) -> bool:
+	if u.barrier:
+		return false
+	for g in units:
+		if g.owner == u.owner or g.st == "dead" or g.barrier:
+			continue
+		var sn = K(g).get("slowNear", null)
+		if sn == null or silenced(g):
+			continue
+		if g.st != "field" and not sn.get("cmd", false):
+			continue
+		var pt = g.pos() if g.st == "field" else DB.entry_c[g.owner]
+		if DB.dist(pt, u.pos()) <= int(sn["r"]):
+			return true
+	return false
+
+
+func slowed(u) -> bool:
+	return not u.barrier and (has_fx(u, "slow") or slow_aura_hit(u))
+
+
+# preso no lugar por Lento/Enraizado (para sinergias de dano)
+func held(u) -> bool:
+	return rooted(u) or slowed(u)
+
+
+func apply_slow(t, src = null) -> void:
+	if t == null or t.barrier or t.st != "field" or has_fx(t, "slow"):
+		return
+	t.fx.append({"k": "slow", "until": "end"})
+	abfx("glue", t.pos(), src.uid if src != null else -1)
+	log_msg(t.owner, "%s ficou Lento (-1 MOV até o fim do round)." % nm(t))
+
+
+# Enraizado até o fim do próximo round; quem acabou de se soltar fica imune por 1 round
+func apply_root(t, src = null) -> bool:
+	if t == null or t.barrier or t.st != "field" or has_fx(t, "rootimm") or rooted(t):
+		return false
+	t.fx.append({"k": "root", "end": round_no + 1})
+	t.fx.append({"k": "rootimm", "till": round_no + 3})
+	abfx("glue", t.pos(), src.uid if src != null else -1)
+	log_msg(t.owner, "%s ficou Enraizado até o fim do próximo round." % nm(t))
+	return true
+
+
+func add_czone(owner: int, h: Vector2i, rounds: int = 2) -> void:
+	if not DB.in_board(h):
+		return
+	czones = czones.filter(func(z): return z["h"] != h)
+	czones.append({"h": h, "owner": owner, "until": round_no + rounds - 1})
+	var mine = czones.filter(func(z): return z["owner"] == owner)
+	while mine.size() > 12:
+		czones.erase(mine.pop_front())
+	emitfx({"t": "czone", "h": h})
+
+
+func add_czone_area(owner: int, c: Vector2i, rad: int, rounds: int = 2) -> void:
+	for h in DB.hexes:
+		if DB.dist(h, c) <= rad and tt_of(terr(h)["k"]).get("pass", 0):
+			add_czone(owner, h, rounds)
+
+
+# a casa está em Zona de Cristal de qual dono? (-1 = nenhum). Inclui a aura do Behemot.
+func czone_owner(h: Vector2i) -> int:
+	for z in czones:
+		if z["h"] == h and int(z["until"]) >= round_no:
+			return int(z["owner"])
+	for g in units:
+		if g.st == "field" and not g.barrier and K(g).has("zoneAura") and not silenced(g) and DB.dist(g.pos(), h) <= int(K(g)["zoneAura"]):
+			return g.owner
+	return -1
+
+
 func match_who(u, who) -> bool:
 	if who == null or who == "":
 		return true
@@ -392,6 +467,13 @@ func mov_of(u) -> int:
 	var ls = int(K(u).get("lastStand", 0))
 	if ls > 0 and field_count(u.owner) <= 3:
 		m = max(m, ls)
+	if not u.barrier:
+		if has_fx(u, "slow") or slow_aura_hit(u):
+			m = max(1, m - 1)
+		for g in units:
+			if g.st == "field" and g.owner != u.owner and K(g).has("anchor") and not silenced(g) and DB.dist(g.pos(), u.pos()) == 1:
+				m = min(m, 1)
+				break
 	if m > 1 and not u.barrier:
 		for g in units:
 			if g.st == "field" and g.owner != u.owner and K(g).has("slowAura") and DB.dist(g.pos(), u.pos()) == 1 and allies_of(g).any(func(x): return DB.dist(x.pos(), g.pos()) == 1 and DB.cards[x.cid]["f"] == DB.cards[g.cid]["f"]):
@@ -568,8 +650,12 @@ func atk_of(a, t) -> int:
 		if aa2 != null and match_who(a, aa2.get("who", "")) and DB.dist(a.pos(), s2.pos()) <= int(aa2["r"]):
 			v += int(aa2["n"])
 	if t != null:
-		if k.has("atkVsLow") and t.hp <= 5:
+		if k.has("atkVsLow") and t.hp <= int(k.get("lowHp", 5)):
 			v += int(k["atkVsLow"])
+		if k.has("atkVsHeld") and held(t):
+			v += int(k["atkVsHeld"]) if not (k.has("atkVsLow") and t.hp <= int(k.get("lowHp", 5))) else 0
+		if k.has("atkVsRoot") and rooted(t):
+			v += int(k["atkVsRoot"])
 		if k.has("atkMelee") and DB.dist(a.pos(), t.pos()) == 1:
 			v += int(k["atkMelee"])
 		if k.has("atkMoved") and act != null and act["uid"] == a.uid and act["moved"]:
@@ -589,6 +675,11 @@ func atk_of(a, t) -> int:
 			v += min(near.size(), int(aa.get("max", 99))) * int(aa["n"])
 		elif not near.is_empty():
 			v += int(aa["n"])
+	if t != null and not t.barrier and match_who(a, "LIT"):
+		for rs in units:
+			if rs.owner == a.owner and rs.st == "field" and not rs.barrier and K(rs).has("resDmg") and not silenced(rs) and held(t) and DB.dist(rs.pos(), t.pos()) <= 3:
+				v += int(K(rs)["resDmg"])
+				break
 	if t != null and k.has("viva") and act != null and act["uid"] == a.uid and act.has("from") and DB.dist(act["from"], t.pos()) >= 3:
 		v += int(k["viva"])
 	if k.has("atkStill") and _still(a):
@@ -608,7 +699,7 @@ func _still(a) -> bool:
 	return not (act != null and act["uid"] == a.uid and act["moved"])
 
 
-func reduction_of(t, peek: bool = false) -> int:
+func reduction_of(t, peek: bool = false, d: int = 1) -> int:
 	if t.barrier:
 		return 0
 	var red = 0
@@ -629,6 +720,8 @@ func reduction_of(t, peek: bool = false) -> int:
 			continue
 		var ar = K(s).get("auraRed", null)
 		if ar == null or not match_who(t, ar.get("who", "")):
+			continue
+		if ar.get("ranged", false) and d <= 1:
 			continue
 		if s.st != "field" and not ar.get("cmd", false):
 			continue
@@ -917,6 +1010,12 @@ func arrive(u, own: bool = false) -> void:
 				log_msg(f["owner"], "%s pisa em chão em chamas (1)." % nm(u))
 				damage(u, 1, null)
 				break
+	if u.st == "field" and not u.barrier:
+		var zo = czone_owner(u.pos())
+		if zo >= 0 and zo != u.owner:
+			apply_slow(u)
+		if own and K(u).has("trail"):
+			add_czone(u.owner, u.pos(), 1)
 	if u.st == "field" and not u.barrier:
 		for rp in enemies_of(u):
 			var n = int(K(rp).get("rappy", 0))
@@ -1817,6 +1916,7 @@ func end_round() -> void:
 				log_msg(p, "%s restaura 1 de Vida de %s." % [nm(k), nm(t)])
 	for u in units:
 		u.fx = u.fx.filter(func(f): return f.get("until", "") != "end" and int(f.get("till", 999)) > round_no and not ((f["k"] == "root" or f["k"] == "prison") and int(f["end"]) <= round_no))
+	czones = czones.filter(func(z): return int(z["until"]) > round_no)
 	for pl in P:
 		pl["discount"] = false
 	if round_no >= 10:
@@ -2374,6 +2474,8 @@ func _act_ult(u) -> bool:
 				t3.fx.append({"k": "root", "end": round_no + 1})
 				emitfx({"t": "passive", "kind": "shield", "uid": t3.uid})
 				log_msg(p, "%s está preso no cristal." % nm(t3))
+				for ex in enemies_of(u).filter(func(x): return x != t3 and DB.dist(x.pos(), h) == 1):
+					apply_slow(ex, u)
 		"earth":
 			var done = []
 			var cur_h = h
@@ -2702,7 +2804,7 @@ func resolve_attack(a, t) -> void:
 				react_red = 3 if c == "cobertura" else 2
 				log_msg(d, "%s: -%d de dano." % [DB.tactics[c]["name"], react_red])
 	var tm2 = tm if target == t else terrain_mods(a, target)
-	var red = reduction_of(target)
+	var red = reduction_of(target, false, DB.dist(a.pos(), target.pos()))
 	var storm_pen = 2 if storm_on() else 0
 	var dealt = max(0, packet - red - react_red - int(tm2["cover"]) - int(tm2["forest"]) - storm_pen)
 	if target.crystal != "":
@@ -2749,6 +2851,15 @@ func resolve_attack(a, t) -> void:
 			target.fx.append({"k": "tox", "src": a.uid})
 			abfx("poison", target.pos(), a.uid)
 			log_msg(p, "%s foi envenenado: perde 1 de Vida a cada round." % nm(target))
+		if after == "slowHit":
+			apply_slow(target, a)
+		if after == "rootCharge" and act != null and act["uid"] == a.uid and act["moved"] and act.has("from") and DB.dist(act["from"], a.pos()) >= 2:
+			apply_root(target, a)
+		if after == "breakRoot" and rooted(target):
+			target.fx = target.fx.filter(func(f): return f["k"] != "root")
+			target.fx.append({"k": "rootimm", "till": round_no + 3})
+			abfx("nova", target.pos(), a.uid)
+			log_msg(p, "Quebra-gelo: o enraizamento de %s se desfaz." % nm(target))
 		if after == "pending":
 			pending.append({"uid": target.uid, "n": 1, "p": p, "src": a.uid})
 			abfx("poison", target.pos(), a.uid)
@@ -3216,6 +3327,41 @@ func entry_effect(u) -> void:
 		"discount":
 			P[p]["discount"] = true
 			log_msg(p, "%s: a próxima implantação de um Fauriano neste round entra com as 2 ações." % name)
+		"czone":
+			var zs = DB.hexes.filter(func(h2): return DB.dist(h2, u.pos()) <= r and h2 != u.pos() and tt_of(terr(h2)["k"]).get("pass", 0))
+			var zh = await pick_hex(p, "%s: escolha o centro da Zona de Cristal (até %d casas)." % [name, r], zs, "place")
+			if zh != null:
+				abfx("barrier", zh, u.uid)
+				add_czone_area(p, zh, 1, 2)
+				log_msg(p, "%s: Zona de Cristal por 2 rounds (inimigos que entram ficam Lentos)." % name)
+		"barrierZone":
+			var hz = await pick_hex(p, "%s: escolha uma casa livre adjacente para a Barreira." % name, adj_free(u.pos()), "place")
+			if hz != null:
+				var nz = n + (2 if terra_on(p) else 0)
+				abfx("barrier", hz, u.uid)
+				_make_barrier(p, hz, nz)
+				add_czone_area(p, hz, 1, 2)
+				log_msg(p, "%s: Barreira com %d de Vida e Zona de Cristal ao redor." % [name, nz])
+		"healZ":
+			var tsz = allies_of(u, true).filter(func(x): return DB.dist(x.pos(), u.pos()) <= r and x.hp < x.maxhp and not x.barrier)
+			var hzz = await pick_hex(p, "%s: restaure %d de Vida de 1 aliado a até %d casas (+1 se ele estiver em Zona de Cristal)." % [name, n, r], tsz, "ally")
+			if hzz != null:
+				var tz = unit_at(hzz)
+				var amt = n + (1 if czone_owner(tz.pos()) == p else 0)
+				abfx("heal", hzz, u.uid)
+				heal(tz, amt)
+				log_msg(p, "%s: %s restaura %d de Vida." % [name, nm(tz), amt])
+		"prism":
+			var tsw = field().filter(func(x): return x != u and not x.barrier and DB.dist(x.pos(), u.pos()) <= r and not (x.owner != u.owner and (has_fx(x, "veil") or imprisoned(x))))
+			var hsw = await pick_hex(p, "%s: escolha uma peça a até %d casas para trocar de lugar (inimigo fica Enraizado)." % [name, r], tsw.map(func(x): return x.pos()), "prism", true)
+			if hsw != null:
+				var tx2 = unit_at(hsw)
+				abfx("portal", u.pos(), u.uid)
+				abfx("portal", hsw, u.uid)
+				log_msg(p, "%s: troca de lugar com %s." % [name, nm(tx2)])
+				await _swap(u, tx2)
+				if tx2.owner != u.owner:
+					apply_root(tx2, u)
 		"veil":
 			u.fx.append({"k": "veil", "v": 1, "until": "start"})
 			abfx("veil", u.pos(), u.uid)
@@ -3752,7 +3898,7 @@ func preview_damage(a, t, fpos = null) -> Dictionary:
 	if tm["forest"] > 0:
 		total -= tm["forest"]
 		parts.append("-%d floresta" % tm["forest"])
-	var red = reduction_of(t, true)
+	var red = reduction_of(t, true, DB.dist(a.pos() if fpos == null else fpos, t.pos()))
 	if red > 0:
 		total -= red
 		parts.append("-%d defesas do alvo" % red)
