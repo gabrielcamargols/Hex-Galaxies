@@ -1,14 +1,14 @@
 """Hex Galaxies - músicas de batalha dos planetas novos (sintetizadas, loops sem emenda).
 
 ABNARA - "Coração da Selva" (Ré dório, 100 BPM, 32 compassos)
-  A selva viva: o mapa respira, cresce e morde. Marimba de madeira em polirritmo (3 contra 4)
-  é o "chão" da floresta; o rio borbulha no fundo; flauta de madeira canta o tema; congas e
+  A selva viva: o mapa respira, cresce e morde. Um piano sutil e melancólico abre em arpejos e
+  vai parando aos poucos até sobrar uma nota solta; o rio borbulha no fundo; a flauta de madeira
+  canta o tema e a ocarina brinca com ela no refrão (as duas revezam as mesmas notas); congas e
   tambores de tronco empurram o ritmo; no fim, as raízes "crescem" com taikos e trompa grave.
-  1-8   a selva acorda: marimba, chocalho, bolhas do rio, tambor de tronco como coração
-  9-16  a caça começa: congas, bumbo, baixo dório, flauta com o tema
-  17-24 clareira (Fá maior): palmas, pergunta e resposta flauta x marimba, a planta predadora
-        rosna (metais dissonantes)
-  25-32 pulso das raízes: taikos, trompa no tema, tudo cresce e volta para a marimba (loop)
+  1-8   a selva acorda: piano em arpejo, chocalho, bolhas do rio, tambor de tronco como coração
+  9-16  a caça começa: congas, bumbo, baixo dório, flauta com o tema (piano mais ralo)
+  17-24 clareira (Fá maior): refrão flauta x ocarina, a planta predadora rosna
+  25-32 pulso das raízes: taikos, trompa no tema; o piano só solta notas; o refrão volta baixinho
 
 GOR'AIDA - "Gelo Instável" (Si menor/frígio, 6/8, 168 colcheias/min, 32 compassos)
   Gelo que canta e racha: sinos de vidro em ostinato de 6/8 (passos que escorregam), vento,
@@ -34,6 +34,48 @@ from musica_faccoes import Track, SR, filt, hz  # noqa: E402
 def flute(tr, notes, t0, g=0.07, pan=0.1):
     """flauta de madeira: seno com sopro e vibrato que entra devagar"""
     tr.lead(notes, t0, g, "sine", vib=0.007, glide=0.04, cut=4200, pan=pan, rev=0.55, breath=0.05)
+
+
+def piano(tr, t0, m, g=0.05, pan=0.0, dur=3.0):
+    """piano suave: martelo leve, parciais um pouco desafinadas (inarmonia) e cauda longa"""
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    f = hz(m)
+    y = np.zeros(n)
+    for k, a in ((1, 1.0), (2, 0.42), (3, 0.2), (4, 0.1), (5, 0.05)):
+        fk = f * k * np.sqrt(1 + 0.0004 * k * k)
+        y += a * np.sin(2 * np.pi * fk * t) * np.exp(-t * (1.1 + k * 0.9))
+    y += 0.15 * np.sin(2 * np.pi * f * 1.003 * t) * np.exp(-t * 1.3)       # segunda corda levemente desafinada
+    y *= np.minimum(1, t / 0.004)
+    y += filt(tr.rng.normal(size=n), "band", [800, 3000]) * np.exp(-t * 80) * 0.05   # toque do martelo
+    tr.add(filt(y, "low", 2600), t0, g, pan, 0.75)
+
+
+def ocarina(tr, notes, t0, g=0.07, pan=-0.2):
+    """ocarina: som redondo e oco (quase seno puro, um pouco de 3º harmônico), pouco sopro"""
+    total = sum(d for _, d in notes)
+    n = int((total * tr.beat + 0.8) * SR)
+    f = np.zeros(n)
+    amp = np.zeros(n)
+    pos = 0
+    prev = hz(notes[0][0])
+    for m, d in notes:
+        k = int(d * tr.beat * SR)
+        if m is not None:
+            tgt = hz(m)
+            gl = np.minimum(1, np.arange(k) / (0.02 * SR))
+            f[pos:pos + k] = prev + (tgt - prev) * gl
+            amp[pos:pos + k] = np.minimum(1, np.arange(k) / (0.025 * SR)) * np.clip((k - np.arange(k)) / (0.05 * SR), 0, 1)
+            prev = tgt
+        else:
+            f[pos:pos + k] = prev
+        pos += k
+    f[pos:] = prev
+    t = np.arange(n) / SR
+    ph = 2 * np.pi * np.cumsum(f * (1 + 0.005 * np.sin(2 * np.pi * 4.6 * t) * np.minimum(1, t / 0.4))) / SR
+    y = np.sin(ph) + 0.12 * np.sin(3 * ph) + 0.04 * np.sin(2 * ph)
+    y += filt(tr.rng.normal(size=n), "band", [1200, 3500]) * 0.02
+    tr.add(y * amp, t0, g, pan, 0.6)
 
 
 def log_drum(tr, t0, m, g=0.12, pan=0.0):
@@ -99,18 +141,31 @@ def abnara(dst):
     tr = Track(100, 32, seed=2170)
     dorian = [(38, [62, 65, 69]), (36, [60, 64, 67]), (43, [62, 67, 71]), (38, [62, 65, 69])]   # Rém - Dó - Sol - Rém
     lift = [(41, [65, 69, 72]), (36, [64, 67, 72]), (43, [62, 67, 71]), (38, [62, 65, 69])]    # Fá - Dó - Sol - Rém
-    cyc = [0, 1, 2]          # marimba: ciclo de 3 notas sobre colcheias (3 contra 4)
     for bar in range(tr.bars):
         sec = bar // 8
         prog = lift if sec == 2 else dorian
         root, ch = prog[(bar // 2) % 4]
         last = bar == tr.bars - 1
-        # ---------- marimba (o chão da floresta): sempre ----------
-        tones = [ch[0] + 12, ch[1] + 12, ch[2] + 12]
-        mg = [0.08, 0.06, 0.055, 0.06][sec]
-        for i in range(8):
-            k = cyc[(bar * 8 + i) % 3]
-            tr.marimba(tr.T(bar, i * 0.5), tones[k] + (12 if (bar * 8 + i) % 6 == 5 else 0), mg * (1.2 if i % 4 == 0 else 1.0), -0.3 + 0.08 * i)
+        # ---------- piano sutil e melancólico: começa em arpejo e vai parando ----------
+        # compassos 1-8: arpejo de 6 notas; 9-16: 4; 17-24: 2; 25-32: uma nota solta a cada 2 compassos
+        arp = [ch[0], ch[2], ch[1] + 12, ch[2], ch[0] + 12, ch[1] + 12]
+        if sec == 0:
+            beats = [0, 0.5, 1, 2, 2.5, 3]
+        elif sec == 1:
+            beats = [0, 1, 2, 3]
+        elif sec == 2:
+            beats = [0, 2.5]
+        else:
+            beats = [0] if bar % 2 == 0 else []
+        for i, bt in enumerate(beats):
+            if sec == 3:
+                m = [ch[0] + 12, ch[2], ch[1] + 12, ch[0]][(bar // 2) % 4]
+            else:
+                m = arp[i % len(arp)]
+            pg = [0.07, 0.055, 0.05, 0.05][sec] * (1.15 if i == 0 else 0.9)
+            piano(tr, tr.T(bar, bt), m, pg, -0.25 + 0.1 * i, 3.5 if sec >= 2 else 2.4)
+        if sec <= 1 and bar % 2 == 0:
+            piano(tr, tr.T(bar), root + 12, [0.05, 0.04][sec], -0.4, 4.0)    # nota grave da mão esquerda
         # rio ao fundo
         tr.bubbles(tr.T(bar), tr.bar, [0.02, 0.012, 0.012, 0.015][sec], 5)
         if bar % 2 == 0:
@@ -156,23 +211,29 @@ def abnara(dst):
              (77, 0.5), (76, 0.5), (74, 0.5), (72, 0.5), (74, 2.0)]
     flute(tr, theme, tr.T(9), 0.07)
     flute(tr, theme, tr.T(13), 0.075)
-    # clareira: pergunta (flauta) e resposta (marimba aguda)
-    call = [(81, 0.5), (79, 0.5), (77, 1.0), (79, 2.0)]
-    ans = [(77, 0.5), (76, 0.5), (72, 1.0), (74, 2.0)]
-    for b0 in (17, 19, 21, 23):
-        flute(tr, call, tr.T(b0), 0.07, 0.2)
-        t = tr.T(b0 + 1)
-        for m, d in ans:
-            tr.marimba(t, m, 0.1, -0.3)
-            tr.marimba(t, m + 12, 0.05, -0.3)
-            t += d * tr.beat
+    # clareira: REFRÃO - flauta e ocarina revezam as mesmas notas
+    refrao = [(81, 0.5), (79, 0.5), (77, 0.5), (79, 0.5), (81, 1.0), (84, 1.0),
+              (82, 0.5), (81, 0.5), (79, 0.5), (77, 0.5), (79, 2.0)]
+    flute(tr, refrao, tr.T(17), 0.07, 0.25)
+    ocarina(tr, refrao, tr.T(19), 0.08, -0.25)
+    flute(tr, refrao, tr.T(21), 0.07, 0.25)
+    # e na última vez elas brincam: uma nota cada uma, pulando de lado
+    t = tr.T(23)
+    for i, (m, d) in enumerate(refrao):
+        if i % 2 == 0:
+            flute(tr, [(m, d)], t, 0.07, 0.3)
+        else:
+            ocarina(tr, [(m, d)], t, 0.085, -0.3)
+        t += d * tr.beat
     # pulso das raízes: trompa no tema, oitava abaixo
     for b0 in (25, 27):
         t = tr.T(b0)
         for m, d in theme[:11]:
             tr.horn(m - 12, t, d * tr.beat * 0.92, 0.08)
             t += d * tr.beat
-    flute(tr, [(74, 4.0), (72, 2.0), (69, 2.0), (74, 8.0)], tr.T(29), 0.05, -0.1)
+    # fim: o refrão volta baixinho (ocarina e flauta) enquanto o piano quase para
+    ocarina(tr, refrao, tr.T(29), 0.06, -0.25)
+    flute(tr, refrao[:6] + [(74, 4.0)], tr.T(31), 0.045, 0.25)
     tr.riser(tr.T(8), tr.bar, 0.03)
     tr.riser(tr.T(24), tr.bar, 0.04)
     tr.boom(tr.T(9), 0.09)
