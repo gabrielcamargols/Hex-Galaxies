@@ -10,7 +10,7 @@ uniform float shadow_level = 0.55;
 uniform float dot_px = 7.0;
 uniform float dot_amt = 0.62;     // força da retícula na sombra
 uniform float hi_amt = 0.5;       // força dos pontinhos de brilho
-uniform float tuft_scale = 5.0;   // tufos por unidade de mundo
+uniform float tuft_scale = 2.2;   // tufos por unidade de mundo
 uniform float gamma = 1.6;        // cores dos vértices: entre sRGB e linear (vivo sem escurecer)
 
 varying vec3 wpos_t;
@@ -30,12 +30,14 @@ void fragment() {
 	// grama/musgo: o chão verde vira tufos hexagonais (um tom por tufo, claro no meio e escuro na borda)
 	float greenish = step(1.12, base.g / max(base.r, 0.02)) * step(1.05, base.g / max(base.b, 0.02)) * step(0.6, wnrm_t.y);
 	if (greenish > 0.5) {
+		// poucos tufos pequenos e espaçados, o resto do chão fica chapado
 		vec2 uv = wpos_t.xz * tuft_scale;
 		float cell = h21t(hexid(uv));
 		float dd = hexd(uv) / 0.5;
-		base *= 0.86 + cell * 0.26;
-		base *= mix(1.08, 0.9, smoothstep(0.35, 1.0, dd));
-		base += vec3(0.05, 0.06, 0.0) * step(0.8, cell) * (1.0 - dd);
+		float pick = step(0.86, cell);
+		float tuft = pick * (1.0 - smoothstep(0.30, 0.62, dd));
+		base *= 1.0 - 0.12 * tuft;
+		base += vec3(0.03, 0.05, 0.0) * tuft * (1.0 - smoothstep(0.0, 0.3, dd));
 	}
 	ALBEDO = pow(clamp(base, 0.0, 1.0), vec3(gamma));
 	if (!FRONT_FACING) {
