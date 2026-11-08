@@ -73,22 +73,33 @@
   ]
  },
  "klang": {
-  "nucleo": "#f33b4b",
-  "motivo": "carapaça vermelha",
-  "ataque": "aby_tiro",
-  "proposta": true
+  "nucleo": "#ff5a4a",
+  "motivo": "garra coral e ecos",
+  "ataque": "aby_klang_estalo",
+  "proposta": true,
+  "habilidades": [
+   "aby_klang_eco"
+  ]
  },
  "kling": {
-  "nucleo": "#ee550e",
-  "motivo": "laranja de oficina",
-  "ataque": "aby_garra",
-  "proposta": true
+  "nucleo": "#ee6a14",
+  "motivo": "laranja de oficina e engrenagens azul-turquesa",
+  "ataque": "aby_kling_chave",
+  "proposta": true,
+  "habilidades": [
+   "aby_kling_oficina",
+   "aby_kling_casco"
+  ]
  },
  "inkshadow": {
   "nucleo": "#0d0d1a",
-  "motivo": "tinta preta (núcleo escuro)",
-  "ataque": "aby_garra",
-  "proposta": true
+  "motivo": "tinta preta com contorno magenta",
+  "ataque": "aby_ink_corte",
+  "proposta": true,
+  "habilidades": [
+   "aby_ink_cortina",
+   "aby_ink_nuvem"
+  ]
  },
  "banker": {
   "nucleo": "#ffe27a",

@@ -9588,5 +9588,2654 @@
     "delay": 0.9
    }
   ]
+ },
+ "aby_klang_estalo": {
+  "nome": "KLANG · Estalo do Eco (ataque à distância)",
+  "personagem": "klang",
+  "hit": "aby_klang_estalo_hit",
+  "proj": {
+   "speed": 19,
+   "arc": 0.0,
+   "y": 1.0,
+   "rajada": {
+    "n": 3,
+    "spread": 0.0,
+    "gap": 0.11,
+    "dy": 0.0,
+    "vy": 0.0
+   },
+   "arpao": {
+    "tex": "arco_som",
+    "len": 0.9,
+    "width": 1.5,
+    "tile": 0.9,
+    "blend_top": "mix",
+    "ramp": [
+     "#12061c",
+     "#301342",
+     "#a957ec",
+     "#ff5a4a",
+     "#ffd9cf"
+    ],
+    "boost": 1.0,
+    "halftone": 0.35,
+    "sombra": 1.3,
+    "nucleo": false
+   },
+   "parts": [
+    {
+     "p": "ponto",
+     "blend": "mix",
+     "trail": true,
+     "amount": 6,
+     "size": 0.14,
+     "speed": [
+      0.3,
+      1.0
+     ],
+     "spread": 60,
+     "life": 0.3,
+     "ramp": [
+      "#a957ec",
+      "#ff5a4a"
+     ],
+     "alpha": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       0
+      ]
+     ]
+    }
+   ]
+  }
+ },
+ "aby_klang_estalo_hit": {
+  "nome": "KLANG · Estalo (acerto)",
+  "layers": [
+   {
+    "luz": "#ff5a4a",
+    "energia": 3.5,
+    "alcance": 3.5,
+    "dur": 0.3,
+    "y": 1.0
+   },
+   {
+    "p": "estrela",
+    "amount": 1,
+    "size": 1.8,
+    "life": 0.24,
+    "angle": [
+     -20,
+     20
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.18,
+      1.2
+     ],
+     [
+      1,
+      0.25
+     ]
+    ],
+    "ramp": [
+     "#a957ec",
+     "#ff5a4a",
+     "#ffffff"
+    ],
+    "boost": 1.5,
+    "nucleo": true
+   },
+   {
+    "p": "racha",
+    "mode": "chao",
+    "amount": 1,
+    "size": 2.2,
+    "life": 1.4,
+    "life_rand": 0,
+    "y": 0.0,
+    "angle": [
+     0,
+     360
+    ],
+    "curve": [
+     [
+      0,
+      0.5
+     ],
+     [
+      0.08,
+      1.0
+     ],
+     [
+      1,
+      1.0
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 3.0,
+    "soft": 0.08,
+    "ramp": [
+     "#12061c",
+     "#301342",
+     "#a957ec",
+     "#ff5a4a"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   {
+    "p": "anel",
+    "mode": "chao",
+    "amount": 1,
+    "size": 2.8,
+    "life": 0.5,
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      1,
+      1.9
+     ]
+    ],
+    "erode": 1.0,
+    "halftone": 1.0,
+    "dot": 8,
+    "ramp": [
+     "#301342",
+     "#a957ec",
+     "#ff5a4a"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   {
+    "p": "faisca",
+    "mode": "vel",
+    "amount": 16,
+    "size": [
+     0.1,
+     0.9
+    ],
+    "speed": [
+     6,
+     12
+    ],
+    "spread": 180,
+    "grav": -12,
+    "damp": [
+     5,
+     9
+    ],
+    "life": 0.32,
+    "curve": [
+     [
+      0,
+      1.3
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#a957ec",
+     "#ff5a4a",
+     "#ffffff"
+    ],
+    "boost": 1.6,
+    "y": 0.9
+   },
+   {
+    "p": "estilhaco",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 6,
+    "size": [
+     0.2,
+     0.5
+    ],
+    "speed": [
+     5,
+     9
+    ],
+    "spread": 180,
+    "grav": -12,
+    "damp": [
+     3,
+     5
+    ],
+    "life": 0.4,
+    "erode": 0.9,
+    "ramp": [
+     "#12061c",
+     "#301342"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 0.8
+   },
+   {
+    "p": "ponto",
+    "blend": "mix",
+    "amount": 10,
+    "size": 0.14,
+    "scale": [
+     0.5,
+     1.5
+    ],
+    "speed": [
+     4,
+     8
+    ],
+    "spread": 180,
+    "grav": -5,
+    "damp": [
+     3,
+     6
+    ],
+    "life": 0.6,
+    "ramp": [
+     "#ff5a4a",
+     "#ff5a4a"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 0.9
+   },
+   {
+    "p": "anel",
+    "amount": 1,
+    "size": 1.9,
+    "life": 0.42,
+    "curve": [
+     [
+      0,
+      0.25
+     ],
+     [
+      1,
+      1.7
+     ]
+    ],
+    "erode": 1.0,
+    "halftone": 0.9,
+    "ramp": [
+     "#a957ec",
+     "#ff5a4a",
+     "#ffd9cf"
+    ],
+    "boost": 1.3,
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.0
+   },
+   {
+    "p": "anel",
+    "amount": 1,
+    "size": 1.71,
+    "life": 0.42,
+    "curve": [
+     [
+      0,
+      0.25
+     ],
+     [
+      1,
+      1.7
+     ]
+    ],
+    "erode": 1.0,
+    "halftone": 0.9,
+    "ramp": [
+     "#a957ec",
+     "#ff5a4a",
+     "#ffd9cf"
+    ],
+    "boost": 1.3,
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.13
+   },
+   {
+    "p": "anel",
+    "amount": 1,
+    "size": 1.539,
+    "life": 0.42,
+    "curve": [
+     [
+      0,
+      0.25
+     ],
+     [
+      1,
+      1.7
+     ]
+    ],
+    "erode": 1.0,
+    "halftone": 0.9,
+    "ramp": [
+     "#a957ec",
+     "#ff5a4a",
+     "#ffd9cf"
+    ],
+    "boost": 1.3,
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.26
+   }
+  ],
+  "shake": 0.2
+ },
+ "aby_klang_eco": {
+  "nome": "KLANG · Eco Profundo (alvo já atacado: +1 e empurra)",
+  "personagem": "klang",
+  "hit": "aby_klang_eco_hit",
+  "proj": {
+   "speed": 22,
+   "arc": 0.0,
+   "y": 1.0,
+   "rajada": {
+    "n": 5,
+    "spread": 0.0,
+    "gap": 0.11,
+    "dy": 0.0,
+    "vy": 0.0
+   },
+   "arpao": {
+    "tex": "arco_som",
+    "len": 0.9,
+    "width": 1.9,
+    "tile": 0.9,
+    "blend_top": "mix",
+    "ramp": [
+     "#12061c",
+     "#301342",
+     "#a957ec",
+     "#ff5a4a",
+     "#ffd9cf"
+    ],
+    "boost": 1.0,
+    "halftone": 0.35,
+    "sombra": 1.3,
+    "nucleo": false
+   },
+   "parts": [
+    {
+     "p": "ponto",
+     "blend": "mix",
+     "trail": true,
+     "amount": 6,
+     "size": 0.14,
+     "speed": [
+      0.3,
+      1.0
+     ],
+     "spread": 60,
+     "life": 0.3,
+     "ramp": [
+      "#a957ec",
+      "#ff5a4a"
+     ],
+     "alpha": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       0
+      ]
+     ]
+    }
+   ]
+  }
+ },
+ "aby_klang_eco_hit": {
+  "nome": "KLANG · Eco (acerto)",
+  "layers": [
+   {
+    "luz": "#ff5a4a",
+    "energia": 3.5,
+    "alcance": 3.5,
+    "dur": 0.3,
+    "y": 1.0
+   },
+   {
+    "p": "estrela",
+    "amount": 1,
+    "size": 1.8,
+    "life": 0.24,
+    "angle": [
+     -20,
+     20
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.18,
+      1.2
+     ],
+     [
+      1,
+      0.25
+     ]
+    ],
+    "ramp": [
+     "#a957ec",
+     "#ff5a4a",
+     "#ffffff"
+    ],
+    "boost": 1.5,
+    "nucleo": true
+   },
+   {
+    "p": "racha",
+    "mode": "chao",
+    "amount": 1,
+    "size": 2.2,
+    "life": 1.4,
+    "life_rand": 0,
+    "y": 0.0,
+    "angle": [
+     0,
+     360
+    ],
+    "curve": [
+     [
+      0,
+      0.5
+     ],
+     [
+      0.08,
+      1.0
+     ],
+     [
+      1,
+      1.0
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 3.0,
+    "soft": 0.08,
+    "ramp": [
+     "#12061c",
+     "#301342",
+     "#a957ec",
+     "#ff5a4a"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   {
+    "p": "anel",
+    "mode": "chao",
+    "amount": 1,
+    "size": 2.8,
+    "life": 0.5,
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      1,
+      1.9
+     ]
+    ],
+    "erode": 1.0,
+    "halftone": 1.0,
+    "dot": 8,
+    "ramp": [
+     "#301342",
+     "#a957ec",
+     "#ff5a4a"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   {
+    "p": "faisca",
+    "mode": "vel",
+    "amount": 16,
+    "size": [
+     0.1,
+     0.9
+    ],
+    "speed": [
+     6,
+     12
+    ],
+    "spread": 180,
+    "grav": -12,
+    "damp": [
+     5,
+     9
+    ],
+    "life": 0.32,
+    "curve": [
+     [
+      0,
+      1.3
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#a957ec",
+     "#ff5a4a",
+     "#ffffff"
+    ],
+    "boost": 1.6,
+    "y": 0.9
+   },
+   {
+    "p": "estilhaco",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 6,
+    "size": [
+     0.2,
+     0.5
+    ],
+    "speed": [
+     5,
+     9
+    ],
+    "spread": 180,
+    "grav": -12,
+    "damp": [
+     3,
+     5
+    ],
+    "life": 0.4,
+    "erode": 0.9,
+    "ramp": [
+     "#12061c",
+     "#301342"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 0.8
+   },
+   {
+    "p": "ponto",
+    "blend": "mix",
+    "amount": 10,
+    "size": 0.14,
+    "scale": [
+     0.5,
+     1.5
+    ],
+    "speed": [
+     4,
+     8
+    ],
+    "spread": 180,
+    "grav": -5,
+    "damp": [
+     3,
+     6
+    ],
+    "life": 0.6,
+    "ramp": [
+     "#ff5a4a",
+     "#ff5a4a"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 0.9
+   },
+   {
+    "p": "anel",
+    "amount": 1,
+    "size": 2.1849999999999996,
+    "life": 0.42,
+    "curve": [
+     [
+      0,
+      0.25
+     ],
+     [
+      1,
+      1.7
+     ]
+    ],
+    "erode": 1.0,
+    "halftone": 0.9,
+    "ramp": [
+     "#a957ec",
+     "#ff5a4a",
+     "#ffd9cf"
+    ],
+    "boost": 1.3,
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.0
+   },
+   {
+    "p": "anel",
+    "amount": 1,
+    "size": 1.9665,
+    "life": 0.42,
+    "curve": [
+     [
+      0,
+      0.25
+     ],
+     [
+      1,
+      1.7
+     ]
+    ],
+    "erode": 1.0,
+    "halftone": 0.9,
+    "ramp": [
+     "#a957ec",
+     "#ff5a4a",
+     "#ffd9cf"
+    ],
+    "boost": 1.3,
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.13
+   },
+   {
+    "p": "anel",
+    "amount": 1,
+    "size": 1.7698499999999997,
+    "life": 0.42,
+    "curve": [
+     [
+      0,
+      0.25
+     ],
+     [
+      1,
+      1.7
+     ]
+    ],
+    "erode": 1.0,
+    "halftone": 0.9,
+    "ramp": [
+     "#a957ec",
+     "#ff5a4a",
+     "#ffd9cf"
+    ],
+    "boost": 1.3,
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.26
+   },
+   {
+    "p": "anel",
+    "amount": 1,
+    "size": 1.5928650000000002,
+    "life": 0.42,
+    "curve": [
+     [
+      0,
+      0.25
+     ],
+     [
+      1,
+      1.7
+     ]
+    ],
+    "erode": 1.0,
+    "halftone": 0.9,
+    "ramp": [
+     "#a957ec",
+     "#ff5a4a",
+     "#ffd9cf"
+    ],
+    "boost": 1.3,
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.39
+   },
+   {
+    "p": "anel",
+    "amount": 1,
+    "size": 1.4335784999999996,
+    "life": 0.42,
+    "curve": [
+     [
+      0,
+      0.25
+     ],
+     [
+      1,
+      1.7
+     ]
+    ],
+    "erode": 1.0,
+    "halftone": 0.9,
+    "ramp": [
+     "#a957ec",
+     "#ff5a4a",
+     "#ffd9cf"
+    ],
+    "boost": 1.3,
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.52
+   },
+   {
+    "p": "fumaca",
+    "blend": "mix",
+    "amount": 8,
+    "size": 0.9,
+    "dir": "away",
+    "lift": 0.1,
+    "speed": [
+     3,
+     6
+    ],
+    "spread": 25,
+    "damp": [
+     3,
+     5
+    ],
+    "life": 0.7,
+    "spin": [
+     -40,
+     40
+    ],
+    "curve": [
+     [
+      0,
+      0.5
+     ],
+     [
+      1,
+      1.3
+     ]
+    ],
+    "erode": 1.0,
+    "halftone": 0.8,
+    "ramp": [
+     "#301342",
+     "#a957ec",
+     "#ff5a4a"
+    ],
+    "alpha": [
+     [
+      0,
+      0.9
+     ],
+     [
+      1,
+      0.9
+     ]
+    ],
+    "y": 0.3
+   },
+   {
+    "p": "seta",
+    "blend": "mix",
+    "amount": 3,
+    "dir": "away",
+    "lift": 0.0,
+    "speed": [
+     3,
+     4
+    ],
+    "spread": 8,
+    "damp": [
+     3,
+     4
+    ],
+    "life": 0.6,
+    "size": 0.6,
+    "angle": [
+     0,
+     0
+    ],
+    "ramp": [
+     "#a957ec",
+     "#ff5a4a",
+     "#ffd9cf"
+    ],
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.2,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.5
+   }
+  ],
+  "shake": 0.35
+ },
+ "aby_kling_chave": {
+  "nome": "KLING · Chave inglesa (ataque)",
+  "personagem": "kling",
+  "hit": "aby_kling_clang",
+  "proj": {
+   "speed": 12,
+   "arc": 1.3,
+   "y": 1.0,
+   "parts": [
+    {
+     "p": "chave",
+     "blend": "mix",
+     "amount": 1,
+     "one_shot": true,
+     "explosive": 1.0,
+     "life": 2.0,
+     "life_rand": 0,
+     "size": 1.05,
+     "spin": [
+      800,
+      800
+     ],
+     "ramp": [
+      "#12061c",
+      "#301342",
+      "#a957ec",
+      "#ee6a14",
+      "#ffd9a8"
+     ],
+     "halftone": 0.2,
+     "alpha": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       1
+      ]
+     ]
+    },
+    {
+     "p": "engrenagem",
+     "blend": "mix",
+     "trail": true,
+     "amount": 4,
+     "size": 0.34,
+     "speed": [
+      0.3,
+      1.0
+     ],
+     "spread": 180,
+     "grav": -5,
+     "spin": [
+      -300,
+      300
+     ],
+     "life": 0.5,
+     "ramp": [
+      "#12061c",
+      "#301342",
+      "#a957ec",
+      "#2fd5c8",
+      "#e0fffb"
+     ],
+     "alpha": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       0
+      ]
+     ]
+    },
+    {
+     "p": "faisca",
+     "blend": "mix",
+     "mode": "vel",
+     "trail": true,
+     "amount": 10,
+     "size": [
+      0.06,
+      0.4
+     ],
+     "speed": [
+      0.5,
+      1.5
+     ],
+     "life": 0.2,
+     "ramp": [
+      "#a957ec",
+      "#ff9a3a",
+      "#ffd9a8"
+     ],
+     "alpha": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       0
+      ]
+     ],
+     "curve": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       0
+      ]
+     ]
+    }
+   ]
+  }
+ },
+ "aby_kling_clang": {
+  "nome": "KLING · Clang! (acerto)",
+  "layers": [
+   {
+    "luz": "#ff9a3a",
+    "energia": 3.5,
+    "alcance": 3.5,
+    "dur": 0.3,
+    "y": 1.0
+   },
+   {
+    "p": "estrela",
+    "amount": 1,
+    "size": 2.0,
+    "life": 0.24,
+    "angle": [
+     -20,
+     20
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.18,
+      1.2
+     ],
+     [
+      1,
+      0.25
+     ]
+    ],
+    "ramp": [
+     "#a957ec",
+     "#ee6a14",
+     "#ffffff"
+    ],
+    "boost": 1.6,
+    "nucleo": true
+   },
+   {
+    "p": "brilho",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.2,
+    "life": 0.26,
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      0.2,
+      1.0
+     ],
+     [
+      1,
+      0.8
+     ]
+    ],
+    "ramp": [
+     "#a957ec",
+     "#ee6a14",
+     "#ffd9a8"
+    ],
+    "halftone": 1.0,
+    "dot": 6,
+    "erode": 1.0,
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 0.9
+   },
+   {
+    "p": "racha",
+    "mode": "chao",
+    "amount": 1,
+    "size": 2.3,
+    "life": 1.5,
+    "life_rand": 0,
+    "y": 0.0,
+    "angle": [
+     0,
+     360
+    ],
+    "curve": [
+     [
+      0,
+      0.5
+     ],
+     [
+      0.08,
+      1.0
+     ],
+     [
+      1,
+      1.0
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 3.0,
+    "soft": 0.08,
+    "ramp": [
+     "#12061c",
+     "#301342",
+     "#a957ec",
+     "#ee6a14"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   {
+    "p": "anel",
+    "mode": "chao",
+    "amount": 1,
+    "size": 2.6,
+    "life": 0.45,
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      1,
+      1.8
+     ]
+    ],
+    "erode": 1.0,
+    "halftone": 1.0,
+    "dot": 8,
+    "ramp": [
+     "#301342",
+     "#a957ec",
+     "#ee6a14"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   {
+    "p": "faisca",
+    "mode": "vel",
+    "amount": 28,
+    "size": [
+     0.08,
+     0.9
+    ],
+    "speed": [
+     7,
+     14
+    ],
+    "spread": 180,
+    "grav": -14,
+    "damp": [
+     4,
+     8
+    ],
+    "life": 0.4,
+    "curve": [
+     [
+      0,
+      1.3
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#ee6a14",
+     "#ffb454",
+     "#ffffff"
+    ],
+    "boost": 1.8,
+    "y": 0.9
+   },
+   {
+    "p": "engrenagem",
+    "blend": "mix",
+    "mode": "bill",
+    "amount": 5,
+    "size": [
+     0.35,
+     0.55
+    ],
+    "speed": [
+     4,
+     8
+    ],
+    "spread": 180,
+    "grav": -14,
+    "damp": [
+     2,
+     4
+    ],
+    "spin": [
+     -500,
+     500
+    ],
+    "life": 0.8,
+    "ramp": [
+     "#12061c",
+     "#301342",
+     "#a957ec",
+     "#2fd5c8",
+     "#e0fffb"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.8,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.9
+   },
+   {
+    "p": "ponto",
+    "blend": "mix",
+    "amount": 10,
+    "size": 0.13,
+    "scale": [
+     0.5,
+     1.5
+    ],
+    "speed": [
+     4,
+     9
+    ],
+    "spread": 180,
+    "grav": -8,
+    "damp": [
+     3,
+     6
+    ],
+    "life": 0.6,
+    "ramp": [
+     "#2fd5c8",
+     "#2fd5c8"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 0.9
+   }
+  ],
+  "shake": 0.25
+ },
+ "aby_kling_oficina": {
+  "nome": "KLING · Oficina Móvel (ajuda: cura 1 no fim do round)",
+  "personagem": "kling",
+  "alvo": "aliado",
+  "layers": [
+   {
+    "raio": "raio",
+    "de": "from",
+    "para": "at",
+    "dur": 0.9,
+    "flick": 0.12,
+    "cresce": 0.15,
+    "width": 0.3,
+    "tile": 1.1,
+    "blend_top": "mix",
+    "ramp": [
+     "#301342",
+     "#a957ec",
+     "#2fd5c8",
+     "#e0fffb"
+    ],
+    "boost": 1.0,
+    "halftone": 0.6,
+    "sombra": 1.5,
+    "y": 1.0
+   },
+   {
+    "luz": "#2fd5c8",
+    "energia": 2.2,
+    "alcance": 3.5,
+    "dur": 1.0,
+    "y": 1.0,
+    "delay": 0.15
+   },
+   {
+    "p": "engrenagem",
+    "mode": "chao",
+    "amount": 1,
+    "size": 2.2,
+    "life": 1.6,
+    "life_rand": 0,
+    "y": 0.0,
+    "angle": [
+     0,
+     0
+    ],
+    "spin": [
+     80,
+     80
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.25,
+      1.0
+     ],
+     [
+      0.85,
+      1.0
+     ],
+     [
+      1,
+      0.6
+     ]
+    ],
+    "halftone": 0.5,
+    "ramp": [
+     "#12061c",
+     "#301342",
+     "#a957ec",
+     "#2fd5c8",
+     "#e0fffb"
+    ],
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.15,
+      1
+     ],
+     [
+      0.8,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.1
+   },
+   {
+    "p": "engrenagem",
+    "mode": "chao",
+    "amount": 1,
+    "size": 1.3,
+    "life": 1.6,
+    "life_rand": 0,
+    "y": 0.0,
+    "angle": [
+     18,
+     18
+    ],
+    "spin": [
+     -135,
+     -135
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.25,
+      1.0
+     ],
+     [
+      0.85,
+      1.0
+     ],
+     [
+      1,
+      0.6
+     ]
+    ],
+    "halftone": 0.5,
+    "ramp": [
+     "#12061c",
+     "#301342",
+     "#a957ec",
+     "#f438a9",
+     "#ffd0ee"
+    ],
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.15,
+      1
+     ],
+     [
+      0.8,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.1
+   },
+   {
+    "p": "engrenagem",
+    "blend": "mix",
+    "ring": 0.55,
+    "amount": 4,
+    "explosive": 0.3,
+    "dir": [
+     0,
+     1,
+     0
+    ],
+    "spread": 4,
+    "speed": [
+     0.5,
+     0.9
+    ],
+    "life": 1.5,
+    "size": [
+     0.5,
+     0.7
+    ],
+    "spin": [
+     -140,
+     140
+    ],
+    "ramp": [
+     "#12061c",
+     "#301342",
+     "#a957ec",
+     "#2fd5c8",
+     "#e0fffb"
+    ],
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.2,
+      1
+     ],
+     [
+      0.8,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.3,
+    "delay": 0.15
+   },
+   {
+    "p": "anel",
+    "mode": "chao",
+    "amount": 1,
+    "size": 3.0,
+    "life": 0.9,
+    "y": 0.0,
+    "curve": [
+     [
+      0,
+      1.7
+     ],
+     [
+      1,
+      0.5
+     ]
+    ],
+    "halftone": 0.8,
+    "ramp": [
+     "#a957ec",
+     "#2fd5c8",
+     "#e0fffb"
+    ],
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.3,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.1
+   },
+   {
+    "p": "estrela",
+    "blend": "mix",
+    "ring": 0.5,
+    "amount": 6,
+    "explosive": 0.4,
+    "dir": [
+     0,
+     1,
+     0
+    ],
+    "spread": 6,
+    "speed": [
+     0.8,
+     1.5
+    ],
+    "life": 1.2,
+    "size": [
+     0.25,
+     0.4
+    ],
+    "spin": [
+     -90,
+     90
+    ],
+    "ramp": [
+     "#a957ec",
+     "#2fd5c8",
+     "#e0fffb"
+    ],
+    "boost": 1.3,
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.2,
+      1
+     ],
+     [
+      0.8,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.2,
+    "delay": 0.2
+   },
+   {
+    "p": "seta",
+    "blend": "mix",
+    "ring": 0.45,
+    "amount": 4,
+    "explosive": 0.3,
+    "dir": [
+     0,
+     1,
+     0
+    ],
+    "spread": 0,
+    "speed": [
+     1.2,
+     1.8
+    ],
+    "life": 1.0,
+    "size": 0.5,
+    "angle": [
+     0,
+     0
+    ],
+    "ramp": [
+     "#a957ec",
+     "#2fd5c8",
+     "#e0fffb"
+    ],
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.2,
+      1
+     ],
+     [
+      0.8,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.3,
+    "delay": 0.2
+   }
+  ]
+ },
+ "aby_kling_casco": {
+  "nome": "KLING · Casco de Reparo (ajuda: -1 de dano)",
+  "personagem": "kling",
+  "alvo": "aliado",
+  "layers": [
+   {
+    "raio": "raio",
+    "de": "from",
+    "para": "at",
+    "dur": 0.8,
+    "flick": 0.12,
+    "cresce": 0.15,
+    "width": 0.3,
+    "tile": 1.1,
+    "blend_top": "mix",
+    "ramp": [
+     "#301342",
+     "#a957ec",
+     "#2fd5c8",
+     "#e0fffb"
+    ],
+    "boost": 1.0,
+    "halftone": 0.6,
+    "sombra": 1.5,
+    "y": 1.0
+   },
+   {
+    "luz": "#2fd5c8",
+    "energia": 2.2,
+    "alcance": 3.5,
+    "dur": 1.0,
+    "y": 1.0,
+    "delay": 0.15
+   },
+   {
+    "p": "hexa",
+    "blend": "mix",
+    "ring": 1.4,
+    "amount": 6,
+    "explosive": 1.0,
+    "one_shot": true,
+    "dir": [
+     0,
+     1,
+     0
+    ],
+    "spread": 0,
+    "speed": [
+     0,
+     0
+    ],
+    "radial": [
+     -9,
+     -9
+    ],
+    "life": 0.42,
+    "size": 0.7,
+    "angle": [
+     0,
+     0
+    ],
+    "spin": [
+     60,
+     60
+    ],
+    "curve": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      0.6
+     ]
+    ],
+    "ramp": [
+     "#12061c",
+     "#301342",
+     "#a957ec",
+     "#2fd5c8",
+     "#e0fffb"
+    ],
+    "halftone": 0.2,
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.15,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.15
+   },
+   {
+    "p": "hexa",
+    "blend": "mix",
+    "amount": 1,
+    "one_shot": true,
+    "explosive": 1.0,
+    "life": 1.6,
+    "life_rand": 0,
+    "size": 2.0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.12,
+      1.25
+     ],
+     [
+      0.2,
+      1.0
+     ],
+     [
+      1,
+      1.05
+     ]
+    ],
+    "ramp": [
+     "#12061c",
+     "#301342",
+     "#a957ec",
+     "#2fd5c8",
+     "#e0fffb"
+    ],
+    "halftone": 0.3,
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.1,
+      0.9
+     ],
+     [
+      0.75,
+      0.9
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.6
+   },
+   {
+    "p": "hexa",
+    "mode": "chao",
+    "amount": 1,
+    "size": 3.0,
+    "life": 1.6,
+    "life_rand": 0,
+    "y": 0.0,
+    "angle": [
+     0,
+     0
+    ],
+    "spin": [
+     40,
+     40
+    ],
+    "curve": [
+     [
+      0,
+      1.6
+     ],
+     [
+      0.3,
+      1.0
+     ],
+     [
+      0.85,
+      1.0
+     ],
+     [
+      1,
+      0.7
+     ]
+    ],
+    "halftone": 0.5,
+    "ramp": [
+     "#12061c",
+     "#301342",
+     "#a957ec",
+     "#2fd5c8",
+     "#e0fffb"
+    ],
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.2,
+      1
+     ],
+     [
+      0.8,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.15
+   },
+   {
+    "p": "faisca",
+    "mode": "vel",
+    "amount": 10,
+    "size": [
+     0.06,
+     0.4
+    ],
+    "speed": [
+     3,
+     6
+    ],
+    "spread": 180,
+    "damp": [
+     5,
+     8
+    ],
+    "life": 0.25,
+    "curve": [
+     [
+      0,
+      1.2
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#a957ec",
+     "#2fd5c8",
+     "#ffffff"
+    ],
+    "boost": 1.5,
+    "y": 1.0,
+    "delay": 0.55
+   }
+  ]
+ },
+ "aby_ink_corte": {
+  "nome": "INKSHADOW · Corte em X (ataque + Nuvem de Tinta)",
+  "personagem": "inkshadow",
+  "layers": [
+   {
+    "luz": "#a957ec",
+    "energia": 3.0,
+    "alcance": 3.5,
+    "dur": 0.3,
+    "y": 1.0
+   },
+   {
+    "p": "rasgo",
+    "blend": "mix",
+    "amount": 1,
+    "flat": 1.0,
+    "size": 3.6,
+    "life": 0.3,
+    "life_rand": 0,
+    "aim": true,
+    "aim_off": 38,
+    "toward": 0.3,
+    "curve": [
+     [
+      0,
+      0.55
+     ],
+     [
+      0.3,
+      1.05
+     ],
+     [
+      1,
+      1.12
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.2,
+    "halftone": 0.3,
+    "ramp": [
+     "#f438a9",
+     "#7a2fc0",
+     "#1a0d2e",
+     "#0d0d1a"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   {
+    "p": "rasgo",
+    "blend": "mix",
+    "amount": 1,
+    "flat": 1.0,
+    "size": 3.6,
+    "life": 0.3,
+    "life_rand": 0,
+    "aim": true,
+    "aim_off": -38,
+    "toward": 0.3,
+    "curve": [
+     [
+      0,
+      0.55
+     ],
+     [
+      0.3,
+      1.05
+     ],
+     [
+      1,
+      1.12
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.2,
+    "halftone": 0.3,
+    "ramp": [
+     "#f438a9",
+     "#7a2fc0",
+     "#1a0d2e",
+     "#0d0d1a"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "delay": 0.06
+   },
+   {
+    "p": "respingo",
+    "mode": "chao",
+    "amount": 1,
+    "size": 2.2,
+    "life": 1.8,
+    "life_rand": 0,
+    "y": 0.0,
+    "angle": [
+     0,
+     360
+    ],
+    "curve": [
+     [
+      0,
+      0.4
+     ],
+     [
+      0.1,
+      1.0
+     ],
+     [
+      1,
+      1.0
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 2.6,
+    "halftone": 0.5,
+    "ramp": [
+     "#f438a9",
+     "#7a2fc0",
+     "#1a0d2e",
+     "#0d0d1a"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "delay": 0.1
+   },
+   {
+    "p": "gota",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 16,
+    "size": 0.26,
+    "speed": [
+     4,
+     9
+    ],
+    "dir": [
+     0,
+     1,
+     0
+    ],
+    "spread": 80,
+    "grav": -16,
+    "life": 0.7,
+    "ramp": [
+     "#a957ec",
+     "#1a0d2e",
+     "#0d0d1a"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.85,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.8,
+    "delay": 0.1
+   },
+   {
+    "p": "estilhaco",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 6,
+    "size": [
+     0.2,
+     0.5
+    ],
+    "speed": [
+     5,
+     9
+    ],
+    "spread": 180,
+    "grav": -12,
+    "damp": [
+     3,
+     5
+    ],
+    "life": 0.4,
+    "erode": 0.9,
+    "ramp": [
+     "#12061c",
+     "#301342"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 0.8,
+    "delay": 0.1
+   },
+   {
+    "p": "ponto",
+    "blend": "mix",
+    "amount": 10,
+    "size": 0.14,
+    "scale": [
+     0.5,
+     1.5
+    ],
+    "speed": [
+     4,
+     8
+    ],
+    "spread": 180,
+    "grav": -5,
+    "damp": [
+     3,
+     6
+    ],
+    "life": 0.6,
+    "ramp": [
+     "#f438a9",
+     "#f438a9"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 0.9,
+    "delay": 0.1
+   },
+   {
+    "sub": "aby_ink_nuvem",
+    "delay": 0.2
+   }
+  ],
+  "shake": 0.2,
+  "shake_delay": 0.1
+ },
+ "aby_ink_nuvem": {
+  "nome": "INKSHADOW · Nuvem de Tinta (cega: -2 ATQ)",
+  "layers": [
+   {
+    "p": "fumaca",
+    "blend": "mix",
+    "amount": 10,
+    "explosive": 0.3,
+    "size": 1.5,
+    "radius": 0.3,
+    "dir": [
+     0,
+     1,
+     0
+    ],
+    "spread": 50,
+    "speed": [
+     0.4,
+     1.2
+    ],
+    "life": 1.6,
+    "spin": [
+     -40,
+     40
+    ],
+    "curve": [
+     [
+      0,
+      0.5
+     ],
+     [
+      0.4,
+      1.1
+     ],
+     [
+      1,
+      1.5
+     ]
+    ],
+    "erode": 0.7,
+    "erode_pow": 0.9,
+    "halftone": 0.5,
+    "ramp": [
+     "#f438a9",
+     "#7a2fc0",
+     "#1a0d2e",
+     "#0d0d1a"
+    ],
+    "alpha": [
+     [
+      0,
+      0.95
+     ],
+     [
+      0.8,
+      0.95
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.3
+   },
+   {
+    "p": "gota",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 10,
+    "size": 0.2,
+    "speed": [
+     2,
+     5
+    ],
+    "dir": [
+     0,
+     1,
+     0
+    ],
+    "spread": 120,
+    "grav": -6,
+    "life": 0.9,
+    "ramp": [
+     "#a957ec",
+     "#1a0d2e",
+     "#0d0d1a"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.3
+   },
+   {
+    "p": "ponto",
+    "blend": "mix",
+    "amount": 8,
+    "size": 0.13,
+    "speed": [
+     1,
+     3
+    ],
+    "spread": 180,
+    "damp": [
+     1,
+     3
+    ],
+    "life": 1.0,
+    "ramp": [
+     "#f438a9",
+     "#f438a9"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.3
+   }
+  ]
+ },
+ "aby_ink_cortina": {
+  "nome": "INKSHADOW · Cortina de Tinta (entrada: intocável)",
+  "personagem": "inkshadow",
+  "alvo": "self",
+  "layers": [
+   {
+    "luz": "#7a2fc0",
+    "energia": 2.0,
+    "alcance": 3.5,
+    "dur": 1.0,
+    "y": 0.8
+   },
+   {
+    "p": "tentaculo",
+    "blend": "mix",
+    "ring": 0.75,
+    "amount": 7,
+    "explosive": 0.25,
+    "dir": [
+     0,
+     1,
+     0
+    ],
+    "spread": 3,
+    "speed": [
+     0.1,
+     0.3
+    ],
+    "life": 1.4,
+    "size": 1.9,
+    "angle": [
+     -8,
+     8
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.35,
+      1.0
+     ],
+     [
+      0.8,
+      1.0
+     ],
+     [
+      1,
+      0.7
+     ]
+    ],
+    "ramp": [
+     "#f438a9",
+     "#7a2fc0",
+     "#1a0d2e",
+     "#0d0d1a"
+    ],
+    "halftone": 0.2,
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.15,
+      1
+     ],
+     [
+      0.75,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.95
+   },
+   {
+    "p": "fumaca",
+    "blend": "mix",
+    "ring": 1.3,
+    "amount": 16,
+    "explosive": 0.3,
+    "dir": [
+     0,
+     1,
+     0
+    ],
+    "spread": 3,
+    "speed": [
+     0.2,
+     0.5
+    ],
+    "radial": [
+     -6,
+     -6
+    ],
+    "life": 0.9,
+    "size": 1.0,
+    "spin": [
+     -40,
+     40
+    ],
+    "curve": [
+     [
+      0,
+      0.6
+     ],
+     [
+      0.5,
+      1.1
+     ],
+     [
+      1,
+      0.8
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 0.9,
+    "halftone": 0.6,
+    "ramp": [
+     "#f438a9",
+     "#7a2fc0",
+     "#1a0d2e",
+     "#0d0d1a"
+    ],
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.2,
+      1
+     ],
+     [
+      0.8,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.8,
+    "delay": 0.1
+   },
+   {
+    "p": "respingo",
+    "mode": "chao",
+    "amount": 1,
+    "size": 2.8,
+    "life": 1.6,
+    "life_rand": 0,
+    "y": 0.0,
+    "angle": [
+     0,
+     360
+    ],
+    "curve": [
+     [
+      0,
+      0.5
+     ],
+     [
+      0.15,
+      1.0
+     ],
+     [
+      1,
+      1.0
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 2.0,
+    "halftone": 0.5,
+    "ramp": [
+     "#f438a9",
+     "#7a2fc0",
+     "#1a0d2e",
+     "#0d0d1a"
+    ],
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.2,
+      1
+     ],
+     [
+      0.8,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ]
+   },
+   {
+    "p": "gota",
+    "blend": "mix",
+    "ring": 0.6,
+    "amount": 10,
+    "explosive": 0.3,
+    "dir": [
+     0,
+     1,
+     0
+    ],
+    "spread": 6,
+    "speed": [
+     0.8,
+     1.6
+    ],
+    "life": 1.3,
+    "size": 0.22,
+    "ramp": [
+     "#a957ec",
+     "#1a0d2e",
+     "#0d0d1a"
+    ],
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.2,
+      1
+     ],
+     [
+      0.8,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.1,
+    "delay": 0.1
+   }
+  ]
  }
 }

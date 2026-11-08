@@ -542,6 +542,106 @@ def estrela_mar():
     return np.asarray(Image.fromarray((v * 255).astype(np.uint8)).resize((N, N), Image.LANCZOS)).astype(np.float32) / 255
 
 
+def arco_som():
+    """onda sonora de lado, 256x64: arcos ")" concêntricos apontando para a direita (frente); usada esticada em faixa"""
+    W, H, s = 256, 64, 4
+    im = Image.new("L", (W * s, H * s), 0)
+    d = ImageDraw.Draw(im)
+    for k, (cx, rr, wd) in enumerate([(30, 100, 14), (95, 100, 11), (160, 90, 8)]):      # 3 arcos, o da frente mais fino
+        box = [(cx - rr) * s, (32 - rr * 0.34) * s, (cx + rr) * s, (32 + rr * 0.34) * s]
+        d.arc(box, -62, 62, fill=255, width=int(wd * s))
+    m = np.asarray(im.filter(ImageFilter.GaussianBlur(s * 0.8))).astype(np.float32) / 255 > 0.45
+    v = _soft(m, 4.5, 0.3, s)
+    return np.asarray(Image.fromarray((v * 255).astype(np.uint8)).resize((W, H), Image.LANCZOS)).astype(np.float32) / 255
+
+
+def engrenagem():
+    """engrenagem de frente: aro com dentes e furo no meio"""
+    S = N * 4
+    c = S / 2
+    im = Image.new("L", (S, S), 0)
+    d = ImageDraw.Draw(im)
+    n = 10
+    d.ellipse([c - S * 0.32, c - S * 0.32, c + S * 0.32, c + S * 0.32], fill=255)
+    for k in range(n):
+        a = 2 * math.pi * k / n
+        px, py = c + math.cos(a) * S * 0.36, c + math.sin(a) * S * 0.36
+        tx, ty = -math.sin(a), math.cos(a)
+        w1, w2 = S * 0.075, S * 0.055
+        ox, oy = math.cos(a) * S * 0.09, math.sin(a) * S * 0.09
+        d.polygon([(px - tx * w1 - ox * 0.5, py - ty * w1 - oy * 0.5), (px + ox - tx * w2, py + oy - ty * w2), (px + ox + tx * w2, py + oy + ty * w2), (px + tx * w1 - ox * 0.5, py + ty * w1 - oy * 0.5)], fill=255)
+    d.ellipse([c - S * 0.12, c - S * 0.12, c + S * 0.12, c + S * 0.12], fill=0)
+    for k in range(4):                                       # furos de alívio
+        a = math.pi / 4 + k * math.pi / 2
+        px, py = c + math.cos(a) * S * 0.22, c + math.sin(a) * S * 0.22
+        d.ellipse([px - S * 0.035, py - S * 0.035, px + S * 0.035, py + S * 0.035], fill=0)
+    m = np.asarray(im).astype(np.float32) / 255 > 0.5
+    v = _soft(m, 8.0, 0.3, 4)
+    return np.asarray(Image.fromarray((v * 255).astype(np.uint8)).resize((N, N), Image.LANCZOS)).astype(np.float32) / 255
+
+
+def chave():
+    """chave inglesa na diagonal (cabeça em cima à direita), com boca aberta"""
+    S = N * 4
+    im = Image.new("L", (S, S), 0)
+    d = ImageDraw.Draw(im)
+    c = S / 2
+    d.rounded_rectangle([c - S * 0.06, S * 0.34, c + S * 0.06, S * 0.95], radius=int(S * 0.05), fill=255)        # cabo
+    d.ellipse([c - S * 0.2, S * 0.08, c + S * 0.2, S * 0.48], fill=255)                                       # cabeça
+    d.polygon([(c - S * 0.075, S * 0.06), (c + S * 0.075, S * 0.06), (c + S * 0.075, S * 0.27), (c - S * 0.075, S * 0.27)], fill=0)   # boca aberta
+    im = im.rotate(-40, resample=Image.BICUBIC)
+    m = np.asarray(im).astype(np.float32) / 255 > 0.5
+    v = _soft(m, 7.0, 0.3, 4)
+    return np.asarray(Image.fromarray((v * 255).astype(np.uint8)).resize((N, N), Image.LANCZOS)).astype(np.float32) / 255
+
+
+def hexa():
+    """placa hexagonal de reparo: moldura grossa, placa interna e 6 rebites"""
+    S = N * 4
+    c = S / 2
+    im = Image.new("L", (S, S), 0)
+    d = ImageDraw.Draw(im)
+    def hexp(r):
+        return [(c + math.cos(math.radians(60 * k)) * r, c + math.sin(math.radians(60 * k)) * r) for k in range(6)]
+    d.polygon(hexp(S * 0.47), fill=255)
+    d.polygon(hexp(S * 0.37), fill=0)
+    d.polygon(hexp(S * 0.31), fill=255)
+    for k in range(6):
+        a = math.radians(60 * k)
+        px, py = c + math.cos(a) * S * 0.42, c + math.sin(a) * S * 0.42
+        d.ellipse([px - S * 0.03, py - S * 0.03, px + S * 0.03, py + S * 0.03], fill=0)
+    d.line([(c - S * 0.2, c), (c + S * 0.2, c)], fill=0, width=int(S * 0.02))      # junta da placa
+    m = np.asarray(im).astype(np.float32) / 255 > 0.5
+    v = _soft(m, 8.0, 0.3, 4)
+    v = np.clip(v * 0.9 + np.where(m, 0.0, 0.0), 0, 1)
+    return np.asarray(Image.fromarray((v * 255).astype(np.uint8)).resize((N, N), Image.LANCZOS)).astype(np.float32) / 255
+
+
+def tentaculo():
+    """tentáculo vertical que sobe e enrola a ponta para a direita, com ventosas"""
+    S = N * 4
+    im = Image.new("L", (S, S), 0)
+    d = ImageDraw.Draw(im)
+    pts = []
+    x, y = S * 0.36, S * 0.98
+    th = -math.pi / 2
+    n = 90
+    for i in range(n):
+        t = i / (n - 1)
+        th += math.sin(t * 6.0) * 0.035 + (max(0.0, t - 0.55) ** 1.3) * 0.34       # ondula e enrola no fim
+        x += math.cos(th) * S * 0.0105
+        y += math.sin(th) * S * 0.0105
+        pts.append((x, y, S * (0.085 * (1 - t) ** 0.9 + 0.014)))
+    for x, y, r in pts:
+        d.ellipse([x - r, y - r, x + r, y + r], fill=255)
+    m = np.asarray(im).astype(np.float32) / 255 > 0.5
+    v = _soft(m, 6.0, 0.3, 4)
+    for x, y, r in pts[8:80:6]:                           # ventosas
+        yy, xx = np.mgrid[0:S, 0:S]
+        v = np.where(np.hypot(xx - (x + r * 0.35), yy - y) < r * 0.28, np.clip(v - 0.3, 0, 1), v)
+    return np.asarray(Image.fromarray((v * 255).astype(np.uint8)).resize((N, N), Image.LANCZOS)).astype(np.float32) / 255
+
+
 def bolha():
     """bolha: anel fino + brilho no canto (intensidade alta no brilho)"""
     x, y = grid()
@@ -598,7 +698,7 @@ def veu():
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     for nm, fn in [("brilho", brilho), ("anel", anel), ("estrela", estrela), ("faisca", faisca), ("fumaca", fumaca),
-                   ("estilhaco", estilhaco), ("respingo", respingo), ("rasgo", rasgo), ("gota", gota), ("seta", seta), ("corrente", corrente), ("voronoi", voronoi), ("ponto", ponto), ("retalho", retalho), ("racha", racha), ("arpao", arpao), ("raio", raio), ("pinca_a", pinca_a), ("punho", punho), ("onda", onda), ("garras_chao", garras_chao), ("moeda", moeda), ("espinhos", espinhos), ("agulha", agulha), ("chifre", chifre), ("espeto", espeto), ("mandibula", mandibula), ("jato", jato), ("estrela_mar", estrela_mar), ("bolha", bolha), ("mina", mina), ("veu", veu)]:
+                   ("estilhaco", estilhaco), ("respingo", respingo), ("rasgo", rasgo), ("gota", gota), ("seta", seta), ("corrente", corrente), ("voronoi", voronoi), ("ponto", ponto), ("retalho", retalho), ("racha", racha), ("arpao", arpao), ("raio", raio), ("pinca_a", pinca_a), ("punho", punho), ("onda", onda), ("garras_chao", garras_chao), ("moeda", moeda), ("espinhos", espinhos), ("agulha", agulha), ("chifre", chifre), ("espeto", espeto), ("mandibula", mandibula), ("jato", jato), ("estrela_mar", estrela_mar), ("arco_som", arco_som), ("engrenagem", engrenagem), ("chave", chave), ("hexa", hexa), ("tentaculo", tentaculo), ("bolha", bolha), ("mina", mina), ("veu", veu)]:
         v = fn()
         if nm == "faisca":
             v = v[::-1]          # cabeça em cima: o topo da textura segue a velocidade
