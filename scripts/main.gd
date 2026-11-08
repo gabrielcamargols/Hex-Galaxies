@@ -1099,6 +1099,15 @@ func _show_army() -> void:
 		army_start = []
 	_clear_ui()
 	_vignette()
+	if ResourceLoader.exists("res://ui/rays.png"):
+		var rays = TextureRect.new()
+		rays.texture = load("res://ui/rays.png")
+		rays.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		rays.stretch_mode = TextureRect.STRETCH_SCALE
+		rays.set_anchors_preset(Control.PRESET_FULL_RECT)
+		rays.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		ui.add_child(rays)
+		w["rays"] = rays
 	var pd = galaxy.data(planet_id)
 	# --- barra do alto: planeta, facções, adversário ---
 	var topbar = _hbox(ui, 14)
@@ -1238,6 +1247,8 @@ func _army_refresh() -> void:
 		return
 	var fac = setup_cfg["fac"]
 	var fc = _fac_col(fac)
+	if w.has("rays") and is_instance_valid(w["rays"]):
+		w["rays"].modulate = fc.lightened(0.25)
 	# abas de facção
 	for c in w["tabs"].get_children():
 		c.queue_free()
@@ -1278,35 +1289,79 @@ func _army_refresh() -> void:
 	w["cmdp"].add_theme_stylebox_override("panel", _flat(Color(0.03, 0.05, 0.11, 0.86), fc, 2, 12, 12))
 	var cid2 = _cur_cmd()
 	var cc = DB.cards[cid2]
+	w["cmdp"].mouse_filter = Control.MOUSE_FILTER_STOP
+	w["cmdp"].tooltip_text = "Toque para ver os detalhes do comandante"
+	for sg in w["cmdp"].gui_input.get_connections():
+		w["cmdp"].gui_input.disconnect(sg["callable"])
+	w["cmdp"].gui_input.connect(func(ev):
+		if ev is InputEventMouseButton and ev.pressed:
+			_army_show(cid2))
 	var cv = _vbox(w["cmdp"], 6)
+	cv.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var ch = _hbox(cv, 10)
+	ch.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if DB.portraits.has(cid2):
-		ch.add_child(_tex_rect(DB.portraits[cid2], Vector2(76, 76)))
+		ch.add_child(_tex_rect(DB.portraits[cid2], Vector2(72, 72)))
 	var cnv = _vbox(ch, 1)
-	_label(cnv, ("COMANDANTE · %s" % DB.factions[fac]["short"].to_upper()) if not mix else ("MIX · COMANDANTE (%s)" % DB.factions[fac]["short"].to_upper()), 11, fc.lightened(0.35))
-	_label(cnv, cc["name"], 22, C_GOLD)
-	_label(cnv, "Vida %d · Atq %d · Mov %d · entra no round 4" % [int(cc["int"]), int(cc["atk"]), int(cc["mov"])], 12, C_DIM)
-	var cb = Button.new()
-	cb.flat = true
-	cb.text = "ver detalhes ▶"
-	cb.add_theme_font_size_override("font_size", 11)
-	cb.pressed.connect(_army_show.bind(cid2))
-	cnv.add_child(cb)
+	cnv.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_label(cnv, ("COMANDANTE · %s" % DB.factions[fac]["short"].to_upper()) if not mix else ("MIX · COMANDANTE (%s)" % DB.factions[fac]["short"].to_upper()), 11, fc.lightened(0.45)).mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_label(cnv, cc["name"], 24, C_GOLD).mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_label(cnv, "entra em campo no round %d" % Game.CMD_ROUND, 12, C_DIM).mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if mix:
 		var sw = _hbox(cnv, 6)
 		var pb = _cbtn(sw, "◀", C_HUD, _mix_cmd_step.bind(-1))
 		pb.custom_minimum_size = Vector2(44, 32)
-		_label(sw, "trocar comandante", 11, C_DIM).size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		_label(sw, "trocar", 11, C_DIM).size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		var nb = _cbtn(sw, "▶", C_HUD, _mix_cmd_step.bind(1))
 		nb.custom_minimum_size = Vector2(44, 32)
 	if compact:
 		_army_refresh_rest()
 		return
-	_ab_box(cv, "PASSIVA", C_CARD, cc["ab"]["name"], cc["ab"]["text"], 380)
+	var cst = _hbox(cv, 6)
+	cst.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_stat_cells(cst, cc)
+	# só os nomes das habilidades: o texto completo fica no painel de detalhes
+	var chips = HFlowContainer.new()
+	chips.add_theme_constant_override("h_separation", 6)
+	chips.add_theme_constant_override("v_separation", 4)
+	chips.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	cv.add_child(chips)
+	_ab_chip(chips, "PASSIVA", C_CARD, cc["ab"]["name"])
 	if cc.has("ab2"):
 		var k2 = cc["ab2"].get("kind", "ativa")
-		_ab_box(cv, "ATIVA · 1 VEZ POR PARTIDA" if k2 != "passiva" else "PASSIVA", C_GOLD if k2 != "passiva" else C_CARD, cc["ab2"]["name"], cc["ab2"]["text"], 380)
+		_ab_chip(chips, "ATIVA" if k2 != "passiva" else "PASSIVA", C_GOLD if k2 != "passiva" else C_CARD, cc["ab2"]["name"])
 	_army_refresh_rest()
+
+
+func _ab_chip(parent: Control, kind: String, col: Color, nm: String) -> void:
+	var pc = PanelContainer.new()
+	pc.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pc.add_theme_stylebox_override("panel", _flat(Color(col.darkened(0.6), 0.95), col, 2, 4, 4))
+	parent.add_child(pc)
+	var hb = _hbox(pc, 6)
+	hb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_label(hb, kind, 9, col.lightened(0.3)).mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_label(hb, nm, 12, C_TXT).mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+
+# quatro atributos: número grande com a legenda embaixo
+func _stat_cells(parent: Control, c: Dictionary) -> void:
+	var vals = [int(c["int"]), int(c["atk"]), int(c["mov"]), int(c["alc"])]
+	var caps = ["VIDA", "ATQ", "MOV", "ALC"]
+	for i in range(4):
+		var pc = PanelContainer.new()
+		pc.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		pc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		pc.add_theme_stylebox_override("panel", _flat(Color(ST_COL[i].darkened(0.65), 0.95), ST_COL[i], 2, 4, 2))
+		parent.add_child(pc)
+		var v = _vbox(pc, 0)
+		v.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var n = _label(v, str(vals[i]), 17, ST_COL[i].lightened(0.35))
+		n.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		n.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var cp = _label(v, caps[i], 9, C_DIM)
+		cp.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		cp.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 
 func _army_refresh_rest() -> void:
@@ -1403,46 +1458,49 @@ func _army_card(c: Dictionary) -> Control:
 	var chosen = army_picks.has(id)
 	var fc = _fac_col(c["f"])
 	var b = Button.new()
-	b.custom_minimum_size = Vector2(0, 168 if compact else 196)
+	b.custom_minimum_size = Vector2(0, 176 if compact else 212)
 	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var border = C_GOLD if chosen else (C_HUD if id == army_detail else fc.darkened(0.15))
-	b.add_theme_stylebox_override("normal", _flat(Color(0.035, 0.06, 0.12, 0.97), border, 3 if chosen else 2, 10, 6))
-	b.add_theme_stylebox_override("hover", _flat(Color(0.07, 0.11, 0.2, 0.95), C_HUD, 2, 10, 6))
-	b.add_theme_stylebox_override("pressed", _flat(Color(0.07, 0.11, 0.2, 0.95), C_GOLD, 3, 10, 6))
+	var tint = C_GOLD if chosen else (C_HUD if id == army_detail else fc)
+	b.add_theme_stylebox_override("normal", _tex_box("res://ui/card.png", 20, tint, 9, 7))
+	b.add_theme_stylebox_override("hover", _tex_box("res://ui/card.png", 20, tint.lightened(0.25) if not chosen else C_GOLD.lightened(0.3), 9, 7))
+	b.add_theme_stylebox_override("pressed", _tex_box("res://ui/card.png", 20, C_GOLD, 9, 7))
 	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	b.pressed.connect(_army_toggle.bind(id))
 	b.mouse_entered.connect(_army_show.bind(id))
 	if army_picks.size() >= 5 and not chosen:
-		b.modulate = Color(0.5, 0.52, 0.58, 1.0)
+		b.modulate = Color(0.55, 0.57, 0.64, 1.0)
 	var v = VBoxContainer.new()
 	v.add_theme_constant_override("separation", 2)
-	v.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 7)
+	v.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 9)
 	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(v)
 	var pic = PanelContainer.new()
-	pic.add_theme_stylebox_override("panel", _flat(fc.darkened(0.55), fc.darkened(0.3), 0, 8, 2))
+	pic.add_theme_stylebox_override("panel", _flat(fc.darkened(0.55), Color.BLACK, 2, 4, 2))
 	pic.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	v.add_child(pic)
 	var tex = DB.portraits.get(id, DB.art.get(id, null))
-	pic.add_child(_tex_rect(tex, Vector2(0, 70 if compact else 92)))
+	pic.add_child(_tex_rect(tex, Vector2(0, 66 if compact else 88)))
 	if chosen:
-		var badge = _label(pic, "★ EM CAMPO" if army_start.has(id) else "✓ NO EXÉRCITO", 10, C_GOLD)
-		badge.size_flags_horizontal = Control.SIZE_SHRINK_END
-		badge.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		var bp = PanelContainer.new()
+		bp.add_theme_stylebox_override("panel", _flat(C_GOLD, Color.BLACK, 2, 3, 2))
+		bp.size_flags_horizontal = Control.SIZE_SHRINK_END
+		bp.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		bp.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		pic.add_child(bp)
+		var badge = _label(bp, "★ EM CAMPO" if army_start.has(id) else "RESERVA", 10, Color("#2a1a00"))
 		badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var nl = _label(v, c["name"], 14, C_GOLD if chosen else C_TXT)
+	var nl = _label(v, c["name"], 15, C_GOLD if chosen else C_TXT)
 	nl.clip_text = true
 	nl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var rl = _label(v, c["role"], 11, C_DIM)
+	var rl = _label(v, c["role"], 11, fc.lightened(0.5))
 	rl.clip_text = true
 	rl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var sr = _hbox(v, 8)
+	var sr = _hbox(v, 3)
 	sr.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var vals = [int(c["int"]), int(c["atk"]), int(c["mov"]), int(c["alc"])]
-	for i in range(4):
-		_stat_mini(sr, ST_COL[i], vals[i])
+	_stat_cells(sr, c)
 	var kd = _ab_kind(c)
-	var al = _label(v, kd[0].split(" ·")[0], 10, kd[1])
+	var al = _label(v, c["ab"]["name"], 11, kd[1].lightened(0.4))
+	al.clip_text = true
 	al.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return b
 
@@ -1452,7 +1510,7 @@ func _army_slot(id: String) -> Control:
 	p.custom_minimum_size = Vector2(76 if compact else 104, 0)
 	if id == "":
 		p.add_theme_stylebox_override("panel", _flat(Color(0.03, 0.05, 0.1, 0.6), Color(0.3, 0.42, 0.55, 0.6), 1, 8, 6))
-		var l = _label(p, "vaga\nlivre", 12, Color(0.4, 0.5, 0.6))
+		var l = _label(p, "vaga\nlivre", 12, Color(0.68, 0.74, 0.85))
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		return p
@@ -1568,9 +1626,6 @@ func _army_detail_build() -> void:
 		flow.add_child(tp)
 		var tl = _label(tp, t[0], 12, t[1].lightened(0.3))
 		tl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	var rs = _label(v, im["resumo"], 13, C_TXT)
-	rs.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	rs.custom_minimum_size = Vector2(dw, 0)
 	if not c.get("cmd", false):
 		var chosen = army_picks.has(id)
 		var h2 = _hbox(v, 8)
