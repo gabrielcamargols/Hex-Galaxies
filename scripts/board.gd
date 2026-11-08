@@ -989,7 +989,22 @@ func _prop(parent: Node3D, desert: bool, h: Vector2i, pos: Vector3, size: float,
 	return _model(parent, mname, pos, pick[2] * size, _rnd(h, 13) * TAU, true)
 
 
+# modelos novos (com textura própria) que substituem os antigos de ossada e cacto
+const MODEL_SWAP = {"cen_tarhut_ossada": "tarhut_fossil", "ossada": "tarhut_fossil", "cen_tarhut_cacto": "tarhut_flor", "cen_tarhut_cacto_bola": "tarhut_flor"}
+const TEXTURED = ["tarhut_fossil", "tarhut_flor"]
+
+
+func _swap_name(mname: String) -> String:
+	if MODEL_SWAP.has(mname):
+		return MODEL_SWAP[mname]
+	var cut = mname.rfind("_")
+	if cut > 0 and mname.substr(cut + 1).is_valid_int() and MODEL_SWAP.has(mname.substr(0, cut)):
+		return MODEL_SWAP[mname.substr(0, cut)]
+	return mname
+
+
 func _scene_of(mname: String) -> Variant:
+	mname = _swap_name(mname)
 	if not model_cache.has(mname):
 		var path = "res://models/%s.glb" % mname
 		model_cache[mname] = load(path) if ResourceLoader.exists(path) else null
@@ -1003,6 +1018,8 @@ func _model(parent: Node3D, mname: String, pos: Vector3, footprint: float, yaw: 
 		return false
 	var inst: Node3D = sc.instantiate()
 	var meshes = inst.find_children("*", "MeshInstance3D", true, false)
+	if toon and TEXTURED.has(_swap_name(mname)):
+		toon = false
 	if toon:
 		if prop_mat == null:
 			prop_mat = StandardMaterial3D.new()
