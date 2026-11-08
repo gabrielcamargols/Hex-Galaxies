@@ -887,7 +887,7 @@ func can_enter(u, h: Vector2i) -> bool:
 		return false
 	if not blocks.has(h):
 		return true
-	return K(u).has("climbAll") and not is_pit(h) and not barrier_at(h)
+	return (K(u).has("climbAll") or (K(u).has("air") and String(terr(h)["k"]) == "correnteza")) and not is_pit(h) and not barrier_at(h)
 
 
 func move_opts(u, mov: int) -> Array:
@@ -958,7 +958,7 @@ func _path(u, a: Vector2i, b: Vector2i) -> Array:
 		for n in DB.nbrs(c):
 			if prev.has(n):
 				continue
-			if n != b and (unit_at(n) != null or (blocks.has(n) and not K(u).has("climbAll"))):
+			if n != b and (unit_at(n) != null or (blocks.has(n) and not K(u).has("climbAll") and not (K(u).has("air") and String(terr(n)["k"]) == "correnteza"))):
 				continue
 			prev[n] = c
 			q.append(n)

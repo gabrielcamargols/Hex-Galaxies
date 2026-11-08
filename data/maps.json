@@ -4413,9 +4413,9 @@
    "cover": 1
   },
   "correnteza": {
-   "name": "Correnteza",
-   "c": 1,
-   "pass": 1,
+   "name": "Rio (água funda)",
+   "c": 0,
+   "pass": 0,
    "top": 0,
    "climb": 1,
    "flow": 1
