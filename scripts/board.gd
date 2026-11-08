@@ -687,13 +687,16 @@ func _tile_mesh(c0: Color, c1: Color, cs: Color) -> ArrayMesh:
 		_tri(st, Vector3(o1.x, 1, o1.y), rim, Vector3(i2.x, 1, i2.y), rim, Vector3(i1.x, 1, i1.y), rim)
 	# tinta: aro externo do topo e quinas verticais (contorno de HQ nas arestas)
 	var ink = Color("#1a0e14")
-	var rim_ink = cs.darkened(0.32)
+	# traço de tinta feito à mão: espessura diferente em cada vértice, cor de tinta escura (quase preto-violeta)
+	var rim_ink = Color("#150a1c").lerp(cs.darkened(0.6), 0.35)
+	var wob = []
+	for k in range(6):
+		wob.append(0.915 + randf() * 0.045)
 	for k in range(6):
 		var o1b = pts_o[k]
 		var o2b = pts_o[(k + 1) % 6]
-		# aro fino e no tom escuro do próprio chão: o tabuleiro fica calmo, sem virar grade
-		var e1 = o1b * 0.978
-		var e2 = o2b * 0.978
+		var e1 = o1b * wob[k]
+		var e2 = o2b * wob[(k + 1) % 6]
 		_tri(st, Vector3(o1b.x, 1.002, o1b.y), rim_ink, Vector3(o2b.x, 1.002, o2b.y), rim_ink, Vector3(e2.x, 1.002, e2.y), rim_ink)
 		_tri(st, Vector3(o1b.x, 1.002, o1b.y), rim_ink, Vector3(e2.x, 1.002, e2.y), rim_ink, Vector3(e1.x, 1.002, e1.y), rim_ink)
 	for k in range(6):
