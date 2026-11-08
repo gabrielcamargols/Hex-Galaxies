@@ -76,6 +76,7 @@ var dune_next: int = -1
 var holes: Array = []
 var tremors: Array = []
 var warn_kind: String = ""      # o que as casas marcadas (tremors) vão virar: raiz, fratura, avalanche
+var fire: Dictionary = {}        # Abnara: casas de mata em chamas -> round em que começaram
 var dyn: Dictionary = {}         # camada dinâmica de terreno dos mapas do dossiê: hex -> {k, until, then}
 var res: Dictionary = {}  # Vector2i -> tipo
 var final_score: Dictionary = {}
@@ -2019,6 +2020,10 @@ func _map_events(def: Dictionary) -> void:
 	if not (ab or gl):
 		return
 	var changed_terrain = false
+	if ab:
+		await _rain_events()
+		if winner != NONE:
+			return
 	# 1) expira o que já passou (raiz murcha, gelo rompido congela de novo)
 	for h in dyn.keys():
 		if int(dyn[h]["until"]) <= round_no:
@@ -2228,6 +2233,87 @@ func zone_radius() -> int:
 # tempestade de areia (mapas com dunas): no round em que o vento muda e no round em que as dunas mudam
 func storm_on() -> bool:
 	return DB.maps[map_id].has("dunes") and (round_no % DUNE_EVERY == 0 or (round_no > 1 and (round_no - 1) % DUNE_EVERY == 0))
+
+
+# Abnara: a partir do round 6 chove (dano -3), o céu escurece e raios caem na mata
+const RAIN_ROUND = 6
+const RAIN_PEN = 3
+const FIRE_ROUNDS = 3
+
+
+func rain_on() -> bool:
+	return map_id == "abnara" and round_no >= RAIN_ROUND
+
+
+func burning_near(u) -> bool:
+	if u == null or u.st != "field":
+		return false
+	for fh in fire.keys():
+		if DB.dist(u.pos(), fh) <= 1:
+			return true
+	return false
+
+
+func _ignite(h: Vector2i) -> bool:
+	if fire.has(h) or String(terr(h)["k"]) != "mata":
+		return false
+	fire[h] = round_no
+	return true
+
+
+# chuva, raios e incêndio da mata (rodam no começo de cada round a partir do round 6)
+func _rain_events() -> void:
+	if not rain_on():
+		return
+	if round_no == RAIN_ROUND:
+		log_msg(-1, "Começa a chover! Todos os ataques causam %d a menos de dano (ninguém enxerga direito)." % RAIN_PEN)
+		emitfx({"t": "rain_start"})
+		await pace()
+	var changed_terrain = false
+	# o fogo que já queimou o bastante deixa só clareira
+	for h in fire.keys():
+		if round_no - int(fire[h]) >= FIRE_ROUNDS:
+			fire.erase(h)
+			dyn[h] = {"k": "clareira", "until": 999, "then": ""}
+			changed_terrain = true
+			log_msg(-1, "A mata queimou até virar cinzas.")
+	# o fogo se espalha para as árvores vizinhas
+	var spread = []
+	for h in fire.keys():
+		for d in DB.DIRS:
+			var nb = h + d
+			if not fire.has(nb) and String(terr(nb)["k"]) == "mata" and rng.randf() < 0.5 and not spread.has(nb):
+				spread.append(nb)
+	for nb in spread:
+		_ignite(nb)
+	if not spread.is_empty():
+		log_msg(-1, "O incêndio se espalhou pela mata (%d casas)." % spread.size())
+	# raios aleatórios: metade das vezes cai numa casa de mata
+	var matas = []
+	for h in DB.hexes:
+		if String(terr(h)["k"]) == "mata":
+			matas.append(h)
+	for i in range(3):
+		var tgt: Vector2i = DB.hexes[rng.randi() % DB.hexes.size()]
+		if not matas.is_empty() and rng.randf() < 0.5:
+			tgt = matas[rng.randi() % matas.size()]
+		var lit = _ignite(tgt)
+		emitfx({"t": "bolt", "h": tgt, "fire": lit})
+		if lit:
+			log_msg(-1, "Um raio atingiu a mata: ela pegou fogo!")
+		await pace()
+	if changed_terrain:
+		load_map()
+	emitfx({"t": "fire_set", "hexes": fire.keys()})
+	# quem está perto do fogo se queima
+	for u in units:
+		if u.barrier or u.crystal != "" or u.st != "field" or not burning_near(u):
+			continue
+		log_msg(-1, "%s se queima perto do incêndio (1)." % nm(u))
+		emitfx({"t": "boom", "h": u.pos()})
+		damage(u, 1, null)
+	settle()
+	await pace()
 
 
 func flag_time(p: int) -> void:
@@ -3094,10 +3180,14 @@ func resolve_attack(a, t) -> void:
 	var tm2 = tm if target == t else terrain_mods(a, target)
 	var red = reduction_of(target, false, DB.dist(a.pos(), target.pos()))
 	var storm_pen = 2 if storm_on() else 0
+	if rain_on():
+		storm_pen += RAIN_PEN
 	var dealt = max(0, packet - red - react_red - int(tm2["cover"]) - int(tm2["forest"]) - storm_pen)
 	if target.crystal != "":
 		dealt = max(dealt, 1)   # um ataque normal sempre quebra o cristal
-	if storm_pen > 0:
+	if rain_on():
+		log_msg(p, "Chuva: -%d de dano (o golpe erra o alvo)." % RAIN_PEN)
+	if storm_on():
 		log_msg(p, "Tempestade de areia: -2 de dano.")
 	if (red > 0 or react_red > 0) and not target.barrier:
 		emitfx({"t": "passive", "kind": "shield", "uid": target.uid})
@@ -4193,6 +4283,9 @@ func preview_damage(a, t, fpos = null) -> Dictionary:
 	if storm_on():
 		total -= 2
 		parts.append("-2 tempestade de areia")
+	if rain_on():
+		total -= RAIN_PEN
+		parts.append("-%d chuva" % RAIN_PEN)
 	a.q = save.x
 	a.r = save.y
 	var dmg = max(0, total)

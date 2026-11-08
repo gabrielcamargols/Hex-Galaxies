@@ -350,6 +350,12 @@ func setup_ambient(map_id: String) -> void:
 	ambient = []
 	storm = []
 	storm_on = false
+	rain_dark = false
+	sun_base = -1.0
+	for fh in fires.keys():
+		if is_instance_valid(fires[fh]):
+			fires[fh].queue_free()
+	fires = {}
 	if board != null and board.env != null:
 		board.env.fog_density = 0.0
 		board.env.fog_enabled = false
@@ -371,6 +377,9 @@ func setup_ambient(map_id: String) -> void:
 		ambient.append(_field(Color(1.0, 1.0, 1.0, 0.85), 520, 6.0, 0.08, Vector3(0.6, -0.9, 0.25), Vector3(span, 3.0, span), 3.2, false))
 		ambient.append(_field(Color(0.75, 0.95, 1.0, 0.6), 60, 8.0, 0.06, Vector3(0.1, 0.05, 0.05), Vector3(span, 2.0, span), 1.2, true))
 	elif map_id == "abnara":
+		# chuva do round 6 (desligada até lá)
+		storm = [_rain_field(span)]
+		storm[0].emitting = false
 		# pólen e vaga-lumes da selva
 		ambient.append(_field(Color(0.85, 1.0, 0.45, 0.75), 140, 8.0, 0.07, Vector3(0.05, 0.08, 0.04), Vector3(span, 2.2, span), 1.2, true))
 		ambient.append(_field(Color(1.0, 0.6, 0.85, 0.5), 50, 9.0, 0.06, Vector3(-0.04, 0.06, 0.05), Vector3(span, 2.0, span), 1.4, true))
@@ -1265,3 +1274,138 @@ func _fx_bolts(L: Dictionary, at: Vector3, from: Variant, tint: Color, ctx: Dict
 		tw.tween_callback(func():
 			for bm in pair:
 				bm[0].queue_free())
+
+
+# ---------------- Abnara: chuva, raio e incêndio (receitas "abnara_raio" e "abnara_ignicao" na Forja) ----------------
+func _rain_field(span: float) -> CPUParticles3D:
+	var p = CPUParticles3D.new()
+	var m = QuadMesh.new()
+	m.size = Vector2(0.035, 0.75)
+	var mt = StandardMaterial3D.new()
+	mt.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mt.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mt.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+	mt.vertex_color_use_as_albedo = true
+	mt.albedo_color = Color(0.72, 0.84, 1.0, 0.55)
+	m.material = mt
+	p.mesh = m
+	p.amount = 2600
+	p.lifetime = 0.65
+	p.preprocess = 0.65
+	p.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+	p.emission_box_extents = Vector3(span, 0.1, span)
+	p.direction = Vector3(0.12, -1.0, 0.04)
+	p.spread = 2.0
+	p.gravity = Vector3.ZERO
+	p.initial_velocity_min = 24.0
+	p.initial_velocity_max = 30.0
+	p.particle_flag_align_y = true
+	p.position = Vector3(0, 14.0, 0)
+	add_child(p)
+	return p
+
+
+var rain_dark: bool = false
+var sun_base: float = -1.0
+var amb_base: float = -1.0
+
+
+func rain(on: bool) -> void:
+	if storm.is_empty() or on == rain_dark:
+		return
+	rain_dark = on
+	for p in storm:
+		p.emitting = on
+	var env: Environment = board.env
+	var sun: DirectionalLight3D = board.sun_light
+	if sun_base < 0.0:
+		sun_base = sun.light_energy
+		amb_base = env.ambient_light_energy
+	env.fog_enabled = true
+	env.fog_light_color = Color(0.2, 0.26, 0.38)
+	var tw = create_tween().set_parallel(true)
+	tw.tween_property(env, "fog_density", 0.02 if on else 0.0, 2.5)
+	tw.tween_property(sun, "light_energy", sun_base * (0.3 if on else 1.0), 2.5)
+	tw.tween_property(env, "ambient_light_energy", amb_base * (0.55 if on else 1.0), 2.5)
+	sun.light_color = Color(0.62, 0.7, 0.9) if on else Color.WHITE
+
+
+# raio do céu: clarão, tremor e, se acendeu uma árvore, a labareda
+func lightning(at: Vector3) -> void:
+	play_fx("abnara_raio", at, at + Vector3(0.5, 11.0 * cam_k, 0.3))
+	if board != null:
+		board.shake = max(board.shake, 0.35)
+		var env: Environment = board.env
+		var amb0 = env.ambient_light_energy
+		env.ambient_light_energy = amb0 + 1.6
+		var tw = create_tween()
+		tw.tween_property(env, "ambient_light_energy", amb0, 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
+
+var fires: Dictionary = {}
+
+
+# labaredas persistentes nas casas em chamas (reconcilia com a lista do jogo)
+func fire_set(hexes: Array, pos_of: Callable) -> void:
+	for h in fires.keys():
+		if not hexes.has(h):
+			if is_instance_valid(fires[h]):
+				fires[h].queue_free()
+			fires.erase(h)
+	for h in hexes:
+		if fires.has(h) and is_instance_valid(fires[h]):
+			continue
+		var root = Node3D.new()
+		root.position = pos_of.call(h)
+		add_child(root)
+		var fl = CPUParticles3D.new()
+		fl.mesh = _quad(0.5, true)
+		fl.amount = 70
+		fl.lifetime = 0.9
+		fl.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
+		fl.emission_sphere_radius = 0.55
+		fl.direction = Vector3.UP
+		fl.spread = 14.0
+		fl.gravity = Vector3(0, 1.4, 0)
+		fl.initial_velocity_min = 0.4
+		fl.initial_velocity_max = 1.1
+		fl.scale_amount_min = 0.6
+		fl.scale_amount_max = 1.5
+		var g = Gradient.new()
+		g.set_color(0, Color(1.0, 0.85, 0.3, 0.0))
+		g.set_color(1, Color(0.8, 0.1, 0.0, 0.0))
+		g.add_point(0.15, Color(1.0, 0.7, 0.2, 0.95))
+		g.add_point(0.6, Color(0.95, 0.3, 0.05, 0.6))
+		fl.color_ramp = g
+		fl.position = Vector3(0, 0.5, 0)
+		root.add_child(fl)
+		var sm = CPUParticles3D.new()
+		sm.mesh = _quad(0.9, false)
+		sm.amount = 24
+		sm.lifetime = 2.2
+		sm.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
+		sm.emission_sphere_radius = 0.4
+		sm.direction = Vector3.UP
+		sm.spread = 12.0
+		sm.gravity = Vector3(0.3, 1.0, 0)
+		sm.initial_velocity_min = 0.5
+		sm.initial_velocity_max = 1.0
+		sm.scale_amount_min = 0.8
+		sm.scale_amount_max = 2.0
+		var g2 = Gradient.new()
+		g2.set_color(0, Color(0.12, 0.1, 0.1, 0.0))
+		g2.set_color(1, Color(0.12, 0.1, 0.1, 0.0))
+		g2.add_point(0.2, Color(0.14, 0.12, 0.12, 0.55))
+		sm.color_ramp = g2
+		sm.position = Vector3(0, 1.0, 0)
+		root.add_child(sm)
+		var li = OmniLight3D.new()
+		li.light_color = Color("#ff8a2a")
+		li.light_energy = 2.2
+		li.omni_range = 4.5
+		li.position = Vector3(0, 1.0, 0)
+		root.add_child(li)
+		var tw = li.create_tween().set_loops()
+		tw.tween_property(li, "light_energy", 1.4, 0.18)
+		tw.tween_property(li, "light_energy", 2.6, 0.22)
+		fires[h] = root
