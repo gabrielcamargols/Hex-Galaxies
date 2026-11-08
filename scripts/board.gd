@@ -46,6 +46,7 @@ var cam_goal: Variant = null
 var cam_speed: float = 8.0      # mais baixo = câmera mais lenta (chegada no planeta)
 var shake: float = 0.0
 
+var res_nodes: Dictionary = {}      # casa -> modelo do recurso (some quando é coletado)
 var active_tiles: Dictionary = {}   # casas animando (relevo/brilho): só estas são varridas todo quadro
 var scan_n: int = 0
 var tiles: Dictionary = {}       # Vector2i -> {node, disp_h, props, hl, dim, label, flash}
@@ -842,6 +843,10 @@ func _add_marks(root: Node3D, h: Vector2i) -> void:
 		lab.position = Vector3(0, 1.45, 0)
 		root.add_child(lab)
 	if g.res.has(h):
+		var rn = Node3D.new()
+		root.add_child(rn)
+		res_nodes[h] = rn
+		root = rn
 		var rt = g.res[h]
 		var rc = Color("#b07a3a")
 		if rt == "agua":
@@ -1654,6 +1659,13 @@ func set_state(s: Dictionary) -> void:
 	state = s
 	refresh_terrain()
 	sync_units()
+	for rh in res_nodes.keys():
+		var rnode = res_nodes[rh]
+		if not is_instance_valid(rnode):
+			res_nodes.erase(rh)
+		elif not g.res.has(rh):
+			rnode.queue_free()
+			res_nodes.erase(rh)
 	# só repinta a casa cujo destaque, etiqueta ou escurecimento mudou (os que pulsam continuam no _process)
 	var hls: Dictionary = s.get("hl", {})
 	var labs: Dictionary = s.get("labels", {})

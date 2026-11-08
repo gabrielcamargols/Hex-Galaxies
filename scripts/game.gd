@@ -826,9 +826,11 @@ func tunnel_opts(u) -> Array:
 
 func move_unit(u, h: Vector2i, own: bool = false) -> void:
 	var fpos = u.pos()
-	if not bananas.is_empty() and not u.barrier:
+	if not u.barrier and (not bananas.is_empty() or (own and not res.is_empty())):
 		for ph in _path(u, fpos, h):
 			_eat_banana(u, ph)
+			if own:
+				_grab_scarab(u, ph)
 	u.q = h.x
 	u.r = h.y
 	emitfx({"t": "move", "uid": u.uid, "from": fpos, "to": h})
@@ -863,6 +865,17 @@ func _path(u, a: Vector2i, b: Vector2i) -> Array:
 	return out
 
 
+# escaravelho verde: quem anda por cima (ou para nele) já o guarda, sem gastar ação
+func _grab_scarab(u, h: Vector2i) -> void:
+	if not res.has(h) or res[h] != "escaravelho" or u.barrier:
+		return
+	res.erase(h)
+	var p = u.owner
+	P[p]["scarabs"] = int(P[p]["scarabs"]) + 1
+	emitfx({"t": "passive", "kind": "ability", "uid": u.uid})
+	log_msg(p, "%s pegou um Escaravelho Verde (%d)." % [nm(u), int(P[p]["scarabs"])])
+
+
 func _eat_banana(u, h: Vector2i) -> void:
 	if not bananas.has(h) or bananas[h]["p"] != u.owner or u.barrier:
 		return
@@ -883,6 +896,7 @@ func _eat_banana(u, h: Vector2i) -> void:
 
 func arrive(u, own: bool = false) -> void:
 	_eat_banana(u, u.pos())
+	_grab_scarab(u, u.pos())
 	if core != null and u.pos() == core and u.st == "field" and not u.barrier:
 		await _capture_core(u)
 	for i in range(mines.size()):
@@ -2491,7 +2505,7 @@ func _act_interact(u) -> bool:
 
 
 func can_collect(u) -> bool:
-	return res.has(u.pos()) and is_live(u) and act["actions"] > 0
+	return res.has(u.pos()) and res[u.pos()] != "escaravelho" and is_live(u) and act["actions"] > 0
 
 
 func act_collect(u) -> bool:
