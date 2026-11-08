@@ -2,10 +2,12 @@
 shader_type spatial;
 render_mode unshaded, cull_front, depth_draw_opaque;
 
-uniform vec3 ink : source_color = vec3(0.05, 0.02, 0.09);
+uniform float gamma = 2.2;
+varying vec3 base;
 uniform float width_px = 2.4;
 
 void vertex() {
+	base = pow(COLOR.rgb, vec3(gamma));
 	vec4 clip = PROJECTION_MATRIX * MODELVIEW_MATRIX * vec4(VERTEX, 1.0);
 	vec3 wp = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	float wob = 0.7 + 0.6 * (0.5 + 0.5 * sin(wp.x * 5.3 + wp.z * 3.7 + wp.y * 4.1));
@@ -17,5 +19,8 @@ void vertex() {
 }
 
 void fragment() {
-	ALBEDO = ink;
+	float l = dot(base, vec3(0.299, 0.587, 0.114));
+	// mesmo tom do objeto, mais escuro e mais saturado
+	vec3 c = mix(vec3(l), base, 1.35) * 0.32;
+	ALBEDO = clamp(c, 0.0, 1.0);
 }

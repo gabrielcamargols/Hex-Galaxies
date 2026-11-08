@@ -6,9 +6,9 @@ render_mode cull_disabled, specular_disabled;
 
 uniform vec3 shadow_tint : source_color = vec3(0.5, 0.4, 0.68);
 uniform float shadow_level = 0.7;
-uniform float dot_px = 7.0;
-uniform float dot_amt = 0.3;      // força da retícula na sombra
-uniform float hi_amt = 0.22;      // força dos pontinhos de brilho
+uniform float dot_px = 9.0;
+uniform float dot_amt = 0.62;     // força da retícula na sombra
+uniform float hi_amt = 0.5;       // força dos pontinhos de brilho
 uniform float gamma = 1.6;        // cores dos vértices: entre sRGB e linear (vivo sem escurecer)
 
 void fragment() {
@@ -31,8 +31,8 @@ void light() {
 	float r = 0.4 * sqrt(sh);
 	shade *= 1.0 - (1.0 - smoothstep(r - 0.07, r + 0.07, d)) * sh * dot_amt;
 	// luz forte (face de frente para o sol): pontinhos claros
-	float hl = smoothstep(0.78, 0.92, nd) * ATTENUATION;
-	float r2 = 0.24 * sqrt(hl);
+	float hl = smoothstep(0.5, 0.8, nd) * ATTENUATION;
+	float r2 = 0.32 * sqrt(hl);
 	float hd = (1.0 - smoothstep(r2 - 0.07, r2 + 0.07, d)) * hl;
 	DIFFUSE_LIGHT += LIGHT_COLOR * (shade + hd * hi_amt) / PI;
 }

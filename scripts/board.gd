@@ -655,6 +655,11 @@ func _place_tile(h: Vector2i) -> void:
 
 
 # prisma unitário (altura 1 a partir de 0); topo com aro claro e centro colorido
+# tinta da cor do terreno: o mesmo tom, mais escuro e mais saturado
+func _ink_of(c: Color) -> Color:
+	return Color.from_hsv(c.h, min(1.0, c.s * 1.3 + 0.12), c.v * 0.4)
+
+
 func _tile_mesh(c0: Color, c1: Color, cs: Color) -> ArrayMesh:
 	var st = SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -686,9 +691,9 @@ func _tile_mesh(c0: Color, c1: Color, cs: Color) -> ArrayMesh:
 		_tri(st, Vector3(o1.x, 1, o1.y), rim, Vector3(o2.x, 1, o2.y), rim, Vector3(i2.x, 1, i2.y), rim)
 		_tri(st, Vector3(o1.x, 1, o1.y), rim, Vector3(i2.x, 1, i2.y), rim, Vector3(i1.x, 1, i1.y), rim)
 	# tinta: aro externo do topo e quinas verticais (contorno de HQ nas arestas)
-	var ink = Color("#1a0e14")
+	var ink = _ink_of(cs)
 	# traço de tinta feito à mão: espessura diferente em cada vértice, cor de tinta escura (quase preto-violeta)
-	var rim_ink = Color("#150a1c").lerp(cs.darkened(0.6), 0.35)
+	var rim_ink = _ink_of(cs)
 	var wob = []
 	for k in range(6):
 		wob.append(0.915 + randf() * 0.045)
