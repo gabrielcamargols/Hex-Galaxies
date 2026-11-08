@@ -154,7 +154,7 @@ func _ready() -> void:
 	add_child(galaxy)
 	galaxy.env = board.env
 	galaxy.planet_hover.connect(_on_planet_hover)
-	galaxy.planet_click.connect(_choose_planet)
+	galaxy.planet_click.connect(_planet_info)
 	var top_layer = CanvasLayer.new()
 	top_layer.layer = 20
 	add_child(top_layer)
@@ -897,39 +897,127 @@ func _show_select() -> void:
 	galaxy.set_mode("select")
 	ui.modulate.a = 0.0
 	_vignette()
-	var top = VBoxContainer.new()
-	top.add_theme_constant_override("separation", 2)
-	ui.add_child(top)
-	_place(top, Control.PRESET_CENTER_TOP, 26)
-	top.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var l1 = _label(top, "ESCOLHA O PLANETA DA BATALHA", 26, C_GOLD)
-	l1.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	var l2 = _label(top, "Toque num planeta para ver as tropas e montar seu exército", 14, C_DIM)
-	l2.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	# título em faixa de HQ inclinada
+	var tb = PanelContainer.new()
+	tb.add_theme_stylebox_override("panel", _hq_box(Color("#1c0b33"), C_GOLD, 8))
+	tb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui.add_child(tb)
+	var tl = _label(tb, "ESCOLHA O PLANETA", 30 if compact else 38, C_GOLD)
+	if font_title != null:
+		tl.add_theme_font_override("font", font_title)
+	tl.add_theme_constant_override("outline_size", 10)
+	tl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_place(tb, Control.PRESET_CENTER_TOP, 22)
 	var back = _cbtn(ui, "◀  Voltar", C_HUD, _back_title)
 	_place(back, Control.PRESET_BOTTOM_LEFT, 22)
+	# em cada planeta, só o nome (o modelo 3D mostra o resto); a descrição aparece ao tocar
 	w["tags"] = {}
 	for id in galaxy.pickable():
 		var d = galaxy.data(id)
-		var tag = PanelContainer.new()
-		tag.add_theme_stylebox_override("panel", _tex_box("res://ui/panel.png", 30, d["atm"].lightened(0.1), 18, 12))
+		var tag = Button.new()
+		tag.text = d["name"].to_upper()
+		tag.add_theme_font_size_override("font_size", 30 if compact else 38)
+		if font_title != null:
+			tag.add_theme_font_override("font", font_title)
+		var ac: Color = d["atm"]
+		for st in ["normal", "hover", "pressed", "focus"]:
+			tag.add_theme_stylebox_override(st, _hq_box(Color("#120624") if st != "hover" else Color("#2a1048"), Color(ac.r, ac.g, ac.b, 1.0), 7))
+		tag.add_theme_color_override("font_color", Color(ac.r, ac.g, ac.b).lightened(0.35))
+		tag.add_theme_color_override("font_hover_color", Color.WHITE)
+		tag.add_theme_color_override("font_outline_color", Color("#0a0410"))
+		tag.add_theme_constant_override("outline_size", 10)
+		tag.pressed.connect(_planet_info.bind(id))
 		ui.add_child(tag)
-		var v = _vbox(tag, 3)
-		_label(v, d["name"].to_upper(), 26, C_GOLD)
-		_label(v, d["sub"].to_upper(), 12, d["atm"].lightened(0.2))
-		var dl = _label(v, d["desc"], 13, C_DIM)
-		dl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		dl.custom_minimum_size = Vector2(250, 0)
-		dl.visible = not compact
-		var b = _cbtn(v, "BATALHAR AQUI", C_GOLD, _choose_planet.bind(id))
-		_primary(b)
-		b.custom_minimum_size = Vector2(0, 40)
-		tag.custom_minimum_size = Vector2(230 if compact else 286, 0)
 		tag.position = Vector2(-1000, -1000)
 		w["tags"][id] = tag
 	await get_tree().create_timer(0.55).timeout
 	if stage == "select":
 		_ui_fade(1.0, 0.6)
+
+
+# caixa de HQ: inclinada, contorno de tinta e sombra dura colorida (impressão deslocada)
+func _hq_box(bg: Color, shadow: Color, shift: int = 6) -> StyleBoxFlat:
+	var b = StyleBoxFlat.new()
+	b.bg_color = bg
+	b.border_color = Color("#0a0410")
+	b.set_border_width_all(4)
+	b.set_corner_radius_all(2)
+	b.shadow_color = shadow
+	b.shadow_size = 1
+	b.shadow_offset = Vector2(shift, shift)
+	b.skew = Vector2(-0.12, 0)
+	b.set_content_margin_all(12)
+	b.content_margin_left = 26
+	b.content_margin_right = 26
+	return b
+
+
+# tocou num planeta: ele vai para a esquerda e a ficha com a descrição e as arenas aparece à direita
+func _planet_info(id: String) -> void:
+	if stage != "select":
+		return
+	stage = "planet_info"
+	planet_id = id
+	sfx.play("confirmar", -8.0)
+	await _ui_fade(0.0, 0.25)
+	_clear_ui()
+	_vignette()
+	galaxy.set_mode("focus", id)
+	var d = galaxy.data(id)
+	var ac: Color = d["atm"]
+	ac.a = 1.0
+	var panel = PanelContainer.new()
+	var pb = _hq_box(Color("#140728").lerp(ac.darkened(0.8), 0.25), ac, 10)
+	pb.content_margin_left = 34
+	pb.content_margin_right = 34
+	pb.content_margin_top = 22
+	pb.content_margin_bottom = 22
+	panel.add_theme_stylebox_override("panel", pb)
+	ui.add_child(panel)
+	var v = _vbox(panel, 8)
+	var nm = _label(v, d["name"].to_upper(), 46 if compact else 60, ac.lightened(0.35))
+	if font_title != null:
+		nm.add_theme_font_override("font", font_title)
+	nm.add_theme_constant_override("outline_size", 12)
+	_label(v, d.get("sub", "").to_upper(), 14, C_GOLD)
+	var dl = _label(v, d.get("desc", ""), 15, C_TXT)
+	dl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	dl.custom_minimum_size = Vector2(320 if compact else 400, 0)
+	var sp = Control.new()
+	sp.custom_minimum_size = Vector2(0, 6)
+	v.add_child(sp)
+	var ah = _label(v, "ARENAS", 18, ac.lightened(0.3))
+	if font_btn != null:
+		ah.add_theme_font_override("font", font_btn)
+	for ar in d.get("arenas", [{"name": d["name"], "map": d["map"], "desc": ""}]):
+		var row = PanelContainer.new()
+		row.add_theme_stylebox_override("panel", _flat(Color(0, 0, 0, 0.35), ac.darkened(0.2), 2, 3, 10))
+		v.add_child(row)
+		var rv = _vbox(row, 4)
+		var an = _label(rv, ar["name"].to_upper(), 20, Color.WHITE)
+		if font_btn != null:
+			an.add_theme_font_override("font", font_btn)
+		if ar.get("desc", "") != "":
+			var ad = _label(rv, ar["desc"], 13, C_DIM)
+			ad.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			ad.custom_minimum_size = Vector2(300 if compact else 380, 0)
+		var bb = _cbtn(rv, "BATALHAR AQUI", C_GOLD, _choose_planet.bind(id, ar["map"]))
+		_primary(bb)
+		bb.custom_minimum_size = Vector2(0, 46)
+	panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER_RIGHT, Control.PRESET_MODE_MINSIZE, 40)
+	panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	panel.grow_vertical = Control.GROW_DIRECTION_BOTH
+	var back = _cbtn(ui, "◀  Planetas", C_HUD, _back_to_select)
+	_place(back, Control.PRESET_BOTTOM_LEFT, 22)
+	await _ui_fade(1.0, 0.4)
+
+
+func _back_to_select() -> void:
+	if stage != "planet_info":
+		return
+	sfx.play("clique", -8.0)
+	await _ui_fade(0.0, 0.25)
+	_show_select()
 
 
 func _back_title() -> void:
@@ -967,9 +1055,9 @@ func _update_tags() -> void:
 			continue
 		tg.visible = true
 		var r = galaxy.screen_radius(id)
-		var pos = sp + Vector2(r * 1.5 + 18.0, -tg.size.y * 0.5)
-		if pos.x + tg.size.x > vp.x - 12.0:
-			pos.x = sp.x - r * 1.5 - 18.0 - tg.size.x
+		# nome logo abaixo do planeta, centralizado
+		var pos = sp + Vector2(-tg.size.x * 0.5, r * 1.15 + 12.0)
+		pos.x = clamp(pos.x, 12.0, vp.x - tg.size.x - 12.0)
 		pos.y = clamp(pos.y, 90.0, vp.y - tg.size.y - 80.0)
 		# não deixa uma etiqueta cobrir a outra
 		for other in placed:
@@ -980,12 +1068,12 @@ func _update_tags() -> void:
 		tg.position = tg.position.lerp(pos, 0.35) if tg.position.x > -900.0 else pos
 
 
-func _choose_planet(id: String) -> void:
-	if stage != "select":
+func _choose_planet(id: String, map_id: String = "") -> void:
+	if stage != "select" and stage != "planet_info":
 		return
 	stage = "to_army"
 	planet_id = id
-	setup_cfg["map"] = galaxy.data(id)["map"]
+	setup_cfg["map"] = map_id if map_id != "" else galaxy.data(id)["map"]
 	sfx.play("confirmar", -6.0)
 	sfx.play("vfx_portal", -12.0)
 	_ui_fade(0.0, 0.35)

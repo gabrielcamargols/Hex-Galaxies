@@ -10,11 +10,13 @@ const PLANETS = [
 	{"id": "valak", "map": "posto", "name": "Valak", "sub": "Mina de cristais dos Terramorfos",
 		"desc": "Caverna de cristais numa mina abandonada pelos Terramorfos. O labirinto muda a cada partida e algo vive no buraco do centro.",
 		"r": 21.0, "size": 2.3, "speed": 0.055, "a0": 0.9, "tex": "valak",
-		"atm": Color(0.45, 0.8, 1.0, 0.9), "dive": Color("#2aa6c8"), "pick": true, "moon": true},
+		"atm": Color(0.45, 0.8, 1.0, 0.9), "dive": Color("#2aa6c8"), "pick": true, "moon": true,
+		"arenas": [{"name": "Mina de Cristais", "map": "posto", "desc": "Labirinto de cristais, carrinhos nos trilhos e a Garra no fosso do centro."}]},
 	{"id": "tarhut", "map": "tarhut", "name": "Tarhut", "sub": "O planeta dos 5 sóis",
 		"desc": "Deserto de dunas que mudam a cada 3 rounds. Vermes gigantes abrem buracos.",
 		"r": 37.0, "size": 3.0, "speed": 0.034, "a0": 2.3, "tex": "tarhut",
-		"atm": Color(1.0, 0.78, 0.45, 0.9), "dive": Color("#e0b070"), "pick": true, "suns": 5},
+		"atm": Color(1.0, 0.78, 0.45, 0.9), "dive": Color("#e0b070"), "pick": true, "suns": 5,
+		"arenas": [{"name": "Mar de Dunas", "map": "tarhut", "desc": "Dunas que mudam a cada 3 rounds, vermes gigantes e escaravelhos verdes."}]},
 	{"id": "gigante", "r": 56.0, "size": 5.4, "speed": 0.017, "a0": 4.6, "tex": "gigante", "atm": Color(0.7, 0.5, 1.0, 0.7), "ring": true},
 ]
 
