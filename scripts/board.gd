@@ -3069,13 +3069,26 @@ func _bridge(root: Node3D, h: Vector2i) -> void:
 		if sc > best:
 			best = sc
 			axis = ax
+	# ilha de ponte cercada de água: o tabuleiro cruza as casas de água vizinhas até a margem, 2 casas adiante
+	var span = 1.0
+	if best <= 0.0:
+		var fbest = -999.0
+		for i in range(3):
+			var a2 = h + DB.DIRS[i] * 2
+			var b2 = h + DB.DIRS[i + 3] * 2
+			var ax2 = (world_xz(a2) - world_xz(b2)).normalized()
+			var sc2 = float(_bank_score(a2) + _bank_score(b2)) - abs(ax2.dot(fl)) * 0.5
+			if sc2 > fbest:
+				fbest = sc2
+				axis = ax2
+		span = 2.0
 	var br = Node3D.new()
 	br.rotation = Vector3(0, atan2(axis.x, axis.y), 0)
 	br.scale = Vector3(HX, 1, HX)
 	root.add_child(br)
-	var L = S3 * TILE * 1.16     # de borda a borda da casa e um pouco sobre as margens
+	var L = S3 * TILE * (span + 0.16)     # de borda a borda e um pouco sobre as margens
 	var W = 1.5
-	var n = 9
+	var n = int(round(9.0 * L / (S3 * TILE * 1.16)))
 	var pw = L / n
 	for i in range(n):
 		var c = Color("#c9824a").lerp(Color("#a8622e"), _rnd(h, i))
@@ -3083,8 +3096,10 @@ func _bridge(root: Node3D, h: Vector2i) -> void:
 	for sx in [-1.0, 1.0]:
 		_mesh(br, _box(Vector3(0.12, 0.1, L)), Color("#7a4a26"), Vector3(sx * W * 0.5, -0.04, 0))
 		_mesh(br, _box(Vector3(0.07, 0.07, L)), Color("#8c5a2c"), Vector3(sx * W * 0.5, 0.36, 0))
-		for sz in [-0.5, 0.0, 0.5]:
-			_mesh(br, _box(Vector3(0.09, 0.4, 0.09)), Color("#7a4a26"), Vector3(sx * W * 0.5, 0.17, sz * L * 0.92))
+		var np = int(L / 1.1) + 1
+		for pi in range(np):
+			var sz = (float(pi) / float(np - 1) - 0.5) * 0.92 if np > 1 else 0.0
+			_mesh(br, _box(Vector3(0.09, 0.4, 0.09)), Color("#7a4a26"), Vector3(sx * W * 0.5, 0.17, sz * L))
 
 
 func _arrow(root: Node3D, dir: Vector2, col: Color, y: float, s: float = 1.0) -> void:
