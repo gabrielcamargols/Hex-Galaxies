@@ -439,7 +439,8 @@ def goraida(dst):
 
 if __name__ == "__main__":
     out = sys.argv[1] if len(sys.argv) > 1 else "sounds"
-    which = sys.argv[2].split(",") if len(sys.argv) > 2 else ["abnara", "goraida"]
+    # Gor'Aida agora é a música ritual acústica: tools/musica_goraida_ritual.py (esta versão sintetizada fica de registro)
+    which = sys.argv[2].split(",") if len(sys.argv) > 2 else ["abnara"]
     if "abnara" in which:
         print("abnara", round(abnara(os.path.join(out, "musica_abnara.ogg")), 1), "s")
     if "goraida" in which:
