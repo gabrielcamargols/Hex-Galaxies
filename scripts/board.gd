@@ -1618,6 +1618,39 @@ func _make_unit(u) -> void:
 
 
 # personagem: a arte num cartão que encara a câmera, com as cores originais e sombra no chão
+# coluna de luz hexagonal sobre a casa do personagem selecionado (aditiva, some no alto)
+var beam_tex: GradientTexture2D = null
+
+
+func _sel_beam(fc: Color) -> MeshInstance3D:
+	if beam_tex == null:
+		beam_tex = GradientTexture2D.new()
+		var gr = Gradient.new()
+		gr.set_color(0, Color(1, 1, 1, 1))
+		gr.set_color(1, Color(1, 1, 1, 0))
+		beam_tex.gradient = gr
+		beam_tex.fill_from = Vector2(0, 1)
+		beam_tex.fill_to = Vector2(0, 0)
+		beam_tex.width = 4
+		beam_tex.height = 64
+	var b = MeshInstance3D.new()
+	var bm = _cyl(INNER * 0.9, INNER * 0.9, 2.6, 6)
+	bm.cap_top = false
+	bm.cap_bottom = false
+	b.mesh = bm
+	var m = StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	m.cull_mode = BaseMaterial3D.CULL_DISABLED
+	m.albedo_texture = beam_tex
+	m.albedo_color = Color(fc.r, fc.g, fc.b, 0.3)
+	b.material_override = m
+	b.position = Vector3(0, 1.3, 0)
+	b.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	return b
+
+
 func _figure(cid: String, body_h: float) -> MeshInstance3D:
 	var tex: Texture2D = DB.art[cid]
 	var mi = MeshInstance3D.new()
@@ -1638,6 +1671,20 @@ func _figure(cid: String, body_h: float) -> MeshInstance3D:
 	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	mi.material_override = m
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	# contorno de seleção (escondido até o personagem ser escolhido)
+	if ResourceLoader.exists("res://shaders/contorno_sel.gdshader"):
+		var ol = MeshInstance3D.new()
+		ol.name = "contorno"
+		ol.mesh = q
+		var om = ShaderMaterial.new()
+		om.shader = load("res://shaders/contorno_sel.gdshader")
+		om.set_shader_parameter("tex", tex)
+		om.set_shader_parameter("center_y", body_h * 0.5)
+		om.set_shader_parameter("px", 0.03 / max(asp, 0.4))
+		ol.material_override = om
+		ol.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		ol.visible = false
+		mi.add_child(ol)
 	return mi
 
 
@@ -1648,6 +1695,9 @@ func _figure_look(fig: MeshInstance3D, flip: bool, mod: Color) -> void:
 		m.uv1_scale = Vector3(sx, 1, 1)
 		m.uv1_offset = Vector3(1.0 if flip else 0.0, 0, 0)
 	m.albedo_color = mod
+	var ol = fig.get_node_or_null("contorno")
+	if ol != null:
+		ol.material_override.set_shader_parameter("flip", 1.0 if flip else 0.0)
 
 
 # caminho casa a casa só pelo terreno (para a animação)
@@ -1822,7 +1872,28 @@ func _update_units(delta: float) -> void:
 				d["lunge"] = max(0.0, d["lunge"] - delta * 3.0)
 				sy *= 1.0 + 0.15 * sin(d["lunge"] * PI)
 			sprite.scale = Vector3(1.0, sy, 1.0)
-		d["ring"].material_override.albedo_color = Color("#ffffff") if selected else d["ring"].get_meta("fcol", Color.WHITE)
+		var fc: Color = d["ring"].get_meta("fcol", Color.WHITE)
+		var pul = 0.5 + 0.5 * sin(t_now * 5.0)
+		# selecionado: base acende e pulsa, contorno da arte na cor da facção, coluna de luz
+		d["ring"].material_override.albedo_color = fc.lightened(0.25 + 0.3 * pul) if selected else fc
+		d["ring"].scale = Vector3.ONE * (1.0 + (0.04 * pul if selected else 0.0))
+		if d["sprite"] != null:
+			var olc = d["sprite"].get_node_or_null("contorno")
+			if olc != null:
+				if olc.visible != selected:
+					olc.visible = selected
+				if selected:
+					olc.material_override.set_shader_parameter("col", fc.lerp(Color.WHITE, 0.25 * pul))
+		var beam = d.get("beam", null)
+		if selected and beam == null:
+			beam = _sel_beam(fc)
+			d["node"].add_child(beam)
+			d["beam"] = beam
+		if beam != null:
+			beam.visible = selected
+			if selected:
+				beam.material_override.albedo_color = Color(fc.r, fc.g, fc.b, 0.22 + 0.16 * pul)
+				beam.rotation.y += delta * 0.8
 		# etiqueta de dano previsto / motivo
 		var tg = state.get("tags", {}).get(u.uid, null)
 		if tg != null:
