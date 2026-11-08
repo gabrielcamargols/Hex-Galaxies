@@ -4217,7 +4217,7 @@ func _open_oficina(auto: bool, fac: String = "aby") -> void:
 	add_child(of)
 	if auto:
 		await get_tree().create_timer(0.8).timeout
-		await of.auto(2)
+		await of.auto(1, 2.0)
 		get_tree().quit()
 
 

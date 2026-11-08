@@ -558,7 +558,7 @@ func play_fx(id: String, at: Vector3, from: Variant = null, tint: Color = Color.
 	var r: Dictionary = receitas[id]
 	var hit_t = 0.0
 	if r.has("proj") and from != null:
-		hit_t = _fx_proj(r["proj"], from, at)
+		hit_t = _fx_proj2(r["proj"], from, at, tint) if r["proj"].has("parts") else _fx_proj(r["proj"], from, at)
 		if r.has("hit"):
 			_fx_after(hit_t, func(): play_fx(str(r["hit"]), at, from, tint))
 		return hit_t
@@ -568,6 +568,8 @@ func play_fx(id: String, at: Vector3, from: Variant = null, tint: Color = Color.
 			_fx_after(dl, play_fx.bind(str(L["sub"]), at, from, tint))
 		elif L.has("drops"):
 			_fx_after(dl, _fx_drops.bind(L, at, from))
+		elif L.has("p"):
+			_fx_after(dl, _fx_part.bind(L, at, from, tint))
 		else:
 			_fx_after(dl, _fx_layer.bind(L, at, from, tint))
 	if r.has("shake") and board != null:
@@ -689,4 +691,196 @@ func _fx_proj(P: Dictionary, from: Vector3, to: Vector3) -> float:
 			_fx_drops({"drops": trail, "count": 1, "speed": [0.2, 0.6], "up": [0.2, 0.8], "push": 0.0, "y": 0.0,
 				"size": [size * 0.22, size * 0.32], "life": [0.3, 0.45], "away": false}, p - Vector3(0, 0.0, 0), null), 0.0, 1.0, t)
 	tw.tween_callback(mi.queue_free)
+	return t
+
+
+# ---------------------------------------------------------------------
+# PARTÍCULAS DA FORJA (estilo "Hits & Impacts" em tempo real)
+# camada: {"p": textura em vfx/tex, "blend": add|mix|chao, "mode": bill|vel|chao, "amount", "life",
+#  "speed":[a,b], "spread", "dir":[x,y,z]|"away"|"up", "grav", "damp":[a,b], "size":m|[w,h], "scale":[a,b],
+#  "curve":[[t,v],...], "ramp":[cores borda->miolo], "alpha":[[t,a],...], "boost", "erode", "halftone",
+#  "dot", "stretch", "angle":[a,b], "spin":[a,b], "radius", "y", "aim", "tint"}
+# ---------------------------------------------------------------------
+var _ramp_cache: Dictionary = {}
+var _part_shaders: Dictionary = {}
+
+
+func _ramp_tex(cols: Array) -> GradientTexture1D:
+	var key = ",".join(cols)
+	if _ramp_cache.has(key):
+		return _ramp_cache[key]
+	var g = Gradient.new()
+	var offs = PackedFloat32Array()
+	var cc = PackedColorArray()
+	for i in range(cols.size()):
+		offs.append(float(i) / max(1.0, cols.size() - 1.0))
+		cc.append(Color(str(cols[i])))
+	g.offsets = offs
+	g.colors = cc
+	var t = GradientTexture1D.new()
+	t.gradient = g
+	t.width = 128
+	_ramp_cache[key] = t
+	return t
+
+
+func _curve(pts: Array) -> Curve:
+	var c = Curve.new()
+	c.max_value = 4.0
+	for p in pts:
+		c.add_point(Vector2(float(p[0]), float(p[1])))
+	return c
+
+
+func _part_shader(blend: String) -> Shader:
+	if not _part_shaders.has(blend):
+		_part_shaders[blend] = load("res://shaders/vfx_part_%s.gdshader" % blend)
+	return _part_shaders[blend]
+
+
+func _fx_part_node(L: Dictionary, tint: Color) -> CPUParticles3D:
+	var path = "res://vfx/tex/%s.png" % str(L["p"])
+	if not ResourceLoader.exists(path):
+		return null
+	var mode = {"bill": 0, "vel": 1, "chao": 2}.get(str(L.get("mode", "bill")), 0)
+	var blend = str(L.get("blend", "add"))
+	if mode == 2:
+		blend = "chao"
+	var cp = CPUParticles3D.new()
+	var q = QuadMesh.new()
+	var sz = L.get("size", 1.0)
+	q.size = Vector2(float(sz[0]), float(sz[1])) if typeof(sz) == TYPE_ARRAY else Vector2(float(sz), float(sz))
+	if mode == 2:
+		q.orientation = PlaneMesh.FACE_Y
+	cp.mesh = q
+	var m = ShaderMaterial.new()
+	m.shader = _part_shader(blend)
+	m.render_priority = 22 if blend == "add" else (21 if blend == "mix" else 3)
+	m.set_shader_parameter("tex", load(path))
+	m.set_shader_parameter("ramp", _ramp_tex(L.get("ramp", ["#ffffff", "#ffffff"])))
+	m.set_shader_parameter("mode", mode)
+	m.set_shader_parameter("boost", float(L.get("boost", 1.0)))
+	m.set_shader_parameter("erode", float(L.get("erode", 0.0)))
+	m.set_shader_parameter("erode_pow", float(L.get("erode_pow", 1.5)))
+	m.set_shader_parameter("soft", float(L.get("soft", 0.12)))
+	m.set_shader_parameter("halftone", float(L.get("halftone", 0.0)))
+	m.set_shader_parameter("dot_px", float(L.get("dot", 7.0)))
+	m.set_shader_parameter("stretch", float(L.get("stretch", 1.0)))
+	cp.material_override = m
+	cp.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	cp.amount = max(1, int(L.get("amount", 1)))
+	cp.lifetime = max(0.05, _rnd(L.get("life", 0.5), 0.5))
+	cp.lifetime_randomness = float(L.get("life_rand", 0.3))
+	cp.one_shot = true
+	cp.explosiveness = float(L.get("explosive", 1.0))
+	cp.local_coords = false
+	cp.speed_scale = float(L.get("speed_scale", 1.0))
+	var sp = L.get("speed", [0.0, 0.0])
+	cp.initial_velocity_min = float(sp[0]) if typeof(sp) == TYPE_ARRAY else float(sp)
+	cp.initial_velocity_max = float(sp[1]) if typeof(sp) == TYPE_ARRAY else float(sp)
+	cp.spread = float(L.get("spread", 180.0))
+	cp.flatness = float(L.get("flat", 0.0))
+	var dm = L.get("damp", [0.0, 0.0])
+	cp.damping_min = float(dm[0])
+	cp.damping_max = float(dm[1])
+	cp.gravity = Vector3(0, float(L.get("grav", 0.0)), 0)
+	var scl = L.get("scale", [1.0, 1.0])
+	cp.scale_amount_min = float(scl[0]) * cam_k
+	cp.scale_amount_max = float(scl[1]) * cam_k
+	if L.has("curve"):
+		cp.scale_amount_curve = _curve(L["curve"])
+	var ang = L.get("angle", [0.0, 360.0])
+	cp.angle_min = float(ang[0])
+	cp.angle_max = float(ang[1])
+	var spin = L.get("spin", [0.0, 0.0])
+	cp.angular_velocity_min = float(spin[0])
+	cp.angular_velocity_max = float(spin[1])
+	if mode == 1:
+		cp.particle_flag_align_y = true
+	if mode == 2:
+		cp.particle_flag_rotate_y = true
+	if float(L.get("radius", 0.0)) > 0.0:
+		cp.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
+		cp.emission_sphere_radius = float(L["radius"]) * cam_k
+	# cor e alfa ao longo da vida
+	var g = Gradient.new()
+	var al = L.get("alpha", [[0.0, 1.0], [0.7, 1.0], [1.0, 0.0]])
+	var offs = PackedFloat32Array()
+	var cc = PackedColorArray()
+	var tc = tint * Color(str(L.get("tint", "#ffffff")))
+	for a in al:
+		offs.append(float(a[0]))
+		cc.append(Color(tc.r, tc.g, tc.b, float(a[1]) * tc.a))
+	g.offsets = offs
+	g.colors = cc
+	cp.color_ramp = g
+	return cp
+
+
+func _fx_part(L: Dictionary, at: Vector3, from: Variant, tint: Color) -> void:
+	var cp = _fx_part_node(L, tint)
+	if cp == null:
+		return
+	var pos = at + Vector3(0, _rnd(L.get("y", 0.9)), 0)
+	if str(L.get("mode", "")) == "chao":
+		pos.y = at.y + 0.05 + _rnd(L.get("y", 0.0))
+	var d = L.get("dir", [0, 1, 0])
+	var away = Vector3.ZERO
+	if from != null:
+		away = (at - from) * Vector3(1, 0, 1)
+		away = away.normalized() if away.length() > 0.01 else Vector3.ZERO
+	if typeof(d) == TYPE_STRING and d == "away":
+		cp.direction = (away + Vector3(0, float(L.get("lift", 0.4)), 0)).normalized() if away != Vector3.ZERO else Vector3.UP
+	else:
+		cp.direction = Vector3(float(d[0]), float(d[1]), float(d[2])).normalized()
+	if L.has("toward") and from != null:
+		pos -= away * float(L["toward"])
+	if bool(L.get("aim", false)) and from != null:
+		var a = rad_to_deg(_screen_angle(from, at))
+		cp.angle_min = a + float(L.get("aim_off", 0.0))
+		cp.angle_max = a + float(L.get("aim_off", 0.0))
+	cp.position = pos
+	add_child(cp)
+	cp.emitting = true
+	get_tree().create_timer(cp.lifetime * (1.0 + cp.lifetime_randomness) / max(0.01, cp.speed_scale) + 0.3).timeout.connect(cp.queue_free)
+
+
+# projétil em partículas: miolo brilhando + rastro emitindo enquanto voa
+func _fx_proj2(P: Dictionary, from: Vector3, to: Vector3, tint: Color) -> float:
+	var a = from + Vector3(0, float(P.get("y", 0.9)), 0)
+	var b = to + Vector3(0, float(P.get("y", 0.9)) * 0.8, 0)
+	var dist = a.distance_to(b)
+	var t = clamp(dist / float(P.get("speed", 12.0)), 0.15, 0.9)
+	var arc = float(P.get("arc", 0.6)) * clamp(dist / 6.0, 0.3, 1.5)
+	var holder = Node3D.new()
+	holder.position = a
+	add_child(holder)
+	var emitters: Array = []
+	for L in P["parts"]:
+		var cp = _fx_part_node(L, tint)
+		if cp == null:
+			continue
+		cp.one_shot = bool(L.get("one_shot", false))
+		cp.explosiveness = float(L.get("explosive", 0.0 if L.get("trail", false) else 1.0))
+		if bool(L.get("trail", false)):
+			cp.position = a
+			holder.get_parent().add_child(cp)     # no mundo: o rastro fica para trás
+		else:
+			cp.local_coords = true
+			holder.add_child(cp)
+		cp.emitting = true
+		emitters.append([cp, bool(L.get("trail", false))])
+	var tw = holder.create_tween()
+	tw.tween_method(func(u):
+		var p = a.lerp(b, u) + Vector3(0, sin(u * PI) * arc, 0)
+		holder.position = p
+		for e in emitters:
+			if e[1]:
+				e[0].position = p, 0.0, 1.0, t)
+	tw.tween_callback(func():
+		for e in emitters:
+			e[0].emitting = false
+			var life = e[0].lifetime + 0.4
+			get_tree().create_timer(life).timeout.connect(e[0].queue_free)
+		get_tree().create_timer(1.5).timeout.connect(holder.queue_free))
 	return t

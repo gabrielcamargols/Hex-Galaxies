@@ -281,13 +281,16 @@ func _fill_list() -> void:
 
 
 ## roteiro automático (revisão/gravação): toca cada receita da facção n vezes
-func auto(n: int = 2, pausa: float = 2.2) -> void:
+func auto(n: int = 2, pausa: float = 2.2, fundos: Array = [0, 1]) -> void:
 	var ids = []
 	for id in vfx.receitas.keys():
-		if str(id).begins_with(fac + "_"):
+		if str(id).begins_with(fac + "_") and not str(id).contains("_z_"):
 			ids.append(id)
 	ids.sort()
-	for id in ids:
-		for i in range(n):
-			tocar(id)
-			await get_tree().create_timer(pausa).timeout
+	for fi in fundos:
+		fundo_i = fi
+		_apply_fundo()
+		for id in ids:
+			for i in range(n):
+				tocar(id)
+				await get_tree().create_timer(pausa).timeout
