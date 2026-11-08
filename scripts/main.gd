@@ -44,7 +44,7 @@ const C_YOU = Color("#2fa8ff")      # seu lado
 const C_CPU = Color("#ff7a1a")      # lado da CPU
 const C_GOLD = Color("#FFD12E")     # títulos e destaque
 const C_END = Color("#F8FAFF")      # encerrar / passar
-const C_HUD = Color("#F438A9")      # molduras da HUD
+const C_HUD = Color("#3340b8")      # molduras da HUD
 const C_TXT = Color("#F8FAFF")      # texto principal
 const C_DIM = Color("#cbbdff")      # texto secundário
 var font_title: Font = null
@@ -3228,7 +3228,7 @@ func _refresh_side() -> void:
 
 
 # ================= cartas =================
-const TYPE_COL = {"Manobra": Color("#4cd964"), "Comando": Color("#4da3ff"), "Equipamento": Color("#ffab40"), "Reação": Color("#ff6ad5")}
+const TYPE_COL = {"Manobra": Color("#4cd964"), "Comando": Color("#4da3ff"), "Equipamento": Color("#ffab40"), "Reação": Color("#5fd6e8")}
 
 
 # o que a carta afeta: texto curto + casas para destacar no tabuleiro
