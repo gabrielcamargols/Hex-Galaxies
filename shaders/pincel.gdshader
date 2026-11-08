@@ -8,6 +8,8 @@ uniform vec3 c_mid : source_color = vec3(0.30, 0.50, 0.25);
 uniform vec3 c_light : source_color = vec3(0.55, 0.68, 0.32);
 uniform vec3 shadow_tint : source_color = vec3(0.30, 0.34, 0.62);
 uniform float seed = 0.0;
+uniform float edge = 1.0;     // 0 = borda lisa, 1 = bem esfarelada
+uniform float patch_scale = 4.5;
 
 varying vec3 wp;
 varying vec3 lp;
@@ -30,7 +32,7 @@ void vertex() {
 
 void fragment() {
 	// pinceladas: três ruídos em escalas diferentes escolhem o verde de cada mancha
-	vec3 q = lp * 4.5 + seed;
+	vec3 q = lp * patch_scale + seed;
 	float n1 = vnoise(q.xy + q.z * 0.7);
 	float n2 = vnoise(q.yz * 1.7 + vec2(seed, 3.1));
 	float patch = n1 * 0.6 + n2 * 0.4;
@@ -39,7 +41,7 @@ void fragment() {
 	// borda esfarelada: perto do contorno da silhueta o pincel "falha"
 	float rim = 1.0 - clamp(abs(dot(NORMAL, VIEW)), 0.0, 1.0);
 	float dab = vnoise(wp.xz * 5.0 + wp.y * 4.0 + seed * 3.0);
-	if (dab < rim * 1.05 - 0.42) {
+	if (dab < rim * 1.05 * edge - 0.42 * edge) {
 		discard;
 	}
 	ROUGHNESS = 1.0;

@@ -3144,6 +3144,22 @@ func _pincel_mat(i: int) -> ShaderMaterial:
 	return pincel_mats[k]
 
 
+# material pintado com paleta própria (raízes, plantas...)
+func _pincel_custom(key: String, dark: Color, mid: Color, light: Color, edge: float = 0.4, scale: float = 5.0) -> ShaderMaterial:
+	if not pincel_mats.has(key):
+		var m = ShaderMaterial.new()
+		m.shader = load("res://shaders/pincel.gdshader")
+		m.set_shader_parameter("seed", float(key.hash() % 97))
+		m.set_shader_parameter("c_dark", dark)
+		m.set_shader_parameter("c_mid", mid)
+		m.set_shader_parameter("c_light", light)
+		m.set_shader_parameter("edge", edge)
+		m.set_shader_parameter("patch_scale", scale)
+		m.set_shader_parameter("shadow_tint", _planet_shadow())
+		pincel_mats[key] = m
+	return pincel_mats[key]
+
+
 func _jungle_tree(root: Node3D, pos: Vector3, s: float, h: Vector2i, i: int) -> void:
 	# tronco e galhos escuros e finos, como no guache; copa em três manchas sobrepostas
 	_mesh(root, _cyl(0.05 * s, 0.1 * s, 0.7 * s, 6), Color("#2a1a1c"), pos + Vector3(0, 0.35 * s, 0))
@@ -3178,8 +3194,10 @@ func _wild_props(root: Node3D, h: Vector2i, k: String) -> bool:
 				cap.radius = 0.12
 				cap.height = 1.25
 				var a = TAU / 4.0 * i
-				_inked(_mesh(holder, cap, Color("#7a4e2a").lerp(Color("#5a3a1e"), _rnd(h, i)), Vector3(cos(a) * 0.22, 0.45, sin(a) * 0.22), Vector3(sin(a) * 0.75, 0, -cos(a) * 0.75)))
-			_inked(_mesh(holder, _sph(0.3, 0.42), Color("#6b4426"), Vector3(0, 0.95, 0)))
+				var rm = _mesh(holder, cap, Color.WHITE, Vector3(cos(a) * 0.22, 0.45, sin(a) * 0.22), Vector3(sin(a) * 0.75, 0, -cos(a) * 0.75))
+				rm.material_override = _pincel_custom("raiz", Color("#3a2430"), Color("#6a4a3e"), Color("#a07850"), 0.3, 7.0)
+			var rb = _mesh(holder, _sph(0.3, 0.42), Color.WHITE, Vector3(0, 0.95, 0))
+			rb.material_override = _pincel_custom("raiz", Color("#3a2430"), Color("#6a4a3e"), Color("#a07850"), 0.3, 7.0)
 			_mesh(holder, _sph(0.16, 0.12), Color("#4ea844"), Vector3(0.05, 1.18, 0.02))
 		"correnteza":
 			var fd: Variant = _flow_of(h)
@@ -3199,14 +3217,18 @@ func _wild_props(root: Node3D, h: Vector2i, k: String) -> bool:
 		"planta":
 			for i in range(4):
 				var a2 = TAU / 4.0 * i + _rnd(h, 1)
-				_mesh(root, _sph(0.26, 0.08), Color("#3c9a44"), Vector3(cos(a2) * 0.32, 0.04, sin(a2) * 0.32))
-			_inked(_mesh(root, _cyl(0.07, 0.1, 0.55, 6), Color("#3c8a3a"), Vector3(0, 0.28, 0)))
+				var lf = _mesh(root, _sph(0.26, 0.08), Color.WHITE, Vector3(cos(a2) * 0.32, 0.04, sin(a2) * 0.32))
+				lf.material_override = _pincel_custom("folha", Color("#1a4a3a"), Color("#2f7a44"), Color("#6aa84a"), 0.2, 6.0)
+			var st2 = _mesh(root, _cyl(0.07, 0.1, 0.55, 6), Color.WHITE, Vector3(0, 0.28, 0))
+			st2.material_override = _pincel_custom("folha", Color("#1a4a3a"), Color("#2f7a44"), Color("#6aa84a"), 0.2, 6.0)
 			var head = Node3D.new()
 			head.position = Vector3(0, 0.72, 0)
 			head.rotation = Vector3(0, _rnd(h, 6) * TAU, 0)
 			root.add_child(head)
-			_inked(_mesh(head, _sph(0.34, 0.34), Color("#f438a9"), Vector3(0, 0.1, 0), Vector3(0.0, 0, 0.35)))
-			_inked(_mesh(head, _sph(0.34, 0.3), Color("#c21f86"), Vector3(0, -0.12, 0), Vector3(0.0, 0, -0.3)))
+			var hm1 = _mesh(head, _sph(0.34, 0.34), Color.WHITE, Vector3(0, 0.1, 0), Vector3(0.0, 0, 0.35))
+			var hm2 = _mesh(head, _sph(0.34, 0.3), Color.WHITE, Vector3(0, -0.12, 0), Vector3(0.0, 0, -0.3))
+			for hm in [hm1, hm2]:
+				hm.material_override = _pincel_custom("petala", Color("#6a1660"), Color("#c02a98"), Color("#ff6ad0"), 0.25, 6.0)
 			for i in range(5):
 				var tx = -0.22 + i * 0.11
 				_mesh(head, _cyl(0.0, 0.035, 0.12, 4), Color("#fff6e0"), Vector3(0.24, -0.02, tx), Vector3(0, 0, PI))
