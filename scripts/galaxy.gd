@@ -136,13 +136,13 @@ func _make_planet(p: Dictionary) -> void:
 	# linha da órbita
 	var ring = MeshInstance3D.new()
 	var tm = TorusMesh.new()
-	var th = 0.07 if pick else 0.04
+	var th = 0.13 if pick else 0.04
 	tm.inner_radius = p["r"] - th
 	tm.outer_radius = p["r"] + th
 	tm.rings = 160
 	tm.ring_segments = 4
 	ring.mesh = tm
-	ring.material_override = _unshaded(Color(1.0, 0.88, 0.3, 0.28))
+	ring.material_override = _unshaded(Color(0.78, 0.82, 1.0, 0.5))
 	ring.visible = pick
 	add_child(ring)
 	var body = MeshInstance3D.new()
@@ -354,8 +354,8 @@ func _cam_goal() -> Array:
 			var yaw = clock * 0.025 + 0.6
 			return [Vector3(sin(yaw) * 96.0, 34.0, cos(yaw) * 96.0), Vector3(0, -15, 0), 0.0]
 		"select":
-			# mais perto: os planetas jogáveis ocupam boa parte da tela
-			return [Vector3(0, 50, 44), Vector3(0, 0, 4), 0.0]
+			# bem longe: sistema inteiro e as órbitas à vista
+			return [Vector3(0, 98, 78), Vector3(0, 0, 2), 0.0]
 		"focus", "dive":
 			var pp = planet_pos(focus_id)
 			var r = planet_size(focus_id)

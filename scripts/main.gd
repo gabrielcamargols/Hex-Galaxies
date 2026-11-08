@@ -405,6 +405,16 @@ func _style_btn(b: Button, col: Color, active: bool = false) -> void:
 	b.add_theme_constant_override("outline_size", 6)
 
 
+# botão neutro do menu: azul-noite com contorno claro; o dourado fica só para a ação principal
+func _menu_btn(b: Button) -> void:
+	var base = Color("#262c86")
+	b.add_theme_stylebox_override("normal", _tex_box("res://ui/btn.png", 14, base, 16, 9))
+	b.add_theme_stylebox_override("hover", _tex_box("res://ui/btn_on.png", 14, base.lightened(0.25), 16, 9))
+	b.add_theme_stylebox_override("pressed", _tex_box("res://ui/btn_on.png", 14, base.lightened(0.1), 16, 9))
+	b.add_theme_color_override("font_color", C_TXT)
+	b.add_theme_color_override("font_hover_color", Color.WHITE)
+
+
 func _cbtn(parent: Control, text: String, col: Color, cb: Callable, active: bool = false) -> Button:
 	var b = Button.new()
 	b.text = text
@@ -577,7 +587,7 @@ func _show_menu() -> void:
 	col.add_theme_constant_override("separation", 6)
 	ui.add_child(col)
 	col.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	col.offset_top = get_viewport().get_visible_rect().size.y * 0.16
+	col.offset_top = get_viewport().get_visible_rect().size.y * 0.05
 	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	# raios de HQ atrás do logo (mesma linguagem da tela do exército), bem suaves
 	if ResourceLoader.exists("res://ui/rays.png"):
@@ -586,7 +596,7 @@ func _show_menu() -> void:
 		mr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		mr.stretch_mode = TextureRect.STRETCH_SCALE
 		mr.set_anchors_preset(Control.PRESET_FULL_RECT)
-		mr.modulate = Color(1, 1, 1, 0.55)
+		mr.modulate = Color(0.75, 0.78, 1, 0.3)
 		mr.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		ui.add_child(mr)
 	var vlab = _label(ui, _version_text(), 13, C_TXT)
@@ -601,11 +611,11 @@ func _show_menu() -> void:
 	var k = _label(col, "U M A   G A L Á X I A   E M   G U E R R A", 14, C_TXT)
 	k.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	if ResourceLoader.exists("res://ui/logo.png"):
-		var lg = _tex_rect(load("res://ui/logo.png"), Vector2(0, 170 if compact else 250))
+		var lg = _tex_rect(load("res://ui/logo.png"), Vector2(0, 250 if compact else 380))
 		lg.size_flags_horizontal = Control.SIZE_FILL
 		col.add_child(lg)
 		var tw = lg.create_tween().set_loops()
-		lg.pivot_offset = Vector2(get_viewport().get_visible_rect().size.x / 2.0, 125)
+		lg.pivot_offset = Vector2(get_viewport().get_visible_rect().size.x / 2.0, 190)
 		tw.tween_property(lg, "scale", Vector2(1.03, 1.03), 0.9).set_trans(Tween.TRANS_SINE)
 		tw.tween_property(lg, "scale", Vector2(1.0, 1.0), 0.9).set_trans(Tween.TRANS_SINE)
 	else:
@@ -630,6 +640,7 @@ func _show_menu() -> void:
 	var rb = _cbtn(row2, "COMO JOGAR", C_ABIL, _rules_popup)
 	var cfgb = _cbtn(row2, "CONFIGURAÇÕES", C_HUD, _settings_panel)
 	for mb in [tb, rb, cfgb]:
+		_menu_btn(mb)
 		mb.custom_minimum_size = Vector2(196, 52)
 		mb.add_theme_font_size_override("font_size", 17)
 	_ui_fade(1.0, 0.9)
@@ -925,7 +936,7 @@ func _show_select() -> void:
 	_vignette()
 	# título em faixa de HQ inclinada
 	var tb = PanelContainer.new()
-	tb.add_theme_stylebox_override("panel", _hq_box(C_SPACE, C_GOLD, 8))
+	tb.add_theme_stylebox_override("panel", _hq_box(C_SPACE, Color("#262c86"), 8))
 	tb.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ui.add_child(tb)
 	var tl = _label(tb, "ESCOLHA O PLANETA", 30 if compact else 38, C_GOLD)
@@ -935,6 +946,7 @@ func _show_select() -> void:
 	tl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_place(tb, Control.PRESET_CENTER_TOP, 22)
 	var back = _cbtn(ui, "◀  Voltar", C_HUD, _back_title)
+	_menu_btn(back)
 	_place(back, Control.PRESET_BOTTOM_LEFT, 22)
 	# em cada planeta, só o nome (o modelo 3D mostra o resto); a descrição aparece ao tocar
 	w["tags"] = {}
@@ -942,16 +954,22 @@ func _show_select() -> void:
 		var d = galaxy.data(id)
 		var tag = Button.new()
 		tag.text = d["name"].to_upper()
-		tag.add_theme_font_size_override("font_size", 30 if compact else 38)
+		tag.add_theme_font_size_override("font_size", 17 if compact else 20)
 		if font_title != null:
 			tag.add_theme_font_override("font", font_title)
 		var ac: Color = d["atm"]
 		for st in ["normal", "hover", "pressed", "focus"]:
-			tag.add_theme_stylebox_override(st, _hq_box(C_SPACE.darkened(0.25) if st != "hover" else C_SPACE.lightened(0.12), Color(ac.r, ac.g, ac.b, 1.0), 7))
-		tag.add_theme_color_override("font_color", Color(ac.r, ac.g, ac.b).lightened(0.35))
+			tag.add_theme_stylebox_override(st, _hq_box(C_SPACE.darkened(0.25) if st != "hover" else C_SPACE.lightened(0.12), Color("#262c86"), 4))
+		for st in ["normal", "hover", "pressed", "focus"]:
+			var sbx = tag.get_theme_stylebox(st) as StyleBoxFlat
+			sbx.set_content_margin_all(5)
+			sbx.content_margin_left = 16
+			sbx.content_margin_right = 16
+			sbx.set_border_width_all(3)
+		tag.add_theme_color_override("font_color", C_TXT)
 		tag.add_theme_color_override("font_hover_color", Color.WHITE)
 		tag.add_theme_color_override("font_outline_color", Color("#0a0410"))
-		tag.add_theme_constant_override("outline_size", 10)
+		tag.add_theme_constant_override("outline_size", 4)
 		tag.pressed.connect(_planet_info.bind(id))
 		ui.add_child(tag)
 		tag.position = Vector2(-1000, -1000)
