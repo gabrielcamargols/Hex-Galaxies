@@ -6684,5 +6684,2909 @@
     "y": 0.0
    }
   ]
+ },
+ "aby_oncus_chifre": {
+  "nome": "ONCUS · Chifre de Narval (ataque)",
+  "personagem": "oncus",
+  "hit": "aby_oncus_impacto",
+  "proj": {
+   "speed": 30,
+   "arc": 0.0,
+   "y": 1.0,
+   "arpao": {
+    "tex": "chifre",
+    "len": 2.0,
+    "width": 0.72,
+    "tile": 2.0,
+    "blend_top": "mix",
+    "ramp": [
+     "#12061c",
+     "#301342",
+     "#a957ec",
+     "#e9f6ff"
+    ],
+    "boost": 1.0,
+    "halftone": 0.0,
+    "sombra": 1.4,
+    "nucleo": false
+   },
+   "parts": [
+    {
+     "p": "faisca",
+     "blend": "mix",
+     "mode": "vel",
+     "trail": true,
+     "amount": 14,
+     "size": [
+      0.08,
+      0.6
+     ],
+     "speed": [
+      1,
+      3
+     ],
+     "spread": 25,
+     "life": 0.22,
+     "ramp": [
+      "#a957ec",
+      "#c77dff",
+      "#f0e6ff"
+     ],
+     "alpha": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       0
+      ]
+     ],
+     "curve": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       0
+      ]
+     ]
+    },
+    {
+     "p": "fumaca",
+     "blend": "mix",
+     "trail": true,
+     "amount": 12,
+     "size": 0.5,
+     "speed": [
+      0.1,
+      0.5
+     ],
+     "spin": [
+      -90,
+      90
+     ],
+     "life": 0.35,
+     "curve": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       0.3
+      ]
+     ],
+     "erode": 1.0,
+     "halftone": 0.8,
+     "ramp": [
+      "#12061c",
+      "#301342",
+      "#a957ec"
+     ],
+     "alpha": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       1
+      ]
+     ]
+    }
+   ]
+  }
+ },
+ "aby_oncus_impacto": {
+  "nome": "ONCUS · Impacto de espinhos (acerto)",
+  "layers": [
+   {
+    "luz": "#c77dff",
+    "energia": 4.0,
+    "alcance": 4.0,
+    "dur": 0.3,
+    "y": 1.0
+   },
+   {
+    "p": "racha",
+    "mode": "chao",
+    "amount": 1,
+    "size": 2.6,
+    "life": 1.7,
+    "life_rand": 0,
+    "y": 0.0,
+    "angle": [
+     0,
+     360
+    ],
+    "curve": [
+     [
+      0,
+      0.5
+     ],
+     [
+      0.08,
+      1.0
+     ],
+     [
+      1,
+      1.0
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 3.0,
+    "soft": 0.08,
+    "ramp": [
+     "#12061c",
+     "#301342",
+     "#a957ec",
+     "#c77dff"
+    ],
+    "boost": 1.1,
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   {
+    "p": "estrela",
+    "amount": 1,
+    "size": 2.1,
+    "life": 0.24,
+    "angle": [
+     -20,
+     20
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.18,
+      1.25
+     ],
+     [
+      1,
+      0.25
+     ]
+    ],
+    "ramp": [
+     "#a957ec",
+     "#e9f6ff",
+     "#ffffff"
+    ],
+    "boost": 1.6,
+    "nucleo": true
+   },
+   {
+    "p": "brilho",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.2,
+    "life": 0.28,
+    "life_rand": 0,
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      0.2,
+      1.0
+     ],
+     [
+      1,
+      0.8
+     ]
+    ],
+    "ramp": [
+     "#a957ec",
+     "#c77dff",
+     "#e9f6ff"
+    ],
+    "halftone": 1.0,
+    "dot": 6,
+    "erode": 1.0,
+    "erode_pow": 1.2,
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 0.9,
+    "nucleo": true
+   },
+   {
+    "p": "anel",
+    "mode": "chao",
+    "amount": 1,
+    "size": 2.8,
+    "life": 0.45,
+    "life_rand": 0,
+    "y": 0.0,
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      1,
+      1.9
+     ]
+    ],
+    "erode": 1.0,
+    "halftone": 1.0,
+    "dot": 8,
+    "ramp": [
+     "#301342",
+     "#a957ec",
+     "#c77dff"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   {
+    "p": "espeto",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 12,
+    "size": [
+     0.5,
+     1.2
+    ],
+    "speed": [
+     7,
+     13
+    ],
+    "spread": 180,
+    "grav": -10,
+    "damp": [
+     3,
+     6
+    ],
+    "life": 0.5,
+    "curve": [
+     [
+      0,
+      1.1
+     ],
+     [
+      1,
+      0.5
+     ]
+    ],
+    "ramp": [
+     "#12061c",
+     "#301342",
+     "#a957ec",
+     "#e9f6ff"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.8,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.8
+   },
+   {
+    "p": "estilhaco",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 8,
+    "size": [
+     0.22,
+     0.6
+    ],
+    "speed": [
+     6,
+     11
+    ],
+    "spread": 180,
+    "grav": -14,
+    "damp": [
+     3,
+     5
+    ],
+    "life": 0.45,
+    "curve": [
+     [
+      0,
+      1.2
+     ],
+     [
+      1,
+      0.5
+     ]
+    ],
+    "erode": 0.9,
+    "ramp": [
+     "#12061c",
+     "#301342"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 0.8
+   },
+   {
+    "p": "faisca",
+    "mode": "vel",
+    "amount": 20,
+    "size": [
+     0.1,
+     1.0
+    ],
+    "speed": [
+     7,
+     13
+    ],
+    "spread": 180,
+    "grav": -12,
+    "damp": [
+     5,
+     9
+    ],
+    "life": 0.34,
+    "curve": [
+     [
+      0,
+      1.3
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#a957ec",
+     "#c77dff",
+     "#ffffff"
+    ],
+    "boost": 1.7,
+    "y": 0.8
+   },
+   {
+    "p": "fumaca",
+    "blend": "mix",
+    "amount": 6,
+    "size": 1.1,
+    "speed": [
+     0.5,
+     1.6
+    ],
+    "dir": [
+     0,
+     1,
+     0
+    ],
+    "spread": 40,
+    "life": 0.8,
+    "spin": [
+     -40,
+     40
+    ],
+    "curve": [
+     [
+      0,
+      0.5
+     ],
+     [
+      1,
+      1.3
+     ]
+    ],
+    "erode": 1.0,
+    "halftone": 0.8,
+    "ramp": [
+     "#12061c",
+     "#301342",
+     "#a957ec"
+    ],
+    "alpha": [
+     [
+      0,
+      0.9
+     ],
+     [
+      1,
+      0.9
+     ]
+    ],
+    "y": 0.3
+   }
+  ],
+  "shake": 0.3
+ },
+ "aby_oncus_caos": {
+  "nome": "ONCUS · Caos de Espinhos (após atacar: dano ao redor)",
+  "personagem": "oncus",
+  "alvo": "self",
+  "layers": [
+   {
+    "luz": "#c77dff",
+    "energia": 3.5,
+    "alcance": 4.0,
+    "dur": 0.3,
+    "y": 0.6
+   },
+   {
+    "p": "anel",
+    "mode": "chao",
+    "amount": 1,
+    "size": 2.8,
+    "life": 0.5,
+    "life_rand": 0,
+    "y": 0.0,
+    "curve": [
+     [
+      0,
+      0.4
+     ],
+     [
+      1,
+      2.4
+     ]
+    ],
+    "erode": 1.0,
+    "halftone": 1.0,
+    "dot": 8,
+    "ramp": [
+     "#301342",
+     "#a957ec",
+     "#c77dff"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   {
+    "p": "racha",
+    "mode": "chao",
+    "amount": 1,
+    "size": 3.4,
+    "life": 1.5,
+    "life_rand": 0,
+    "y": 0.0,
+    "angle": [
+     0,
+     360
+    ],
+    "curve": [
+     [
+      0,
+      0.5
+     ],
+     [
+      0.1,
+      1.0
+     ],
+     [
+      1,
+      1.0
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 3.0,
+    "soft": 0.08,
+    "ramp": [
+     "#12061c",
+     "#301342",
+     "#a957ec"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   {
+    "p": "espeto",
+    "blend": "mix",
+    "mode": "vel",
+    "ring": 0.35,
+    "amount": 14,
+    "explosive": 1.0,
+    "one_shot": true,
+    "dir": [
+     0,
+     1,
+     0
+    ],
+    "spread": 0,
+    "speed": [
+     0,
+     0
+    ],
+    "radial": [
+     26,
+     34
+    ],
+    "damp": [
+     0,
+     0
+    ],
+    "life": 0.42,
+    "size": [
+     0.9,
+     1.4
+    ],
+    "curve": [
+     [
+      0,
+      0.9
+     ],
+     [
+      1,
+      0.7
+     ]
+    ],
+    "ramp": [
+     "#12061c",
+     "#301342",
+     "#a957ec",
+     "#e9f6ff"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.8,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.5
+   },
+   {
+    "p": "faisca",
+    "mode": "vel",
+    "ring": 0.3,
+    "amount": 22,
+    "dir": [
+     0,
+     1,
+     0
+    ],
+    "spread": 0,
+    "speed": [
+     0,
+     0
+    ],
+    "radial": [
+     24,
+     34
+    ],
+    "life": 0.3,
+    "size": [
+     0.15,
+     0.9
+    ],
+    "curve": [
+     [
+      0,
+      1.3
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#a957ec",
+     "#c77dff",
+     "#ffffff"
+    ],
+    "boost": 1.6,
+    "y": 0.5
+   },
+   {
+    "p": "estilhaco",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 8,
+    "size": [
+     0.22,
+     0.6
+    ],
+    "speed": [
+     5,
+     9
+    ],
+    "spread": 180,
+    "grav": -12,
+    "damp": [
+     3,
+     5
+    ],
+    "life": 0.45,
+    "erode": 0.9,
+    "ramp": [
+     "#12061c",
+     "#301342"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 0.5
+   },
+   {
+    "p": "fumaca",
+    "blend": "mix",
+    "ring": 0.5,
+    "amount": 12,
+    "dir": [
+     0,
+     1,
+     0
+    ],
+    "spread": 5,
+    "speed": [
+     1.5,
+     3.0
+    ],
+    "life": 0.8,
+    "size": 0.7,
+    "spin": [
+     -40,
+     40
+    ],
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      0.3,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "erode": 1.0,
+    "halftone": 0.8,
+    "ramp": [
+     "#12061c",
+     "#301342",
+     "#a957ec"
+    ],
+    "y": 0.0
+   }
+  ],
+  "shake": 0.25
+ },
+ "aby_moby_investida": {
+  "nome": "MOBY · Investida Selvagem (ataque: mova e ataque)",
+  "personagem": "moby",
+  "hit": "aby_moby_mordida",
+  "proj": {
+   "speed": 24,
+   "arc": 0.0,
+   "y": 0.6,
+   "parts": [
+    {
+     "p": "gota",
+     "blend": "mix",
+     "mode": "vel",
+     "trail": true,
+     "amount": 24,
+     "size": 0.2,
+     "speed": [
+      1,
+      4
+     ],
+     "spread": 60,
+     "dir": [
+      0,
+      1,
+      0
+     ],
+     "grav": -12,
+     "life": 0.45,
+     "ramp": [
+      "#301342",
+      "#a957ec",
+      "#f1e9ff"
+     ],
+     "alpha": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       0
+      ]
+     ]
+    },
+    {
+     "p": "fumaca",
+     "blend": "mix",
+     "trail": true,
+     "amount": 14,
+     "size": 0.7,
+     "speed": [
+      0.2,
+      0.8
+     ],
+     "spin": [
+      -60,
+      60
+     ],
+     "life": 0.5,
+     "curve": [
+      [
+       0,
+       0.8
+      ],
+      [
+       1,
+       0.3
+      ]
+     ],
+     "erode": 1.0,
+     "halftone": 0.8,
+     "ramp": [
+      "#301342",
+      "#a957ec",
+      "#f1e9ff"
+     ],
+     "alpha": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       1
+      ]
+     ]
+    }
+   ],
+   "arpao": {
+    "tex": "jato",
+    "len": 2.3,
+    "width": 1.0,
+    "tile": 2.3,
+    "blend_top": "mix",
+    "ramp": [
+     "#12061c",
+     "#301342",
+     "#a957ec",
+     "#f1e9ff"
+    ],
+    "boost": 1.0,
+    "halftone": 0.0,
+    "sombra": 1.25,
+    "nucleo": false
+   }
+  }
+ },
+ "aby_moby_mordida": {
+  "nome": "MOBY · Mordida (acerto)",
+  "layers": [
+   {
+    "luz": "#f1e9ff",
+    "energia": 3.5,
+    "alcance": 4.0,
+    "dur": 0.3,
+    "y": 1.0,
+    "delay": 0.2
+   },
+   {
+    "p": "mandibula",
+    "blend": "mix",
+    "amount": 1,
+    "one_shot": true,
+    "explosive": 1.0,
+    "life": 0.5,
+    "life_rand": 0,
+    "size": 1.6380000000000001,
+    "y": 1.75,
+    "dir": [
+     0,
+     -1,
+     0
+    ],
+    "spread": 0,
+    "speed": [
+     8,
+     8
+    ],
+    "damp": [
+     6,
+     6
+    ],
+    "angle": [
+     0,
+     0
+    ],
+    "ramp": [
+     "#12061c",
+     "#301342",
+     "#a957ec",
+     "#f6eeff"
+    ],
+    "curve": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.8,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ]
+   },
+   {
+    "p": "mandibula",
+    "blend": "mix",
+    "amount": 1,
+    "one_shot": true,
+    "explosive": 1.0,
+    "life": 0.5,
+    "life_rand": 0,
+    "size": 1.6380000000000001,
+    "y": 0.25,
+    "dir": [
+     0,
+     1,
+     0
+    ],
+    "spread": 0,
+    "speed": [
+     8,
+     8
+    ],
+    "damp": [
+     6,
+     6
+    ],
+    "angle": [
+     180,
+     180
+    ],
+    "ramp": [
+     "#12061c",
+     "#301342",
+     "#a957ec",
+     "#f6eeff"
+    ],
+    "curve": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.8,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ]
+   },
+   {
+    "p": "estrela",
+    "amount": 1,
+    "size": 2.0,
+    "life": 0.24,
+    "angle": [
+     -20,
+     20
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.18,
+      1.25
+     ],
+     [
+      1,
+      0.25
+     ]
+    ],
+    "ramp": [
+     "#a957ec",
+     "#f1e9ff",
+     "#ffffff"
+    ],
+    "boost": 1.6,
+    "y": 1.0,
+    "delay": 0.15,
+    "nucleo": true
+   },
+   {
+    "p": "racha",
+    "mode": "chao",
+    "amount": 1,
+    "size": 2.4,
+    "life": 1.6,
+    "life_rand": 0,
+    "y": 0.0,
+    "angle": [
+     0,
+     360
+    ],
+    "curve": [
+     [
+      0,
+      0.5
+     ],
+     [
+      0.08,
+      1.0
+     ],
+     [
+      1,
+      1.0
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 3.0,
+    "soft": 0.08,
+    "ramp": [
+     "#12061c",
+     "#301342",
+     "#a957ec"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "delay": 0.15
+   },
+   {
+    "p": "anel",
+    "mode": "chao",
+    "amount": 1,
+    "size": 2.8,
+    "life": 0.5,
+    "life_rand": 0,
+    "y": 0.0,
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      1,
+      1.9
+     ]
+    ],
+    "erode": 1.0,
+    "halftone": 1.0,
+    "dot": 8,
+    "ramp": [
+     "#301342",
+     "#a957ec",
+     "#f1e9ff"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "delay": 0.15
+   },
+   {
+    "p": "gota",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 26,
+    "size": 0.26,
+    "speed": [
+     4,
+     9
+    ],
+    "dir": [
+     0,
+     1,
+     0
+    ],
+    "spread": 80,
+    "grav": -16,
+    "life": 0.7,
+    "ramp": [
+     "#301342",
+     "#a957ec",
+     "#f1e9ff"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.8,
+    "delay": 0.15
+   },
+   {
+    "p": "ponto",
+    "blend": "mix",
+    "amount": 16,
+    "size": 0.15,
+    "scale": [
+     0.5,
+     1.5
+    ],
+    "speed": [
+     4,
+     9
+    ],
+    "spread": 180,
+    "grav": -6,
+    "damp": [
+     3,
+     6
+    ],
+    "life": 0.6,
+    "ramp": [
+     "#f438a9",
+     "#f438a9"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 0.9,
+    "delay": 0.15
+   },
+   {
+    "p": "fumaca",
+    "blend": "mix",
+    "amount": 8,
+    "size": 1.0,
+    "speed": [
+     0.5,
+     1.6
+    ],
+    "dir": [
+     0,
+     1,
+     0
+    ],
+    "spread": 40,
+    "life": 0.8,
+    "spin": [
+     -40,
+     40
+    ],
+    "curve": [
+     [
+      0,
+      0.5
+     ],
+     [
+      1,
+      1.3
+     ]
+    ],
+    "erode": 1.0,
+    "halftone": 0.8,
+    "ramp": [
+     "#301342",
+     "#a957ec",
+     "#f1e9ff"
+    ],
+    "alpha": [
+     [
+      0,
+      0.9
+     ],
+     [
+      1,
+      0.9
+     ]
+    ],
+    "y": 0.3,
+    "delay": 0.15
+   }
+  ],
+  "shake": 0.3,
+  "shake_delay": 0.18
+ },
+ "aby_moby_viva": {
+  "nome": "MOBY · Maré Viva (3+ casas: +2 e puxa 1)",
+  "personagem": "moby",
+  "puxa": {
+   "casas": 1,
+   "inicio": 0.0,
+   "dur": 0.4,
+   "apos_voo": true
+  },
+  "hit": "aby_moby_viva_hit",
+  "proj": {
+   "speed": 30,
+   "arc": 0.0,
+   "y": 0.6,
+   "parts": [
+    {
+     "p": "gota",
+     "blend": "mix",
+     "mode": "vel",
+     "trail": true,
+     "amount": 24,
+     "size": 0.2,
+     "speed": [
+      1,
+      4
+     ],
+     "spread": 60,
+     "dir": [
+      0,
+      1,
+      0
+     ],
+     "grav": -12,
+     "life": 0.45,
+     "ramp": [
+      "#301342",
+      "#a957ec",
+      "#f1e9ff"
+     ],
+     "alpha": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       0
+      ]
+     ]
+    },
+    {
+     "p": "fumaca",
+     "blend": "mix",
+     "trail": true,
+     "amount": 14,
+     "size": 0.7,
+     "speed": [
+      0.2,
+      0.8
+     ],
+     "spin": [
+      -60,
+      60
+     ],
+     "life": 0.5,
+     "curve": [
+      [
+       0,
+       0.8
+      ],
+      [
+       1,
+       0.3
+      ]
+     ],
+     "erode": 1.0,
+     "halftone": 0.8,
+     "ramp": [
+      "#301342",
+      "#a957ec",
+      "#f1e9ff"
+     ],
+     "alpha": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       1
+      ]
+     ]
+    }
+   ],
+   "arpao": {
+    "tex": "jato",
+    "len": 3.0,
+    "width": 1.4,
+    "tile": 3.0,
+    "blend_top": "mix",
+    "ramp": [
+     "#12061c",
+     "#301342",
+     "#a957ec",
+     "#f1e9ff"
+    ],
+    "boost": 1.0,
+    "halftone": 0.0,
+    "sombra": 1.25,
+    "nucleo": false
+   }
+  }
+ },
+ "aby_moby_viva_hit": {
+  "nome": "MOBY · Maré Viva (acerto)",
+  "layers": [
+   {
+    "luz": "#f1e9ff",
+    "energia": 3.5,
+    "alcance": 4.0,
+    "dur": 0.3,
+    "y": 1.0,
+    "delay": 0.2
+   },
+   {
+    "p": "mandibula",
+    "blend": "mix",
+    "amount": 1,
+    "one_shot": true,
+    "explosive": 1.0,
+    "life": 0.5,
+    "life_rand": 0,
+    "size": 2.2113000000000005,
+    "y": 1.75,
+    "dir": [
+     0,
+     -1,
+     0
+    ],
+    "spread": 0,
+    "speed": [
+     8,
+     8
+    ],
+    "damp": [
+     6,
+     6
+    ],
+    "angle": [
+     0,
+     0
+    ],
+    "ramp": [
+     "#12061c",
+     "#301342",
+     "#a957ec",
+     "#f6eeff"
+    ],
+    "curve": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.8,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ]
+   },
+   {
+    "p": "mandibula",
+    "blend": "mix",
+    "amount": 1,
+    "one_shot": true,
+    "explosive": 1.0,
+    "life": 0.5,
+    "life_rand": 0,
+    "size": 2.2113000000000005,
+    "y": 0.25,
+    "dir": [
+     0,
+     1,
+     0
+    ],
+    "spread": 0,
+    "speed": [
+     8,
+     8
+    ],
+    "damp": [
+     6,
+     6
+    ],
+    "angle": [
+     180,
+     180
+    ],
+    "ramp": [
+     "#12061c",
+     "#301342",
+     "#a957ec",
+     "#f6eeff"
+    ],
+    "curve": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.8,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ]
+   },
+   {
+    "p": "estrela",
+    "amount": 1,
+    "size": 2.7,
+    "life": 0.24,
+    "angle": [
+     -20,
+     20
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.18,
+      1.25
+     ],
+     [
+      1,
+      0.25
+     ]
+    ],
+    "ramp": [
+     "#a957ec",
+     "#f1e9ff",
+     "#ffffff"
+    ],
+    "boost": 1.6,
+    "y": 1.0,
+    "delay": 0.15,
+    "nucleo": true
+   },
+   {
+    "p": "racha",
+    "mode": "chao",
+    "amount": 1,
+    "size": 3.24,
+    "life": 1.6,
+    "life_rand": 0,
+    "y": 0.0,
+    "angle": [
+     0,
+     360
+    ],
+    "curve": [
+     [
+      0,
+      0.5
+     ],
+     [
+      0.08,
+      1.0
+     ],
+     [
+      1,
+      1.0
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 3.0,
+    "soft": 0.08,
+    "ramp": [
+     "#12061c",
+     "#301342",
+     "#a957ec"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "delay": 0.15
+   },
+   {
+    "p": "anel",
+    "mode": "chao",
+    "amount": 1,
+    "size": 3.78,
+    "life": 0.5,
+    "life_rand": 0,
+    "y": 0.0,
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      1,
+      1.9
+     ]
+    ],
+    "erode": 1.0,
+    "halftone": 1.0,
+    "dot": 8,
+    "ramp": [
+     "#301342",
+     "#a957ec",
+     "#f1e9ff"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "delay": 0.15
+   },
+   {
+    "p": "gota",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 35,
+    "size": 0.26,
+    "speed": [
+     4,
+     9
+    ],
+    "dir": [
+     0,
+     1,
+     0
+    ],
+    "spread": 80,
+    "grav": -16,
+    "life": 0.7,
+    "ramp": [
+     "#301342",
+     "#a957ec",
+     "#f1e9ff"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.8,
+    "delay": 0.15
+   },
+   {
+    "p": "ponto",
+    "blend": "mix",
+    "amount": 16,
+    "size": 0.15,
+    "scale": [
+     0.5,
+     1.5
+    ],
+    "speed": [
+     4,
+     9
+    ],
+    "spread": 180,
+    "grav": -6,
+    "damp": [
+     3,
+     6
+    ],
+    "life": 0.6,
+    "ramp": [
+     "#f438a9",
+     "#f438a9"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 0.9,
+    "delay": 0.15
+   },
+   {
+    "p": "fumaca",
+    "blend": "mix",
+    "amount": 8,
+    "size": 1.0,
+    "speed": [
+     0.5,
+     1.6
+    ],
+    "dir": [
+     0,
+     1,
+     0
+    ],
+    "spread": 40,
+    "life": 0.8,
+    "spin": [
+     -40,
+     40
+    ],
+    "curve": [
+     [
+      0,
+      0.5
+     ],
+     [
+      1,
+      1.3
+     ]
+    ],
+    "erode": 1.0,
+    "halftone": 0.8,
+    "ramp": [
+     "#301342",
+     "#a957ec",
+     "#f1e9ff"
+    ],
+    "alpha": [
+     [
+      0,
+      0.9
+     ],
+     [
+      1,
+      0.9
+     ]
+    ],
+    "y": 0.3,
+    "delay": 0.15
+   },
+   {
+    "p": "onda",
+    "mode": "chao",
+    "amount": 1,
+    "size": 3.0,
+    "life": 0.9,
+    "life_rand": 0,
+    "y": 0.0,
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      1,
+      3.6
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.8,
+    "halftone": 0.7,
+    "ramp": [
+     "#301342",
+     "#a957ec",
+     "#f1e9ff"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "delay": 0.15
+   },
+   {
+    "p": "onda",
+    "mode": "chao",
+    "amount": 1,
+    "size": 3.0,
+    "life": 0.9,
+    "life_rand": 0,
+    "y": 0.0,
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      1,
+      3.6
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.8,
+    "halftone": 0.7,
+    "ramp": [
+     "#301342",
+     "#a957ec",
+     "#f1e9ff"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "delay": 0.4
+   }
+  ],
+  "shake": 0.45,
+  "shake_delay": 0.18
+ },
+ "aby_sterina_estrela": {
+  "nome": "ESTERINA · Toque Estelar (ataque)",
+  "personagem": "sterina",
+  "hit": "aby_sterina_estouro",
+  "proj": {
+   "speed": 12,
+   "arc": 0.9,
+   "y": 1.1,
+   "parts": [
+    {
+     "p": "estrela",
+     "blend": "mix",
+     "amount": 1,
+     "one_shot": true,
+     "explosive": 1.0,
+     "life": 2.0,
+     "life_rand": 0,
+     "size": 0.95,
+     "spin": [
+      300,
+      300
+     ],
+     "ramp": [
+      "#12061c",
+      "#a957ec",
+      "#f438a9",
+      "#fff0fa"
+     ],
+     "halftone": 0.3,
+     "alpha": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       1
+      ]
+     ]
+    },
+    {
+     "p": "estrela",
+     "mode": "vel",
+     "trail": true,
+     "amount": 10,
+     "size": [
+      0.15,
+      0.4
+     ],
+     "speed": [
+      0.3,
+      1.2
+     ],
+     "spread": 180,
+     "life": 0.5,
+     "spin": [
+      -200,
+      200
+     ],
+     "ramp": [
+      "#a957ec",
+      "#ff91d8",
+      "#fff0fa"
+     ],
+     "boost": 1.4,
+     "alpha": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       0
+      ]
+     ],
+     "curve": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       0.2
+      ]
+     ]
+    },
+    {
+     "p": "bolha",
+     "blend": "mix",
+     "trail": true,
+     "amount": 6,
+     "size": 0.28,
+     "speed": [
+      0.2,
+      0.7
+     ],
+     "dir": [
+      0,
+      1,
+      0
+     ],
+     "spread": 40,
+     "life": 0.7,
+     "ramp": [
+      "#301342",
+      "#a957ec",
+      "#ff91d8",
+      "#fff0fa"
+     ],
+     "alpha": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       0
+      ]
+     ]
+    }
+   ]
+  }
+ },
+ "aby_sterina_estouro": {
+  "nome": "ESTERINA · Estouro Estelar (acerto)",
+  "layers": [
+   {
+    "luz": "#ff91d8",
+    "energia": 3.5,
+    "alcance": 3.5,
+    "dur": 0.3,
+    "y": 0.9
+   },
+   {
+    "p": "estrela",
+    "amount": 1,
+    "size": 2.2,
+    "life": 0.28,
+    "angle": [
+     -15,
+     15
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.18,
+      1.25
+     ],
+     [
+      1,
+      0.25
+     ]
+    ],
+    "ramp": [
+     "#a957ec",
+     "#f438a9",
+     "#fff0fa"
+    ],
+    "boost": 1.6,
+    "nucleo": true
+   },
+   {
+    "p": "anel",
+    "amount": 1,
+    "size": 1.9,
+    "life": 0.34,
+    "curve": [
+     [
+      0,
+      0.25
+     ],
+     [
+      1,
+      1.7
+     ]
+    ],
+    "erode": 1.0,
+    "halftone": 0.9,
+    "ramp": [
+     "#a957ec",
+     "#f438a9",
+     "#ff91d8"
+    ],
+    "boost": 1.4,
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 0.9
+   },
+   {
+    "p": "estrela_mar",
+    "mode": "chao",
+    "amount": 1,
+    "size": 2.0,
+    "life": 1.0,
+    "life_rand": 0,
+    "y": 0.0,
+    "angle": [
+     0,
+     360
+    ],
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      0.15,
+      1.0
+     ],
+     [
+      1,
+      1.1
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 2.0,
+    "halftone": 0.6,
+    "ramp": [
+     "#301342",
+     "#a957ec",
+     "#f438a9",
+     "#ff91d8"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   {
+    "p": "estrela",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 10,
+    "size": [
+     0.25,
+     0.5
+    ],
+    "speed": [
+     4,
+     9
+    ],
+    "spread": 180,
+    "grav": -8,
+    "damp": [
+     2,
+     4
+    ],
+    "spin": [
+     -300,
+     300
+    ],
+    "life": 0.7,
+    "ramp": [
+     "#a957ec",
+     "#ff91d8",
+     "#fff0fa"
+    ],
+    "boost": 1.3,
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.9
+   },
+   {
+    "p": "bolha",
+    "blend": "mix",
+    "amount": 10,
+    "size": 0.3,
+    "speed": [
+     1.5,
+     4
+    ],
+    "spread": 180,
+    "damp": [
+     2,
+     4
+    ],
+    "life": 0.9,
+    "ramp": [
+     "#301342",
+     "#a957ec",
+     "#ff91d8",
+     "#fff0fa"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.9
+   },
+   {
+    "p": "faisca",
+    "mode": "vel",
+    "amount": 14,
+    "size": [
+     0.1,
+     0.8
+    ],
+    "speed": [
+     6,
+     11
+    ],
+    "spread": 180,
+    "grav": -10,
+    "damp": [
+     5,
+     9
+    ],
+    "life": 0.3,
+    "curve": [
+     [
+      0,
+      1.2
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#f438a9",
+     "#ff91d8",
+     "#ffffff"
+    ],
+    "boost": 1.6,
+    "y": 0.9
+   },
+   {
+    "p": "ponto",
+    "blend": "mix",
+    "amount": 12,
+    "size": 0.14,
+    "scale": [
+     0.5,
+     1.5
+    ],
+    "speed": [
+     4,
+     8
+    ],
+    "spread": 180,
+    "grav": -5,
+    "damp": [
+     3,
+     6
+    ],
+    "life": 0.6,
+    "ramp": [
+     "#f438a9",
+     "#f438a9"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 0.9
+   }
+  ],
+  "shake": 0.15
+ },
+ "aby_sterina_regen": {
+  "nome": "ESTERINA · Regeneração Estelar (ajuda: cura 3)",
+  "personagem": "sterina",
+  "alvo": "aliado",
+  "layers": [
+   {
+    "raio": "raio",
+    "de": "from",
+    "para": "at",
+    "dur": 0.9,
+    "flick": 0.12,
+    "cresce": 0.15,
+    "width": 0.3,
+    "tile": 1.1,
+    "blend_top": "mix",
+    "ramp": [
+     "#301342",
+     "#a957ec",
+     "#ff91d8",
+     "#fff0fa"
+    ],
+    "boost": 1.0,
+    "halftone": 0.6,
+    "sombra": 1.5,
+    "y": 1.0
+   },
+   {
+    "luz": "#ff91d8",
+    "energia": 2.5,
+    "alcance": 4.0,
+    "dur": 1.0,
+    "y": 1.0,
+    "delay": 0.15
+   },
+   {
+    "p": "estrela_mar",
+    "mode": "chao",
+    "amount": 1,
+    "size": 2.2,
+    "life": 1.8,
+    "life_rand": 0,
+    "y": 0.0,
+    "angle": [
+     0,
+     0
+    ],
+    "spin": [
+     90,
+     90
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.25,
+      1.0
+     ],
+     [
+      0.85,
+      1.05
+     ],
+     [
+      1,
+      0.7
+     ]
+    ],
+    "halftone": 0.5,
+    "ramp": [
+     "#301342",
+     "#a957ec",
+     "#f438a9",
+     "#ff91d8",
+     "#fff0fa"
+    ],
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.15,
+      1
+     ],
+     [
+      0.8,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.1
+   },
+   {
+    "p": "anel",
+    "mode": "chao",
+    "amount": 1,
+    "size": 3.0,
+    "life": 0.9,
+    "life_rand": 0,
+    "y": 0.0,
+    "curve": [
+     [
+      0,
+      1.7
+     ],
+     [
+      1,
+      0.5
+     ]
+    ],
+    "halftone": 0.8,
+    "ramp": [
+     "#a957ec",
+     "#ff91d8",
+     "#fff0fa"
+    ],
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.3,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.1
+   },
+   {
+    "p": "estrela",
+    "blend": "mix",
+    "mode": "bill",
+    "ring": 0.6,
+    "amount": 10,
+    "explosive": 0.5,
+    "dir": [
+     0,
+     -1,
+     0
+    ],
+    "spread": 4,
+    "speed": [
+     0.8,
+     1.4
+    ],
+    "life": 1.3,
+    "size": [
+     0.3,
+     0.55
+    ],
+    "spin": [
+     -90,
+     90
+    ],
+    "ramp": [
+     "#a957ec",
+     "#ff91d8",
+     "#fff0fa"
+    ],
+    "boost": 1.3,
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.2,
+      1
+     ],
+     [
+      0.8,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 2.6,
+    "delay": 0.15
+   },
+   {
+    "p": "bolha",
+    "blend": "mix",
+    "ring": 0.5,
+    "amount": 10,
+    "explosive": 0.3,
+    "dir": [
+     0,
+     1,
+     0
+    ],
+    "spread": 6,
+    "speed": [
+     0.8,
+     1.6
+    ],
+    "life": 1.4,
+    "size": 0.3,
+    "ramp": [
+     "#301342",
+     "#a957ec",
+     "#ff91d8",
+     "#fff0fa"
+    ],
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.2,
+      1
+     ],
+     [
+      0.8,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.1,
+    "delay": 0.15
+   },
+   {
+    "p": "fumaca",
+    "blend": "mix",
+    "ring": 0.55,
+    "amount": 10,
+    "explosive": 0.2,
+    "dir": [
+     0,
+     1,
+     0
+    ],
+    "spread": 5,
+    "speed": [
+     0.8,
+     1.6
+    ],
+    "life": 0.9,
+    "size": 0.45,
+    "spin": [
+     -40,
+     40
+    ],
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      0.3,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "erode": 1.0,
+    "halftone": 0.7,
+    "ramp": [
+     "#301342",
+     "#a957ec",
+     "#ff91d8"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 0.0,
+    "delay": 0.15
+   }
+  ]
+ },
+ "aby_sterina_luz": {
+  "nome": "ESTERINA · Luz da Fenda (ajuda: cura até 6)",
+  "personagem": "sterina",
+  "alvo": "aliado",
+  "layers": [
+   {
+    "raio": "raio",
+    "de": "from",
+    "para": "at",
+    "dur": 0.9,
+    "flick": 0.12,
+    "cresce": 0.15,
+    "width": 0.3,
+    "tile": 1.1,
+    "blend_top": "mix",
+    "ramp": [
+     "#301342",
+     "#a957ec",
+     "#ff91d8",
+     "#fff0fa"
+    ],
+    "boost": 1.0,
+    "halftone": 0.6,
+    "sombra": 1.5,
+    "y": 1.0
+   },
+   {
+    "luz": "#ff91d8",
+    "energia": 2.5,
+    "alcance": 4.0,
+    "dur": 1.0,
+    "y": 1.0,
+    "delay": 0.15
+   },
+   {
+    "p": "estrela_mar",
+    "mode": "chao",
+    "amount": 1,
+    "size": 2.9700000000000006,
+    "life": 1.8,
+    "life_rand": 0,
+    "y": 0.0,
+    "angle": [
+     0,
+     0
+    ],
+    "spin": [
+     90,
+     90
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.25,
+      1.0
+     ],
+     [
+      0.85,
+      1.05
+     ],
+     [
+      1,
+      0.7
+     ]
+    ],
+    "halftone": 0.5,
+    "ramp": [
+     "#301342",
+     "#a957ec",
+     "#f438a9",
+     "#ff91d8",
+     "#fff0fa"
+    ],
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.15,
+      1
+     ],
+     [
+      0.8,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.1
+   },
+   {
+    "p": "anel",
+    "mode": "chao",
+    "amount": 1,
+    "size": 4.050000000000001,
+    "life": 0.9,
+    "life_rand": 0,
+    "y": 0.0,
+    "curve": [
+     [
+      0,
+      1.7
+     ],
+     [
+      1,
+      0.5
+     ]
+    ],
+    "halftone": 0.8,
+    "ramp": [
+     "#a957ec",
+     "#ff91d8",
+     "#fff0fa"
+    ],
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.3,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.1
+   },
+   {
+    "p": "estrela",
+    "blend": "mix",
+    "mode": "bill",
+    "ring": 0.81,
+    "amount": 13,
+    "explosive": 0.5,
+    "dir": [
+     0,
+     -1,
+     0
+    ],
+    "spread": 4,
+    "speed": [
+     0.8,
+     1.4
+    ],
+    "life": 1.3,
+    "size": [
+     0.3,
+     0.55
+    ],
+    "spin": [
+     -90,
+     90
+    ],
+    "ramp": [
+     "#a957ec",
+     "#ff91d8",
+     "#fff0fa"
+    ],
+    "boost": 1.3,
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.2,
+      1
+     ],
+     [
+      0.8,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 2.6,
+    "delay": 0.15
+   },
+   {
+    "p": "bolha",
+    "blend": "mix",
+    "ring": 0.675,
+    "amount": 13,
+    "explosive": 0.3,
+    "dir": [
+     0,
+     1,
+     0
+    ],
+    "spread": 6,
+    "speed": [
+     0.8,
+     1.6
+    ],
+    "life": 1.4,
+    "size": 0.3,
+    "ramp": [
+     "#301342",
+     "#a957ec",
+     "#ff91d8",
+     "#fff0fa"
+    ],
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.2,
+      1
+     ],
+     [
+      0.8,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.1,
+    "delay": 0.15
+   },
+   {
+    "p": "fumaca",
+    "blend": "mix",
+    "ring": 0.55,
+    "amount": 10,
+    "explosive": 0.2,
+    "dir": [
+     0,
+     1,
+     0
+    ],
+    "spread": 5,
+    "speed": [
+     0.8,
+     1.6
+    ],
+    "life": 0.9,
+    "size": 0.45,
+    "spin": [
+     -40,
+     40
+    ],
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      0.3,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "erode": 1.0,
+    "halftone": 0.7,
+    "ramp": [
+     "#301342",
+     "#a957ec",
+     "#ff91d8"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 0.0,
+    "delay": 0.15
+   },
+   {
+    "p": "estrela_mar",
+    "mode": "chao",
+    "amount": 1,
+    "size": 3.4,
+    "life": 1.8,
+    "life_rand": 0,
+    "y": 0.0,
+    "angle": [
+     36,
+     36
+    ],
+    "spin": [
+     -60,
+     -60
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.25,
+      1.0
+     ],
+     [
+      0.85,
+      1.05
+     ],
+     [
+      1,
+      0.7
+     ]
+    ],
+    "halftone": 0.5,
+    "ramp": [
+     "#301342",
+     "#a957ec",
+     "#f438a9",
+     "#ff91d8"
+    ],
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.15,
+      0.9
+     ],
+     [
+      0.8,
+      0.9
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.2
+   },
+   {
+    "p": "estrela",
+    "amount": 1,
+    "size": 2.6,
+    "life": 0.4,
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.3,
+      1.3
+     ],
+     [
+      1,
+      0.3
+     ]
+    ],
+    "ramp": [
+     "#a957ec",
+     "#f438a9",
+     "#fff0fa"
+    ],
+    "boost": 1.6,
+    "y": 1.1,
+    "delay": 0.9
+   },
+   {
+    "p": "brilho",
+    "amount": 1,
+    "size": 3.2,
+    "life": 0.5,
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      0.3,
+      1.0
+     ],
+     [
+      1,
+      1.3
+     ]
+    ],
+    "ramp": [
+     "#301342",
+     "#a957ec",
+     "#ff91d8",
+     "#fff0fa"
+    ],
+    "boost": 1.2,
+    "halftone": 0.7,
+    "alpha": [
+     [
+      0,
+      0.9
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.9
+   }
+  ]
  }
 }

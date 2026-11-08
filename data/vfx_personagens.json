@@ -46,21 +46,31 @@
  },
  "oncus": {
   "nucleo": "#e9f6ff",
-  "motivo": "chifre prateado",
-  "ataque": "aby_garra",
-  "proposta": true
+  "motivo": "chifre prateado e espinhos",
+  "ataque": "aby_oncus_chifre",
+  "proposta": true,
+  "habilidades": [
+   "aby_oncus_caos"
+  ]
  },
  "moby": {
-  "nucleo": "#1c91d8",
-  "motivo": "azul do mar",
-  "ataque": "aby_garra",
-  "proposta": true
+  "nucleo": "#f1e9ff",
+  "motivo": "baleia lilás, espuma clara",
+  "ataque": "aby_moby_investida",
+  "proposta": true,
+  "habilidades": [
+   "aby_moby_viva"
+  ]
  },
  "sterina": {
   "nucleo": "#fff0fa",
-  "motivo": "luz estelar",
-  "ataque": "aby_garra",
-  "proposta": true
+  "motivo": "estrela-do-mar e bolhas",
+  "ataque": "aby_sterina_estrela",
+  "proposta": true,
+  "habilidades": [
+   "aby_sterina_regen",
+   "aby_sterina_luz"
+  ]
  },
  "klang": {
   "nucleo": "#f33b4b",

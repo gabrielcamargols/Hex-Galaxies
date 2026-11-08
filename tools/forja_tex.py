@@ -434,6 +434,114 @@ def agulha():
     return np.asarray(Image.fromarray((v * 255).astype(np.uint8)).resize((W, H), Image.LANCZOS)).astype(np.float32) / 255
 
 
+def _soft(m, k=9.0, hi=0.2, S=1):
+    """máscara booleana -> intensidade: borda baixa (contorno), miolo alto"""
+    d = ndi.distance_transform_edt(m) / (S * k)
+    return np.clip(d, 0, 1) * (1 - hi) + m * hi
+
+
+def chifre():
+    """chifre de narval de lado (ponta à direita), 256x64: cone com espiral e base grossa"""
+    W, H, s = 256, 64, 4
+    im = Image.new("L", (W * s, H * s), 0)
+    d = ImageDraw.Draw(im)
+    d.polygon([(6 * s, 10 * s), (60 * s, 17 * s), (252 * s, 32 * s), (60 * s, 47 * s), (6 * s, 54 * s)], fill=255)
+    m = np.asarray(im).astype(np.float32) / 255 > 0.5
+    v = _soft(m, 10.0, 0.25, s)
+    y, x = np.mgrid[0:H * s, 0:W * s]
+    larg = np.clip((x / s - 6) / 246, 0, 1)
+    ban = np.sin((x / s * 0.55) + (y / s - 32) * 0.28)                 # faixas diagonais = espiral do chifre
+    v = np.where(m, np.clip(v - (ban > 0.55) * 0.32 * (1 - larg * 0.6), 0, 1), v)
+    v = np.clip(v + np.clip(1 - np.abs(y - 26 * s) / (2.0 * s), 0, 1) * m * 0.3, 0, 1)
+    return np.asarray(Image.fromarray((v * 255).astype(np.uint8)).resize((W, H), Image.LANCZOS)).astype(np.float32) / 255
+
+
+def espeto():
+    """espeto vertical (ponta em cima), 128: base larga, afinando; para rajadas radiais com velocidade"""
+    S = N * 4
+    im = Image.new("L", (S, S), 0)
+    d = ImageDraw.Draw(im)
+    d.polygon([(S * 0.30, S * 0.98), (S * 0.5, S * 0.02), (S * 0.70, S * 0.98)], fill=255)
+    m = np.asarray(im).astype(np.float32) / 255 > 0.5
+    v = _soft(m, 9.0, 0.25, 4)
+    y, x = np.mgrid[0:S, 0:S]
+    v = np.clip(v + np.clip(1 - np.abs(x - S * 0.46) / (S * 0.02), 0, 1) * m * 0.3, 0, 1)
+    return np.asarray(Image.fromarray((v * 255).astype(np.uint8)).resize((N, N), Image.LANCZOS)).astype(np.float32) / 255
+
+
+def mandibula():
+    """mandíbula de cima: gengiva em arco largo e achatado com presas penduradas; a de baixo é a mesma girada 180 graus"""
+    S = N * 4
+    c = S / 2
+    im = Image.new("L", (S, S), 0)
+    d = ImageDraw.Draw(im)
+    cy = S * 0.3
+    d.ellipse([c - S * 0.48, cy - S * 0.2, c + S * 0.48, cy + S * 0.2], fill=255)
+    d.rectangle([0, cy, S, S], fill=0)                      # só o topo do arco (gengiva)
+    d.rectangle([c - S * 0.47, cy - S * 0.01, c + S * 0.47, cy + S * 0.07], fill=255)
+    rr = random.Random(11)
+    n = 6
+    for k in range(n):
+        u = (k + 0.5) / n * 2 - 1                          # -1..1 ao longo da boca
+        px = c + u * S * 0.40
+        py = cy + S * 0.03
+        L = S * (0.46 - 0.12 * abs(u)) * (1.0 + rr.uniform(-0.05, 0.08))
+        tip = (px - u * S * 0.05, py + L)                  # as pontas se fecham um pouco para dentro
+        w = S * 0.065
+        d.polygon([(px - w, py), tip, (px + w, py)], fill=255)
+    m = np.asarray(im).astype(np.float32) / 255 > 0.5
+    v = _soft(m, 6.0, 0.3, 4)
+    return np.asarray(Image.fromarray((v * 255).astype(np.uint8)).resize((N, N), Image.LANCZOS)).astype(np.float32) / 255
+
+
+def jato():
+    """jato de maré de lado (frente à direita), 256x64: massa de água com crista curvada na frente, topo com espuma"""
+    W, H, s = 256, 64, 4
+    rr = random.Random(23)
+    im = Image.new("L", (W * s, H * s), 0)
+    d = ImageDraw.Draw(im)
+    top = []
+    for i in range(0, 41):
+        x = 6 + i * 5.2
+        f = i / 40
+        h = 8 + 34 * (f ** 0.8) + rr.uniform(-3, 3) * f      # cresce para a frente
+        top.append((x * s, (60 - h) * s))
+    d.polygon([(6 * s, 60 * s)] + top + [(220 * s, 14 * s), (244 * s, 20 * s), (252 * s, 36 * s), (240 * s, 50 * s), (214 * s, 60 * s)], fill=255)
+    for k in range(7):                                     # bolhas de espuma na crista
+        cx, cy = rr.uniform(150, 235), rr.uniform(10, 26)
+        d.ellipse([(cx - 7) * s, (cy - 7) * s, (cx + 7) * s, (cy + 7) * s], fill=255)
+    m = np.asarray(im).astype(np.float32) / 255 > 0.5
+    v = _soft(m, 9.0, 0.3, s)
+    y, x = np.mgrid[0:H * s, 0:W * s]
+    ond = np.sin(x / s * 0.45 + y / s * 0.2) > 0.6                                   # linhas de correnteza
+    v = np.where(m, np.clip(v - ond * 0.08, 0, 1), v)
+    return np.asarray(Image.fromarray((v * 255).astype(np.uint8)).resize((W, H), Image.LANCZOS)).astype(np.float32) / 255
+
+
+def estrela_mar():
+    """estrela-do-mar vista de cima: 5 braços arredondados, miolo e pintinhas (para o chão)"""
+    S = N * 4
+    c = S / 2
+    im = Image.new("L", (S, S), 0)
+    d = ImageDraw.Draw(im)
+    pts = []
+    for k in range(10):
+        a = -math.pi / 2 + k * math.pi / 5
+        r = S * (0.46 if k % 2 == 0 else 0.17)
+        pts.append((c + math.cos(a) * r, c + math.sin(a) * r))
+    d.polygon(pts, fill=255)
+    m = np.asarray(im.filter(ImageFilter.GaussianBlur(S * 0.012))).astype(np.float32) / 255 > 0.5
+    v = _soft(m, 14.0, 0.25, 4)
+    y, x = np.mgrid[0:S, 0:S]
+    for k in range(5):
+        a = -math.pi / 2 + k * 2 * math.pi / 5
+        for t in (0.2, 0.3, 0.4):
+            px, py = c + math.cos(a) * S * t * 0.95, c + math.sin(a) * S * t * 0.95
+            v = np.where(np.hypot(x - px, y - py) < S * 0.012, np.clip(v + 0.35, 0, 1), v)
+        v = np.clip(v - np.clip(1 - np.abs(np.cos(a) * (y - c) - np.sin(a) * (x - c)) / (S * 0.008), 0, 1) * m * 0.0, 0, 1)
+    return np.asarray(Image.fromarray((v * 255).astype(np.uint8)).resize((N, N), Image.LANCZOS)).astype(np.float32) / 255
+
+
 def bolha():
     """bolha: anel fino + brilho no canto (intensidade alta no brilho)"""
     x, y = grid()
@@ -490,7 +598,7 @@ def veu():
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     for nm, fn in [("brilho", brilho), ("anel", anel), ("estrela", estrela), ("faisca", faisca), ("fumaca", fumaca),
-                   ("estilhaco", estilhaco), ("respingo", respingo), ("rasgo", rasgo), ("gota", gota), ("seta", seta), ("corrente", corrente), ("voronoi", voronoi), ("ponto", ponto), ("retalho", retalho), ("racha", racha), ("arpao", arpao), ("raio", raio), ("pinca_a", pinca_a), ("punho", punho), ("onda", onda), ("garras_chao", garras_chao), ("moeda", moeda), ("espinhos", espinhos), ("agulha", agulha), ("bolha", bolha), ("mina", mina), ("veu", veu)]:
+                   ("estilhaco", estilhaco), ("respingo", respingo), ("rasgo", rasgo), ("gota", gota), ("seta", seta), ("corrente", corrente), ("voronoi", voronoi), ("ponto", ponto), ("retalho", retalho), ("racha", racha), ("arpao", arpao), ("raio", raio), ("pinca_a", pinca_a), ("punho", punho), ("onda", onda), ("garras_chao", garras_chao), ("moeda", moeda), ("espinhos", espinhos), ("agulha", agulha), ("chifre", chifre), ("espeto", espeto), ("mandibula", mandibula), ("jato", jato), ("estrela_mar", estrela_mar), ("bolha", bolha), ("mina", mina), ("veu", veu)]:
         v = fn()
         if nm == "faisca":
             v = v[::-1]          # cabeça em cima: o topo da textura segue a velocidade
