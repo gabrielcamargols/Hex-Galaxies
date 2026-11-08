@@ -58,6 +58,7 @@ var fullscreen: bool = false
 var render_q: float = 1.0
 var hq_on: bool = false         # filtro de quadrinho na tela (pesado; desligado por padrão)
 var hq_rect: ColorRect = null
+var voice_on: bool = true       # líderes leem as falas em voz alta (voz do aparelho)
 var fast_mode: bool = false      # modo rápido: sem confirmar, prévia ao apontar, animações 2×
 var pend_hover: bool = false
 var intense: bool = false
@@ -717,6 +718,15 @@ func _settings_panel() -> void:
 		fast_mode = not fast_mode
 		_save_prefs()
 		fb.text = _fast_label())
+	var vb = _cbtn(v, _voice_label(), C_HUD, func(): pass)
+	vb.custom_minimum_size = Vector2(0, 40)
+	vb.tooltip_text = "Os líderes de cada facção leem as próprias falas em voz alta (usa a voz do aparelho)."
+	vb.pressed.connect(func():
+		voice_on = not voice_on
+		if not voice_on:
+			DisplayServer.tts_stop()
+		_save_prefs()
+		vb.text = _voice_label())
 	var ub = _cbtn(v, _ui_scale_label(), C_HUD, func(): pass)
 	ub.custom_minimum_size = Vector2(0, 40)
 	ub.tooltip_text = "Tamanho dos botões e textos."
@@ -744,6 +754,10 @@ func _undo_move() -> void:
 	pend = null
 	sel = uid
 	refresh()
+
+
+func _voice_label() -> String:
+	return "Voz dos líderes: " + ("LIGADA" if voice_on else "desligada")
 
 
 func _fast_label() -> String:
@@ -4795,8 +4809,33 @@ func _is_touch() -> bool:
 
 
 # voz do personagem junto com o balão: "fala" (amigável), "prov" (provocação), "triste" (lamento)
+# tom e velocidade de cada facção para a voz do aparelho (líderes)
+const LEAD_VOICE = {
+	"KRI": [0.75, 1.05], "WAC": [0.9, 0.95], "ZUK": [1.25, 1.15], "ABY": [0.6, 0.85],
+	"TER": [0.7, 0.9], "LIT": [1.5, 1.0], "FAU": [1.1, 1.1],
+}
+
+
+func _leader_speak(u, text: String, mood: String) -> void:
+	if not voice_on or text == "" or DisplayServer.has_feature(DisplayServer.FEATURE_TEXT_TO_SPEECH) == false:
+		return
+	var vs = DisplayServer.tts_get_voices_for_language("pt")
+	if vs.is_empty():
+		vs = DisplayServer.tts_get_voices_for_language("pt-BR")
+	if vs.is_empty():
+		return
+	var cfg = LEAD_VOICE.get(_fac_of(u), [1.0, 1.0])
+	var pitch = float(cfg[0]) * (0.85 if mood == "triste" else (1.1 if mood == "prov" else 1.0))
+	var vid = vs[int(abs(String(u.cid).hash())) % vs.size()]
+	DisplayServer.tts_stop()
+	DisplayServer.tts_speak(text, vid, int(clamp(float(vol.get("Vozes", 90.0)), 0.0, 100.0)), clamp(pitch, 0.0, 2.0), clamp(float(cfg[1]), 0.1, 10.0))
+
+
 func _talk_voice(u, text: String, mood: String) -> void:
 	if sfx == null:
+		return
+	if u.is_cmd and voice_on:
+		_leader_speak(u, text, mood)
 		return
 	var n = "v_%s_%s" % [u.cid, "prov" if mood == "prov" else "fala"]
 	var pitch = 0.84 if mood == "triste" else randf_range(0.96, 1.05)
@@ -4968,6 +5007,7 @@ func _load_prefs() -> void:
 	if cf.load("user://prefs.cfg") == OK:
 		ui_pref = str(cf.get_value("ui", "scale", "auto"))
 		fast_mode = bool(cf.get_value("ui", "fast", false))
+		voice_on = bool(cf.get_value("ui", "voice", true))
 		hq_on = bool(cf.get_value("video", "hq2", false))
 		for b in vol.keys():
 			vol[b] = float(cf.get_value("som", b, vol[b]))
@@ -4980,6 +5020,7 @@ func _save_prefs() -> void:
 	var cf = ConfigFile.new()
 	cf.set_value("ui", "scale", ui_pref)
 	cf.set_value("ui", "fast", fast_mode)
+	cf.set_value("ui", "voice", voice_on)
 	for b in vol.keys():
 		cf.set_value("som", b, vol[b])
 	cf.set_value("video", "res", res_pref)
