@@ -36,8 +36,8 @@ TERRAIN = {
     "avalanche": {"name": "Corredor de avalanche", "c": 1, "pass": 1, "top": 0, "climb": 1, "aval": 1},
 }
 INFO = {
-    "ABNARA": {"id": "abnara", "name": "Abnara", "plain": "trilha", "biome": "jungle"},
-    "GORAIDA": {"id": "goraida", "name": "Gor'Aida", "plain": "neve", "biome": "ice"},
+    "ABNARA": {"id": "abnara", "name": "Abnara", "plain": "trilha", "biome": "jungle", "hex_scale": 1.3},
+    "GORAIDA": {"id": "goraida", "name": "Gor'Aida", "plain": "neve", "biome": "ice", "hex_scale": 1.0},
 }
 D6 = [(1, 0), (1, -1), (0, -1), (-1, 0), (-1, 1), (0, 1)]
 
@@ -93,7 +93,7 @@ def main():
             "name": info["name"], "plain": info["plain"], "half": [], "cells": cells,
             "shape": {"q": R, "r": R, "s": R},
             "entry_centers": [{"q": e[0], "r": e[1]} for e in entries],
-            "biome": info["biome"], "cam_yaw": 90, "zone_grow": 3,
+            "biome": info["biome"], "cam_yaw": 90, "zone_grow": 3, "hex_scale": info["hex_scale"],
             "cores": cores, "flow": flow, "sectors": dict(sectors),
             "fonte": "data/level_design (dossiê v1.0, 08/11/2026)",
         }

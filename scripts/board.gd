@@ -36,6 +36,7 @@ const PAL = {
 const ELEV = {"tarhut": "#c0583a", "posto": "#e0c060", "abnara": "#d6e27a", "goraida": "#ffffff"}  # tom que as casas altas puxam
 # planeta: o tabuleiro fica num platô e o chão se curva em volta (deserto contínuo)
 var PLAT = 18.5       # raio plano em volta do tabuleiro (ajustado ao tamanho do mapa)
+var HX: float = 1.0          # espaçamento das casas (mapas com "hex_scale": casas mais largas, mais respiro)
 var bio: String = "desert"   # ambiente do planeta: desert (Tarhut), sea (Valak), jungle (Abnara), ice (Gor'Aida)
 var RIM = 12.0         # raio da borda arredondada (onde o deserto se curva)
 var UNDER = 34.0       # altura da base rochosa por baixo do planetoide
@@ -146,6 +147,7 @@ func build(game: Game) -> void:
 	core_next_at = null
 	var desert = g.map_id == "tarhut"
 	bio = str(DB.maps[g.map_id].get("biome", "desert" if desert else "sea"))
+	HX = float(DB.maps[g.map_id].get("hex_scale", 1.0))
 	# planetoide do tamanho do tabuleiro
 	var far = 0.0
 	for h in DB.hexes:
@@ -482,12 +484,12 @@ func _build_far(desert: bool) -> void:
 
 
 func world_xz(h: Vector2i) -> Vector2:
-	return Vector2(1.5 * h.y, -S3 * (h.x + h.y / 2.0))
+	return Vector2(1.5 * h.y, -S3 * (h.x + h.y / 2.0)) * HX
 
 
 func hex_from_world(x: float, z: float) -> Vector2i:
-	var r = x / 1.5
-	var q = -z / S3 - r / 2.0
+	var r = x / HX / 1.5
+	var q = -z / HX / S3 - r / 2.0
 	var s = -q - r
 	var rq = round(q)
 	var rr = round(r)
@@ -620,7 +622,9 @@ func _place_tile(h: Vector2i) -> void:
 	var y = tile["disp_h"] * HS
 	# o corpo vai da base até o topo: escala vertical
 	var height = y - BASE_Y
-	tile["body"].scale = Vector3(1, height, 1)
+	tile["body"].scale = Vector3(HX, height, HX)
+	tile["hl"].scale = Vector3(HX, 1, HX)
+	tile["dim"].scale = Vector3(HX, 1, HX)
 	tile["body"].position = Vector3(0, BASE_Y, 0)
 	tile["props"].position = Vector3(0, y, 0)
 	tile["hl"].position = Vector3(0, y + 0.03, 0)
@@ -1574,16 +1578,18 @@ func _make_unit(u) -> void:
 	var node = Node3D.new()
 	add_child(node)
 	var sc = 0.75 if u.barrier else (1.15 if BIG.has(u.cid) else (1.08 if u.is_cmd else 1.0))
+	if HX > 1.0:
+		sc *= HX * 1.15      # casas mais largas: personagens maiores para continuarem fáceis de ver
 	# base hexagonal do tamanho da casa, na cor principal da facção: preenchimento translúcido,
 	# aro grosso na cor e contorno de tinta (estilo HQ)
 	var fcol = _unit_fac_col(u)
 	var shadow = MeshInstance3D.new()
-	shadow.mesh = _disc(INNER * 0.97, 6)
+	shadow.mesh = _disc(INNER * 0.97 * HX, 6)
 	shadow.material_override = _overlay_mat(Color(fcol.r, fcol.g, fcol.b, 0.30))
 	shadow.position = Vector3(0, 0.02, 0)
 	node.add_child(shadow)
 	var ring = MeshInstance3D.new()
-	ring.mesh = _hex_band(INNER * 0.97, INNER * 0.80, Color("#0a0410"), 0.045)
+	ring.mesh = _hex_band(INNER * 0.97 * HX, INNER * 0.80 * HX, Color("#0a0410"), 0.045)
 	ring.material_override = _mat(fcol, true)
 	ring.material_override.vertex_color_use_as_albedo = true
 	ring.position = Vector3(0, 0.035, 0)
@@ -2912,9 +2918,12 @@ func _jungle_tree(root: Node3D, pos: Vector3, s: float, h: Vector2i, i: int) -> 
 func _wild_props(root: Node3D, h: Vector2i, k: String) -> bool:
 	match k:
 		"mata":
-			var spots = [Vector3(-0.3, 0, -0.22), Vector3(0.3, 0, -0.18), Vector3(0.0, 0, 0.3)]
-			for i in range(spots.size()):
-				_jungle_tree(root, spots[i] + Vector3((_rnd(h, i) - 0.5) * 0.12, 0, (_rnd(h, i + 5) - 0.5) * 0.12), 0.95 + _rnd(h, i + 9) * 0.3, h, i + int(_rnd(h, 3) * 3))
+			# árvores baixas na borda da casa: quem está no meio continua visível
+			var rr0 = 0.62 * HX
+			var a0 = _rnd(h, 2) * TAU
+			for i in range(3):
+				var aa = a0 + TAU / 3.0 * i
+				_jungle_tree(root, Vector3(cos(aa) * rr0, 0, sin(aa) * rr0), 0.62 + _rnd(h, i + 9) * 0.18, h, i + int(_rnd(h, 3) * 3))
 			for i in range(3):
 				_mesh(root, _sph(0.16, 0.12), Color("#3c9a44"), Vector3((_rnd(h, i + 20) - 0.5) * 1.2, 0.05, (_rnd(h, i + 21) - 0.5) * 1.1))
 		"raiz":

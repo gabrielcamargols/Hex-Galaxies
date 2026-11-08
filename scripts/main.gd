@@ -5292,7 +5292,7 @@ func _update_plates(delta: float) -> void:
 	if not w.has("plates") or not is_instance_valid(w["plates"]):
 		return
 	var seen = {}
-	var sc = clamp(40.0 / max(board.cam_dist, 1.0), 0.85, 1.15)
+	var sc = clamp(40.0 / max(board.cam_dist, 1.0), 0.7, 1.15)   # de longe as barras encolhem e não se amontoam
 	for uid in board.unit_nodes.keys():
 		var u: Variant = game.by_uid(uid)
 		if u == null or u.crystal != "":
@@ -5302,7 +5302,8 @@ func _update_plates(delta: float) -> void:
 			plates[uid] = _make_plate(u)
 		var pl = plates[uid]
 		var d = board.unit_nodes[uid]
-		var wp = d["node"].position + Vector3(0, d.get("top", 1.75) * d["node"].scale.y + 0.25, 0)
+		# a barra de vida fica colada na cabeça do personagem
+		var wp = d["node"].position + Vector3(0, d.get("top", 1.75) * d["node"].scale.y * 0.92, 0)
 		var p: Panel = pl["panel"]
 		if board.cam.is_position_behind(wp) or d["node"].scale.y < 0.3:
 			p.visible = false
