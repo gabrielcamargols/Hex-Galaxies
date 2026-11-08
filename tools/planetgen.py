@@ -127,6 +127,19 @@ def gelo(out):
     save(img, os.path.join(out, "gelo.png"))
 
 
+def abnara(out):
+    """selva viva: florestas em camadas, rios azuis serpenteando e clareiras douradas (mapa "abnara")"""
+    P, la = sphere_dirs()
+    v = fbm(P, 55, 5, 1.8)
+    img = ramp(v, [(0, "#123e1e"), (0.3, "#1f5e2c"), (0.45, "#2f8a3e"), (0.58, "#4ea844"), (0.7, "#86c450"), (0.8, "#e8d07a")])
+    rio = fbm(P, 56, 4, 2.6)
+    img[np.abs(rio - 0.5) < 0.022] = np.array([0x2f, 0xb8, 0xd8]) / 255
+    img[np.abs(rio - 0.5) < 0.008] = np.array([0xb8, 0xf2, 0xff]) / 255
+    flor = fbm(P, 57, 3, 8.0)
+    img[(flor > 0.86) & (v > 0.45)] = np.array([0xf4, 0x38, 0xa9]) / 255   # plantas predadoras rosa
+    save(img, os.path.join(out, "abnara.png"))
+
+
 def lava(out):
     P, la = sphere_dirs()
     v = fbm(P, 66, 5, 2.2)

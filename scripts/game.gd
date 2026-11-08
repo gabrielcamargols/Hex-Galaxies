@@ -172,9 +172,12 @@ func load_map() -> void:
 	map_name = def["name"]
 	plain = {"k": def["plain"], "h": 0}
 	terr_map = {}
-	for e in def["half"]:
+	for e in def.get("half", []):
 		terr_map[Vector2i(e[0], e[1])] = {"k": e[2], "h": e[3]}
 		terr_map[Vector2i(-e[0], -e[1])] = {"k": e[2], "h": e[3]}
+	# mapas do dossiê de level design (Abnara, Gor'Aida): todas as casas listadas, sem espelho automático
+	for e in def.get("cells", []):
+		terr_map[Vector2i(e[0], e[1])] = {"k": e[2], "h": e[3]}
 	if def.has("dunes"):
 		var dh = dune_heights(dune)
 		for h in dh.keys():
@@ -200,7 +203,7 @@ func dune_heights(idx: int) -> Dictionary:
 	if not def.has("dunes"):
 		return out
 	var base = {}
-	for e in def["half"]:
+	for e in def.get("half", []):
 		base[Vector2i(e[0], e[1])] = true
 		base[Vector2i(-e[0], -e[1])] = true
 	for pk in def["dunes"][idx]["peaks"]:
@@ -226,6 +229,12 @@ func tt_of(k: String) -> Dictionary:
 	return DB.tt[k]
 
 
+# buraco de verme ou fenda de gelo: ninguém fica de pé ali (nem quem escala)
+func is_pit(h: Vector2i) -> bool:
+	var k = terr(h)["k"]
+	return k == "buraco" or tt_of(k).get("pit", 0) == 1
+
+
 func terr(h: Vector2i) -> Dictionary:
 	return terr_map.get(h, plain)
 
@@ -236,7 +245,7 @@ func h_of(h: Vector2i) -> int:
 
 # altura onde a peça fica de pé (no topo do obstáculo, para quem escala)
 func stand_h(h: Vector2i) -> int:
-	if blocks.has(h) and terr(h)["k"] != "buraco":
+	if blocks.has(h) and not is_pit(h):
 		return h_of(h) + int(tt_of(terr(h)["k"]).get("top", 0))
 	return h_of(h)
 
@@ -245,7 +254,7 @@ func can_step(a: Vector2i, b: Vector2i, climber: bool = false) -> bool:
 	var ta = terr(a)
 	var tb = terr(b)
 	if climber:
-		return tb["k"] != "buraco"
+		return not is_pit(b)
 	if not tt_of(tb["k"]).get("pass", 0):
 		return false
 	var dh = int(tb["h"]) - int(ta["h"])
@@ -873,7 +882,7 @@ func can_enter(u, h: Vector2i) -> bool:
 		return false
 	if not blocks.has(h):
 		return true
-	return K(u).has("climbAll") and terr(h)["k"] != "buraco" and not barrier_at(h)
+	return K(u).has("climbAll") and not is_pit(h) and not barrier_at(h)
 
 
 func move_opts(u, mov: int) -> Array:
@@ -1796,6 +1805,16 @@ func _escape_ok(h: Vector2i) -> bool:
 
 # ================= núcleo central =================
 func _core_spot() -> Variant:
+	var defc = DB.maps[map_id].get("cores", [])
+	if not defc.is_empty():
+		# mapas do dossiê: o núcleo surge só nas casas candidatas da planta
+		var cc = []
+		for e in defc:
+			var hc = Vector2i(int(e[0]), int(e[1]))
+			if hc != core and not blocks.has(hc) and not barrier_at(hc):
+				cc.append(hc)
+		if not cc.is_empty():
+			return _pick(cc)
 	var c0 = DB.entry_c[0]
 	var c1 = DB.entry_c[1]
 	var cand = DB.hexes.filter(func(h): return not blocks.has(h) and not barrier_at(h) and not cart_at(h) and tt_of(terr(h)["k"]).get("pass", 0) and terr(h)["k"] != "movedica" and abs(DB.dist(h, c0) - DB.dist(h, c1)) <= 1 and DB.dist(h, c0) >= 3 and DB.dist(h, c1) >= 3 and h != core and not tremors.has(h))
@@ -1904,6 +1923,9 @@ func end_round() -> void:
 	await resolve_queues()
 	if winner != NONE:
 		return
+	await _terrain_round_end()
+	if winner != NONE:
+		return
 	for p in range(2):
 		for k in field().filter(func(u): return u.owner == p and K(u).has("endHeal")):
 			var opts = allies_of(k).filter(func(x): return DB.dist(x.pos(), k.pos()) == 1 and x.hp < x.maxhp)
@@ -1923,6 +1945,48 @@ func end_round() -> void:
 		do_final_score()
 		return
 	await start_round()
+
+
+# fim do round nos mapas do dossiê: plantas predadoras mordem e a correnteza leva quem está no rio
+func _terrain_round_end() -> void:
+	var def = DB.maps[map_id]
+	if not def.has("cells"):
+		return
+	var bit = false
+	for u in field():
+		if u.barrier or K(u).has("air"):
+			continue
+		for n in DB.nbrs(u.pos()):
+			if tt_of(terr(n)["k"]).get("bite", 0):
+				emitfx({"t": "boom", "h": n})
+				log_msg(-1, "Planta predadora morde %s (1)." % nm(u))
+				damage(u, 1, null)
+				bit = true
+				break
+	if bit:
+		settle()
+		await pace()
+		if winner != NONE:
+			return
+	var flow = {}
+	for e in def.get("flow", []):
+		flow[Vector2i(int(e[0]), int(e[1]))] = Vector2i(int(e[2]), int(e[3]))
+	var moved = false
+	for u in field():
+		if u.barrier or K(u).has("air") or not flow.has(u.pos()):
+			continue
+		var to = flow[u.pos()]
+		if not is_free(to) or not can_step(u.pos(), to):
+			continue
+		var fpos = u.pos()
+		u.q = to.x
+		u.r = to.y
+		emitfx({"t": "move", "uid": u.uid, "from": fpos, "to": to})
+		log_msg(-1, "A correnteza levou %s 1 casa." % nm(u))
+		moved = true
+		await arrive(u)
+	if moved:
+		await pace()
 
 
 func do_final_score() -> void:
@@ -2131,8 +2195,10 @@ func _act_move(u, h: Vector2i) -> bool:
 	act["actions"] -= 1
 	act["moved"] = true
 	var from_h = u.pos()
+	var pth = _path(u, from_h, h)
 	await move_unit(u, h, true)
 	_use_blue(u)
+	await _ice_slide(u, pth[pth.size() - 2] if pth.size() >= 2 else from_h)
 	if u.st == "field" and (in_zone(from_h) or in_zone(u.pos())):
 		await vibrate(int(vrule("move", 1)), "%s andou perto do buraco" % nm(u))
 	# só dá para desfazer se nada aconteceu no caminho (mina, banana, núcleo, dano)
@@ -2141,6 +2207,23 @@ func _act_move(u, h: Vector2i) -> bool:
 	else:
 		undo = null
 	return true
+
+
+# GELO LISO (Gor'Aida): quem termina o movimento no gelo desliza mais 1 casa na direção em que vinha,
+# se a casa seguinte estiver livre e der para pisar nela
+func _ice_slide(u, prev: Vector2i) -> void:
+	if u.st != "field" or u.barrier or not tt_of(terr(u.pos())["k"]).get("slide", 0):
+		return
+	var d = u.pos() - prev
+	if DB.dist(prev, u.pos()) != 1:
+		return
+	var nx = u.pos() + d
+	if not is_free(nx) or not can_step(u.pos(), nx) or K(u).has("air"):
+		return
+	log_msg(u.owner, "%s escorregou no gelo liso." % nm(u))
+	emitfx({"t": "passive", "kind": "slide", "uid": u.uid})
+	await move_unit(u, nx, true)
+	await arrive(u, true)
 
 
 func can_undo() -> bool:

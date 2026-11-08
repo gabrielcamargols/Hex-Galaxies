@@ -24,10 +24,19 @@ const PAL = {
 	"hole": ["#3a2418", "#24140c", "#120a04"],
 	"cave": ["#7a64e0", "#5a48c0", "#24186a"], "cave2": ["#6c56d4", "#4e3cb0", "#20145e"], "pit": ["#140a24", "#0c0618", "#05020a"],
 	"rubble_g": ["#6aa040", "#548232", "#2c4a1c"], "sand2": ["#d8903e", "#b8702c", "#6e3a1a"], "grass3": ["#389444", "#2a7434", "#184a22"],
+	# Abnara (selva viva)
+	"trilha": ["#a8cc5c", "#86ac44", "#3e5e22"], "clareira": ["#ecd27c", "#cfb25c", "#6e5a2a"], "mata": ["#2f8a3e", "#226e30", "#123e1a"],
+	"raiz": ["#7a8a3e", "#5e6e2e", "#2e3a18"], "rio": ["#3cc4e4", "#2296c0", "#0e4a6a"], "ponte": ["#c8925a", "#a06c3a", "#5a3a1c"],
+	"pedra": ["#a6a2b4", "#868296", "#46444e"],
+	# Gor'Aida (gelo instável)
+	"neve": ["#f4f8ff", "#d8e6f4", "#8ea6c0"], "neve_base": ["#fff0cc", "#ead6aa", "#9a8a6a"], "gelo": ["#9ce2ff", "#70c4ee", "#3a7aa8"],
+	"gelo_f": ["#cdeeff", "#a6d4f0", "#5a8ab0"], "fenda": ["#123050", "#0a1e36", "#040c18"], "gelo_alto": ["#c4e2f6", "#9cc6e6", "#4e7ea6"],
+	"aval": ["#f8e8f4", "#e6cce0", "#9a7a98"],
 }
-const ELEV = {"tarhut": "#c0583a", "posto": "#e0c060"}  # tom que as casas altas puxam
+const ELEV = {"tarhut": "#c0583a", "posto": "#e0c060", "abnara": "#d6e27a", "goraida": "#ffffff"}  # tom que as casas altas puxam
 # planeta: o tabuleiro fica num platô e o chão se curva em volta (deserto contínuo)
 var PLAT = 18.5       # raio plano em volta do tabuleiro (ajustado ao tamanho do mapa)
+var bio: String = "desert"   # ambiente do planeta: desert (Tarhut), sea (Valak), jungle (Abnara), ice (Gor'Aida)
 var RIM = 12.0         # raio da borda arredondada (onde o deserto se curva)
 var UNDER = 34.0       # altura da base rochosa por baixo do planetoide
 const ZOOM_MIN = 4.0
@@ -136,6 +145,7 @@ func build(game: Game) -> void:
 	core_at = null
 	core_next_at = null
 	var desert = g.map_id == "tarhut"
+	bio = str(DB.maps[g.map_id].get("biome", "desert" if desert else "sea"))
 	# planetoide do tamanho do tabuleiro
 	var far = 0.0
 	for h in DB.hexes:
@@ -192,6 +202,8 @@ func build(game: Game) -> void:
 		tiles[h] = {"node": node, "disp_h": float(g.h_of(h)), "body": null, "props": null, "hl": hl, "dim": dim, "label": lab, "flash": 0.0, "sig": ""}
 	if cave:
 		_build_cave()
+	elif bio == "jungle" or bio == "ice":
+		_build_wild(bio)
 	else:
 		_build_scenery(desert)
 		_build_far(desert)
@@ -307,6 +319,10 @@ func planet_y(x: float, z: float) -> float:
 		var a = atan2(z, x)
 		var dune = 0.55 * pow(abs(sin(x * 0.21 + z * 0.08 + sin(z * 0.05) * 2.0)), 1.6) + 0.45 * pow(abs(sin(z * 0.17 - x * 0.06 + a)), 2.0)
 		y += amp * dune
+	elif bio == "jungle" or bio == "ice":
+		# morros suaves em volta da arena
+		var amp2 = min(1.0, d / 6.0) * (0.9 if bio == "jungle" else 1.2)
+		y += amp2 * (0.5 + 0.5 * sin(x * 0.23 + sin(z * 0.11) * 2.0)) * (0.5 + 0.5 * sin(z * 0.19 - x * 0.07))
 	else:
 		y += 0.08 * sin(x * 0.7) * sin(z * 0.6)
 	return y
@@ -325,7 +341,9 @@ func _planet_col(desert: bool, x: float, z: float, y: float, under: float) -> Co
 		var band = int(floor(-y * 0.9)) % 3
 		var rock_d = [Color("#8a5a3c"), Color("#6e4430"), Color("#a0704a")]
 		var rock_g = [Color("#4a6a5a"), Color("#3a5446"), Color("#5a7a62")]
-		var rc = rock_d[band] if desert else rock_g[band]
+		var rock_j = [Color("#5a4a2c"), Color("#463a22"), Color("#6e5a36")]
+		var rock_i = [Color("#6a86a8"), Color("#56708e"), Color("#86a2c2")]
+		var rc = rock_d[band] if desert else (rock_j[band] if bio == "jungle" else (rock_i[band] if bio == "ice" else rock_g[band]))
 		return rc.darkened(clamp(under * 0.7, 0.0, 0.6))
 	var r = sqrt(x * x + z * z)
 	var d = max(0.0, r - PLAT)
@@ -334,6 +352,12 @@ func _planet_col(desert: bool, x: float, z: float, y: float, under: float) -> Co
 		var crest = clamp((y - ground) / 1.3, 0.0, 1.0)
 		var c = Color("#d8893e").lerp(Color("#f4b45e"), crest)
 		return c.lerp(Color("#9a6440"), clamp(d / RIM, 0.0, 0.45))
+	if bio == "jungle":
+		var gj = Color("#4c9e3c").lerp(Color("#2f7a34"), clamp(0.5 + 0.5 * sin(x * 0.31 + z * 0.17), 0.0, 1.0) * 0.6)
+		return gj.lerp(Color("#1d4a24"), clamp(d / RIM, 0.0, 0.7))
+	if bio == "ice":
+		var gi = Color("#f2f8ff").lerp(Color("#cfe4f6"), clamp(0.5 + 0.5 * sin(x * 0.27 - z * 0.21), 0.0, 1.0) * 0.7)
+		return gi.lerp(Color("#8eb4dc"), clamp(d / RIM, 0.0, 0.7))
 	return Color("#1d86c8").lerp(Color("#0e3a78"), clamp(d / RIM, 0.0, 1.0))
 
 
@@ -494,6 +518,32 @@ func pal_of(t: Dictionary, h: Vector2i) -> String:
 		return "cave" if (h.x * 3 + h.y * 7) % 5 != 0 else "cave2"
 	var desert = g.map_id == "tarhut"
 	match t["k"]:
+		"trilha", "planta":
+			return "trilha"
+		"clareira":
+			return "clareira"
+		"mata":
+			return "mata"
+		"raiz":
+			return "raiz"
+		"correnteza":
+			return "rio"
+		"ponte":
+			return "ponte"
+		"ruina_alta":
+			return "pedra"
+		"neve", "parede_gelo":
+			return "neve"
+		"neve_base":
+			return "neve_base"
+		"gelo":
+			return "gelo"
+		"gelo_fragil":
+			return "gelo_f"
+		"fenda":
+			return "fenda"
+		"avalanche":
+			return "aval"
 		"duna":
 			return "dune"
 		"rocha", "ruina", "galpao", "ossada", "ossada_c":
@@ -674,7 +724,7 @@ func _overlay_mat(c: Color) -> StandardMaterial3D:
 
 
 # sombra de cada planeta (mesma em chão, cenário e modelos): Tarhut vinho-violeta, Valak azul-violeta
-const PLANET_SHADOW = {"tarhut": Color(0.62, 0.32, 0.46), "valak": Color(0.36, 0.30, 0.72)}
+const PLANET_SHADOW = {"tarhut": Color(0.62, 0.32, 0.46), "valak": Color(0.36, 0.30, 0.72), "abnara": Color(0.22, 0.40, 0.46), "goraida": Color(0.42, 0.52, 0.82)}
 var tex_mats: Dictionary = {}
 
 
@@ -863,6 +913,8 @@ func _cen_tile(root: Node3D, h: Vector2i, k: String) -> bool:
 
 
 func _add_props_old(root: Node3D, h: Vector2i, t: Dictionary) -> void:
+	if _wild_props(root, h, t["k"]):
+		return
 	match t["k"]:
 		"rocha":
 			if _model(root, "rocha", Vector3.ZERO, 1.55, _rnd(h, 2) * TAU):
@@ -2138,6 +2190,11 @@ func fit_camera(snap: bool) -> void:
 		goal["yaw"] = PI / 2.0
 		goal["dist"] = PLAT * 3.25
 		goal["target"] = Vector3(-1.5, 0, 0)
+	# mapas desenhados com as bases em outra direção da grade (Abnara, Gor'Aida): a câmera gira junto
+	var yo = deg_to_rad(float(DB.maps[g.map_id].get("cam_yaw", 0))) if g != null else 0.0
+	if yo != 0.0:
+		goal["yaw"] += yo
+		goal["target"] = goal["target"].rotated(Vector3.UP, yo)
 	if (me == 1) != flip_view:
 		# gira 180°: no online cada um vê o próprio lado à direita
 		goal["yaw"] += PI
@@ -2803,3 +2860,197 @@ func move_cart(i: int, to: Vector2i) -> void:
 	var tw = create_tween()
 	tw.tween_property(n, "position", goal, 0.22)
 	tw.tween_callback(func(): n.remove_meta("moving"))
+
+
+# ================= Abnara (selva viva) e Gor'Aida (gelo instável) =================
+# peças feitas com formas simples no estilo HQ (contorno grosso). Quando houver modelos do Meshy,
+# é só trocar aqui por _model(...), como em Tarhut.
+var flow_dir: Dictionary = {}     # casa -> direção (no mundo) da correnteza/avalanche
+var flow_map_id: String = ""
+
+
+func _flow_of(h: Vector2i) -> Variant:
+	if flow_map_id != g.map_id:
+		flow_map_id = g.map_id
+		flow_dir = {}
+		for e in DB.maps[g.map_id].get("flow", []):
+			var a = Vector2i(int(e[0]), int(e[1]))
+			var b = Vector2i(int(e[2]), int(e[3]))
+			flow_dir[a] = (world_xz(b) - world_xz(a)).normalized()
+	return flow_dir.get(h, null)
+
+
+func _inked(mi: MeshInstance3D) -> MeshInstance3D:
+	mi.material_overlay = _outline_thick(0.03)
+	return mi
+
+
+func _sph(r: float, hgt: float = -1.0) -> SphereMesh:
+	var sm = SphereMesh.new()
+	sm.radius = r
+	sm.height = r * 2.0 if hgt < 0.0 else hgt
+	sm.radial_segments = 10
+	sm.rings = 6
+	return sm
+
+
+func _arrow(root: Node3D, dir: Vector2, col: Color, y: float, s: float = 1.0) -> void:
+	var arrow = Node3D.new()
+	arrow.rotation = Vector3(0, -atan2(dir.y, dir.x), 0)
+	root.add_child(arrow)
+	_mesh(arrow, _box(Vector3(0.5 * s, 0.03, 0.09 * s)), col, Vector3(-0.1 * s, y, 0))
+	_mesh(arrow, _cyl(0.0, 0.17 * s, 0.04, 3), col, Vector3(0.24 * s, y, 0), Vector3(0, PI / 2, 0))
+
+
+func _jungle_tree(root: Node3D, pos: Vector3, s: float, h: Vector2i, i: int) -> void:
+	_inked(_mesh(root, _cyl(0.06 * s, 0.1 * s, 0.7 * s, 6), Color("#6b4426"), pos + Vector3(0, 0.35 * s, 0)))
+	var greens = [Color("#2f8a3e"), Color("#3fa04a"), Color("#57b552")]
+	_inked(_mesh(root, _sph(0.42 * s, 0.6 * s), greens[i % 3], pos + Vector3(0, 0.82 * s, 0)))
+	_inked(_mesh(root, _sph(0.3 * s, 0.44 * s), greens[(i + 1) % 3], pos + Vector3((_rnd(h, i + 40) - 0.5) * 0.3 * s, 1.12 * s, (_rnd(h, i + 41) - 0.5) * 0.3 * s)))
+
+
+func _wild_props(root: Node3D, h: Vector2i, k: String) -> bool:
+	match k:
+		"mata":
+			var spots = [Vector3(-0.3, 0, -0.22), Vector3(0.3, 0, -0.18), Vector3(0.0, 0, 0.3)]
+			for i in range(spots.size()):
+				_jungle_tree(root, spots[i] + Vector3((_rnd(h, i) - 0.5) * 0.12, 0, (_rnd(h, i + 5) - 0.5) * 0.12), 0.95 + _rnd(h, i + 9) * 0.3, h, i + int(_rnd(h, 3) * 3))
+			for i in range(3):
+				_mesh(root, _sph(0.16, 0.12), Color("#3c9a44"), Vector3((_rnd(h, i + 20) - 0.5) * 1.2, 0.05, (_rnd(h, i + 21) - 0.5) * 1.1))
+		"raiz":
+			var holder = Node3D.new()
+			holder.rotation = Vector3(0, _rnd(h, 2) * TAU, 0)
+			root.add_child(holder)
+			for i in range(4):
+				var cap = CapsuleMesh.new()
+				cap.radius = 0.12
+				cap.height = 1.25
+				var a = TAU / 4.0 * i
+				_inked(_mesh(holder, cap, Color("#7a4e2a").lerp(Color("#5a3a1e"), _rnd(h, i)), Vector3(cos(a) * 0.22, 0.45, sin(a) * 0.22), Vector3(sin(a) * 0.75, 0, -cos(a) * 0.75)))
+			_inked(_mesh(holder, _sph(0.3, 0.42), Color("#6b4426"), Vector3(0, 0.95, 0)))
+			_mesh(holder, _sph(0.16, 0.12), Color("#4ea844"), Vector3(0.05, 1.18, 0.02))
+		"correnteza":
+			var fd: Variant = _flow_of(h)
+			for i in range(2):
+				_mesh(root, _box(Vector3(0.5, 0.02, 0.05)), Color("#bff2ff"), Vector3((_rnd(h, i) - 0.5) * 0.9, 0.02, (_rnd(h, i + 4) - 0.5) * 0.9), Vector3(0, _rnd(h, 8) * 0.6, 0))
+			if fd != null:
+				_arrow(root, fd, Color("#ffffff"), 0.04)
+		"ponte":
+			for i in range(5):
+				_inked(_mesh(root, _box(Vector3(1.25, 0.08, 0.2)), Color("#b07840").lerp(Color("#8c5a2c"), _rnd(h, i)), Vector3(0, 0.05, -0.46 + i * 0.23)))
+			for sx in [-0.62, 0.62]:
+				_inked(_mesh(root, _box(Vector3(0.06, 0.06, 1.15)), Color("#6b4426"), Vector3(sx, 0.32, 0)))
+				for sz in [-0.5, 0.5]:
+					_mesh(root, _cyl(0.05, 0.05, 0.36, 6), Color("#6b4426"), Vector3(sx, 0.18, sz))
+		"ruina_alta":
+			var hb = Node3D.new()
+			hb.rotation = Vector3(0, int(_rnd(h, 2) * 6) * PI / 3.0, 0)
+			root.add_child(hb)
+			_inked(_mesh(hb, _box(Vector3(1.1, 0.7, 0.95)), Color("#9a96aa"), Vector3(0, 0.35, 0)))
+			_inked(_mesh(hb, _box(Vector3(0.75, 0.6, 0.7)), Color("#b0acbe"), Vector3(-0.08, 0.98, 0.04), Vector3(0, 0.25, 0.08)))
+			_inked(_mesh(hb, _cyl(0.17, 0.2, 1.2, 8), Color("#c4c0d0"), Vector3(0.38, 1.25, -0.25)))
+			_mesh(hb, _box(Vector3(0.6, 0.06, 0.5)), Color("#4ea844"), Vector3(-0.1, 1.31, 0.05), Vector3(0, 0.25, 0.08))
+		"planta":
+			for i in range(4):
+				var a2 = TAU / 4.0 * i + _rnd(h, 1)
+				_mesh(root, _sph(0.26, 0.08), Color("#3c9a44"), Vector3(cos(a2) * 0.32, 0.04, sin(a2) * 0.32))
+			_inked(_mesh(root, _cyl(0.07, 0.1, 0.55, 6), Color("#3c8a3a"), Vector3(0, 0.28, 0)))
+			var head = Node3D.new()
+			head.position = Vector3(0, 0.72, 0)
+			head.rotation = Vector3(0, _rnd(h, 6) * TAU, 0)
+			root.add_child(head)
+			_inked(_mesh(head, _sph(0.34, 0.34), Color("#f438a9"), Vector3(0, 0.1, 0), Vector3(0.0, 0, 0.35)))
+			_inked(_mesh(head, _sph(0.34, 0.3), Color("#c21f86"), Vector3(0, -0.12, 0), Vector3(0.0, 0, -0.3)))
+			for i in range(5):
+				var tx = -0.22 + i * 0.11
+				_mesh(head, _cyl(0.0, 0.035, 0.12, 4), Color("#fff6e0"), Vector3(0.24, -0.02, tx), Vector3(0, 0, PI))
+			for i in range(5):
+				_mesh(head, _sph(0.035, 0.035), Color("#fff0fa"), Vector3(-0.05 + _rnd(h, i + 30) * 0.2, 0.32, -0.15 + i * 0.07))
+		"trilha", "clareira":
+			for i in range(3):
+				_mesh(root, _cyl(0.0, 0.05, 0.14, 4), Color("#4f8a22") if k == "trilha" else Color("#9a8a3a"), Vector3((_rnd(h, i) - 0.5) * 1.0, 0.07, (_rnd(h, i + 9) - 0.5) * 0.9))
+			if _rnd(h, 33) > 0.7:
+				_mesh(root, _sph(0.06), Color("#f438a9") if _rnd(h, 34) > 0.5 else Color("#ffe27a"), Vector3((_rnd(h, 35) - 0.5) * 0.9, 0.08, (_rnd(h, 36) - 0.5) * 0.9))
+		"neve", "neve_base":
+			for i in range(2):
+				if _rnd(h, i + 50) > 0.45:
+					_mesh(root, _sph(0.18 + _rnd(h, i) * 0.1, 0.12), Color("#ffffff"), Vector3((_rnd(h, i + 1) - 0.5) * 1.0, 0.03, (_rnd(h, i + 2) - 0.5) * 0.9))
+		"gelo":
+			for i in range(3):
+				_mesh(root, _box(Vector3(0.55, 0.012, 0.05)), Color("#ffffff"), Vector3((_rnd(h, i) - 0.5) * 0.8, 0.015, (_rnd(h, i + 6) - 0.5) * 0.8), Vector3(0, 0.6 + _rnd(h, 9) * 0.3, 0))
+		"gelo_fragil":
+			var p0 = Vector3((_rnd(h, 1) - 0.5) * 0.3, 0.016, (_rnd(h, 2) - 0.5) * 0.3)
+			for i in range(4):
+				var a3 = TAU / 4.0 * i + _rnd(h, i + 3) * 1.2
+				var ln = 0.35 + _rnd(h, i + 7) * 0.3
+				_mesh(root, _box(Vector3(ln, 0.012, 0.035)), Color("#2a5a8a"), p0 + Vector3(cos(a3) * ln * 0.5, 0, sin(a3) * ln * 0.5), Vector3(0, -a3, 0))
+		"fenda":
+			_mesh(root, _cyl(0.72, 0.6, 0.06, 6), Color("#06101e"), Vector3(0, 0.02, 0), Vector3(0, PI / 6.0, 0))
+			for i in range(8):
+				var a4 = TAU / 8.0 * i + _rnd(h, i) * 0.4
+				_inked(_mesh(root, _cyl(0.0, 0.1, 0.3 + _rnd(h, i + 10) * 0.2, 4), Color("#e8f6ff"), Vector3(cos(a4) * 0.66, 0.12, sin(a4) * 0.66), Vector3(sin(a4) * 0.45, 0, -cos(a4) * 0.45)))
+		"parede_gelo":
+			for i in range(3):
+				var px = (i - 1) * 0.36 + (_rnd(h, i) - 0.5) * 0.1
+				var ht = 1.2 + _rnd(h, i + 3) * 0.5
+				_inked(_mesh(root, _cyl(0.08, 0.3, ht, 5), Color("#9cd4f4").lerp(Color("#c8ecff"), _rnd(h, i + 6)), Vector3(px, ht * 0.5, (_rnd(h, i + 9) - 0.5) * 0.4), Vector3(0, _rnd(h, i + 12), (_rnd(h, i + 15) - 0.5) * 0.2)))
+			_inked(_mesh(root, _box(Vector3(1.1, 0.5, 0.8)), Color("#b8e0f8"), Vector3(0, 0.25, 0)))
+			_mesh(root, _box(Vector3(1.0, 0.08, 0.7)), Color("#ffffff"), Vector3(0, 0.52, 0))
+		"avalanche":
+			var fd2: Variant = _flow_of(h)
+			if fd2 == null:
+				fd2 = Vector2(0, 1)
+			_arrow(root, fd2, Color("#f438a9"), 0.03, 1.1)
+			_arrow(root, fd2, Color("#a957ec"), 0.03, 0.7)
+			_mesh(root, _sph(0.2, 0.12), Color("#ffffff"), Vector3((_rnd(h, 1) - 0.5) * 0.8, 0.03, (_rnd(h, 2) - 0.5) * 0.8))
+		_:
+			return false
+	return true
+
+
+# entorno do planeta (fora do tabuleiro): floresta e ruínas em Abnara, picos de gelo em Gor'Aida
+func _build_wild(kind: String) -> void:
+	var cells = []
+	for q in range(-DB.R - 5, DB.R + 6):
+		for r in range(-DB.R - 5, DB.R + 6):
+			var hh = Vector2i(q, r)
+			var d = DB.out_dist(hh)
+			if d >= 1 and d <= 5:
+				cells.append(hh)
+	for h in cells:
+		var d = DB.out_dist(h)
+		var dens = 0.35 if d == 1 else (0.6 if kind == "jungle" else 0.45)
+		if _rnd(h, 9) > dens:
+			continue
+		var wp = world_xz(h)
+		var px = wp.x + (_rnd(h, 5) - 0.5) * 0.8
+		var pz = wp.y + (_rnd(h, 6) - 0.5) * 0.8
+		var holder = Node3D.new()
+		scenery_root.add_child(holder)
+		holder.position = Vector3(px, planet_y(px, pz), pz)
+		var s = (0.9 + _rnd(h, 8) * 0.6) * (0.8 if d == 1 else 1.0 + d * 0.08)
+		var roll = _rnd(h, 11)
+		if kind == "jungle":
+			if roll < 0.62:
+				_jungle_tree(holder, Vector3.ZERO, s * 1.3, h, int(_rnd(h, 3) * 3))
+			elif roll < 0.8:
+				for i in range(3):
+					_inked(_mesh(holder, _sph(0.3 * s, 0.4 * s), Color("#3fa04a").lerp(Color("#2f8a3e"), _rnd(h, i)), Vector3((_rnd(h, i + 1) - 0.5) * 0.8 * s, 0.15 * s, (_rnd(h, i + 2) - 0.5) * 0.8 * s)))
+			elif roll < 0.92:
+				_inked(_mesh(holder, _cyl(0.2 * s, 0.26 * s, 1.6 * s, 8), Color("#b0acbe"), Vector3(0, 0.8 * s, 0), Vector3(0, 0, (_rnd(h, 4) - 0.5) * 0.3)))
+				_mesh(holder, _box(Vector3(0.5 * s, 0.08 * s, 0.5 * s)), Color("#4ea844"), Vector3(0, 1.62 * s, 0))
+			else:
+				_inked(_mesh(holder, _sph(0.5 * s, 0.6 * s), Color("#8e8a7c"), Vector3(0, 0.2 * s, 0)))
+		else:
+			if roll < 0.45:
+				for i in range(3):
+					var ht = (1.0 + _rnd(h, i + 3) * 1.4) * s
+					_inked(_mesh(holder, _cyl(0.0, 0.32 * s, ht, 5), Color("#9cd4f4").lerp(Color("#d8f2ff"), _rnd(h, i + 6)), Vector3((_rnd(h, i) - 0.5) * 0.7 * s, ht * 0.5, (_rnd(h, i + 9) - 0.5) * 0.7 * s), Vector3((_rnd(h, i + 12) - 0.5) * 0.3, 0, (_rnd(h, i + 15) - 0.5) * 0.3)))
+			elif roll < 0.75:
+				_inked(_mesh(holder, _sph(0.6 * s, 0.5 * s), Color("#ffffff"), Vector3(0, 0.05, 0)))
+			else:
+				# pinheiro com neve
+				_mesh(holder, _cyl(0.05 * s, 0.07 * s, 0.35 * s, 6), Color("#5a3d22"), Vector3(0, 0.17 * s, 0))
+				for i in range(3):
+					var w = 0.42 * s * (1.0 - i * 0.24)
+					_inked(_mesh(holder, _cyl(0.0, w, 0.55 * s, 8), [Color("#2f6a5a"), Color("#3c806a"), Color("#e8f4ff")][i], Vector3(0, 0.45 * s + i * 0.3 * s, 0)))

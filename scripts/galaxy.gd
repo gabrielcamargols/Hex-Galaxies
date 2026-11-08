@@ -17,6 +17,16 @@ const PLANETS = [
 		"r": 37.0, "size": 3.0, "speed": 0.034, "a0": 2.3, "tex": "tarhut",
 		"atm": Color(1.0, 0.78, 0.45, 0.9), "dive": Color("#e0b070"), "pick": true, "suns": 5,
 		"arenas": [{"name": "Mar de Dunas", "map": "tarhut", "desc": "Dunas que mudam a cada 3 rounds, vermes gigantes e escaravelhos verdes."}]},
+	{"id": "abnara", "map": "abnara", "name": "Abnara", "sub": "A selva viva",
+		"desc": "Selva de raízes, rios e plantas predadoras. Três rotas: a mata do norte, o rio do meio e as ruínas do sul.",
+		"r": 29.0, "size": 2.6, "speed": 0.044, "a0": 4.1, "tex": "abnara",
+		"atm": Color(0.55, 1.0, 0.55, 0.9), "dive": Color("#4ea844"), "pick": true,
+		"arenas": [{"name": "Selva Viva", "map": "abnara", "desc": "217 casas. Mata que bloqueia tiros, rio com correnteza, pontes, ruínas e plantas predadoras."}]},
+	{"id": "goraida", "map": "goraida", "name": "Gor'Aida", "sub": "O gelo instável",
+		"desc": "Planalto gelado com corredores de gelo liso, fendas e paredes glaciais. Quatro rotas que se cruzam.",
+		"r": 46.0, "size": 2.8, "speed": 0.026, "a0": 5.6, "tex": "gelo",
+		"atm": Color(0.7, 0.9, 1.0, 0.9), "dive": Color("#9ce2ff"), "pick": true,
+		"arenas": [{"name": "Gelo Instável", "map": "goraida", "desc": "331 casas. Gelo liso que faz deslizar, fendas, paredes glaciais e corredores de avalanche."}]},
 	{"id": "gigante", "r": 56.0, "size": 5.4, "speed": 0.017, "a0": 4.6, "tex": "gigante", "atm": Color(0.7, 0.5, 1.0, 0.7), "ring": true},
 ]
 

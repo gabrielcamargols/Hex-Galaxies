@@ -366,6 +366,14 @@ func setup_ambient(map_id: String) -> void:
 		s1.emitting = false
 		s2.emitting = false
 		storm = [s1, s2]
+	elif map_id == "goraida":
+		# neve caindo com vento e cristais de gelo no ar
+		ambient.append(_field(Color(1.0, 1.0, 1.0, 0.85), 520, 6.0, 0.08, Vector3(0.6, -0.9, 0.25), Vector3(span, 3.0, span), 3.2, false))
+		ambient.append(_field(Color(0.75, 0.95, 1.0, 0.6), 60, 8.0, 0.06, Vector3(0.1, 0.05, 0.05), Vector3(span, 2.0, span), 1.2, true))
+	elif map_id == "abnara":
+		# pólen e vaga-lumes da selva
+		ambient.append(_field(Color(0.85, 1.0, 0.45, 0.75), 140, 8.0, 0.07, Vector3(0.05, 0.08, 0.04), Vector3(span, 2.2, span), 1.2, true))
+		ambient.append(_field(Color(1.0, 0.6, 0.85, 0.5), 50, 9.0, 0.06, Vector3(-0.04, 0.06, 0.05), Vector3(span, 2.0, span), 1.4, true))
 	else:
 		# caverna de Valak: poeira de cristal cintilando (roxa e ciano) e névoa baixa lilás
 		ambient.append(_field(Color(0.85, 0.55, 1.0, 0.75), 140, 9.0, 0.07, Vector3(0.05, 0.12, 0.05), Vector3(span, 2.5, span), 1.4, true))
