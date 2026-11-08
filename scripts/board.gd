@@ -30,7 +30,7 @@ const PAL = {
 	"pedra": ["#a6a2b4", "#868296", "#46444e"],
 	# Gor'Aida (gelo instável)
 	"neve": ["#f4f8ff", "#d8e6f4", "#8ea6c0"], "neve_base": ["#fff0cc", "#ead6aa", "#9a8a6a"], "gelo": ["#9ce2ff", "#70c4ee", "#3a7aa8"],
-	"gelo_f": ["#cdeeff", "#a6d4f0", "#5a8ab0"], "fenda": ["#123050", "#0a1e36", "#040c18"], "gelo_alto": ["#c4e2f6", "#9cc6e6", "#4e7ea6"],
+	"gelo_f": ["#cdeeff", "#a6d4f0", "#5a8ab0"], "fenda": ["#102a66", "#1b4aa0", "#2f6fc0"], "gelo_alto": ["#c4e2f6", "#9cc6e6", "#4e7ea6"],
 	"aval": ["#f8e8f4", "#e6cce0", "#9a7a98"],
 }
 const ELEV = {"tarhut": "#c0583a", "posto": "#e0c060", "abnara": "#d6e27a", "goraida": "#ffffff"}  # tom que as casas altas puxam
@@ -201,7 +201,16 @@ func build(game: Game) -> void:
 		lab.pixel_size = 0.006
 		lab.visible = false
 		node.add_child(lab)
-		tiles[h] = {"node": node, "disp_h": float(g.h_of(h)), "body": null, "props": null, "hl": hl, "dim": dim, "label": lab, "flash": 0.0, "sig": ""}
+		var wsp = Sprite3D.new()
+		wsp.texture = _warn_tex()
+		wsp.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		wsp.no_depth_test = true
+		wsp.shaded = false
+		wsp.pixel_size = 0.0062
+		wsp.render_priority = 9
+		wsp.visible = false
+		node.add_child(wsp)
+		tiles[h] = {"node": node, "disp_h": _disp_of(h), "body": null, "props": null, "hl": hl, "dim": dim, "label": lab, "warn": wsp, "flash": 0.0, "sig": ""}
 	if cave:
 		_build_cave()
 	elif bio == "jungle" or bio == "ice":
@@ -589,7 +598,7 @@ func refresh_terrain() -> void:
 		active_tiles[h] = true
 		tile["sig"] = sig
 		if first:
-			tile["disp_h"] = float(t["h"])
+			tile["disp_h"] = _disp_of(h)
 		if tile["body"] != null:
 			tile["body"].queue_free()
 		if tile["props"] != null:
@@ -617,6 +626,17 @@ func refresh_terrain() -> void:
 		_place_tile(h)
 
 
+# fenda de gelo: o chão afunda no relevo, então as paredes das casas vizinhas, a luz e a sombra do jogo fazem o buraco
+const PIT_DEPTH = 0.95
+
+
+func _disp_of(h: Vector2i) -> float:
+	var v = float(g.h_of(h))
+	if g.terr(h)["k"] == "fenda":
+		v -= PIT_DEPTH
+	return v
+
+
 func _place_tile(h: Vector2i) -> void:
 	var tile = tiles[h]
 	var y = tile["disp_h"] * HS
@@ -630,6 +650,8 @@ func _place_tile(h: Vector2i) -> void:
 	tile["hl"].position = Vector3(0, y + 0.03, 0)
 	tile["dim"].position = Vector3(0, y + 0.035, 0)
 	tile["label"].position = Vector3(0, y + 0.35, 0)
+	if tile.get("warn") != null:
+		tile["warn"].position = Vector3(0, y + 1.15, 0)
 
 
 # prisma unitário (altura 1 a partir de 0); topo com aro claro e centro colorido
@@ -809,6 +831,51 @@ var crack_mats: Array = []
 var terr_mats: Dictionary = {}
 var swirl_nodes: Array = []
 var mark_tex: Texture2D = null
+var warn_tiles: Dictionary = {}
+var warn_tex_cache: Texture2D = null
+
+
+# balão de HQ para os avisos: estrela amarela com contorno grosso, retícula no canto e "!" em tinta
+func _warn_tex() -> Texture2D:
+	if warn_tex_cache != null:
+		return warn_tex_cache
+	var S = 192
+	var img = Image.create(S, S, false, Image.FORMAT_RGBA8)
+	var ink = Color("#1a0e14")
+	var fill = Color("#ffc928")
+	var shade = Color("#f08a14")
+	var half = S * 0.5
+	var N = 9.0
+	for py in range(S):
+		for px in range(S):
+			var x = (px + 0.5 - half) / half
+			var y = (py + 0.5 - half) / half
+			var d = sqrt(x * x + y * y)
+			var th = atan2(y, x) + PI / 2.0
+			var tri = abs(fposmod(th * N / TAU, 1.0) * 2.0 - 1.0)
+			var rr = lerp(0.56, 0.96, pow(1.0 - tri, 1.4))
+			if d > rr:
+				continue
+			var c = fill
+			# retícula de HQ no lado de baixo
+			if x * 0.5 + y * 0.9 > 0.12:
+				var gx = fposmod(px, 12.0) - 6.0
+				var gy = fposmod(py + (6 if int(px / 12.0) % 2 == 1 else 0), 12.0) - 6.0
+				var rad = clamp((x * 0.5 + y * 0.9 - 0.12) * 5.0, 0.0, 1.0) * 4.2
+				if gx * gx + gy * gy < rad * rad:
+					c = shade
+			if d > rr - 0.085:
+				c = ink
+			# o "!" em tinta, com a base mais grossa que o topo
+			var bar_w = lerp(0.075, 0.15, clamp((y + 0.5) / 0.55, 0.0, 1.0))
+			if y > -0.5 and y < 0.1 and abs(x) < bar_w:
+				c = ink
+			var dd = Vector2(x, y - 0.33).length()
+			if dd < 0.115:
+				c = ink
+			img.set_pixel(px, py, c)
+	warn_tex_cache = ImageTexture.create_from_image(img)
+	return warn_tex_cache
 
 
 func _terr_mat(path: String) -> Material:
@@ -1816,6 +1883,16 @@ func _process(delta: float) -> void:
 				nd.get_meta("disk").albedo_color.a = pulse
 	if g == null:
 		return
+	if not warn_tiles.is_empty():
+		var tw = Time.get_ticks_msec() / 1000.0
+		for wh in warn_tiles.keys():
+			if tiles.has(wh) and tiles[wh]["warn"] != null:
+				var sp = tiles[wh]["warn"]
+				var ph = float(wh.x * 7 + wh.y * 3)
+				var yb = tiles[wh]["disp_h"] * HS + 1.15
+				sp.position.y = yb + sin(tw * 4.2 + ph) * 0.07
+				var pu = 1.0 + 0.06 * sin(tw * 8.0 + ph)
+				sp.scale = Vector3(pu, pu, pu)
 	_update_camera(delta)
 	# casas de entrada piscando quando dá para colocar reserva
 	for dh in state.get("hl", {}).keys():
@@ -1828,7 +1905,7 @@ func _process(delta: float) -> void:
 		var tile = tiles[h]
 		if tile["body"] == null:
 			continue
-		var tgt = float(g.h_of(h))
+		var tgt = _disp_of(h)
 		if abs(tile["disp_h"] - tgt) > 0.003:
 			tile["disp_h"] += (tgt - tile["disp_h"]) * min(1.0, delta * 4.0)
 			_place_tile(h)
@@ -2110,8 +2187,16 @@ func _apply_overlay(h: Vector2i) -> void:
 	var lit = state.get("lit", null)
 	tile["dim"].visible = lit != null and not lit.has(h)
 	var lab_txt = state.get("labels", {}).get(h, "")
-	tile["label"].visible = lab_txt != ""
-	if lab_txt != "":
+	# aviso de evento do mapa: balão de HQ (estrela com "!") que balança sobre a casa
+	var show_warn = lab_txt == "!" and (hl == "trem" or hl == "danger")
+	if tile["warn"] != null:
+		tile["warn"].visible = show_warn
+		if show_warn:
+			warn_tiles[h] = true
+		else:
+			warn_tiles.erase(h)
+	tile["label"].visible = lab_txt != "" and not show_warn
+	if lab_txt != "" and not show_warn:
 		tile["label"].text = lab_txt
 		tile["label"].modulate = state.get("label_colors", {}).get(h, Color.WHITE)
 
@@ -2994,10 +3079,19 @@ func _wild_props(root: Node3D, h: Vector2i, k: String) -> bool:
 				var ln = 0.35 + _rnd(h, i + 7) * 0.3
 				_mesh(root, _box(Vector3(ln, 0.012, 0.035)), Color("#2a5a8a"), p0 + Vector3(cos(a3) * ln * 0.5, 0, sin(a3) * ln * 0.5), Vector3(0, -a3, 0))
 		"fenda":
-			_mesh(root, _cyl(0.72, 0.6, 0.06, 6), Color("#06101e"), Vector3(0, 0.02, 0), Vector3(0, PI / 6.0, 0))
-			for i in range(8):
-				var a4 = TAU / 8.0 * i + _rnd(h, i) * 0.4
-				_inked(_mesh(root, _cyl(0.0, 0.1, 0.3 + _rnd(h, i + 10) * 0.2, 4), Color("#e8f6ff"), Vector3(cos(a4) * 0.66, 0.12, sin(a4) * 0.66), Vector3(sin(a4) * 0.45, 0, -cos(a4) * 0.45)))
+			# chão do buraco: rachaduras azul-claras, retícula e cacos de gelo nascendo do fundo (sem nada preto chapado)
+			for i in range(6):
+				var a4 = TAU / 6.0 * i + _rnd(h, i) * 0.8
+				var ln = 0.4 + _rnd(h, i + 10) * 0.35
+				_mesh(root, _box(Vector3(ln, 0.012, 0.05)), Color("#6cc4ff"), Vector3(cos(a4) * ln * 0.5, 0.012, sin(a4) * ln * 0.5), Vector3(0, -a4, 0))
+			for i in range(14):
+				var a5 = _rnd(h, i + 30) * TAU
+				var r5 = sqrt(_rnd(h, i + 50)) * 0.78
+				_mesh(root, _cyl(0.035 + _rnd(h, i + 70) * 0.03, 0.035 + _rnd(h, i + 70) * 0.03, 0.01, 8), Color("#3f8fe6"), Vector3(cos(a5) * r5, 0.014, sin(a5) * r5))
+			for i in range(3):
+				var a6 = TAU / 3.0 * i + _rnd(h, 5) * 2.0
+				var hh2 = 0.28 + _rnd(h, i + 9) * 0.22
+				_inked(_mesh(root, _cyl(0.0, 0.1, hh2, 5), Color("#d6f1ff"), Vector3(cos(a6) * 0.38, hh2 * 0.5, sin(a6) * 0.38), Vector3(sin(a6) * 0.18, 0, -cos(a6) * 0.18)))
 		"parede_gelo":
 			for i in range(3):
 				var px = (i - 1) * 0.36 + (_rnd(h, i) - 0.5) * 0.1
