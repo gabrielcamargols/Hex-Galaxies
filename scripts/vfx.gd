@@ -551,28 +551,39 @@ func _screen_angle(a: Vector3, b: Vector3) -> float:
 
 
 ## toca uma receita. at = onde acontece; from = de onde veio (ataque/tiro). Devolve o tempo até o impacto.
-func play_fx(id: String, at: Vector3, from: Variant = null, tint: Color = Color.WHITE, follow: Node3D = null) -> float:
+func play_fx(id: String, at: Vector3, from: Variant = null, tint: Color = Color.WHITE, follow: Node3D = null, ctx: Dictionary = {}) -> float:
+	# ctx: {"nucleo": Color do personagem (miolo do efeito), "extras": [Vector3] alvos secundários}
 	_receitas_load()
 	if not receitas.has(id):
 		return 0.0
 	var r: Dictionary = receitas[id]
 	var hit_t = 0.0
 	if r.has("proj") and from != null:
-		hit_t = _fx_proj2(r["proj"], from, at, tint) if r["proj"].has("parts") else _fx_proj(r["proj"], from, at)
+		var P = _core_dict(r["proj"], ctx)
+		hit_t = _fx_proj2(P, from, at, tint, ctx) if P.has("parts") else _fx_proj(P, from, at)
 		if r.has("hit"):
-			_fx_after(hit_t, func(): play_fx(str(r["hit"]), at, from, tint))
+			_fx_after(hit_t, func(): play_fx(str(r["hit"]), at, from, tint, follow, ctx))
 		return hit_t
-	for L in r.get("layers", []):
+	for L0 in r.get("layers", []):
+		var L = _core_dict(L0, ctx)
 		var dl = _rnd(L.get("delay", 0.0))
 		var at2 = _em(L, at, from)
+		if str(L.get("em", "")) == "extras":
+			for e in ctx.get("extras", []):
+				if L.has("sub"):
+					_fx_after(dl, play_fx.bind(str(L["sub"]), e, at, tint, null, ctx))
+			continue
 		if L.has("luz"):
 			_fx_after(dl, _fx_light.bind(L, at2))
 			continue
 		if L.has("corrente"):
 			_fx_after(dl, _fx_chain.bind(L, at, from, tint, follow))
 			continue
+		if L.has("raio"):
+			_fx_after(dl, _fx_bolts.bind(L, at, from, tint, ctx))
+			continue
 		if L.has("sub"):
-			_fx_after(dl, play_fx.bind(str(L["sub"]), at2, from, tint))
+			_fx_after(dl, play_fx.bind(str(L["sub"]), at2, from, tint, follow, ctx))
 		elif L.has("drops"):
 			_fx_after(dl, _fx_drops.bind(L, at2, from))
 		elif L.has("p"):
@@ -582,6 +593,48 @@ func play_fx(id: String, at: Vector3, from: Variant = null, tint: Color = Color.
 	if r.has("shake") and board != null:
 		_fx_after(_rnd(r.get("shake_delay", 0.0)), func(): board.shake = max(board.shake, float(r["shake"])))
 	return float(r.get("hit_t", 0.0))
+
+
+# COR DE NÚCLEO: camadas marcadas com "nucleo": true trocam o topo da rampa (o miolo mais claro)
+# pela cor do personagem; bordas e partículas seguem a paleta da facção.
+func _core_ramp(cols: Array, core: Color) -> Array:
+	var out = cols.duplicate()
+	if out.size() >= 3:
+		out[out.size() - 2] = "#" + core.to_html(false)
+		out[out.size() - 1] = "#" + core.lightened(0.35).to_html(false)
+	else:
+		out = ["#" + core.darkened(0.2).to_html(false), "#" + core.to_html(false), "#" + core.lightened(0.6).to_html(false)]
+	return out
+
+
+func _core_dict(L: Dictionary, ctx: Dictionary) -> Dictionary:
+	if not ctx.has("nucleo"):
+		return L
+	var core: Color = ctx["nucleo"]
+	var touched = false
+	var M = L
+	if bool(L.get("nucleo", false)):
+		M = L.duplicate(true)
+		touched = true
+		if M.has("ramp"):
+			M["ramp"] = _core_ramp(M["ramp"], core)
+		if M.has("luz"):
+			M["luz"] = "#" + core.to_html(false)
+	for k in ["orbe", "rastro", "arpao"]:
+		if M.has(k) and bool(M[k].get("nucleo", true)):
+			if not touched:
+				M = M.duplicate(true)
+				touched = true
+			if M[k].has("ramp"):
+				M[k]["ramp"] = _core_ramp(M[k]["ramp"], core)
+	if M.has("parts"):
+		if not touched:
+			M = M.duplicate(true)
+		var np = []
+		for q in M["parts"]:
+			np.append(_core_dict(q, ctx))
+		M["parts"] = np
+	return M
 
 
 func _fx_after(t: float, f: Callable) -> void:
@@ -899,7 +952,7 @@ func _fx_part(L: Dictionary, at: Vector3, from: Variant, tint: Color, follow: No
 
 
 # projétil em partículas: miolo brilhando + rastro emitindo enquanto voa
-func _fx_proj2(P: Dictionary, from: Vector3, to: Vector3, tint: Color) -> float:
+func _fx_proj2(P: Dictionary, from: Vector3, to: Vector3, tint: Color, ctx: Dictionary = {}) -> float:
 	var a = from + Vector3(0, float(P.get("y", 0.9)), 0)
 	var b = to + Vector3(0, float(P.get("y", 0.9)) * 0.8, 0)
 	var dist = a.distance_to(b)
@@ -914,6 +967,13 @@ func _fx_proj2(P: Dictionary, from: Vector3, to: Vector3, tint: Color) -> float:
 	if P.has("rastro"):
 		var tr = _fx_rastro_mesh(P["rastro"])
 		holder.add_child(tr)
+	var beams: Array = []          # [mesh, material, papel] — arpão e cabo, atualizados no voo
+	if P.has("arpao"):
+		for bl in _beam_pair(P["arpao"], "arpao", tint):
+			beams.append(bl + ["arpao"])
+	if P.has("cabo"):
+		for bl in _beam_pair(P["cabo"], "corrente", tint):
+			beams.append(bl + ["cabo"])
 	var dir0 = (b - a).normalized()
 	if abs(dir0.dot(Vector3.UP)) < 0.99:
 		holder.look_at_from_position(a, a + dir0, Vector3.UP)
@@ -938,11 +998,23 @@ func _fx_proj2(P: Dictionary, from: Vector3, to: Vector3, tint: Color) -> float:
 		if (nxt - p).length() > 0.0001 and abs((nxt - p).normalized().dot(Vector3.UP)) < 0.99:
 			holder.look_at_from_position(p, nxt, Vector3.UP)
 		holder.position = p
+		if not beams.is_empty():
+			var dv = (nxt - p).normalized() if (nxt - p).length() > 0.0001 else (b - a).normalized()
+			var hl = float(P.get("arpao", {}).get("len", 1.2)) * cam_k
+			var tail = p - dv * hl
+			for bm in beams:
+				if bm[2] == "arpao":
+					bm[0].transform = Transform3D(Basis(p - tail, Vector3.UP, Vector3.BACK), tail)
+				else:
+					var c0 = a - Vector3(0, 0.15, 0)
+					bm[0].transform = Transform3D(Basis(tail - c0, Vector3.UP, Vector3.BACK), c0)
 		for e in emitters:
 			if e[1]:
 				e[0].position = p, 0.0, 1.0, t)
 	tw.tween_callback(func():
 		holder.visible = false          # a esfera some no impacto; o estouro assume
+		for bm in beams:
+			bm[0].queue_free()
 		for e in emitters:
 			e[0].emitting = false
 			var life = e[0].lifetime + 0.4
@@ -1093,3 +1165,69 @@ func _fx_light(L: Dictionary, at: Vector3) -> void:
 	var tw = li.create_tween()
 	tw.tween_property(li, "light_energy", 0.0, float(L.get("dur", 0.3))).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tw.tween_callback(li.queue_free)
+
+
+# par de faixas (sombra escura por baixo + brilho por cima) para arpão, cabo e raio
+func _beam_pair(B: Dictionary, texname: String, tint: Color) -> Array:
+	var out = []
+	var tex = load("res://vfx/tex/%s.png" % str(B.get("tex", texname)))
+	var dark = B.get("ramp_sombra", ["#12061c", "#301342"])
+	# topo em "mix" deixa a cor chapada (núcleo legível em qualquer fundo); "add" brilha somando luz
+	for layer in [["mix", dark, float(B.get("sombra", 1.5)), 1.0, 20], [str(B.get("blend_top", "add")), B.get("ramp", ["#a957ec", "#f438a9", "#ffffff"]), 1.0, float(B.get("boost", 1.4)), 23]]:
+		var mi = MeshInstance3D.new()
+		var q = QuadMesh.new()
+		mi.mesh = q
+		mi.extra_cull_margin = 16.0
+		var m = ShaderMaterial.new()
+		m.shader = load("res://shaders/vfx_beam_%s.gdshader" % layer[0])
+		m.render_priority = layer[4]
+		m.set_shader_parameter("tex", tex)
+		m.set_shader_parameter("ramp", _ramp_tex(layer[1]))
+		m.set_shader_parameter("width", float(B.get("width", 0.35)) * layer[2] * cam_k)
+		# tile = comprimento da peça: arpão aparece uma vez inteiro; cabo/raio repetem
+		m.set_shader_parameter("tile", float(B.get("tile", B.get("len", 0.8))) * cam_k)
+		m.set_shader_parameter("boost", layer[3])
+		m.set_shader_parameter("halftone", float(B.get("halftone", 0.4)))
+		m.set_shader_parameter("tint", tint)
+		mi.material_override = m
+		add_child(mi)
+		out.append([mi, m])
+	return out
+
+
+# RAIOS: de "de" (at|from) para "para" (extras|from|aleatorio); tremem trocando o desenho a cada "flick"
+func _fx_bolts(L: Dictionary, at: Vector3, from: Variant, tint: Color, ctx: Dictionary) -> void:
+	var y = float(L.get("y", 0.9))
+	var src = (from if str(L.get("de", "at")) == "from" and from != null else at) + Vector3(0, y, 0)
+	var alvos: Array = []
+	match str(L.get("para", "extras")):
+		"extras":
+			for e in ctx.get("extras", []):
+				alvos.append(e + Vector3(0, y, 0))
+		"from":
+			if from != null:
+				alvos.append(from + Vector3(0, y, 0))
+		"at":
+			alvos.append(at + Vector3(0, y, 0))
+		_:
+			for i in range(int(L.get("n", 4))):
+				var a = randf() * TAU
+				var r = _rnd(L.get("raio_len", [0.8, 1.5])) * cam_k
+				alvos.append(src + Vector3(cos(a) * r, randf_range(-0.5, 0.9), sin(a) * r))
+	var dur = float(L.get("dur", 0.35))
+	var flick = float(L.get("flick", 0.05))
+	for b in alvos:
+		var pair = _beam_pair(L, "raio", tint)
+		var tw = create_tween()
+		tw.tween_method(func(t):
+			var k = min(1.0, t / max(0.001, float(L.get("cresce", 0.06))))
+			var end = src.lerp(b, k)
+			var step = floor(t / flick)
+			var fade = 1.0 - clamp((t - dur * 0.6) / (dur * 0.4), 0.0, 1.0)
+			for bm in pair:
+				bm[0].transform = Transform3D(Basis(end - src, Vector3.UP, Vector3.BACK), src)
+				bm[1].set_shader_parameter("scroll", step * 0.37 + randf() * 0.01)
+				bm[1].set_shader_parameter("fade", fade), 0.0, dur, dur)
+		tw.tween_callback(func():
+			for bm in pair:
+				bm[0].queue_free())

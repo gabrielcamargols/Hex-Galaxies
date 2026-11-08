@@ -9,7 +9,8 @@ const FUNDOS = {
 	"Neutro": [Color("#8c909e"), Color("#6c7080"), Color("#2a2c36")],
 	"Claro": [Color("#e9e4d8"), Color("#cfc8b6"), Color("#7d8794")],
 }
-const LADOS = [["rhazur", "k_tank"], ["sterina", "k_front"]]
+const LADOS = [["rhazur", "k_tank"], ["rayak", "k_tank"], ["strahl", "k_tank"], ["sterina", "k_front"]]
+const EXTRAS = ["k_front", "k_sniper"]     # inimigos vizinhos do alvo (descargas, áreas)
 
 var vfx: Node3D
 var cam: Camera3D
@@ -17,6 +18,8 @@ var env: Environment
 var shake: float = 0.0          # a vfx.gd escreve aqui (finge ser o tabuleiro)
 var tiles: Array = []
 var figs: Array = []
+var extras: Array = []
+var pers: Dictionary = {}
 var fundo_i: int = 0
 var lado_i: int = 0
 var trocado: bool = false
@@ -54,6 +57,11 @@ func _ready() -> void:
 	vfx.set_script(load("res://scripts/vfx.gd"))
 	add_child(vfx)
 	vfx.board = self
+	var pf = FileAccess.open("res://data/vfx_personagens.json", FileAccess.READ)
+	if pf != null:
+		var pd = JSON.parse_string(pf.get_as_text())
+		if typeof(pd) == TYPE_DICTIONARY:
+			pers = pd
 	_build_figs()
 	_build_ui()
 	_apply_fundo()
@@ -125,9 +133,10 @@ func _fig(cid: String) -> MeshInstance3D:
 
 
 func _build_figs() -> void:
-	for f in figs:
+	for f in figs + extras:
 		f.queue_free()
 	figs.clear()
+	extras.clear()
 	var par = LADOS[lado_i]
 	for i in range(2):
 		var f = _fig(par[i])
@@ -139,6 +148,16 @@ func _build_figs() -> void:
 			m.uv1_offset = Vector3(1, 0, 0)
 		add_child(f)
 		figs.append(f)
+	var side = 1.0 if not trocado else -1.0
+	for i in range(EXTRAS.size()):
+		var e = _fig(EXTRAS[i])
+		e.position = Vector3((2.6 + (-0.87 if i == 0 else 0.87)) * side, 0.0, -1.5)   # vizinhos do alvo, atrás dele
+		var em: StandardMaterial3D = e.material_override
+		if em != null and side > 0:
+			em.uv1_scale = Vector3(-1, 1, 1)
+			em.uv1_offset = Vector3(1, 0, 0)
+		add_child(e)
+		extras.append(e)
 
 
 func _pa() -> Vector3:
@@ -171,22 +190,28 @@ func tocar(id: String) -> void:
 	t_laco = 2.2
 	var r: Dictionary = vfx.receitas.get(id, {})
 	var alvo = str(r.get("alvo", "outro"))
+	var atk = LADOS[lado_i][0]
+	var ctx = {"extras": extras.map(func(e): return e.position)}
+	if pers.has(atk) and pers[atk].has("nucleo"):
+		ctx["nucleo"] = Color(str(pers[atk]["nucleo"]))
 	if alvo == "self":
-		vfx.play_fx(id, _pa(), null)
+		vfx.play_fx(id, _pa(), null, Color.WHITE, null, ctx)
 	elif r.has("puxa"):
-		# Abraço: o alvo é arrastado até a casa ao lado do atacante e depois volta ao lugar
+		# puxões: o alvo é arrastado (até o lado do atacante, ou N casas) e depois volta ao lugar
 		var fig: Node3D = figs[1]
 		var ini = _pb()
-		var dest = _pa() + (ini - _pa()).normalized() * 1.73
-		vfx.play_fx(id, ini, _pa(), Color.WHITE, fig)
 		var pz = r["puxa"]
+		var dest = _pa() + (ini - _pa()).normalized() * 1.73
+		if pz.has("casas"):
+			dest = ini + (_pa() - ini).normalized() * min(1.73 * float(pz["casas"]), ini.distance_to(_pa()) - 1.73)
+		var voo = vfx.play_fx(id, ini, _pa(), Color.WHITE, fig, ctx)
 		var tw = fig.create_tween()
-		tw.tween_interval(float(pz.get("inicio", 0.4)))
+		tw.tween_interval(float(pz.get("inicio", 0.4)) + (voo if bool(pz.get("apos_voo", false)) else 0.0))
 		tw.tween_property(fig, "position", dest, float(pz.get("dur", 0.4))).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 		tw.tween_interval(1.1)
 		tw.tween_property(fig, "position", ini, 0.01)
 	else:
-		vfx.play_fx(id, _pb(), _pa())
+		vfx.play_fx(id, _pb(), _pa(), Color.WHITE, null, ctx)
 	if info != null:
 		info.text = "%s   ·   velocidade %sx   ·   fundo %s" % [id, str(vel), FUNDOS.keys()[fundo_i]]
 

@@ -1,0 +1,103 @@
+{
+ "_nota": "Cor de núcleo de cada personagem (miolo do efeito) e a receita do ataque básico. Bordas e partículas seguem a paleta da facção. 'proposta': ainda não aprovada pelo diretor.",
+ "rhazur": {
+  "nucleo": "#ff9f1a",
+  "motivo": "manopla dourada",
+  "ataque": "aby_garra",
+  "proposta": true
+ },
+ "bayak": {
+  "nucleo": "#2ddaf6",
+  "motivo": "olhos ciano",
+  "ataque": "aby_tiro",
+  "proposta": true
+ },
+ "strahl": {
+  "nucleo": "#ffe03a",
+  "motivo": "eletricidade (pedido)",
+  "ataque": "aby_soco_eletrico"
+ },
+ "sapturne": {
+  "nucleo": "#b9f3ff",
+  "motivo": "gelo / foca",
+  "ataque": "aby_tiro",
+  "proposta": true
+ },
+ "rayak": {
+  "nucleo": "#2f9bff",
+  "motivo": "azul (pedido)",
+  "ataque": "aby_arpao"
+ },
+ "balu": {
+  "nucleo": "#5fd66a",
+  "motivo": "capuz verde",
+  "ataque": "aby_garra",
+  "proposta": true
+ },
+ "oncus": {
+  "nucleo": "#e9f6ff",
+  "motivo": "chifre prateado",
+  "ataque": "aby_garra",
+  "proposta": true
+ },
+ "moby": {
+  "nucleo": "#1c91d8",
+  "motivo": "azul do mar",
+  "ataque": "aby_garra",
+  "proposta": true
+ },
+ "sterina": {
+  "nucleo": "#fff0fa",
+  "motivo": "luz estelar",
+  "ataque": "aby_garra",
+  "proposta": true
+ },
+ "klang": {
+  "nucleo": "#f33b4b",
+  "motivo": "carapaça vermelha",
+  "ataque": "aby_tiro",
+  "proposta": true
+ },
+ "kling": {
+  "nucleo": "#ee550e",
+  "motivo": "laranja de oficina",
+  "ataque": "aby_garra",
+  "proposta": true
+ },
+ "inkshadow": {
+  "nucleo": "#0d0d1a",
+  "motivo": "tinta preta (núcleo escuro)",
+  "ataque": "aby_garra",
+  "proposta": true
+ },
+ "banker": {
+  "nucleo": "#ffe27a",
+  "motivo": "ouro de moeda",
+  "ataque": "aby_garra",
+  "proposta": true
+ },
+ "a_lumina": {
+  "nucleo": "#5cf2ff",
+  "motivo": "isca luminosa",
+  "ataque": "aby_tiro",
+  "proposta": true
+ },
+ "a_medusa": {
+  "nucleo": "#b6ff3c",
+  "motivo": "choque verde-limão",
+  "ataque": "aby_garra",
+  "proposta": true
+ },
+ "a_garra": {
+  "nucleo": "#3cdc8c",
+  "motivo": "cracas / algas",
+  "ataque": "aby_garra",
+  "proposta": true
+ },
+ "a_vespertina": {
+  "nucleo": "#d81c3e",
+  "motivo": "carmim do crepúsculo",
+  "ataque": "aby_garra",
+  "proposta": true
+ }
+}

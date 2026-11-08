@@ -262,10 +262,48 @@ def racha():
     return v * np.clip((1.0 - np.hypot(x, y)) * 4, 0, 1)
 
 
+def arpao():
+    """arpão de lado (ponta à direita), 256x64: haste, farpas e ponta; intensidade alta no fio da lâmina"""
+    W, H = 256, 64
+    im = Image.new("L", (W * 2, H * 2), 0)
+    d = ImageDraw.Draw(im)
+    s = 2
+    d.rectangle([0, 28 * s, 190 * s, 36 * s], fill=215)                         # haste
+    d.polygon([(178 * s, 14 * s), (256 * s, 32 * s), (178 * s, 50 * s), (192 * s, 32 * s)], fill=255)   # ponta
+    d.polygon([(150 * s, 32 * s), (176 * s, 10 * s), (168 * s, 32 * s)], fill=230)                   # farpa de cima
+    d.polygon([(150 * s, 32 * s), (176 * s, 54 * s), (168 * s, 32 * s)], fill=230)                   # farpa de baixo
+    for k in range(4):                                                                               # amarras
+        x = 20 + k * 14
+        d.rectangle([x * s, 25 * s, (x + 5) * s, 39 * s], fill=120)
+    v = np.asarray(im.resize((W, H), Image.LANCZOS)).astype(np.float32) / 255
+    return v
+
+
+def raio():
+    """raio em tira repetível (256x64): zigue-zague com ramos; miolo branco (alto), halo baixo"""
+    W, H = 256, 64
+    rr = random.Random(17)
+    im = Image.new("L", (W, H), 0)
+    d = ImageDraw.Draw(im)
+    pts = [(0, H / 2)]
+    for i in range(1, 9):
+        pts.append((i * W / 9, H / 2 + rr.uniform(-20, 20)))
+    pts.append((W, H / 2))
+    d.line(pts, fill=255, width=5)
+    for i in range(2, 8, 2):
+        x, y = pts[i]
+        d.line([(x, y), (x + rr.uniform(10, 26), y + rr.choice([-1, 1]) * rr.uniform(12, 22))], fill=200, width=3)
+    m = np.asarray(im).astype(np.float32) / 255
+    core = ndi.gaussian_filter(m, 0.8)
+    core = np.clip(core / core.max() * 1.3, 0, 1)      # miolo do raio chega no topo da rampa (cor do núcleo)
+    halo = ndi.gaussian_filter(m, 5.0) * 2.2
+    return np.clip(np.maximum(core, np.clip(halo, 0, 0.45)), 0, 1)
+
+
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     for nm, fn in [("brilho", brilho), ("anel", anel), ("estrela", estrela), ("faisca", faisca), ("fumaca", fumaca),
-                   ("estilhaco", estilhaco), ("respingo", respingo), ("rasgo", rasgo), ("gota", gota), ("seta", seta), ("corrente", corrente), ("voronoi", voronoi), ("ponto", ponto), ("retalho", retalho), ("racha", racha)]:
+                   ("estilhaco", estilhaco), ("respingo", respingo), ("rasgo", rasgo), ("gota", gota), ("seta", seta), ("corrente", corrente), ("voronoi", voronoi), ("ponto", ponto), ("retalho", retalho), ("racha", racha), ("arpao", arpao), ("raio", raio)]:
         v = fn()
         if nm == "faisca":
             v = v[::-1]          # cabeça em cima: o topo da textura segue a velocidade
