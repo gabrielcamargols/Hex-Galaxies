@@ -3045,21 +3045,35 @@ func _water(root: Node3D, h: Vector2i, y: float) -> void:
 
 
 # ponte: sem chão por baixo, água correndo no leito e tabuleiro de tábuas de borda a borda da casa
+func _bank_score(n: Vector2i) -> int:
+	if not tiles.has(n):
+		return 0
+	var k = g.terr(n)["k"]
+	if k == "correnteza" or k == "fosso" or k == "buraco":
+		return 0
+	return 1 if k == "ponte" else 2
+
+
 func _bridge(root: Node3D, h: Vector2i) -> void:
 	_water(root, h, -RIVER_DROP * HS + 0.03)
-	# eixo da ponte: o par de vizinhas opostas que não é água
+	# eixo da ponte: o par de vizinhas opostas com mais chão (margem vale 2, outra ponte vale 1, água 0);
+	# no empate, atravessa o rio (perpendicular à correnteza)
 	var axis = Vector2(0, 1)
+	var best = -999.0
+	var fl = _river_dir(h)
 	for i in range(3):
 		var a = h + DB.DIRS[i]
 		var b = h + DB.DIRS[i + 3]
-		if tiles.has(a) and tiles.has(b) and g.terr(a)["k"] != "correnteza" and g.terr(b)["k"] != "correnteza":
-			axis = (world_xz(a) - world_xz(b)).normalized()
-			break
+		var ax = (world_xz(a) - world_xz(b)).normalized()
+		var sc = float(_bank_score(a) + _bank_score(b)) - abs(ax.dot(fl)) * 0.5
+		if sc > best:
+			best = sc
+			axis = ax
 	var br = Node3D.new()
 	br.rotation = Vector3(0, atan2(axis.x, axis.y), 0)
 	br.scale = Vector3(HX, 1, HX)
 	root.add_child(br)
-	var L = S3 * TILE * 1.03     # de borda a borda da casa
+	var L = S3 * TILE * 1.16     # de borda a borda da casa e um pouco sobre as margens
 	var W = 1.5
 	var n = 9
 	var pw = L / n
