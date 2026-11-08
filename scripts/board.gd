@@ -617,8 +617,8 @@ func refresh_terrain() -> void:
 		body.material_override = tile_mat
 		tile["node"].add_child(body)
 		tile["body"] = body
-		if t["k"] == "fosso":
-			body.visible = false
+		if t["k"] == "fosso" or t["k"] == "ponte":
+			body.visible = false   # ponte: sem chão, a água passa por baixo
 		var props = Node3D.new()
 		tile["node"].add_child(props)
 		tile["props"] = props
@@ -628,12 +628,16 @@ func refresh_terrain() -> void:
 
 # fenda de gelo: o chão afunda no relevo, então as paredes das casas vizinhas, a luz e a sombra do jogo fazem o buraco
 const PIT_DEPTH = 0.95
+const RIVER_DROP = 0.8   # níveis que o leito do rio afunda em relação às margens
 
 
 func _disp_of(h: Vector2i) -> float:
 	var v = float(g.h_of(h))
-	if g.terr(h)["k"] == "fenda":
+	var kk = g.terr(h)["k"]
+	if kk == "fenda":
 		v -= PIT_DEPTH
+	elif kk == "correnteza":
+		v -= RIVER_DROP   # o rio corre num leito afundado
 	return v
 
 
@@ -2992,6 +2996,83 @@ func _sph(r: float, hgt: float = -1.0) -> SphereMesh:
 	return sm
 
 
+var hex_flat_mesh: ArrayMesh = null
+var water_mats: Dictionary = {}
+
+
+func _hex_flat() -> ArrayMesh:
+	if hex_flat_mesh == null:
+		var st = SurfaceTool.new()
+		st.begin(Mesh.PRIMITIVE_TRIANGLES)
+		st.set_normal(Vector3.UP)
+		for k in range(6):
+			var a = PI / 3.0 * k
+			var b = PI / 3.0 * (k + 1)
+			st.add_vertex(Vector3.ZERO)
+			st.add_vertex(Vector3(cos(b), 0, sin(b)) * TILE * 1.002)
+			st.add_vertex(Vector3(cos(a), 0, sin(a)) * TILE * 1.002)
+		hex_flat_mesh = st.commit()
+	return hex_flat_mesh
+
+
+# direção da correnteza de uma casa de água ou de ponte (a ponte herda a de uma vizinha de água)
+func _river_dir(h: Vector2i) -> Vector2:
+	var fd: Variant = _flow_of(h)
+	if fd != null:
+		return fd
+	for n in DB.DIRS:
+		var nb = h + n
+		var f2: Variant = _flow_of(nb)
+		if f2 != null and tiles.has(nb):
+			return f2
+	return Vector2(0, 1)
+
+
+func _water(root: Node3D, h: Vector2i, y: float) -> void:
+	var d = _river_dir(h)
+	var key = "%.2f,%.2f" % [d.x, d.y]
+	if not water_mats.has(key):
+		var m = ShaderMaterial.new()
+		m.shader = load("res://shaders/agua.gdshader")
+		m.set_shader_parameter("flow", d)
+		water_mats[key] = m
+	var mi = MeshInstance3D.new()
+	mi.mesh = _hex_flat()
+	mi.scale = Vector3(HX, 1, HX)
+	mi.position = Vector3(0, y, 0)
+	mi.material_override = water_mats[key]
+	root.add_child(mi)
+
+
+# ponte: sem chão por baixo, água correndo no leito e tabuleiro de tábuas de borda a borda da casa
+func _bridge(root: Node3D, h: Vector2i) -> void:
+	_water(root, h, -RIVER_DROP * HS + 0.03)
+	# eixo da ponte: o par de vizinhas opostas que não é água
+	var axis = Vector2(0, 1)
+	for i in range(3):
+		var a = h + DB.DIRS[i]
+		var b = h + DB.DIRS[i + 3]
+		if tiles.has(a) and tiles.has(b) and g.terr(a)["k"] != "correnteza" and g.terr(b)["k"] != "correnteza":
+			axis = (world_xz(a) - world_xz(b)).normalized()
+			break
+	var br = Node3D.new()
+	br.rotation = Vector3(0, atan2(axis.x, axis.y), 0)
+	br.scale = Vector3(HX, 1, HX)
+	root.add_child(br)
+	var L = S3 * TILE * 1.03     # de borda a borda da casa
+	var W = 1.5
+	var n = 9
+	var pw = L / n
+	for i in range(n):
+		var c = Color("#c9824a").lerp(Color("#a8622e"), _rnd(h, i))
+		_mesh(br, _box(Vector3(W, 0.09, pw * 0.88)), c, Vector3(0, 0.03, -L * 0.5 + pw * (i + 0.5)))
+	for sx in [-1.0, 1.0]:
+		_mesh(br, _box(Vector3(0.12, 0.1, L)), Color("#7a4a26"), Vector3(sx * W * 0.5, -0.04, 0))
+		_mesh(br, _box(Vector3(0.07, 0.07, L)), Color("#8c5a2c"), Vector3(sx * W * 0.5, 0.36, 0))
+		for sz in [-0.5, 0.0, 0.5]:
+			_mesh(br, _box(Vector3(0.09, 0.4, 0.09)), Color("#7a4a26"), Vector3(sx * W * 0.5, 0.17, sz * L * 0.92))
+
+
 func _arrow(root: Node3D, dir: Vector2, col: Color, y: float, s: float = 1.0) -> void:
 	var arrow = Node3D.new()
 	arrow.rotation = Vector3(0, -atan2(dir.y, dir.x), 0)
@@ -3032,17 +3113,11 @@ func _wild_props(root: Node3D, h: Vector2i, k: String) -> bool:
 			_mesh(holder, _sph(0.16, 0.12), Color("#4ea844"), Vector3(0.05, 1.18, 0.02))
 		"correnteza":
 			var fd: Variant = _flow_of(h)
-			for i in range(2):
-				_mesh(root, _box(Vector3(0.5, 0.02, 0.05)), Color("#bff2ff"), Vector3((_rnd(h, i) - 0.5) * 0.9, 0.02, (_rnd(h, i + 4) - 0.5) * 0.9), Vector3(0, _rnd(h, 8) * 0.6, 0))
+			_water(root, h, 0.03)
 			if fd != null:
-				_arrow(root, fd, Color("#ffffff"), 0.04)
+				_arrow(root, fd, Color("#ffffff"), 0.06)
 		"ponte":
-			for i in range(5):
-				_inked(_mesh(root, _box(Vector3(1.25, 0.08, 0.2)), Color("#b07840").lerp(Color("#8c5a2c"), _rnd(h, i)), Vector3(0, 0.05, -0.46 + i * 0.23)))
-			for sx in [-0.62, 0.62]:
-				_inked(_mesh(root, _box(Vector3(0.06, 0.06, 1.15)), Color("#6b4426"), Vector3(sx, 0.32, 0)))
-				for sz in [-0.5, 0.5]:
-					_mesh(root, _cyl(0.05, 0.05, 0.36, 6), Color("#6b4426"), Vector3(sx, 0.18, sz))
+			_bridge(root, h)
 		"ruina_alta":
 			var hb = Node3D.new()
 			hb.rotation = Vector3(0, int(_rnd(h, 2) * 6) * PI / 3.0, 0)
