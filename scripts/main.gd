@@ -4262,6 +4262,7 @@ func _perf_guard(delta: float) -> void:
 			if render_q > 0.75:
 				render_q = 0.75
 				get_viewport().scaling_3d_scale = render_q
+			get_viewport().msaa_3d = Viewport.MSAA_DISABLED
 			print("desempenho baixo (%.0f fps): filtro HQ desligado e resolução 3D reduzida" % fps)
 
 
