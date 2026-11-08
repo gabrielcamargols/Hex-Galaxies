@@ -1,6 +1,7 @@
 // Hex Galaxies - sombreado "pintado" para o cenário (tools/cenario.py)
 // 3 tons (sombra quente, base, brilho), borda dos tons com pinceladas e luz de contorno.
 shader_type spatial;
+#include "res://shaders/hexdots.gdshaderinc"
 render_mode cull_disabled, specular_disabled;
 
 uniform vec3 shadow_tint : source_color = vec3(0.55, 0.42, 0.58);
@@ -34,8 +35,7 @@ void light() {
 	vec3 shade = mix(shadow_tint * shadow_level, vec3(1.0), lit);
 	// retícula de quadrinho na sombra (espaço de tela)
 	vec2 p = FRAGCOORD.xy;
-	vec2 rp = vec2(p.x + p.y, p.x - p.y) * 0.70710678 / 6.0;
-	float d = length(fract(rp) - 0.5);
+	float d = hexd(p / 7.0);
 	float sh = smoothstep(0.02, -0.25, nd);
 	float r = 0.4 * sqrt(sh);
 	shade *= 1.0 - (1.0 - smoothstep(r - 0.07, r + 0.07, d)) * sh * 0.3;

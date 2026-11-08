@@ -2,6 +2,7 @@
 // retícula SÓ nas sombras (faces viradas contra o sol) e pontinhos claros SÓ no brilho.
 // Os meios-tons ficam limpos.
 shader_type spatial;
+#include "res://shaders/hexdots.gdshaderinc"
 render_mode cull_disabled, specular_disabled;
 
 uniform vec3 shadow_tint : source_color = vec3(0.5, 0.4, 0.68);
@@ -26,10 +27,9 @@ void light() {
 	vec3 dark = shadow_tint * shadow_level;
 	vec2 p = FRAGCOORD.xy;
 	// retícula diagonal: só na passagem entre a luz e a sombra (o ponto cresce conforme escurece)
-	vec2 rp = vec2(p.x + p.y, p.x - p.y) * 0.70710678 / dot_px;
-	float d = length(fract(rp) - 0.5);
+	float d = hexd(p / (dot_px * 1.15));
 	float need = clamp((0.85 - l) / 0.85, 0.0, 1.0);
-	float r = 0.62 * sqrt(need);
+	float r = 0.52 * sqrt(need);
 	float dotm = 1.0 - smoothstep(r - 0.06, r + 0.06, d);
 	vec3 shade = mix(vec3(1.0), dark, dotm);
 	// sombra funda: tudo escuro, com hachuras (linhas diagonais) para dar detalhe

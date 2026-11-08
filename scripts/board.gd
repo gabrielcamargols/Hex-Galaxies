@@ -3144,6 +3144,26 @@ func _pincel_mat(i: int) -> ShaderMaterial:
 	return pincel_mats[k]
 
 
+# musgo em camadas: cadeia de passes (next_pass), cada um uma camada mais alta dos tufos
+var moss_chain: ShaderMaterial = null
+
+
+func _moss_mat() -> ShaderMaterial:
+	if moss_chain == null:
+		var n = 5
+		var prev: ShaderMaterial = null
+		for i in range(n - 1, -1, -1):
+			var m = ShaderMaterial.new()
+			m.shader = load("res://shaders/musgo.gdshader")
+			m.set_shader_parameter("layer", float(i) / float(n - 1))
+			m.set_shader_parameter("shadow_tint", _planet_shadow())
+			if prev != null:
+				m.next_pass = prev
+			prev = m
+		moss_chain = prev
+	return moss_chain
+
+
 # material pintado com paleta própria (raízes, plantas...)
 func _pincel_custom(key: String, dark: Color, mid: Color, light: Color, edge: float = 0.4, scale: float = 5.0) -> ShaderMaterial:
 	if not pincel_mats.has(key):
@@ -3233,8 +3253,11 @@ func _wild_props(root: Node3D, h: Vector2i, k: String) -> bool:
 			parts.append([_box(Vector3(0.26, 0.2, 0.22)), Vector3(0.62, 0.3, 0.2), Vector3(0.2, 0.7, 0.1), st_m])
 			parts.append([_box(Vector3(0.2, 0.16, 0.2)), Vector3(-0.7, 0.28, -0.4), Vector3(0.1, 0.3, 0.3), st_m])
 			# musgo no topo e cipós descendo das colunas
-			parts.append([_sph(0.34, 0.14), Vector3(0, 1.7, -0.15), Vector3.ZERO, mo_m])
-			parts.append([_sph(0.26, 0.12), Vector3(0.0, 0.7, 0.42), Vector3.ZERO, mo_m])
+			var sh_m = _moss_mat()
+			parts.append([_box(Vector3(1.0, 0.06, 0.3)), Vector3(0, 1.68, -0.15), Vector3(0, 0, 0.05), sh_m])
+			parts.append([_box(Vector3(0.9, 0.05, 0.22)), Vector3(0, 0.67, 0.42), Vector3(0, 0.05, 0), sh_m])
+			parts.append([_box(Vector3(1.1, 0.05, 0.7)), Vector3(0, 0.3, 0.02), Vector3.ZERO, sh_m])
+			parts.append([_sph(0.32, 0.12), Vector3(0.05, 0.84, 0.4), Vector3.ZERO, sh_m])
 			for cx in [-0.42, 0.42]:
 				parts.append([_cyl(0.025, 0.03, 0.9, 4), Vector3(cx + 0.14, 1.0, -0.02), Vector3(0.1, 0, 0.1), mo_m])
 			for pt in parts:

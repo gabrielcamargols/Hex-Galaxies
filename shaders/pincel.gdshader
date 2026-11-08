@@ -1,6 +1,7 @@
 // Copa de árvore pintada (guache do Aranhaverso): manchas planas de verdes diferentes, borda esfarelada de pincel,
 // luz quente de um lado e sombra fria azul-violeta do outro, retícula fina na sombra.
 shader_type spatial;
+#include "res://shaders/hexdots.gdshaderinc"
 render_mode cull_disabled, specular_disabled;
 
 uniform vec3 c_dark : source_color = vec3(0.17, 0.33, 0.27);
@@ -52,10 +53,9 @@ void light() {
 	float l = smoothstep(-0.12, 0.55, nd) * mix(1.0, ATTENUATION, 0.9);
 	vec3 dark = shadow_tint * 0.62;
 	vec2 p = FRAGCOORD.xy;
-	vec2 rp = vec2(p.x + p.y, p.x - p.y) * 0.70710678 / 6.0;
-	float d = length(fract(rp) - 0.5);
+	float d = hexd(p / 7.0);
 	float need = clamp((0.85 - l) / 0.85, 0.0, 1.0);
-	float r = 0.62 * sqrt(need);
+	float r = 0.52 * sqrt(need);
 	vec3 shade = mix(vec3(1.0), dark, 1.0 - smoothstep(r - 0.06, r + 0.06, d));
 	float deep = smoothstep(0.38, 0.1, l);
 	shade = mix(shade, dark, deep);

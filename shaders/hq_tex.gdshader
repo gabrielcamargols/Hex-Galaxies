@@ -2,6 +2,7 @@
 // (fóssil, flor do deserto e outros modelos novos): a cor vem da textura, achatada em 3 tons,
 // com retícula só na sombra e pontinhos claros no brilho. O contorno preto vem do material de contorno.
 shader_type spatial;
+#include "res://shaders/hexdots.gdshaderinc"
 render_mode cull_disabled, specular_disabled;
 
 uniform sampler2D tex : source_color, filter_linear_mipmap;
@@ -30,8 +31,7 @@ void light() {
 	float lit = smoothstep(0.0, 0.06, nd) * mix(1.0, ATTENUATION, 0.6);
 	vec3 shade = mix(shadow_tint * shadow_level, vec3(1.0), lit);
 	vec2 p = FRAGCOORD.xy;
-	vec2 rp = vec2(p.x + p.y, p.x - p.y) * 0.70710678 / dot_px;
-	float d = length(fract(rp) - 0.5);
+	float d = hexd(p / (dot_px * 1.15));
 	float sh = smoothstep(0.02, -0.25, nd);
 	float r = 0.4 * sqrt(sh);
 	shade *= 1.0 - (1.0 - smoothstep(r - 0.07, r + 0.07, d)) * sh * dot_amt;

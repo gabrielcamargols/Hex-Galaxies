@@ -1,5 +1,6 @@
 // Água corrente em cores chapadas: faixas claras que deslizam na direção da correnteza, retícula nas áreas escuras.
 shader_type spatial;
+#include "res://shaders/hexdots.gdshaderinc"
 render_mode unshaded, cull_disabled;
 
 uniform vec2 flow = vec2(0.0, 1.0);          // direção no mundo (x, z)
@@ -29,8 +30,7 @@ void fragment() {
 	col = mix(col, light, streak);
 	// retícula nas áreas escuras
 	vec2 p = FRAGCOORD.xy;
-	vec2 rp = vec2(p.x + p.y, p.x - p.y) * 0.70710678 / 8.0;
-	float d = length(fract(rp) - 0.5);
+	float d = hexd(p / 9.0);
 	float dots = (1.0 - smoothstep(0.28, 0.36, d)) * (w > 0.1 ? 0.0 : 1.0);
 	col = mix(col, mid, dots * 0.6);
 	ALBEDO = col;
