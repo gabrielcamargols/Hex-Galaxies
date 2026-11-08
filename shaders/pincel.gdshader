@@ -49,16 +49,19 @@ void fragment() {
 
 void light() {
 	float nd = dot(NORMAL, LIGHT);
-	float lit = smoothstep(-0.05, 0.12, nd) * mix(1.0, ATTENUATION, 0.6);
-	// sombra fria (azul-violeta) em vez de só escurecer
-	vec3 shade = mix(shadow_tint * 0.62, vec3(1.0), lit);
-	// luz quente nas faces viradas pro sol
-	vec3 warm = mix(vec3(1.0), vec3(1.14, 1.04, 0.78), smoothstep(0.35, 0.9, nd) * ATTENUATION);
+	float l = smoothstep(-0.12, 0.55, nd) * mix(1.0, ATTENUATION, 0.9);
+	vec3 dark = shadow_tint * 0.62;
 	vec2 p = FRAGCOORD.xy;
-	vec2 rp = vec2(p.x + p.y, p.x - p.y) * 0.70710678 / 5.0;
+	vec2 rp = vec2(p.x + p.y, p.x - p.y) * 0.70710678 / 6.0;
 	float d = length(fract(rp) - 0.5);
-	float sh = smoothstep(0.05, -0.3, nd);
-	float r = 0.38 * sqrt(sh);
-	shade *= 1.0 - (1.0 - smoothstep(r - 0.07, r + 0.07, d)) * sh * 0.35;
+	float need = clamp((0.85 - l) / 0.85, 0.0, 1.0);
+	float r = 0.62 * sqrt(need);
+	vec3 shade = mix(vec3(1.0), dark, 1.0 - smoothstep(r - 0.06, r + 0.06, d));
+	float deep = smoothstep(0.38, 0.1, l);
+	shade = mix(shade, dark, deep);
+	float hatch = step(0.78, fract((p.x - p.y) / 6.0));
+	shade *= 1.0 - hatch * deep * 0.38;
+	// luz quente só onde está bem iluminado
+	vec3 warm = mix(vec3(1.0), vec3(1.12, 1.03, 0.8), smoothstep(0.6, 1.0, l));
 	DIFFUSE_LIGHT += LIGHT_COLOR * shade * warm / PI;
 }
