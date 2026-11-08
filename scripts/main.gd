@@ -125,6 +125,7 @@ func _ready() -> void:
 	sfx.set_script(load("res://scripts/sfx.gd"))
 	add_child(sfx)
 	vfx.sfx = sfx
+	get_tree().create_timer(1.5).timeout.connect(func(): sfx.warm())
 	# filtro de quadrinho sobre o 3D (fica abaixo da interface)
 	var hq_layer = CanvasLayer.new()
 	hq_layer.layer = -1
@@ -2279,7 +2280,8 @@ func _fmt_clock(t: float) -> String:
 func _apply_title() -> void:
 	if not w.has("title") or not is_instance_valid(w["title"]):
 		return
-	w["title"].text = title_base
+	if w["title"].text != title_base:
+		w["title"].text = title_base
 	if game == null or not game.clock_on:
 		return
 	for p in range(2):
@@ -2288,7 +2290,11 @@ func _apply_title() -> void:
 			continue
 		var t = float(game.clock[p])
 		var run = game.cur == p and game.winner == Game.NONE
-		cl.text = "⏱ %s%s" % [_fmt_clock(t), "  ◀ jogando" if run else ""]
+		var tx = "⏱ %s%s" % [_fmt_clock(t), "  ◀ jogando" if run else ""]
+		if cl.text == tx and cl.has_meta("run") and cl.get_meta("run") == run:
+			continue
+		cl.set_meta("run", run)
+		cl.text = tx
 		cl.add_theme_color_override("font_color", Color("#ff5a4a") if t < 60.0 else (Color("#ffe39a") if run else Color("#8fb8cc")))
 
 
@@ -2348,7 +2354,26 @@ func _refresh_top() -> void:
 	w["events"].visible = not ev.is_empty()
 
 
+var party_sig: String = ""
+var hand_sig: String = ""
+
+
+func _party_signature() -> String:
+	var s = "%d|%d|%d|%d|%d|%s|%s|%s|%s|%s|%s|%s|" % [sel, dsel, inspect, me, game.cur, str(can_deploy_now()), str(busy), str(my_turn()), str(game.clock_on), str(compact), str(res_drag != null and res_drag.get("on", false)), deploy_block_reason()]
+	for pp in range(2):
+		s += "%d,%s;" % [game.scarabs_of(pp), str(game.P[pp].get("mix", false))]
+	for u in game.units:
+		if u.barrier:
+			continue
+		s += "%d:%s:%d:%d:%d:%d:%s:%s;" % [u.uid, u.st, u.hp, u.maxhp, u.q, u.r, str(u.activated), u.eq]
+	return s
+
+
 func _refresh_party() -> void:
+	var psg = _party_signature()
+	if psg == party_sig and w.has("party0") and is_instance_valid(w["party0"]) and w["party0"].get_child_count() > 0:
+		return
+	party_sig = psg
 	for p in range(2):
 		var box: VBoxContainer = w["party%d" % p]
 		for c in box.get_children():
@@ -2435,7 +2460,14 @@ func _roster_scroll(parent: Control) -> ScrollContainer:
 
 
 # limita a altura das listas para não ficarem embaixo da ficha nem do botão de passar
+var fit_t: float = 0.0
+
+
 func _fit_rosters() -> void:
+	var now = Time.get_ticks_msec()
+	if now - fit_t < 250:
+		return
+	fit_t = now
 	if not w.has("party0_sc") or not is_instance_valid(w["party0_sc"]):
 		return
 	var vh = ui.size.y
@@ -3077,11 +3109,19 @@ func _refresh_hand() -> void:
 	if not w.has("hand"):
 		return
 	var box: HBoxContainer = w["hand"]
-	for c in box.get_children():
-		c.queue_free()
 	if game == null:
+		for c in box.get_children():
+			c.queue_free()
 		return
 	var pl = game.P[me]
+	var hsg = "%s|%d|%s|%s|" % [str(my_turn()), pl["deck"].size(), str(compact), str(game.act != null)]
+	for id in pl["hand"]:
+		hsg += "%s:%s:%s;" % [id, str(_card_playable(id)), _card_targets(id)["txt"]]
+	if hsg == hand_sig and box.get_child_count() > 0:
+		return
+	hand_sig = hsg
+	for c in box.get_children():
+		c.queue_free()
 	for id in pl["hand"]:
 		box.add_child(_make_card(id))
 	var info = _label(box, "  Baralho\n  %d" % pl["deck"].size(), 12, C_DIM)
@@ -4746,9 +4786,16 @@ func _update_plates(delta: float) -> void:
 		pl["ghost"].size.x = pl["bw"] * clamp(pl["ghost_v"] / max(1.0, float(u.maxhp)), 0.0, 1.0)
 		var hc = Color("#4cd964") if frac > 0.6 else (Color("#ffcf3a") if frac > 0.34 else Color("#ff3b3b"))
 		pl["flash"] = max(0.0, pl["flash"] - delta * 3.0)
-		pl["fill"].color = hc.lerp(Color.WHITE, pl["flash"] * 0.8)
-		pl["hp"].text = str(u.hp)
-		pl["hp"].add_theme_color_override("font_color", hc.lightened(0.25))
+		var fcol = hc.lerp(Color.WHITE, pl["flash"] * 0.8)
+		if pl["fill"].color != fcol:
+			pl["fill"].color = fcol
+		var hpt = str(u.hp)
+		if pl["hp"].text != hpt:
+			pl["hp"].text = hpt
+			pl["hp"].add_theme_color_override("font_color", hc.lightened(0.25))
+		elif pl.get("hc", Color.BLACK) != hc:
+			pl["hp"].add_theme_color_override("font_color", hc.lightened(0.25))
+		pl["hc"] = hc
 		var fl = []
 		if u.eq != "":
 			fl.append(u.eq.to_upper())
@@ -4758,8 +4805,12 @@ func _update_plates(delta: float) -> void:
 			fl.append("SEM HAB.")
 		if game.has_fx(u, "mark"):
 			fl.append("ALVO")
-		pl["flags"].text = " · ".join(fl)
-		pl["flags"].visible = not fl.is_empty()
+		var flt = " · ".join(fl)
+		if pl["flags"].text != flt:
+			pl["flags"].text = flt
+		var flv = not fl.is_empty()
+		if pl["flags"].visible != flv:
+			pl["flags"].visible = flv
 		var shake = Vector2(sin(Time.get_ticks_msec() * 0.09) * 3.0 * pl["flash"], 0)
 		p.scale = Vector2.ONE * sc * (1.0 + pl["flash"] * 0.12)
 		p.pivot_offset = Vector2(p.size.x * 0.5, p.size.y)

@@ -123,3 +123,21 @@ func stop_loop(n: String, fade: float = 2.0) -> void:
 func stop_all_loops() -> void:
 	for n in loops.keys():
 		stop_loop(n, 0.5)
+
+
+# aquece os efeitos curtos: o primeiro uso de cada som (principalmente na web) custa um engasgo,
+# então eles tocam mudos, um por quadro, enquanto o menu carrega
+func warm() -> void:
+	var p = AudioStreamPlayer.new()
+	add_child(p)
+	p.bus = "Efeitos"
+	p.volume_db = -80.0
+	for n in streams.keys():
+		var st = streams[n]
+		if st == null or n.begins_with("musica") or n.begins_with("entrada") or n.ends_with("_loop") or n == "tensao_loop":
+			continue
+		p.stream = st
+		p.play()
+		await get_tree().process_frame
+		p.stop()
+	p.queue_free()

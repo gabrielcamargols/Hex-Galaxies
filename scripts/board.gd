@@ -46,6 +46,8 @@ var cam_goal: Variant = null
 var cam_speed: float = 8.0      # mais baixo = câmera mais lenta (chegada no planeta)
 var shake: float = 0.0
 
+var active_tiles: Dictionary = {}   # casas animando (relevo/brilho): só estas são varridas todo quadro
+var scan_n: int = 0
 var tiles: Dictionary = {}       # Vector2i -> {node, disp_h, props, hl, dim, label, flash}
 var tile_mat: Material
 var unit_nodes: Dictionary = {}  # uid -> {node, sprite, hp, label, path, ...}
@@ -518,6 +520,7 @@ func refresh_terrain() -> void:
 			continue
 		if not first:
 			tile["flash"] = 1.0
+		active_tiles[h] = true
 		tile["sig"] = sig
 		if first:
 			tile["disp_h"] = float(t["h"])
@@ -1486,8 +1489,10 @@ func _process(delta: float) -> void:
 	for dh in state.get("hl", {}).keys():
 		if state["hl"][dh] == "deploy" and tiles.has(dh):
 			_apply_overlay(dh)
-	# relevo animado (dunas sobem e descem)
-	for h in tiles.keys():
+	# relevo animado (dunas sobem e descem): confere todas as casas só de vez em quando
+	scan_n += 1
+	var cand = tiles.keys() if scan_n % 20 == 0 else active_tiles.keys()
+	for h in cand:
 		var tile = tiles[h]
 		if tile["body"] == null:
 			continue
@@ -1501,6 +1506,10 @@ func _process(delta: float) -> void:
 		if tile["flash"] > 0.0:
 			tile["flash"] = max(0.0, tile["flash"] - delta * 0.9)
 			_apply_overlay(h)
+		if tile["flash"] <= 0.0 and tile["disp_h"] == tgt:
+			active_tiles.erase(h)
+		else:
+			active_tiles[h] = true
 	_update_units(delta)
 
 
@@ -1605,7 +1614,17 @@ func set_state(s: Dictionary) -> void:
 	state = s
 	refresh_terrain()
 	sync_units()
+	# só repinta a casa cujo destaque, etiqueta ou escurecimento mudou (os que pulsam continuam no _process)
+	var hls: Dictionary = s.get("hl", {})
+	var labs: Dictionary = s.get("labels", {})
+	var labc: Dictionary = s.get("label_colors", {})
+	var lit = s.get("lit", null)
 	for h in tiles.keys():
+		var tile = tiles[h]
+		var k = "%s|%s|%s|%s" % [hls.get(h, ""), labs.get(h, ""), str(labc.get(h, "")), "-" if lit == null else ("1" if lit.has(h) else "0")]
+		if tile.get("ovk", "") == k and tile["flash"] <= 0.0:
+			continue
+		tile["ovk"] = k
 		_apply_overlay(h)
 
 
