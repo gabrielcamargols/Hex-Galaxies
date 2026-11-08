@@ -300,12 +300,112 @@ def raio():
     return np.clip(np.maximum(core, np.clip(halo, 0, 0.45)), 0, 1)
 
 
+def _poly_mask(pts, S):
+    im = Image.new("L", (S, S), 0)
+    ImageDraw.Draw(im).polygon(pts, fill=255)
+    return np.asarray(im).astype(np.float32) / 255
+
+
+def pinca_a():
+    """dedo de cima da pinça de caranguejo: nasce no CENTRO (pivô), arqueia para a direita e desce até a ponta;
+    dentes serrilhados na borda de dentro. Intensidade alta no miolo, baixa na borda."""
+    S = N * 2
+    c = S / 2
+    R = S * 0.46
+    P0, P1, P2 = np.array([c, c - 4.0]), np.array([c + 0.55 * R, c - 0.75 * R]), np.array([c + 0.98 * R, c + 0.05 * R])
+    outer, inner = [], []
+    n = 40
+    for i in range(n + 1):
+        t = i / n
+        p = (1 - t) ** 2 * P0 + 2 * (1 - t) * t * P1 + t * t * P2
+        dp = 2 * (1 - t) * (P1 - P0) + 2 * t * (P2 - P1)
+        nv = np.array([dp[1], -dp[0]]) / (np.linalg.norm(dp) + 1e-6)     # normal para fora (cima)
+        w = S * 0.075 * (1 - t) ** 0.8 + 1.0
+        outer.append(tuple(p + nv * w))
+        dente = (S * 0.045 if (i % 4) in (1, 2) and 0.08 < t < 0.8 else 0.0)
+        inner.append(tuple(p - nv * (w * 0.55 + dente)))
+    pts = outer + inner[::-1]
+    m = _poly_mask(pts, S)
+    d = ndi.distance_transform_edt(m)
+    v = np.clip(d / 16.0, 0, 1) * 0.8 + m * 0.2
+    v = np.asarray(Image.fromarray((v * 255).astype(np.uint8)).resize((N, N), Image.LANCZOS)).astype(np.float32) / 255
+    return v
+
+
+def punho():
+    """punho de HQ fechado, nós dos dedos para cima; borda escura (contorno) por intensidade baixa"""
+    S = N * 2
+    im = Image.new("L", (S, S), 0)
+    d = ImageDraw.Draw(im)
+    d.rounded_rectangle([S * 0.30, S * 0.62, S * 0.70, S * 0.92], radius=int(S * 0.06), fill=255)          # pulso
+    d.ellipse([S * 0.16, S * 0.26, S * 0.84, S * 0.80], fill=255)                                            # mão
+    for k in range(4):
+        cx = S * (0.27 + k * 0.155)
+        d.ellipse([cx - S * 0.085, S * 0.14, cx + S * 0.085, S * 0.40], fill=255)                            # nós
+    d.ellipse([S * 0.10, S * 0.42, S * 0.46, S * 0.66], fill=255)                                            # polegar
+    m = np.asarray(im).astype(np.float32) / 255 > 0.5
+    dist = ndi.distance_transform_edt(m)
+    v = np.clip(dist / 10.0, 0, 1) * 0.85 + m * 0.15
+    ln = Image.new("L", (S, S), 0)
+    dl = ImageDraw.Draw(ln)
+    for k in range(3):
+        x = S * (0.345 + k * 0.155)
+        dl.line([(x, S * 0.22), (x, S * 0.44)], fill=255, width=7)
+    dl.arc([S * 0.10, S * 0.42, S * 0.46, S * 0.66], 200, 340, fill=255, width=6)
+    lnm = np.asarray(ln).astype(np.float32) / 255
+    v = np.where(lnm > 0.5, 0.18, v)
+    hi = np.clip(1 - np.hypot((np.arange(S)[None, :] - S * 0.42) / (S * 0.18), (np.arange(S)[:, None] - S * 0.3) / (S * 0.09)), 0, 1)
+    v = np.clip(v + hi * 0.25 * m, 0, 1)
+    v = np.asarray(Image.fromarray((v * 255).astype(np.uint8)).resize((N, N), Image.LANCZOS)).astype(np.float32) / 255
+    return v
+
+
+def onda():
+    """crista de onda (maré): arco grosso com espuma recortada no topo"""
+    x, y = grid()
+    r = np.hypot(x, y + 0.6)
+    band = np.clip(1 - np.abs(r - 0.95) / 0.22, 0, 1) * (y < 0.3)
+    n = fbm(41, esc=10)
+    espuma = np.clip(1 - np.abs(r - 1.12) / (0.05 + 0.08 * n), 0, 1) * (n > 0.45) * (y < 0.2)
+    return np.clip(np.maximum(band * (0.5 + 0.5 * np.clip(1.15 - r, 0, 1) * 2), espuma), 0, 1)
+
+
+def garras_chao():
+    """três sulcos de garra no chão"""
+    S = N * 2
+    im = Image.new("L", (S, S), 0)
+    d = ImageDraw.Draw(im)
+    for k in range(3):
+        off = (k - 1) * S * 0.16
+        pts = []
+        for i in range(12):
+            t = i / 11
+            pts.append((S * 0.18 + t * S * 0.64 + off * 0.3, S * 0.25 + off + t * S * 0.42 + math.sin(t * 3) * 8))
+        for i in range(len(pts) - 1):
+            w = int(4 + 22 * math.sin(math.pi * i / (len(pts) - 1)))
+            d.line([pts[i], pts[i + 1]], fill=255, width=w)
+    m = np.asarray(im).astype(np.float32) / 255
+    core = ndi.gaussian_filter(m, 1.5)
+    v = np.asarray(Image.fromarray((np.clip(core, 0, 1) * 255).astype(np.uint8)).resize((N, N), Image.LANCZOS)).astype(np.float32) / 255
+    return v
+
+
+def moeda():
+    x, y = grid()
+    r = np.hypot(x * 1.0, y * 1.0)
+    face = np.clip((0.82 - r) * 12, 0, 1)
+    aro = np.clip(1 - np.abs(r - 0.66) / 0.06, 0, 1)
+    return np.clip(face * 0.7 + aro * 0.3 + np.clip(0.4 - np.hypot(x + 0.3, y + 0.3), 0, 1), 0, 1)
+
+
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     for nm, fn in [("brilho", brilho), ("anel", anel), ("estrela", estrela), ("faisca", faisca), ("fumaca", fumaca),
-                   ("estilhaco", estilhaco), ("respingo", respingo), ("rasgo", rasgo), ("gota", gota), ("seta", seta), ("corrente", corrente), ("voronoi", voronoi), ("ponto", ponto), ("retalho", retalho), ("racha", racha), ("arpao", arpao), ("raio", raio)]:
+                   ("estilhaco", estilhaco), ("respingo", respingo), ("rasgo", rasgo), ("gota", gota), ("seta", seta), ("corrente", corrente), ("voronoi", voronoi), ("ponto", ponto), ("retalho", retalho), ("racha", racha), ("arpao", arpao), ("raio", raio), ("pinca_a", pinca_a), ("punho", punho), ("onda", onda), ("garras_chao", garras_chao), ("moeda", moeda)]:
         v = fn()
         if nm == "faisca":
             v = v[::-1]          # cabeça em cima: o topo da textura segue a velocidade
         save(nm, v)
+        if nm == "pinca_a":
+            save("pinca_b", v[::-1])     # dedo de baixo: espelho vertical
         print("textura", nm)

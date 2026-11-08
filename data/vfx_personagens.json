@@ -3,8 +3,12 @@
  "rhazur": {
   "nucleo": "#ff9f1a",
   "motivo": "manopla dourada",
-  "ataque": "aby_garra",
-  "proposta": true
+  "ataque": "aby_rhazur_pinca",
+  "proposta": true,
+  "habilidades": [
+   "aby_rhazur_mare",
+   "aby_rhazur_abraco"
+  ]
  },
  "bayak": {
   "nucleo": "#2ddaf6",
@@ -15,7 +19,7 @@
  "strahl": {
   "nucleo": "#ffe03a",
   "motivo": "eletricidade (pedido)",
-  "ataque": "aby_soco_eletrico"
+  "ataque": "aby_strahl_soco"
  },
  "sapturne": {
   "nucleo": "#b9f3ff",
@@ -26,7 +30,7 @@
  "rayak": {
   "nucleo": "#2f9bff",
   "motivo": "azul (pedido)",
-  "ataque": "aby_arpao"
+  "ataque": "aby_rayak_arpao"
  },
  "balu": {
   "nucleo": "#5fd66a",

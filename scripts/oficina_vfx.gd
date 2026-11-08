@@ -30,6 +30,7 @@ var fac: String = "aby"
 var ui: CanvasLayer
 var lista: VBoxContainer
 var info: Label
+var painel: PanelContainer
 var t_laco: float = 0.0
 var font: Font = null
 var on_exit: Callable
@@ -167,12 +168,12 @@ func _pb() -> Vector3:
 
 
 func _cam_place(delta: float) -> void:
-	var tgt = Vector3(-1.1, 0.7, 0)   # palco deslocado: o painel fica à esquerda
+	var tgt = Vector3(-1.1 if painel == null or painel.visible else 0.0, 0.7, 0)   # com painel, o palco vai para a direita
 	if shake > 0.0:
 		var t = Time.get_ticks_msec() / 1000.0
 		tgt += Vector3(sin(t * 43.0), cos(t * 31.0) * 0.5, 0) * 0.18 * shake
 		shake = max(0.0, shake - delta * 1.4)
-	cam.position = tgt + Vector3(0, 5.3, 8.2)
+	cam.position = tgt + (Vector3(0, 5.3, 8.2) if painel == null or painel.visible else Vector3(0, 4.3, 6.4))
 	cam.look_at(tgt)
 
 
@@ -190,6 +191,12 @@ func tocar(id: String) -> void:
 	t_laco = 2.2
 	var r: Dictionary = vfx.receitas.get(id, {})
 	var alvo = str(r.get("alvo", "outro"))
+	if r.has("personagem"):
+		# efeito próprio de um personagem: ele vira o atacante no palco
+		for i in range(LADOS.size()):
+			if LADOS[i][0] == str(r["personagem"]) and i != lado_i:
+				lado_i = i
+				_build_figs()
 	var atk = LADOS[lado_i][0]
 	var ctx = {"extras": extras.map(func(e): return e.position)}
 	if pers.has(atk) and pers[atk].has("nucleo"):
@@ -253,6 +260,7 @@ func _build_ui() -> void:
 	pan.add_theme_stylebox_override("panel", sb)
 	pan.position = Vector2(16, 16)
 	ui.add_child(pan)
+	painel = pan
 	var v = VBoxContainer.new()
 	v.add_theme_constant_override("separation", 6)
 	pan.add_child(v)
@@ -333,7 +341,7 @@ func legenda(txt: String, sub: String = "") -> void:
 		legenda_lb.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		legenda_lb.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
 		legenda_lb.offset_top = 18
-		legenda_lb.offset_left = 380
+		legenda_lb.offset_left = 380 if painel == null or painel.visible else 0
 		ui.add_child(legenda_lb)
 	legenda_lb.text = txt + ("\n" + sub if sub != "" else "")
 

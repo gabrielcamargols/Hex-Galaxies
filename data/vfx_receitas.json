@@ -1,7 +1,7 @@
 {
  "_nota": "Receitas da Forja de VFX. Camada: tex (vfx/<tex>.png), n quadros, mode bill|pe|chao, size (m), dur (s), delay, y, roll [min,max] graus, aim (gira para a direção do ataque), toward (m em direção ao atacante), grow [ini,fim], rise, base (âncora no pé), tint. Gotas: drops, count, speed, up, push, grav, size, life. Projétil: proj {tex,n,size,speed,arc,fps,trail} + hit (receita no alvo). shake: tremor da câmera.",
  "aby_impacto": {
-  "nome": "ATAQUE · Impacto",
+  "nome": "(base) Impacto",
   "layers": [
    {
     "luz": "#f438a9",
@@ -579,7 +579,7 @@
   "shake": 0.3
  },
  "aby_garra": {
-  "nome": "ATAQUE · Garra (corpo a corpo)",
+  "nome": "(base) Garra (corpo a corpo)",
   "layers": [
    {
     "p": "rasgo",
@@ -667,7 +667,7 @@
   "hit_t": 0.1
  },
  "aby_tiro": {
-  "nome": "ATAQUE · Tiro de mutação",
+  "nome": "(base) Tiro de mutação",
   "proj": {
    "speed": 11,
    "arc": 0.9,
@@ -960,7 +960,7 @@
   "alvo": "self"
  },
  "aby_erupcao": {
-  "nome": "ATAQUE · Erupção (área no inimigo)",
+  "nome": "(base) Erupção (área no inimigo)",
   "layers": [
    {
     "luz": "#f438a9",
@@ -1449,7 +1449,7 @@
   "shake": 0.35
  },
  "aby_mutacao": {
-  "nome": "AJUDA · Mutação (fortalece)",
+  "nome": "(base) Mutação (fortalece)",
   "alvo": "self",
   "layers": [
    {
@@ -1715,600 +1715,8 @@
   ]
  },
  "_linguagem": "AJUDA (time): sobe, fecha para dentro (anel contrai), tons claros, setas, sem preto, sem tremor, dura mais. ATAQUE: explode para fora, estilhaços pretos, fumaça escura, respingo no chão, tremor, rápido.",
- "aby_abraco": {
-  "nome": "ATAQUE · Abraço do Abismo (puxa)",
-  "puxa": {
-   "inicio": 0.42000000000000004,
-   "dur": 0.45
-  },
-  "hit_t": 0.22,
-  "layers": [
-   {
-    "p": "brilho",
-    "em": "from",
-    "amount": 1,
-    "size": 1.2,
-    "life": 0.25,
-    "life_rand": 0,
-    "y": 1.1,
-    "curve": [
-     [
-      0,
-      0.4
-     ],
-     [
-      0.3,
-      1.1
-     ],
-     [
-      1,
-      1.2
-     ]
-    ],
-    "ramp": [
-     "#301342",
-     "#a957ec",
-     "#f438a9",
-     "#ff91d8"
-    ],
-    "boost": 1.2,
-    "halftone": 0.8,
-    "alpha": [
-     [
-      0,
-      1
-     ],
-     [
-      1,
-      0
-     ]
-    ],
-    "nucleo": true
-   },
-   {
-    "p": "faisca",
-    "em": "from",
-    "mode": "vel",
-    "amount": 8,
-    "dir": "away",
-    "lift": 0.2,
-    "spread": 30,
-    "size": [
-     0.08,
-     0.6
-    ],
-    "speed": [
-     5,
-     9
-    ],
-    "damp": [
-     6,
-     9
-    ],
-    "life": 0.25,
-    "ramp": [
-     "#f438a9",
-     "#ff91d8",
-     "#ffffff"
-    ],
-    "boost": 1.6,
-    "curve": [
-     [
-      0,
-      1.3
-     ],
-     [
-      1,
-      0
-     ]
-    ],
-    "y": 1.1
-   },
-   {
-    "corrente": "corrente",
-    "ida": 0.22,
-    "segura": 0.2,
-    "volta": 0.45,
-    "width": 0.68,
-    "tile": 1.0,
-    "y_from": 1.15,
-    "y_to": 0.95,
-    "ramp": [
-     "#301342",
-     "#a957ec",
-     "#f438a9",
-     "#ff91d8",
-     "#ffffff"
-    ],
-    "boost": 1.45,
-    "halftone": 0.4,
-    "recolhe": 3.0,
-    "nucleo": true
-   },
-   {
-    "p": "rasgo",
-    "blend": "mix",
-    "amount": 1,
-    "size": 1.8,
-    "life": 0.4,
-    "life_rand": 0,
-    "angle": [
-     90,
-     90
-    ],
-    "curve": [
-     [
-      0,
-      1.5
-     ],
-     [
-      0.6,
-      0.7
-     ],
-     [
-      1,
-      0.6
-     ]
-    ],
-    "erode": 1.0,
-    "erode_pow": 2.0,
-    "ramp": [
-     "#12061c",
-     "#301342"
-    ],
-    "alpha": [
-     [
-      0,
-      1
-     ],
-     [
-      1,
-      1
-     ]
-    ],
-    "delay": 0.2,
-    "y": 0.95
-   },
-   {
-    "p": "rasgo",
-    "amount": 1,
-    "size": 1.66,
-    "life": 0.4,
-    "life_rand": 0,
-    "angle": [
-     90,
-     90
-    ],
-    "curve": [
-     [
-      0,
-      1.5
-     ],
-     [
-      0.6,
-      0.7
-     ],
-     [
-      1,
-      0.6
-     ]
-    ],
-    "erode": 1.0,
-    "erode_pow": 1.8,
-    "halftone": 0.6,
-    "ramp": [
-     "#a957ec",
-     "#f438a9",
-     "#ff91d8",
-     "#ffe6f6"
-    ],
-    "boost": 1.3,
-    "delay": 0.2,
-    "y": 0.95,
-    "nucleo": true
-   },
-   {
-    "p": "rasgo",
-    "blend": "mix",
-    "amount": 1,
-    "size": 1.8,
-    "life": 0.4,
-    "life_rand": 0,
-    "angle": [
-     210,
-     210
-    ],
-    "curve": [
-     [
-      0,
-      1.5
-     ],
-     [
-      0.6,
-      0.7
-     ],
-     [
-      1,
-      0.6
-     ]
-    ],
-    "erode": 1.0,
-    "erode_pow": 2.0,
-    "ramp": [
-     "#12061c",
-     "#301342"
-    ],
-    "alpha": [
-     [
-      0,
-      1
-     ],
-     [
-      1,
-      1
-     ]
-    ],
-    "delay": 0.2,
-    "y": 0.95
-   },
-   {
-    "p": "rasgo",
-    "amount": 1,
-    "size": 1.66,
-    "life": 0.4,
-    "life_rand": 0,
-    "angle": [
-     210,
-     210
-    ],
-    "curve": [
-     [
-      0,
-      1.5
-     ],
-     [
-      0.6,
-      0.7
-     ],
-     [
-      1,
-      0.6
-     ]
-    ],
-    "erode": 1.0,
-    "erode_pow": 1.8,
-    "halftone": 0.6,
-    "ramp": [
-     "#a957ec",
-     "#f438a9",
-     "#ff91d8",
-     "#ffe6f6"
-    ],
-    "boost": 1.3,
-    "delay": 0.2,
-    "y": 0.95,
-    "nucleo": true
-   },
-   {
-    "p": "rasgo",
-    "blend": "mix",
-    "amount": 1,
-    "size": 1.8,
-    "life": 0.4,
-    "life_rand": 0,
-    "angle": [
-     330,
-     330
-    ],
-    "curve": [
-     [
-      0,
-      1.5
-     ],
-     [
-      0.6,
-      0.7
-     ],
-     [
-      1,
-      0.6
-     ]
-    ],
-    "erode": 1.0,
-    "erode_pow": 2.0,
-    "ramp": [
-     "#12061c",
-     "#301342"
-    ],
-    "alpha": [
-     [
-      0,
-      1
-     ],
-     [
-      1,
-      1
-     ]
-    ],
-    "delay": 0.2,
-    "y": 0.95
-   },
-   {
-    "p": "rasgo",
-    "amount": 1,
-    "size": 1.66,
-    "life": 0.4,
-    "life_rand": 0,
-    "angle": [
-     330,
-     330
-    ],
-    "curve": [
-     [
-      0,
-      1.5
-     ],
-     [
-      0.6,
-      0.7
-     ],
-     [
-      1,
-      0.6
-     ]
-    ],
-    "erode": 1.0,
-    "erode_pow": 1.8,
-    "halftone": 0.6,
-    "ramp": [
-     "#a957ec",
-     "#f438a9",
-     "#ff91d8",
-     "#ffe6f6"
-    ],
-    "boost": 1.3,
-    "delay": 0.2,
-    "y": 0.95,
-    "nucleo": true
-   },
-   {
-    "p": "brilho",
-    "amount": 1,
-    "size": 1.5,
-    "life": 0.22,
-    "life_rand": 0,
-    "curve": [
-     [
-      0,
-      0.4
-     ],
-     [
-      0.25,
-      1.2
-     ],
-     [
-      1,
-      1.4
-     ]
-    ],
-    "ramp": [
-     "#301342",
-     "#a957ec",
-     "#f438a9",
-     "#ff91d8",
-     "#ffe6f6"
-    ],
-    "boost": 1.3,
-    "halftone": 0.8,
-    "alpha": [
-     [
-      0,
-      1
-     ],
-     [
-      1,
-      0
-     ]
-    ],
-    "delay": 0.22,
-    "y": 0.95,
-    "nucleo": true
-   },
-   {
-    "p": "fumaca",
-    "blend": "mix",
-    "amount": 16,
-    "radius": 0.9,
-    "radial": [
-     -9,
-     -5
-    ],
-    "tangential": [
-     7,
-     11
-    ],
-    "speed": [
-     0,
-     0.5
-    ],
-    "life": 0.55,
-    "size": 0.7,
-    "spin": [
-     -120,
-     120
-    ],
-    "curve": [
-     [
-      0,
-      0.6
-     ],
-     [
-      0.4,
-      1
-     ],
-     [
-      1,
-      0.3
-     ]
-    ],
-    "erode": 1.0,
-    "halftone": 0.8,
-    "ramp": [
-     "#12061c",
-     "#301342",
-     "#4a1d63"
-    ],
-    "alpha": [
-     [
-      0,
-      1
-     ],
-     [
-      1,
-      1
-     ]
-    ],
-    "delay": 0.22,
-    "y": 0.9
-   },
-   {
-    "p": "estilhaco",
-    "blend": "mix",
-    "mode": "vel",
-    "amount": 8,
-    "spread": 180,
-    "size": [
-     0.25,
-     0.7
-    ],
-    "speed": [
-     5,
-     9
-    ],
-    "grav": -12,
-    "damp": [
-     3,
-     5
-    ],
-    "life": 0.4,
-    "curve": [
-     [
-      0,
-      1.1
-     ],
-     [
-      1,
-      0.4
-     ]
-    ],
-    "erode": 0.9,
-    "ramp": [
-     "#12061c",
-     "#301342"
-    ],
-    "alpha": [
-     [
-      0,
-      1
-     ],
-     [
-      1,
-      1
-     ]
-    ],
-    "delay": 0.22,
-    "y": 0.95
-   },
-   {
-    "p": "fumaca",
-    "blend": "mix",
-    "segue": 0.45,
-    "amount": 34,
-    "size": 0.75,
-    "speed": [
-     0.2,
-     0.8
-    ],
-    "spin": [
-     -90,
-     90
-    ],
-    "life": 0.6,
-    "curve": [
-     [
-      0,
-      1
-     ],
-     [
-      1,
-      0.4
-     ]
-    ],
-    "erode": 1.0,
-    "halftone": 0.8,
-    "ramp": [
-     "#301342",
-     "#4a1d63",
-     "#a957ec"
-    ],
-    "alpha": [
-     [
-      0,
-      1
-     ],
-     [
-      1,
-      1
-     ]
-    ],
-    "delay": 0.42000000000000004,
-    "y": 0.6
-   },
-   {
-    "p": "faisca",
-    "mode": "vel",
-    "segue": 0.45,
-    "amount": 20,
-    "size": [
-     0.08,
-     0.55
-    ],
-    "speed": [
-     1,
-     3
-    ],
-    "grav": -4,
-    "life": 0.3,
-    "ramp": [
-     "#f438a9",
-     "#ff91d8",
-     "#ffffff"
-    ],
-    "boost": 1.6,
-    "curve": [
-     [
-      0,
-      1.2
-     ],
-     [
-      1,
-      0
-     ]
-    ],
-    "delay": 0.42000000000000004,
-    "y": 0.9
-   },
-   {
-    "sub": "aby_impacto",
-    "em": "dest",
-    "delay": 0.8700000000000001
-   }
-  ],
-  "shake": 0.2,
-  "shake_delay": 0.22
- },
  "aby_tiro_estouro": {
-  "nome": "ATAQUE · Tiro: estouro em retícula",
+  "nome": "(base) Tiro: estouro em retícula",
   "layers": [
    {
     "sub": "aby_impacto"
@@ -2618,36 +2026,755 @@
    }
   ]
  },
- "aby_arpao": {
-  "nome": "ATAQUE · Arpão (Rayak)",
-  "puxa": {
-   "apos_voo": true,
-   "inicio": 0.18,
-   "dur": 0.4,
-   "casas": 2
-  },
-  "proj": {
-   "speed": 14,
-   "arc": 0.25,
-   "y": 1.0,
-   "arpao": {
-    "len": 1.35,
-    "width": 0.46,
-    "tile": 1.35,
+ "aby_rhazur_pinca": {
+  "nome": "RHAZUR · Pinça do Abismo (ataque)",
+  "personagem": "rhazur",
+  "hit_t": 0.14,
+  "layers": [
+   {
+    "p": "pinca_a",
+    "blend": "mix",
+    "amount": 1,
+    "size": 2.7,
+    "life": 0.14,
+    "life_rand": 0,
+    "aim": true,
+    "aim_off": 55,
+    "spin": [
+     -392.85714285714283,
+     -392.85714285714283
+    ],
+    "toward": 0.85,
+    "y": 0.95,
+    "ramp": [
+     "#12061c",
+     "#a957ec",
+     "#f438a9",
+     "#ff9f1a",
+     "#ffd56a"
+    ],
+    "halftone": 0.4,
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "curve": [
+     [
+      0,
+      0.85
+     ],
+     [
+      1,
+      1.0
+     ]
+    ]
+   },
+   {
+    "p": "pinca_a",
+    "blend": "mix",
+    "amount": 1,
+    "size": 2.7,
+    "life": 0.32,
+    "life_rand": 0,
+    "aim": true,
+    "aim_off": 0,
+    "toward": 0.85,
+    "y": 0.95,
+    "ramp": [
+     "#12061c",
+     "#a957ec",
+     "#f438a9",
+     "#ff9f1a",
+     "#ffd56a"
+    ],
+    "halftone": 0.4,
+    "erode": 1.0,
+    "erode_pow": 2.2,
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "curve": [
+     [
+      0,
+      1.0
+     ],
+     [
+      0.2,
+      1.06
+     ],
+     [
+      1,
+      1.0
+     ]
+    ],
+    "delay": 0.14
+   },
+   {
+    "p": "pinca_b",
+    "blend": "mix",
+    "amount": 1,
+    "size": 2.7,
+    "life": 0.14,
+    "life_rand": 0,
+    "aim": true,
+    "aim_off": -55,
+    "spin": [
+     392.85714285714283,
+     392.85714285714283
+    ],
+    "toward": 0.85,
+    "y": 0.95,
+    "ramp": [
+     "#12061c",
+     "#a957ec",
+     "#f438a9",
+     "#ff9f1a",
+     "#ffd56a"
+    ],
+    "halftone": 0.4,
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "curve": [
+     [
+      0,
+      0.85
+     ],
+     [
+      1,
+      1.0
+     ]
+    ]
+   },
+   {
+    "p": "pinca_b",
+    "blend": "mix",
+    "amount": 1,
+    "size": 2.7,
+    "life": 0.32,
+    "life_rand": 0,
+    "aim": true,
+    "aim_off": 0,
+    "toward": 0.85,
+    "y": 0.95,
+    "ramp": [
+     "#12061c",
+     "#a957ec",
+     "#f438a9",
+     "#ff9f1a",
+     "#ffd56a"
+    ],
+    "halftone": 0.4,
+    "erode": 1.0,
+    "erode_pow": 2.2,
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "curve": [
+     [
+      0,
+      1.0
+     ],
+     [
+      0.2,
+      1.06
+     ],
+     [
+      1,
+      1.0
+     ]
+    ],
+    "delay": 0.14
+   },
+   {
+    "luz": "#ff9f1a",
+    "energia": 4.5,
+    "alcance": 4.0,
+    "dur": 0.3,
+    "y": 1.0,
+    "delay": 0.14
+   },
+   {
+    "p": "faisca",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 16,
+    "size": [
+     0.1,
+     1.2
+    ],
+    "speed": [
+     14,
+     22
+    ],
+    "spread": 180,
+    "damp": [
+     10,
+     14
+    ],
+    "life": 0.18,
+    "ramp": [
+     "#12061c",
+     "#12061c"
+    ],
+    "curve": [
+     [
+      0,
+      1.4
+     ],
+     [
+      1,
+      0.2
+     ]
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 0.95,
+    "delay": 0.14
+   },
+   {
+    "p": "estrela",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.5,
+    "life": 0.16,
+    "life_rand": 0,
+    "angle": [
+     0,
+     45
+    ],
+    "curve": [
+     [
+      0,
+      0.4
+     ],
+     [
+      0.3,
+      1.1
+     ],
+     [
+      1,
+      0.2
+     ]
+    ],
+    "ramp": [
+     "#12061c",
+     "#f438a9",
+     "#ff9f1a",
+     "#ffd56a"
+    ],
+    "y": 0.95,
+    "delay": 0.14
+   },
+   {
+    "p": "garras_chao",
+    "mode": "chao",
+    "amount": 1,
+    "size": 2.3,
+    "life": 1.5,
+    "life_rand": 0,
+    "y": 0.0,
+    "aim": true,
+    "curve": [
+     [
+      0,
+      0.6
+     ],
+     [
+      0.1,
+      1.0
+     ],
+     [
+      1,
+      1.0
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 3.0,
+    "ramp": [
+     "#12061c",
+     "#301342",
+     "#f438a9",
+     "#ff9f1a"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "delay": 0.14
+   },
+   {
+    "p": "gota",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 12,
+    "size": 0.28,
+    "speed": [
+     3,
+     6.5
+    ],
+    "dir": [
+     0,
+     1,
+     0
+    ],
+    "spread": 70,
+    "grav": -16,
+    "life": 0.6,
+    "ramp": [
+     "#301342",
+     "#a957ec",
+     "#f438a9"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.85,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.9,
+    "delay": 0.14
+   },
+   {
+    "p": "ponto",
+    "blend": "mix",
+    "amount": 16,
+    "size": 0.17,
+    "scale": [
+     0.5,
+     1.5
+    ],
+    "speed": [
+     4,
+     10
+    ],
+    "spread": 180,
+    "grav": -5,
+    "damp": [
+     3,
+     6
+    ],
+    "life": 0.6,
+    "life_rand": 0.4,
+    "curve": [
+     [
+      0,
+      1
+     ],
+     [
+      0.6,
+      0.8
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#ff9f1a",
+     "#ff9f1a"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 0.95,
+    "delay": 0.14
+   },
+   {
+    "p": "ponto",
+    "blend": "mix",
+    "amount": 11,
+    "size": 0.14,
+    "scale": [
+     0.5,
+     1.5
+    ],
+    "speed": [
+     4,
+     10
+    ],
+    "spread": 180,
+    "grav": -5,
+    "damp": [
+     3,
+     6
+    ],
+    "life": 0.6,
+    "life_rand": 0.4,
+    "curve": [
+     [
+      0,
+      1
+     ],
+     [
+      0.6,
+      0.8
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#a957ec",
+     "#a957ec"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 0.95,
+    "delay": 0.14
+   }
+  ],
+  "shake": 0.3,
+  "shake_delay": 0.14
+ },
+ "aby_rhazur_mare": {
+  "nome": "RHAZUR · Maré Brutal (ajuda: +1 ATQ)",
+  "personagem": "rhazur",
+  "alvo": "self",
+  "layers": [
+   {
+    "p": "onda",
+    "mode": "chao",
+    "amount": 1,
+    "size": 3.0,
+    "life": 0.9,
+    "life_rand": 0,
+    "y": 0.0,
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      1,
+      3.4
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.8,
+    "halftone": 0.7,
+    "ramp": [
+     "#301342",
+     "#a957ec",
+     "#f438a9",
+     "#ffd56a"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   {
+    "p": "onda",
+    "mode": "chao",
+    "amount": 1,
+    "size": 3.0,
+    "life": 0.9,
+    "life_rand": 0,
+    "y": 0.0,
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      1,
+      3.4
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.8,
+    "halftone": 0.7,
+    "ramp": [
+     "#301342",
+     "#a957ec",
+     "#f438a9",
+     "#ffd56a"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "delay": 0.25
+   },
+   {
+    "p": "anel",
+    "mode": "chao",
+    "amount": 1,
+    "size": 2.8,
+    "life": 0.8,
+    "life_rand": 0,
+    "y": 0.0,
+    "curve": [
+     [
+      0,
+      1.7
+     ],
+     [
+      1,
+      0.45
+     ]
+    ],
+    "halftone": 0.7,
     "ramp": [
      "#a957ec",
      "#f438a9",
-     "#ff91d8",
-     "#ffffff"
+     "#ff9f1a"
     ],
-    "boost": 1.0,
-    "halftone": 0.3,
-    "sombra": 1.6,
-    "blend_top": "mix"
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.3,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ]
    },
-   "cabo": {
-    "width": 0.3,
-    "tile": 0.75,
+   {
+    "p": "seta",
+    "blend": "mix",
+    "amount": 6,
+    "explosive": 0.3,
+    "ring": 0.8,
+    "dir": [
+     0,
+     1,
+     0
+    ],
+    "spread": 0,
+    "speed": [
+     1.4,
+     2.2
+    ],
+    "life": 0.9,
+    "size": 0.55,
+    "angle": [
+     0,
+     0
+    ],
+    "ramp": [
+     "#a957ec",
+     "#ff9f1a",
+     "#ffd56a"
+    ],
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.2,
+      1
+     ],
+     [
+      0.8,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.3,
+    "delay": 0.15
+   },
+   {
+    "p": "gota",
+    "blend": "mix",
+    "mode": "vel",
+    "ring": 0.6,
+    "amount": 10,
+    "dir": [
+     0,
+     1,
+     0
+    ],
+    "spread": 12,
+    "speed": [
+     2.5,
+     4.5
+    ],
+    "grav": -6,
+    "life": 0.7,
+    "size": 0.22,
+    "ramp": [
+     "#a957ec",
+     "#f438a9",
+     "#ff91d8"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.1
+   },
+   {
+    "p": "fumaca",
+    "ring": 0.55,
+    "amount": 16,
+    "explosive": 0.1,
+    "dir": [
+     0,
+     1,
+     0
+    ],
+    "spread": 5,
+    "speed": [
+     1.5,
+     2.6
+    ],
+    "life": 0.8,
+    "size": 0.45,
+    "spin": [
+     -40,
+     40
+    ],
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      0.3,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "erode": 1.0,
+    "halftone": 0.6,
+    "ramp": [
+     "#a957ec",
+     "#f438a9",
+     "#ff9f1a",
+     "#ffd56a"
+    ],
+    "boost": 1.1,
+    "y": 0.0
+   }
+  ]
+ },
+ "aby_rhazur_abraco": {
+  "nome": "RHAZUR · Abraço do Abismo (ativa: puxa)",
+  "puxa": {
+   "inicio": 0.42000000000000004,
+   "dur": 0.45
+  },
+  "hit_t": 0.22,
+  "layers": [
+   {
+    "p": "brilho",
+    "em": "from",
+    "amount": 1,
+    "size": 1.2,
+    "life": 0.25,
+    "life_rand": 0,
+    "y": 1.1,
+    "curve": [
+     [
+      0,
+      0.4
+     ],
+     [
+      0.3,
+      1.1
+     ],
+     [
+      1,
+      1.2
+     ]
+    ],
     "ramp": [
      "#301342",
      "#a957ec",
@@ -2655,120 +2782,476 @@
      "#ff91d8"
     ],
     "boost": 1.2,
-    "halftone": 0.4,
-    "nucleo": false
-   },
-   "parts": [
-    {
-     "p": "faisca",
-     "mode": "vel",
-     "trail": true,
-     "amount": 20,
-     "size": [
-      0.07,
-      0.45
+    "halftone": 0.8,
+    "alpha": [
+     [
+      0,
+      1
      ],
-     "speed": [
+     [
       1,
-      3
-     ],
-     "grav": -4,
-     "life": 0.25,
-     "ramp": [
-      "#a957ec",
-      "#f438a9",
-      "#ff91d8"
-     ],
-     "boost": 1.5,
-     "curve": [
-      [
-       0,
-       1.2
-      ],
-      [
-       1,
-       0
-      ]
+      0
      ]
-    },
-    {
-     "p": "fumaca",
-     "blend": "mix",
-     "trail": true,
-     "amount": 16,
-     "size": 0.45,
-     "life": 0.35,
-     "speed": [
-      0.2,
-      0.6
-     ],
-     "spin": [
-      -90,
-      90
-     ],
-     "curve": [
-      [
-       0,
-       1
-      ],
-      [
-       1,
-       0.3
-      ]
-     ],
-     "erode": 1.0,
-     "halftone": 0.8,
-     "ramp": [
-      "#301342",
-      "#4a1d63",
-      "#a957ec"
-     ],
-     "alpha": [
-      [
-       0,
-       1
-      ],
-      [
-       1,
-       1
-      ]
-     ]
-    }
-   ]
-  },
-  "hit": "aby_arpao_puxa"
- },
- "aby_arpao_puxa": {
-  "nome": "ATAQUE · Arpão de Arrasto (puxa 2 casas)",
-  "layers": [
+    ],
+    "nucleo": true
+   },
    {
-    "sub": "aby_impacto"
+    "p": "faisca",
+    "em": "from",
+    "mode": "vel",
+    "amount": 8,
+    "dir": "away",
+    "lift": 0.2,
+    "spread": 30,
+    "size": [
+     0.08,
+     0.6
+    ],
+    "speed": [
+     5,
+     9
+    ],
+    "damp": [
+     6,
+     9
+    ],
+    "life": 0.25,
+    "ramp": [
+     "#f438a9",
+     "#ff91d8",
+     "#ffffff"
+    ],
+    "boost": 1.6,
+    "curve": [
+     [
+      0,
+      1.3
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.1
    },
    {
     "corrente": "corrente",
-    "ida": 0.001,
-    "segura": 0.18,
-    "volta": 0.4,
-    "width": 0.34,
-    "tile": 0.75,
-    "y_from": 0.85,
-    "y_to": 1.0,
+    "ida": 0.22,
+    "segura": 0.2,
+    "volta": 0.45,
+    "width": 0.68,
+    "tile": 1.0,
+    "y_from": 1.15,
+    "y_to": 0.95,
     "ramp": [
      "#301342",
      "#a957ec",
      "#f438a9",
-     "#ff91d8"
+     "#ff91d8",
+     "#ffffff"
     ],
-    "boost": 1.25,
+    "boost": 1.45,
     "halftone": 0.4,
-    "recolhe": 3.5
+    "recolhe": 3.0,
+    "nucleo": true
+   },
+   {
+    "p": "rasgo",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.8,
+    "life": 0.4,
+    "life_rand": 0,
+    "angle": [
+     90,
+     90
+    ],
+    "curve": [
+     [
+      0,
+      1.5
+     ],
+     [
+      0.6,
+      0.7
+     ],
+     [
+      1,
+      0.6
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 2.0,
+    "ramp": [
+     "#12061c",
+     "#301342"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "delay": 0.2,
+    "y": 0.95
+   },
+   {
+    "p": "rasgo",
+    "amount": 1,
+    "size": 1.66,
+    "life": 0.4,
+    "life_rand": 0,
+    "angle": [
+     90,
+     90
+    ],
+    "curve": [
+     [
+      0,
+      1.5
+     ],
+     [
+      0.6,
+      0.7
+     ],
+     [
+      1,
+      0.6
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.8,
+    "halftone": 0.6,
+    "ramp": [
+     "#a957ec",
+     "#f438a9",
+     "#ff9f1a",
+     "#ffd56a"
+    ],
+    "boost": 1.3,
+    "delay": 0.2,
+    "y": 0.95
+   },
+   {
+    "p": "rasgo",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.8,
+    "life": 0.4,
+    "life_rand": 0,
+    "angle": [
+     210,
+     210
+    ],
+    "curve": [
+     [
+      0,
+      1.5
+     ],
+     [
+      0.6,
+      0.7
+     ],
+     [
+      1,
+      0.6
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 2.0,
+    "ramp": [
+     "#12061c",
+     "#301342"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "delay": 0.2,
+    "y": 0.95
+   },
+   {
+    "p": "rasgo",
+    "amount": 1,
+    "size": 1.66,
+    "life": 0.4,
+    "life_rand": 0,
+    "angle": [
+     210,
+     210
+    ],
+    "curve": [
+     [
+      0,
+      1.5
+     ],
+     [
+      0.6,
+      0.7
+     ],
+     [
+      1,
+      0.6
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.8,
+    "halftone": 0.6,
+    "ramp": [
+     "#a957ec",
+     "#f438a9",
+     "#ff9f1a",
+     "#ffd56a"
+    ],
+    "boost": 1.3,
+    "delay": 0.2,
+    "y": 0.95
+   },
+   {
+    "p": "rasgo",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.8,
+    "life": 0.4,
+    "life_rand": 0,
+    "angle": [
+     330,
+     330
+    ],
+    "curve": [
+     [
+      0,
+      1.5
+     ],
+     [
+      0.6,
+      0.7
+     ],
+     [
+      1,
+      0.6
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 2.0,
+    "ramp": [
+     "#12061c",
+     "#301342"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "delay": 0.2,
+    "y": 0.95
+   },
+   {
+    "p": "rasgo",
+    "amount": 1,
+    "size": 1.66,
+    "life": 0.4,
+    "life_rand": 0,
+    "angle": [
+     330,
+     330
+    ],
+    "curve": [
+     [
+      0,
+      1.5
+     ],
+     [
+      0.6,
+      0.7
+     ],
+     [
+      1,
+      0.6
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.8,
+    "halftone": 0.6,
+    "ramp": [
+     "#a957ec",
+     "#f438a9",
+     "#ff9f1a",
+     "#ffd56a"
+    ],
+    "boost": 1.3,
+    "delay": 0.2,
+    "y": 0.95
+   },
+   {
+    "p": "brilho",
+    "amount": 1,
+    "size": 1.5,
+    "life": 0.22,
+    "life_rand": 0,
+    "curve": [
+     [
+      0,
+      0.4
+     ],
+     [
+      0.25,
+      1.2
+     ],
+     [
+      1,
+      1.4
+     ]
+    ],
+    "ramp": [
+     "#301342",
+     "#a957ec",
+     "#f438a9",
+     "#ff91d8",
+     "#ffe6f6"
+    ],
+    "boost": 1.3,
+    "halftone": 0.8,
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.22,
+    "y": 0.95,
+    "nucleo": true
    },
    {
     "p": "fumaca",
     "blend": "mix",
-    "segue": 0.4,
-    "amount": 26,
+    "amount": 16,
+    "radius": 0.9,
+    "radial": [
+     -9,
+     -5
+    ],
+    "tangential": [
+     7,
+     11
+    ],
+    "speed": [
+     0,
+     0.5
+    ],
+    "life": 0.55,
     "size": 0.7,
+    "spin": [
+     -120,
+     120
+    ],
+    "curve": [
+     [
+      0,
+      0.6
+     ],
+     [
+      0.4,
+      1
+     ],
+     [
+      1,
+      0.3
+     ]
+    ],
+    "erode": 1.0,
+    "halftone": 0.8,
+    "ramp": [
+     "#12061c",
+     "#301342",
+     "#4a1d63"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "delay": 0.22,
+    "y": 0.9
+   },
+   {
+    "p": "estilhaco",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 8,
+    "spread": 180,
+    "size": [
+     0.25,
+     0.7
+    ],
+    "speed": [
+     5,
+     9
+    ],
+    "grav": -12,
+    "damp": [
+     3,
+     5
+    ],
+    "life": 0.4,
+    "curve": [
+     [
+      0,
+      1.1
+     ],
+     [
+      1,
+      0.4
+     ]
+    ],
+    "erode": 0.9,
+    "ramp": [
+     "#12061c",
+     "#301342"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "delay": 0.22,
+    "y": 0.95
+   },
+   {
+    "p": "fumaca",
+    "blend": "mix",
+    "segue": 0.45,
+    "amount": 34,
+    "size": 0.75,
     "speed": [
      0.2,
      0.8
@@ -2777,7 +3260,7 @@
      -90,
      90
     ],
-    "life": 0.55,
+    "life": 0.6,
     "curve": [
      [
       0,
@@ -2805,17 +3288,17 @@
       1
      ]
     ],
-    "delay": 0.18,
-    "y": 0.5
+    "delay": 0.42000000000000004,
+    "y": 0.6
    },
    {
     "p": "faisca",
     "mode": "vel",
-    "segue": 0.4,
-    "amount": 16,
+    "segue": 0.45,
+    "amount": 20,
     "size": [
      0.08,
-     0.5
+     0.55
     ],
     "speed": [
      1,
@@ -2828,7 +3311,7 @@
      "#ff91d8",
      "#ffffff"
     ],
-    "boost": 1.5,
+    "boost": 1.6,
     "curve": [
      [
       0,
@@ -2839,94 +3322,1162 @@
       0
      ]
     ],
-    "delay": 0.18,
-    "y": 0.9,
-    "nucleo": true
+    "delay": 0.42000000000000004,
+    "y": 0.9
+   },
+   {
+    "sub": "aby_rhazur_esmaga",
+    "em": "dest",
+    "delay": 0.8700000000000001
    }
-  ]
+  ],
+  "shake": 0.2,
+  "shake_delay": 0.22,
+  "personagem": "rhazur"
  },
- "aby_soco_eletrico": {
-  "nome": "ATAQUE · Soco elétrico + Descarga (Strahl)",
+ "aby_rhazur_esmaga": {
+  "nome": "RHAZUR · Pancada da manopla (fim do Abraço)",
+  "personagem": "rhazur",
   "layers": [
    {
-    "luz": "#f438a9",
+    "luz": "#ff9f1a",
     "energia": 5.0,
-    "alcance": 5.0,
+    "alcance": 4.5,
     "dur": 0.35,
-    "y": 1.0,
-    "nucleo": true
+    "y": 1.0
    },
    {
-    "sub": "aby_impacto"
-   },
-   {
-    "raio": "raio",
-    "para": "aleatorio",
-    "n": 5,
-    "raio_len": [
-     0.9,
-     1.7
-    ],
-    "dur": 0.32,
-    "flick": 0.045,
-    "width": 0.42,
-    "tile": 0.9,
-    "ramp": [
-     "#301342",
-     "#a957ec",
-     "#f438a9",
-     "#ff91d8",
-     "#ffffff"
-    ],
-    "boost": 1.0,
-    "halftone": 0.6,
-    "sombra": 1.8,
-    "nucleo": true,
-    "y": 0.95,
-    "blend_top": "mix"
-   },
-   {
-    "p": "faisca",
-    "mode": "vel",
-    "amount": 30,
-    "size": [
-     0.08,
-     0.6
-    ],
-    "speed": [
-     9,
-     17
-    ],
-    "spread": 180,
-    "damp": [
-     8,
-     12
-    ],
-    "life": 0.2,
-    "ramp": [
-     "#a957ec",
-     "#f438a9",
-     "#ff91d8",
-     "#ffffff"
-    ],
-    "boost": 1.8,
+    "p": "anel",
+    "mode": "chao",
+    "amount": 1,
+    "size": 3.0,
+    "life": 0.45,
+    "life_rand": 0,
+    "y": 0.0,
     "curve": [
      [
       0,
-      1.3
+      0.3
+     ],
+     [
+      1,
+      1.8
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.0,
+    "halftone": 1.0,
+    "ramp": [
+     "#12061c",
+     "#a957ec",
+     "#ff9f1a"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   {
+    "p": "racha",
+    "mode": "chao",
+    "amount": 1,
+    "size": 2.4,
+    "life": 1.4,
+    "life_rand": 0,
+    "y": 0.0,
+    "angle": [
+     0,
+     360
+    ],
+    "curve": [
+     [
+      0,
+      0.5
+     ],
+     [
+      0.08,
+      1.0
+     ],
+     [
+      1,
+      1.0
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 3.0,
+    "soft": 0.08,
+    "ramp": [
+     "#12061c",
+     "#301342",
+     "#a957ec",
+     "#ff9f1a",
+     "#ffd56a"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   {
+    "p": "estilhaco",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 10,
+    "dir": [
+     0,
+     1,
+     0
+    ],
+    "spread": 50,
+    "size": [
+     0.25,
+     0.7
+    ],
+    "speed": [
+     6,
+     10
+    ],
+    "grav": -14,
+    "life": 0.5,
+    "curve": [
+     [
+      0,
+      1.1
+     ],
+     [
+      1,
+      0.4
+     ]
+    ],
+    "erode": 0.9,
+    "ramp": [
+     "#12061c",
+     "#301342"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 0.2
+   },
+   {
+    "p": "caco",
+    "caco": "prisma",
+    "cor": "#ff9f1a",
+    "amount": 6,
+    "size": 0.16,
+    "scale": [
+     0.6,
+     1.3
+    ],
+    "speed": [
+     4,
+     7
+    ],
+    "dir": [
+     0,
+     1,
+     0
+    ],
+    "spread": 55,
+    "grav": -18,
+    "life": 0.6,
+    "spin": [
+     -540,
+     540
+    ],
+    "curve": [
+     [
+      0,
+      1
+     ],
+     [
+      0.8,
+      1
      ],
      [
       1,
       0
      ]
     ],
-    "nucleo": true
+    "y": 0.2
+   },
+   {
+    "p": "faisca",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 12,
+    "size": [
+     0.1,
+     1.2
+    ],
+    "speed": [
+     14,
+     22
+    ],
+    "spread": 180,
+    "damp": [
+     10,
+     14
+    ],
+    "life": 0.18,
+    "ramp": [
+     "#12061c",
+     "#12061c"
+    ],
+    "curve": [
+     [
+      0,
+      1.4
+     ],
+     [
+      1,
+      0.2
+     ]
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 0.6,
+    "delay": 0.0
+   },
+   {
+    "p": "ponto",
+    "blend": "mix",
+    "amount": 14,
+    "size": 0.17,
+    "scale": [
+     0.5,
+     1.5
+    ],
+    "speed": [
+     4,
+     10
+    ],
+    "spread": 180,
+    "grav": -5,
+    "damp": [
+     3,
+     6
+    ],
+    "life": 0.6,
+    "life_rand": 0.4,
+    "curve": [
+     [
+      0,
+      1
+     ],
+     [
+      0.6,
+      0.8
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#ff9f1a",
+     "#ff9f1a"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 0.6,
+    "delay": 0.02
+   },
+   {
+    "p": "ponto",
+    "blend": "mix",
+    "amount": 9,
+    "size": 0.14,
+    "scale": [
+     0.5,
+     1.5
+    ],
+    "speed": [
+     4,
+     10
+    ],
+    "spread": 180,
+    "grav": -5,
+    "damp": [
+     3,
+     6
+    ],
+    "life": 0.6,
+    "life_rand": 0.4,
+    "curve": [
+     [
+      0,
+      1
+     ],
+     [
+      0.6,
+      0.8
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#f438a9",
+     "#f438a9"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 0.6,
+    "delay": 0.02
+   }
+  ],
+  "shake": 0.4
+ },
+ "aby_rayak_arpao": {
+  "nome": "RAYAK · Arpão (ataque)",
+  "personagem": "rayak",
+  "puxa": {
+   "apos_voo": true,
+   "inicio": 0.2,
+   "dur": 0.4,
+   "casas": 2
+  },
+  "proj": {
+   "speed": 15,
+   "arc": 0.2,
+   "y": 1.0,
+   "arpao": {
+    "len": 1.35,
+    "width": 0.46,
+    "tile": 1.35,
+    "blend_top": "mix",
+    "ramp": [
+     "#12061c",
+     "#301342",
+     "#2f9bff",
+     "#bfe4ff"
+    ],
+    "boost": 1.0,
+    "halftone": 0.3,
+    "sombra": 1.5,
+    "nucleo": false
+   },
+   "cabo": {
+    "width": 0.28,
+    "tile": 0.75,
+    "ramp": [
+     "#301342",
+     "#a957ec",
+     "#f438a9",
+     "#ff91d8"
+    ],
+    "boost": 1.2,
+    "halftone": 0.4,
+    "nucleo": false
+   },
+   "parts": [
+    {
+     "p": "gota",
+     "blend": "mix",
+     "mode": "vel",
+     "trail": true,
+     "amount": 18,
+     "size": 0.18,
+     "speed": [
+      0.5,
+      1.5
+     ],
+     "grav": -8,
+     "life": 0.35,
+     "ramp": [
+      "#301342",
+      "#2f9bff",
+      "#bfe4ff"
+     ],
+     "alpha": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       0
+      ]
+     ]
+    },
+    {
+     "p": "faisca",
+     "blend": "mix",
+     "mode": "vel",
+     "trail": true,
+     "amount": 14,
+     "size": [
+      0.05,
+      0.5
+     ],
+     "speed": [
+      0.5,
+      1.5
+     ],
+     "life": 0.2,
+     "ramp": [
+      "#a957ec",
+      "#f438a9"
+     ],
+     "alpha": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       0
+      ]
+     ],
+     "curve": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       0
+      ]
+     ]
+    }
+   ]
+  },
+  "hit": "aby_rayak_perfura"
+ },
+ "aby_rayak_perfura": {
+  "nome": "RAYAK · Perfuração + Arrasto (acerto do arpão)",
+  "personagem": "rayak",
+  "layers": [
+   {
+    "luz": "#2f9bff",
+    "energia": 4.0,
+    "alcance": 4.0,
+    "dur": 0.3,
+    "y": 1.0
+   },
+   {
+    "p": "faisca",
+    "blend": "mix",
+    "mode": "vel",
+    "dir": "away",
+    "lift": 0.05,
+    "spread": 7,
+    "amount": 16,
+    "size": [
+     0.1,
+     1.6
+    ],
+    "speed": [
+     14,
+     24
+    ],
+    "damp": [
+     10,
+     14
+    ],
+    "life": 0.22,
+    "ramp": [
+     "#301342",
+     "#2f9bff",
+     "#bfe4ff"
+    ],
+    "curve": [
+     [
+      0,
+      1.4
+     ],
+     [
+      1,
+      0.1
+     ]
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 1.0
+   },
+   {
+    "p": "faisca",
+    "blend": "mix",
+    "mode": "vel",
+    "dir": "away",
+    "lift": 0.05,
+    "spread": 10,
+    "amount": 10,
+    "size": [
+     0.1,
+     1.3
+    ],
+    "speed": [
+     12,
+     20
+    ],
+    "damp": [
+     10,
+     14
+    ],
+    "life": 0.2,
+    "ramp": [
+     "#12061c",
+     "#12061c"
+    ],
+    "curve": [
+     [
+      0,
+      1.4
+     ],
+     [
+      1,
+      0.1
+     ]
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 1.0
+   },
+   {
+    "p": "gota",
+    "blend": "mix",
+    "mode": "vel",
+    "dir": "away",
+    "lift": 0.35,
+    "spread": 28,
+    "amount": 20,
+    "size": 0.26,
+    "speed": [
+     5,
+     10
+    ],
+    "grav": -14,
+    "life": 0.6,
+    "ramp": [
+     "#301342",
+     "#2f9bff",
+     "#bfe4ff"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.85,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0
+   },
+   {
+    "p": "anel",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.4,
+    "life": 0.22,
+    "life_rand": 0,
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      1,
+      1.5
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.0,
+    "halftone": 0.8,
+    "ramp": [
+     "#301342",
+     "#a957ec",
+     "#2f9bff"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 1.0
+   },
+   {
+    "corrente": "corrente",
+    "ida": 0.001,
+    "segura": 0.2,
+    "volta": 0.4,
+    "width": 0.3,
+    "tile": 0.75,
+    "y_from": 0.85,
+    "y_to": 1.0,
+    "ramp": [
+     "#301342",
+     "#a957ec",
+     "#f438a9",
+     "#ff91d8"
+    ],
+    "boost": 1.2,
+    "halftone": 0.4,
+    "recolhe": 3.5
+   },
+   {
+    "p": "gota",
+    "blend": "mix",
+    "mode": "vel",
+    "segue": 0.4,
+    "amount": 24,
+    "size": 0.2,
+    "speed": [
+     0.6,
+     1.8
+    ],
+    "grav": -8,
+    "life": 0.45,
+    "ramp": [
+     "#301342",
+     "#2f9bff",
+     "#bfe4ff"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.2,
+    "y": 0.5
+   },
+   {
+    "p": "ponto",
+    "blend": "mix",
+    "amount": 14,
+    "size": 0.17,
+    "scale": [
+     0.5,
+     1.5
+    ],
+    "speed": [
+     4,
+     10
+    ],
+    "spread": 180,
+    "grav": -5,
+    "damp": [
+     3,
+     6
+    ],
+    "life": 0.6,
+    "life_rand": 0.4,
+    "curve": [
+     [
+      0,
+      1
+     ],
+     [
+      0.6,
+      0.8
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#2f9bff",
+     "#2f9bff"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.02
+   },
+   {
+    "p": "ponto",
+    "blend": "mix",
+    "amount": 9,
+    "size": 0.14,
+    "scale": [
+     0.5,
+     1.5
+    ],
+    "speed": [
+     4,
+     10
+    ],
+    "spread": 180,
+    "grav": -5,
+    "damp": [
+     3,
+     6
+    ],
+    "life": 0.6,
+    "life_rand": 0.4,
+    "curve": [
+     [
+      0,
+      1
+     ],
+     [
+      0.6,
+      0.8
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#a957ec",
+     "#a957ec"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.02
+   }
+  ],
+  "shake": 0.25
+ },
+ "aby_strahl_soco": {
+  "nome": "STRAHL · Soco elétrico + Descarga (ataque)",
+  "personagem": "strahl",
+  "hit_t": 0.06,
+  "layers": [
+   {
+    "p": "punho",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.5,
+    "life": 0.28,
+    "life_rand": 0,
+    "aim": true,
+    "aim_off": -90,
+    "toward": 0.55,
+    "y": 0.95,
+    "curve": [
+     [
+      0,
+      1.7
+     ],
+     [
+      0.18,
+      0.85
+     ],
+     [
+      1,
+      0.95
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 3.0,
+    "halftone": 0.4,
+    "ramp": [
+     "#12061c",
+     "#a957ec",
+     "#ffe03a",
+     "#fff7b0"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   {
+    "luz": "#ffe03a",
+    "energia": 5.0,
+    "alcance": 4.5,
+    "dur": 0.35,
+    "y": 1.0,
+    "delay": 0.06
+   },
+   {
+    "p": "faisca",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 16,
+    "size": [
+     0.1,
+     1.2
+    ],
+    "speed": [
+     14,
+     22
+    ],
+    "spread": 35,
+    "damp": [
+     10,
+     14
+    ],
+    "life": 0.18,
+    "ramp": [
+     "#12061c",
+     "#12061c"
+    ],
+    "curve": [
+     [
+      0,
+      1.4
+     ],
+     [
+      1,
+      0.2
+     ]
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 0.95,
+    "delay": 0.06,
+    "dir": "away"
+   },
+   {
+    "p": "faisca",
+    "blend": "mix",
+    "mode": "vel",
+    "dir": "away",
+    "lift": 0.1,
+    "spread": 30,
+    "amount": 20,
+    "size": [
+     0.08,
+     0.9
+    ],
+    "speed": [
+     12,
+     20
+    ],
+    "damp": [
+     10,
+     14
+    ],
+    "life": 0.2,
+    "ramp": [
+     "#a957ec",
+     "#ffe03a",
+     "#fff7b0"
+    ],
+    "curve": [
+     [
+      0,
+      1.4
+     ],
+     [
+      1,
+      0.1
+     ]
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 0.95,
+    "delay": 0.06
+   },
+   {
+    "p": "anel",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.8,
+    "life": 0.28,
+    "life_rand": 0,
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      1,
+      1.5
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.0,
+    "halftone": 0.9,
+    "ramp": [
+     "#a957ec",
+     "#f438a9",
+     "#ffe03a"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 0.95,
+    "delay": 0.08
+   },
+   {
+    "p": "anel",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.8,
+    "life": 0.28,
+    "life_rand": 0,
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      1,
+      1.5
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.0,
+    "halftone": 0.9,
+    "ramp": [
+     "#a957ec",
+     "#f438a9",
+     "#ffe03a"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 0.95,
+    "delay": 0.22
+   },
+   {
+    "p": "anel",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.8,
+    "life": 0.28,
+    "life_rand": 0,
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      1,
+      1.5
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.0,
+    "halftone": 0.9,
+    "ramp": [
+     "#a957ec",
+     "#f438a9",
+     "#ffe03a"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "y": 0.95,
+    "delay": 0.36
+   },
+   {
+    "raio": "raio",
+    "para": "aleatorio",
+    "n": 4,
+    "raio_len": [
+     0.5,
+     1.0
+    ],
+    "dur": 0.5,
+    "flick": 0.04,
+    "width": 0.38,
+    "tile": 0.8,
+    "blend_top": "mix",
+    "ramp": [
+     "#301342",
+     "#a957ec",
+     "#f438a9",
+     "#ffe03a",
+     "#fff7b0"
+    ],
+    "boost": 1.0,
+    "halftone": 0.5,
+    "sombra": 1.7,
+    "y": 0.95,
+    "delay": 0.06
+   },
+   {
+    "raio": "raio",
+    "para": "aleatorio",
+    "n": 3,
+    "raio_len": [
+     0.4,
+     0.9
+    ],
+    "dur": 0.4,
+    "flick": 0.04,
+    "width": 0.3,
+    "tile": 0.8,
+    "blend_top": "mix",
+    "ramp": [
+     "#301342",
+     "#a957ec",
+     "#f438a9",
+     "#ffe03a",
+     "#fff7b0"
+    ],
+    "boost": 1.0,
+    "halftone": 0.5,
+    "sombra": 1.7,
+    "y": 0.95,
+    "delay": 0.3
+   },
+   {
+    "raio": "raio",
+    "de": "at",
+    "para": "extras",
+    "dur": 0.42,
+    "flick": 0.04,
+    "cresce": 0.08,
+    "width": 0.46,
+    "tile": 1.0,
+    "blend_top": "mix",
+    "ramp": [
+     "#301342",
+     "#a957ec",
+     "#f438a9",
+     "#ffe03a",
+     "#fff7b0"
+    ],
+    "boost": 1.0,
+    "halftone": 0.5,
+    "sombra": 1.8,
+    "delay": 0.16,
+    "y": 0.95
+   },
+   {
+    "sub": "aby_strahl_choque",
+    "em": "extras",
+    "delay": 0.22
    },
    {
     "p": "ponto",
     "blend": "mix",
     "amount": 18,
-    "size": 0.18,
+    "size": 0.17,
     "scale": [
      0.5,
      1.5
@@ -2972,20 +4523,20 @@
      ]
     ],
     "y": 0.95,
-    "delay": 0.02
+    "delay": 0.06
    },
    {
     "p": "ponto",
     "blend": "mix",
-    "amount": 14,
-    "size": 0.15,
+    "amount": 12,
+    "size": 0.14,
     "scale": [
      0.5,
      1.5
     ],
     "speed": [
-     3,
-     9
+     4,
+     10
     ],
     "spread": 180,
     "grav": -5,
@@ -3024,318 +4575,91 @@
      ]
     ],
     "y": 0.95,
-    "delay": 0.02
-   },
-   {
-    "p": "anel",
-    "amount": 1,
-    "size": 2.0,
-    "life": 0.25,
-    "life_rand": 0,
-    "curve": [
-     [
-      0,
-      0.3
-     ],
-     [
-      1,
-      1.6
-     ]
-    ],
-    "erode": 1.0,
-    "erode_pow": 1.0,
-    "halftone": 0.9,
-    "ramp": [
-     "#a957ec",
-     "#f438a9",
-     "#ff91d8",
-     "#ffffff"
-    ],
-    "boost": 1.4,
-    "alpha": [
-     [
-      0,
-      1
-     ],
-     [
-      1,
-      1
-     ]
-    ],
-    "delay": 0.1,
-    "y": 0.95,
-    "nucleo": true
-   },
-   {
-    "p": "anel",
-    "amount": 1,
-    "size": 2.0,
-    "life": 0.25,
-    "life_rand": 0,
-    "curve": [
-     [
-      0,
-      0.3
-     ],
-     [
-      1,
-      1.6
-     ]
-    ],
-    "erode": 1.0,
-    "erode_pow": 1.0,
-    "halftone": 0.9,
-    "ramp": [
-     "#a957ec",
-     "#f438a9",
-     "#ff91d8",
-     "#ffffff"
-    ],
-    "boost": 1.4,
-    "alpha": [
-     [
-      0,
-      1
-     ],
-     [
-      1,
-      1
-     ]
-    ],
-    "delay": 0.24,
-    "y": 0.95,
-    "nucleo": true
-   },
-   {
-    "raio": "raio",
-    "de": "at",
-    "para": "extras",
-    "dur": 0.42,
-    "flick": 0.045,
-    "cresce": 0.08,
-    "width": 0.5,
-    "tile": 1.0,
-    "ramp": [
-     "#301342",
-     "#a957ec",
-     "#f438a9",
-     "#ff91d8",
-     "#ffffff"
-    ],
-    "boost": 1.0,
-    "halftone": 0.5,
-    "sombra": 1.8,
-    "nucleo": true,
-    "delay": 0.12,
-    "y": 0.95,
-    "blend_top": "mix"
-   },
-   {
-    "sub": "aby_choque",
-    "em": "extras",
-    "delay": 0.2
+    "delay": 0.06
    }
   ],
-  "shake": 0.35
+  "shake": 0.3,
+  "shake_delay": 0.06
  },
- "aby_choque": {
-  "nome": "ATAQUE · Choque (descarga no vizinho)",
+ "aby_strahl_choque": {
+  "nome": "STRAHL · Choque no vizinho (Descarga)",
+  "personagem": "strahl",
   "layers": [
    {
-    "luz": "#f438a9",
+    "luz": "#ffe03a",
     "energia": 3.0,
     "alcance": 3.0,
     "dur": 0.25,
-    "y": 1.0,
-    "nucleo": true
-   },
-   {
-    "p": "brilho",
-    "amount": 1,
-    "size": 1.3,
-    "life": 0.2,
-    "life_rand": 0,
-    "curve": [
-     [
-      0,
-      0.4
-     ],
-     [
-      0.25,
-      1.2
-     ],
-     [
-      1,
-      1.4
-     ]
-    ],
-    "ramp": [
-     "#301342",
-     "#a957ec",
-     "#f438a9",
-     "#ff91d8",
-     "#ffe6f6"
-    ],
-    "boost": 1.3,
-    "halftone": 0.85,
-    "alpha": [
-     [
-      0,
-      1
-     ],
-     [
-      1,
-      0
-     ]
-    ],
-    "y": 0.95,
-    "nucleo": true
-   },
-   {
-    "p": "brilho",
-    "blend": "mix",
-    "amount": 1,
-    "size": 1.15,
-    "life": 0.3,
-    "life_rand": 0,
-    "curve": [
-     [
-      0,
-      0.3
-     ],
-     [
-      0.2,
-      1.0
-     ],
-     [
-      1,
-      0.8
-     ]
-    ],
-    "ramp": [
-     "#a957ec",
-     "#f438a9",
-     "#ff91d8",
-     "#ffffff"
-    ],
-    "halftone": 1.0,
-    "dot": 6,
-    "erode": 1.0,
-    "erode_pow": 1.2,
-    "alpha": [
-     [
-      0,
-      1
-     ],
-     [
-      1,
-      1
-     ]
-    ],
-    "y": 0.9,
-    "nucleo": true
-   },
-   {
-    "p": "estrela",
-    "amount": 1,
-    "size": 1.4,
-    "life": 0.2,
-    "life_rand": 0,
-    "spin": [
-     -200,
-     200
-    ],
-    "curve": [
-     [
-      0,
-      0.2
-     ],
-     [
-      0.2,
-      1.1
-     ],
-     [
-      1,
-      0.2
-     ]
-    ],
-    "ramp": [
-     "#a957ec",
-     "#f438a9",
-     "#ffffff"
-    ],
-    "boost": 1.5,
-    "y": 0.95,
-    "nucleo": true
+    "y": 1.0
    },
    {
     "raio": "raio",
     "para": "aleatorio",
     "n": 3,
     "raio_len": [
-     0.6,
-     1.1
+     0.4,
+     0.9
     ],
-    "dur": 0.25,
-    "flick": 0.045,
+    "dur": 0.35,
+    "flick": 0.04,
     "width": 0.3,
     "tile": 0.8,
+    "blend_top": "mix",
     "ramp": [
      "#301342",
      "#a957ec",
      "#f438a9",
-     "#ff91d8",
-     "#ffffff"
+     "#ffe03a",
+     "#fff7b0"
     ],
     "boost": 1.0,
-    "halftone": 0.6,
-    "nucleo": true,
+    "halftone": 0.5,
+    "sombra": 1.7,
     "y": 0.95,
-    "blend_top": "mix"
+    "delay": 0.0
    },
    {
-    "p": "faisca",
-    "mode": "vel",
-    "amount": 14,
-    "size": [
-     0.06,
-     0.45
-    ],
-    "speed": [
-     7,
-     13
-    ],
-    "spread": 180,
-    "damp": [
-     8,
-     12
-    ],
-    "life": 0.18,
-    "ramp": [
-     "#a957ec",
-     "#f438a9",
-     "#ff91d8",
-     "#ffffff"
-    ],
-    "boost": 1.8,
+    "p": "anel",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.4,
+    "life": 0.25,
+    "life_rand": 0,
     "curve": [
      [
       0,
-      1.3
+      0.3
      ],
      [
       1,
-      0
+      1.4
      ]
     ],
-    "nucleo": true,
+    "erode": 1.0,
+    "erode_pow": 1.0,
+    "halftone": 0.9,
+    "ramp": [
+     "#a957ec",
+     "#f438a9",
+     "#ffe03a"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
     "y": 0.95
    },
    {
     "p": "ponto",
     "blend": "mix",
-    "amount": 9,
-    "size": 0.18,
+    "amount": 10,
+    "size": 0.17,
     "scale": [
      0.5,
      1.5
@@ -3387,14 +4711,14 @@
     "p": "ponto",
     "blend": "mix",
     "amount": 7,
-    "size": 0.15,
+    "size": 0.14,
     "scale": [
      0.5,
      1.5
     ],
     "speed": [
-     3,
-     9
+     4,
+     10
     ],
     "spread": 180,
     "grav": -5,
@@ -3436,6 +4760,6 @@
     "delay": 0.02
    }
   ],
-  "shake": 0.15
+  "shake": 0.12
  }
 }
