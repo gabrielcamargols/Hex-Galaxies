@@ -46,6 +46,7 @@ var cam_goal: Variant = null
 var cam_speed: float = 8.0      # mais baixo = câmera mais lenta (chegada no planeta)
 var shake: float = 0.0
 
+var cz_nodes: Dictionary = {}       # casa -> cristais da Zona de Cristal (Lithari)
 var res_nodes: Dictionary = {}      # casa -> modelo do recurso (some quando é coletado)
 var active_tiles: Dictionary = {}   # casas animando (relevo/brilho): só estas são varridas todo quadro
 var scan_n: int = 0
@@ -1527,6 +1528,11 @@ func _process(delta: float) -> void:
 			orb.rotation.y += delta * 2.0
 	if g != null:
 		_update_claw(delta)
+	if not cz_nodes.is_empty():
+		var pulse = 0.26 + 0.12 * sin(Time.get_ticks_msec() / 350.0)
+		for nd in cz_nodes.values():
+			if is_instance_valid(nd) and nd.has_meta("disk"):
+				nd.get_meta("disk").albedo_color.a = pulse
 	if g == null:
 		return
 	_update_camera(delta)
@@ -1655,10 +1661,75 @@ func _update_units(delta: float) -> void:
 
 
 # ================= destaques =================
+# ---- Zona de Cristal: aglomerado de cristais brilhantes no chão da casa ----
+func _build_czone(h: Vector2i) -> Node3D:
+	var root = Node3D.new()
+	var xz = world_xz(h)
+	root.position = Vector3(xz.x, top_y(h), xz.y)
+	var disk = MeshInstance3D.new()
+	disk.mesh = _cyl(0.78, 0.78, 0.02, 6)
+	var dm = StandardMaterial3D.new()
+	dm.albedo_color = Color(0.45, 0.92, 1.0, 0.30)
+	dm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	dm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	dm.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	disk.material_override = dm
+	disk.position = Vector3(0, 0.04, 0)
+	root.add_child(disk)
+	root.set_meta("disk", dm)
+	for i in range(5):
+		var a = _rnd(h, i + 40) * TAU
+		var rr = 0.12 + _rnd(h, i + 50) * 0.42
+		var hh = 0.32 + _rnd(h, i + 60) * 0.42
+		var sh = MeshInstance3D.new()
+		sh.mesh = _cyl(0.0, 0.11 + _rnd(h, i + 70) * 0.06, hh, 5)
+		var m = StandardMaterial3D.new()
+		m.albedo_color = Color(0.55, 0.93, 1.0, 0.82).lerp(Color(0.72, 0.62, 1.0, 0.82), _rnd(h, i + 80) * 0.5)
+		m.emission_enabled = true
+		m.emission = Color(0.3, 0.85, 1.0)
+		m.emission_energy_multiplier = 1.6
+		m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		m.roughness = 0.15
+		sh.material_override = m
+		sh.position = Vector3(cos(a) * rr, hh * 0.5, sin(a) * rr)
+		sh.rotation = Vector3((_rnd(h, i + 90) - 0.5) * 0.35, a, (_rnd(h, i + 100) - 0.5) * 0.35)
+		root.add_child(sh)
+	root.scale = Vector3(0.01, 0.01, 0.01)
+	var tw = root.create_tween()
+	tw.tween_property(root, "scale", Vector3.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	return root
+
+
+func _sync_czones() -> void:
+	var want: Dictionary = {}
+	for z in g.czones:
+		if int(z["until"]) >= g.round_no:
+			want[z["h"]] = true
+	for u in g.units:
+		if u.st == "field" and not u.barrier and g.K(u).has("zoneAura") and not g.silenced(u):
+			for n in DB.nbrs(u.pos()):
+				if DB.in_board(n):
+					want[n] = true
+	for h in cz_nodes.keys():
+		var nd = cz_nodes[h]
+		if not want.has(h) or not is_instance_valid(nd):
+			if is_instance_valid(nd):
+				var tw = nd.create_tween()
+				tw.tween_property(nd, "scale", Vector3(0.01, 0.01, 0.01), 0.25)
+				tw.tween_callback(nd.queue_free)
+			cz_nodes.erase(h)
+	for h in want.keys():
+		if not cz_nodes.has(h) and tiles.has(h):
+			var nd2 = _build_czone(h)
+			add_child(nd2)
+			cz_nodes[h] = nd2
+
+
 func set_state(s: Dictionary) -> void:
 	state = s
 	refresh_terrain()
 	sync_units()
+	_sync_czones()
 	for rh in res_nodes.keys():
 		var rnode = res_nodes[rh]
 		if not is_instance_valid(rnode):

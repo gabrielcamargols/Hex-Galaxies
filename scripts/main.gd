@@ -2225,10 +2225,6 @@ func refresh() -> void:
 	for fr in game.fires:
 		st["labels"][fr["h"]] = "FOGO"
 		st["label_colors"][fr["h"]] = Color("#ff6a2a")
-	for cz in game.czones:
-		if int(cz["until"]) >= game.round_no:
-			st["labels"][cz["h"]] = "CRISTAL"
-			st["label_colors"][cz["h"]] = Color("#7fe8ff")
 	for sh in game.shells:
 		st["labels"][sh["h"]] = "ARTILHARIA"
 		st["label_colors"][sh["h"]] = Color("#ffcc55")
