@@ -25,15 +25,15 @@ const PAL = {
 	"cave": ["#7a64e0", "#5a48c0", "#24186a"], "cave2": ["#6c56d4", "#4e3cb0", "#20145e"], "pit": ["#140a24", "#0c0618", "#05020a"],
 	"rubble_g": ["#6aa040", "#548232", "#2c4a1c"], "sand2": ["#d8903e", "#b8702c", "#6e3a1a"], "grass3": ["#389444", "#2a7434", "#184a22"],
 	# Abnara (selva viva)
-	"trilha": ["#a8cc5c", "#86ac44", "#3e5e22"], "clareira": ["#ecd27c", "#cfb25c", "#6e5a2a"], "mata": ["#2f8a3e", "#226e30", "#123e1a"],
-	"raiz": ["#7a8a3e", "#5e6e2e", "#2e3a18"], "rio": ["#3cc4e4", "#2296c0", "#0e4a6a"], "ponte": ["#c8925a", "#a06c3a", "#5a3a1c"],
-	"pedra": ["#a6a2b4", "#868296", "#46444e"],
+	"trilha": ["#7fb04a", "#639238", "#2e4e22"], "clareira": ["#cdb86e", "#ad9a52", "#5a4a2a"], "mata": ["#217044", "#185a36", "#0c3222"],
+	"raiz": ["#6a7a3a", "#4e5e2c", "#2a3416"], "rio": ["#2f76d8", "#2358b0", "#102e72"], "ponte": ["#c0723a", "#9a5428", "#52301a"],
+	"pedra": ["#8e8aa8", "#726e8c", "#3c3a54"],
 	# Gor'Aida (gelo instável)
 	"neve": ["#f4f8ff", "#d8e6f4", "#8ea6c0"], "neve_base": ["#fff0cc", "#ead6aa", "#9a8a6a"], "gelo": ["#9ce2ff", "#70c4ee", "#3a7aa8"],
 	"gelo_f": ["#cdeeff", "#a6d4f0", "#5a8ab0"], "fenda": ["#102a66", "#1b4aa0", "#2f6fc0"], "gelo_alto": ["#c4e2f6", "#9cc6e6", "#4e7ea6"],
 	"aval": ["#f8e8f4", "#e6cce0", "#9a7a98"],
 }
-const ELEV = {"tarhut": "#c0583a", "posto": "#e0c060", "abnara": "#d6e27a", "goraida": "#ffffff"}  # tom que as casas altas puxam
+const ELEV = {"tarhut": "#c0583a", "posto": "#e0c060", "abnara": "#b6d88a", "goraida": "#ffffff"}  # tom que as casas altas puxam
 # planeta: o tabuleiro fica num platô e o chão se curva em volta (deserto contínuo)
 var PLAT = 18.5       # raio plano em volta do tabuleiro (ajustado ao tamanho do mapa)
 var HX: float = 1.0          # espaçamento das casas (mapas com "hex_scale": casas mais largas, mais respiro)
