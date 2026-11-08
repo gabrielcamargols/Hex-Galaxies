@@ -148,7 +148,7 @@ func _pb() -> Vector3:
 
 
 func _cam_place(delta: float) -> void:
-	var tgt = Vector3(0, 0.7, 0)
+	var tgt = Vector3(-1.5, 0.7, 0)   # palco deslocado: o painel fica à esquerda
 	if shake > 0.0:
 		var t = Time.get_ticks_msec() / 1000.0
 		tgt += Vector3(sin(t * 43.0), cos(t * 31.0) * 0.5, 0) * 0.18 * shake
