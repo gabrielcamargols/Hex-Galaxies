@@ -2111,7 +2111,8 @@ func _build_hud() -> void:
 	# ficha da peça
 	var uc = _panel(ui)
 	_place(uc, Control.PRESET_BOTTOM_LEFT, 8)
-	w["ucard_text"] = _rich(uc, 260 if compact else 320)
+	w["ucard_text"] = _rich(uc, 200 if compact else 230)
+	w["ucard_text"].add_theme_font_size_override("normal_font_size", 12 if compact else 13)
 	w["ucard"] = uc
 	# embaixo: mão de cartas + botões de ação
 	var botcol = _vbox(ui, 6)
@@ -2690,11 +2691,11 @@ func _refresh_party() -> void:
 			grid.add_theme_constant_override("v_separation", 3)
 			box.add_child(grid)
 			for u in res:
-				grid.add_child(_res_tile(u, p, dep_ok))
+				grid.add_child(_with_hp(_res_tile(u, p, dep_ok), u))
 		if not fld.is_empty():
 			_label(box, "EM CAMPO · %d" % fld.size(), 11, C_DIM)
 			for u in fld:
-				box.add_child(_field_row(u))
+				box.add_child(_with_hp(_field_row(u), u))
 		if not dead.is_empty():
 			var names = dead.map(func(x): return _short(x.cid))
 			var dl = _label(box, "Caídos: " + ", ".join(names), 11, Color(0.55, 0.58, 0.62))
@@ -2704,6 +2705,37 @@ func _refresh_party() -> void:
 
 func _roster_w() -> float:
 	return 186.0 if compact else 200.0
+
+
+# barra de vida embaixo do avatar na coluna da esquerda (cor do lado; amarela e vermelha quando cai)
+func _hp_bar(u, width: float) -> Control:
+	var frac = clamp(float(max(0, u.hp)) / max(1.0, float(u.maxhp)), 0.0, 1.0)
+	var side_c = (C_YOU if u.owner == me else C_CPU).lightened(0.15)
+	var hc = side_c if frac > 0.6 else (Color("#ffcf3a") if frac > 0.34 else Color("#ff3b3b"))
+	var bar = Control.new()
+	bar.custom_minimum_size = Vector2(width, 6)
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var bg = ColorRect.new()
+	bg.color = Color(0, 0, 0, 0.55)
+	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bar.add_child(bg)
+	var fill = ColorRect.new()
+	fill.color = hc
+	fill.position = Vector2.ZERO
+	fill.size = Vector2(width * frac, 6)
+	fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bar.add_child(fill)
+	return bar
+
+
+# junta o avatar com a barra de vida embaixo dele
+func _with_hp(b: Button, u) -> VBoxContainer:
+	var v = VBoxContainer.new()
+	v.add_theme_constant_override("separation", 2)
+	v.add_child(b)
+	v.add_child(_hp_bar(u, b.custom_minimum_size.x))
+	return v
 
 
 func _roster_scroll(parent: Control) -> ScrollContainer:
@@ -2814,7 +2846,7 @@ func _refresh_ucard() -> void:
 		else:
 			var c = DB.cards[u.cid]
 			var fcol = DB.factions[c["f"]]["color"]
-			txt = "[color=%s]%s[/color] · %s\n[font_size=24][b]%s[/b][/font_size]\n" % [fcol, DB.factions[c["f"]]["name"].to_upper(), "Você" if u.owner == me else _opp(), c["name"]]
+			txt = "[color=%s]%s[/color] · %s\n[font_size=18][b]%s[/b][/font_size]\n" % [fcol, DB.factions[c["f"]]["name"].to_upper(), "Você" if u.owner == me else _opp(), c["name"]]
 			txt += "%s\n[b]Vida[/b] %d/%d   [b]Ataque[/b] %d   [b]Movimento[/b] %d   [b]Alcance[/b] %d\n" % [c["role"], max(0, u.hp), u.maxhp, game.atk_of(u, null), game.mov_of(u), game.alc_of(u)]
 			if u.st == "field":
 				txt += "[i]%s[/i]\n" % game.t_name(u.pos())
@@ -4862,7 +4894,6 @@ func _process(_delta: float) -> void:
 				eb.modulate = Color.WHITE
 		_tick_clock(_delta)
 		_apply_title()
-		_update_plates(_delta)
 		_tremor_omen(_delta)
 		vfx.cam_k = _fx_scale()
 	if bubbles.is_empty():
