@@ -482,7 +482,7 @@ func _planet_of_map(m: String) -> String:
 
 
 func _stop_battle_loops() -> void:
-	for n in ["vento_loop", "musica_deserto", "ilha_loop", "tempestade_loop", "musica_valak"]:
+	for n in ["vento_loop", "musica_deserto", "ilha_loop", "caverna_loop", "tempestade_loop", "musica_valak"]:
 		sfx.stop_loop(n, 0.8)
 	_fac_music("")
 
@@ -1776,7 +1776,7 @@ func _start_match(sides) -> void:
 	if game.map_id == "tarhut":
 		sfx.loop("vento_loop", -15.0, 2.0)
 	else:
-		sfx.loop("ilha_loop", -14.0, 2.0)
+		sfx.loop("caverna_loop", -12.0, 2.0)
 	if autotest:
 		_map_music()
 	refresh()

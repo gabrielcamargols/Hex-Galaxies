@@ -367,9 +367,10 @@ func setup_ambient(map_id: String) -> void:
 		s2.emitting = false
 		storm = [s1, s2]
 	else:
-		# pólen dourado e névoa baixa sobre a água
-		ambient.append(_field(Color(1.0, 0.95, 0.6, 0.7), 160, 8.0, 0.08, Vector3(0.3, 0.15, 0.2), Vector3(span, 2.0, span), 1.2, true))
-		ambient.append(_field(Color(0.9, 0.97, 1.0, 0.16), 50, 10.0, 2.6, Vector3(0.4, 0.0, 0.2), Vector3(span + 4.0, 0.4, span + 4.0), -0.3, false))
+		# caverna de Valak: poeira de cristal cintilando (roxa e ciano) e névoa baixa lilás
+		ambient.append(_field(Color(0.85, 0.55, 1.0, 0.75), 140, 9.0, 0.07, Vector3(0.05, 0.12, 0.05), Vector3(span, 2.5, span), 1.4, true))
+		ambient.append(_field(Color(0.45, 0.95, 1.0, 0.6), 70, 9.0, 0.06, Vector3(-0.05, 0.1, 0.05), Vector3(span, 2.5, span), 1.6, true))
+		ambient.append(_field(Color(0.6, 0.45, 0.95, 0.14), 50, 12.0, 2.8, Vector3(0.15, 0.0, 0.1), Vector3(span + 4.0, 0.4, span + 4.0), -0.3, false))
 
 
 func _field(col: Color, amount: int, life: float, size: float, wind: Vector3, extents: Vector3, y: float, additive: bool) -> CPUParticles3D:
