@@ -850,30 +850,12 @@ func _add_marks(root: Node3D, h: Vector2i) -> void:
 			rc = Color("#c9c2b4")
 		elif rt == "escaravelho":
 			rc = Color("#2fd04f")
-		var rm = _mesh(root, (SphereMesh.new() as Mesh) if (rt == "agua" or rt == "escaravelho") else (_box(Vector3(0.3, 0.22, 0.3)) as Mesh), rc, Vector3(0.42, 0.18, 0.22))
-		if rt == "agua":
-			rm.scale = Vector3(0.3, 0.36, 0.3)
-		elif rt == "escaravelho":
-			# besouro: casco verde brilhante achatado + cabeça
-			rm.scale = Vector3(0.62, 0.34, 0.86)
-			rm.position = Vector3(0.0, 0.3, 0.0)
-			var mt = rm.material_override
-			if mt is StandardMaterial3D:
-				mt.emission_enabled = true
-				mt.emission = Color("#18c040")
-				mt.emission_energy_multiplier = 0.9
-				mt.metallic = 0.6
-				mt.roughness = 0.25
-			var hd = _mesh(root, SphereMesh.new(), Color("#1f9c42"), Vector3(0.0, 0.3, -0.48))
-			hd.scale = Vector3(0.3, 0.22, 0.26)
-			var bm = _mesh(root, _cyl(0.04, 0.04, 2.2, 6), Color("#30e050"), Vector3(0.0, 1.2, 0.0))
-			if bm.material_override is StandardMaterial3D:
-				bm.material_override.emission_enabled = true
-				bm.material_override.emission = Color("#18d040")
-				bm.material_override.emission_energy_multiplier = 1.3
-			for sx in [-1, 1]:
-				for zz in [-0.14, 0.0, 0.14]:
-					var lg = _mesh(root, _box(Vector3(0.4, 0.05, 0.05)), Color("#145c28"), Vector3(sx * 0.5, 0.14, zz * 1.7))
+		if rt == "escaravelho":
+			_build_beetle(root)
+		else:
+			var rm = _mesh(root, (SphereMesh.new() as Mesh) if rt == "agua" else (_box(Vector3(0.3, 0.22, 0.3)) as Mesh), rc, Vector3(0.42, 0.18, 0.22))
+			if rt == "agua":
+				rm.scale = Vector3(0.3, 0.36, 0.3)
 		var rl = Label3D.new()
 		rl.text = DB.res[rt]["name"].split(" ")[0].to_upper()
 		rl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
@@ -887,6 +869,64 @@ func _add_marks(root: Node3D, h: Vector2i) -> void:
 			rl.font_size = 60
 			rl.modulate = Color("#8dff9f")
 		root.add_child(rl)
+
+
+# escaravelho verde: modelo 3D com brilho (emissão na própria textura + halo aditivo que pulsa)
+var halo_tex: GradientTexture2D = null
+
+
+func _build_beetle(root: Node3D) -> void:
+	var holder = Node3D.new()
+	holder.position = Vector3(0, 0.34, 0)
+	root.add_child(holder)
+	var ps = load("res://models/escaravelho.glb")
+	if ps is PackedScene:
+		var inst = ps.instantiate()
+		holder.add_child(inst)
+		inst.rotation_degrees = Vector3(-90, 0, 0)
+		inst.scale = Vector3.ONE * 0.95
+		for mi in inst.find_children("*", "MeshInstance3D", true, false):
+			var mat = mi.get_active_material(0)
+			if mat is StandardMaterial3D:
+				mat = mat.duplicate()
+				mat.emission_enabled = true
+				mat.emission_texture = mat.albedo_texture
+				mat.emission_energy_multiplier = 0.8
+				mi.material_override = mat
+	if halo_tex == null:
+		halo_tex = GradientTexture2D.new()
+		var gr = Gradient.new()
+		gr.set_color(0, Color(0.35, 1.0, 0.5, 0.75))
+		gr.set_color(1, Color(0.1, 0.9, 0.35, 0.0))
+		gr.set_offset(0, 0.0)
+		halo_tex.gradient = gr
+		halo_tex.fill = GradientTexture2D.FILL_RADIAL
+		halo_tex.fill_from = Vector2(0.5, 0.5)
+		halo_tex.fill_to = Vector2(1.0, 0.5)
+		halo_tex.width = 128
+		halo_tex.height = 128
+	var halo = MeshInstance3D.new()
+	var q = QuadMesh.new()
+	q.size = Vector2(2.2, 2.2)
+	halo.mesh = q
+	var hm = StandardMaterial3D.new()
+	hm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	hm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	hm.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	hm.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	hm.albedo_texture = halo_tex
+	hm.no_depth_test = true
+	hm.render_priority = -1
+	halo.material_override = hm
+	halo.position = Vector3(0, 0.1, 0)
+	holder.add_child(halo)
+	# pulsa o brilho e balança o besouro
+	var tw = halo.create_tween().set_loops()
+	tw.tween_property(halo, "scale", Vector3(1.25, 1.25, 1.25), 0.9).set_trans(Tween.TRANS_SINE)
+	tw.tween_property(halo, "scale", Vector3(0.85, 0.85, 0.85), 0.9).set_trans(Tween.TRANS_SINE)
+	var tw2 = holder.create_tween().set_loops()
+	tw2.tween_property(holder, "rotation_degrees:y", 14.0, 1.6).set_trans(Tween.TRANS_SINE)
+	tw2.tween_property(holder, "rotation_degrees:y", -14.0, 1.6).set_trans(Tween.TRANS_SINE)
 
 
 # ---------- modelos 3D da Meshy (res://models/<nome>.glb) ----------
