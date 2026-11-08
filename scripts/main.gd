@@ -2389,7 +2389,7 @@ func refresh() -> void:
 				st["hl"][h] = "danger"
 	board.sync_carts(game.carts)
 	for h in game.tremors:
-		st["hl"][h] = "trem"
+		st["hl"][h] = "danger" if game.warn_kind == "avalanche" else "trem"
 		st["labels"][h] = "!"
 		st["label_colors"][h] = Color("#ffe39a")
 	if game.dune_next >= 0:
@@ -2847,7 +2847,14 @@ func _refresh_ucard() -> void:
 			var rr = DB.res[game.res[hex_info]]
 			txt += "\n[color=#5ec8f0]Recurso %s:[/color] %s (%s)" % [rr["name"], rr["text"], "é coletado ao passar por cima" if game.res[hex_info] == "escaravelho" else "coletar gasta 1 ação"]
 		if game.tremors.has(hex_info):
-			txt += "\n[color=#ffb14a]A areia treme: um buraco de verme abre aqui no próximo round.[/color]"
+			if game.warn_kind == "raiz":
+				txt += "\n[color=#9be85a]Raiz brotando: esta casa vira uma raiz maciça no próximo round (dura 3 rounds).[/color]"
+			elif game.warn_kind == "fratura":
+				txt += "\n[color=#9fe8ff]Gelo rachado: rompe no próximo round. Quem estiver aqui leva 2 e cai para a borda.[/color]"
+			elif game.warn_kind == "avalanche":
+				txt += "\n[color=#9fe8ff]Corredor de avalanche: no próximo round quem estiver aqui leva 2 e é empurrado 1 casa.[/color]"
+			else:
+				txt += "\n[color=#ffb14a]A areia treme: um buraco de verme abre aqui no próximo round.[/color]"
 	w["ucard"].visible = txt != ""
 	w["ucard_text"].text = txt
 
@@ -4601,6 +4608,34 @@ func _on_fx(e: Dictionary) -> void:
 				w["banner"].add_theme_color_override("font_color", Color("#ff9a5a"))
 			for th in e["hexes"]:
 				vfx.dust_burst(_hex_pos(th, 0.0), false)
+		"warn_map":
+			sfx.play("verme_rumor", -3.0, 0.6)
+			board.shake = max(board.shake, 0.3)
+			var wk = String(e["kind"])
+			banner("AS RAÍZES SE MEXEM" if wk == "raiz" else ("O GELO ESTALA" if wk == "fratura" else "AVALANCHE À VISTA"), "saia das casas marcadas: acontece no próximo round")
+			if w.has("banner"):
+				w["banner"].add_theme_color_override("font_color", Color("#9be85a") if wk == "raiz" else Color("#9fe8ff"))
+			for th in e["hexes"]:
+				vfx.dust_burst(_hex_pos(th, 0.0), false)
+		"roots":
+			board.shake = max(board.shake, 0.6)
+			sfx.play("explosao", -6.0, 0.55)
+			for th in e["hexes"]:
+				vfx.dust_burst(_hex_pos(th, 0.0), true)
+		"icebreak":
+			banner("O GELO SE ROMPEU!", "fendas abertas por 3 rounds")
+			board.quake()
+			sfx.play("explosao", -2.0, 0.7)
+			for th in e["hexes"]:
+				vfx.dust_burst(_hex_pos(th, 0.0), true)
+				vfx.flip("rock", _hex_pos(th, 0.0), 3.0, 0.7, Color("#bfeeff"))
+		"avalanche":
+			banner("AVALANCHE!", "a neve desce pelo corredor")
+			board.quake()
+			sfx.play("verme_ataque", 0.0, 0.55)
+			for th in e["hexes"]:
+				vfx.dust_burst(_hex_pos(th, 0.0), true)
+				vfx.flip("boom", _hex_pos(th, 0.0), 3.5, 0.8, Color("#e8f6ff"))
 		"worm":
 			banner("VERME GIGANTE!", "quem estiver nos buracos é devorado")
 			if w.has("banner"):

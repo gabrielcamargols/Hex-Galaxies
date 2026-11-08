@@ -75,6 +75,8 @@ var dune: int = 0
 var dune_next: int = -1
 var holes: Array = []
 var tremors: Array = []
+var warn_kind: String = ""      # o que as casas marcadas (tremors) vão virar: raiz, fratura, avalanche
+var dyn: Dictionary = {}         # camada dinâmica de terreno dos mapas do dossiê: hex -> {k, until, then}
 var res: Dictionary = {}  # Vector2i -> tipo
 var final_score: Dictionary = {}
 var terr_map: Dictionary = {}
@@ -178,6 +180,8 @@ func load_map() -> void:
 	# mapas do dossiê de level design (Abnara, Gor'Aida): todas as casas listadas, sem espelho automático
 	for e in def.get("cells", []):
 		terr_map[Vector2i(e[0], e[1])] = {"k": e[2], "h": e[3]}
+	for dh2 in dyn.keys():
+		terr_map[dh2] = {"k": dyn[dh2]["k"], "h": int(terr_map.get(dh2, plain)["h"])}
 	if def.has("dunes"):
 		var dh = dune_heights(dune)
 		for h in dh.keys():
@@ -1959,8 +1963,9 @@ func _terrain_round_end() -> void:
 		for n in DB.nbrs(u.pos()):
 			if tt_of(terr(n)["k"]).get("bite", 0):
 				emitfx({"t": "boom", "h": n})
-				log_msg(-1, "Planta predadora morde %s (1)." % nm(u))
-				damage(u, 1, null)
+				var bd = 2 if (map_id == "abnara" and _pulse(round_no)) else 1
+				log_msg(-1, "Planta predadora morde %s (%d)." % [nm(u), bd])
+				damage(u, bd, null)
 				bit = true
 				break
 	if bit:
@@ -1987,6 +1992,206 @@ func _terrain_round_end() -> void:
 		await arrive(u)
 	if moved:
 		await pace()
+	if winner != NONE:
+		return
+	await _map_events(def)
+
+
+# ================= eventos dos mapas do dossiê =================
+# Abnara: raízes brotam nos rounds 3, 6, 9 (aviso no round anterior). Gor'Aida: o gelo frágil se rompe nos
+# rounds 3, 6, 9 e avalanches descem nos rounds 4, 7, 10. Sempre um round inteiro de aviso, e nunca
+# cortam o mapa em pedaços.
+func _pulse(r: int) -> bool:
+	return r == 3 or r == 6 or r == 9
+
+
+func _aval(r: int) -> bool:
+	return r == 4 or r == 7 or r == 10
+
+
+func _mirror(h: Vector2i) -> Vector2i:
+	return Vector2i(-h.x - h.y, h.y)
+
+
+func _map_events(def: Dictionary) -> void:
+	var ab = map_id == "abnara"
+	var gl = map_id == "goraida"
+	if not (ab or gl):
+		return
+	var changed_terrain = false
+	# 1) expira o que já passou (raiz murcha, gelo rompido congela de novo)
+	for h in dyn.keys():
+		if int(dyn[h]["until"]) <= round_no:
+			var then = String(dyn[h].get("then", ""))
+			if then == "":
+				dyn.erase(h)
+			else:
+				dyn[h] = {"k": then, "until": 999, "then": ""}
+			changed_terrain = true
+	# 2) o evento marcado acontece
+	if not tremors.is_empty() and ((ab and _pulse(round_no)) or (gl and warn_kind == "fratura" and _pulse(round_no)) or (gl and warn_kind == "avalanche" and _aval(round_no))):
+		var hs = tremors.duplicate()
+		var kind = warn_kind
+		tremors = []
+		warn_kind = ""
+		if kind == "raiz":
+			var n = 0
+			for h in hs:
+				if unit_at(h) != null or barrier_at(h):
+					continue
+				dyn[h] = {"k": "raiz", "until": round_no + 3, "then": ""}
+				n += 1
+			changed_terrain = n > 0
+			log_msg(-1, "Raízes brotaram do chão (%d casas) e vão murchar em 3 rounds." % n)
+			emitfx({"t": "roots", "hexes": hs})
+		elif kind == "fratura":
+			for h in hs:
+				dyn[h] = {"k": "fenda", "until": round_no + 3, "then": "gelo"}
+			changed_terrain = true
+			log_msg(-1, "O gelo rachado se rompeu! Quem estava nas casas marcadas caiu para a borda.")
+			emitfx({"t": "icebreak", "hexes": hs})
+		elif kind == "avalanche":
+			log_msg(-1, "Uma avalanche desceu pelo corredor marcado!")
+			emitfx({"t": "avalanche", "hexes": hs})
+		if changed_terrain:
+			load_map()
+		for h in hs:
+			var u = unit_at(h)
+			if u == null or u.barrier:
+				continue
+			if kind == "fratura" and not K(u).has("air"):
+				emitfx({"t": "boom", "h": h})
+				log_msg(-1, "%s caiu na fenda do gelo (2)." % nm(u))
+				damage(u, 2, null)
+				await _eject(u)
+			elif kind == "avalanche":
+				emitfx({"t": "boom", "h": h})
+				log_msg(-1, "%s foi atingido pela avalanche (2)." % nm(u))
+				damage(u, 2, null)
+				if u.st == "field":
+					await _shove_flow(u, def)
+		settle()
+		await pace()
+		if winner != NONE:
+			return
+	elif changed_terrain:
+		load_map()
+	# 3) marca o próximo evento (um round inteiro de aviso)
+	var nr = round_no + 1
+	if nr > 10:
+		return
+	var kind2 = ""
+	if ab and _pulse(nr):
+		kind2 = "raiz"
+	elif gl and _pulse(nr):
+		kind2 = "fratura"
+	elif gl and _aval(nr):
+		kind2 = "avalanche"
+	if kind2 == "":
+		return
+	var pick = _warn_hexes(kind2, def, nr)
+	if pick.is_empty():
+		return
+	tremors = pick
+	warn_kind = kind2
+	if kind2 == "raiz":
+		log_msg(-1, "A mata se mexe: raízes vão brotar no próximo round nas casas marcadas.")
+	elif kind2 == "fratura":
+		log_msg(-1, "O gelo estala: as casas marcadas vão se romper no próximo round.")
+	else:
+		log_msg(-1, "Ruído na montanha: uma avalanche vai descer pelo corredor marcado no próximo round.")
+	emitfx({"t": "warn_map", "kind": kind2, "hexes": tremors.duplicate()})
+	if changed_terrain:
+		load_map()
+
+
+# escolhe as casas do próximo evento por setor sorteado; nunca corta o mapa e nunca marca as bases
+func _warn_hexes(kind: String, def: Dictionary, nr: int) -> Array:
+	var secs = def.get("sectors", {})
+	var names = []
+	for k in secs.keys():
+		if (kind == "raiz" and String(k).begins_with("RAIZES")) or (kind == "fratura" and String(k).begins_with("FRATURA")) or (kind == "avalanche" and String(k).begins_with("AVALANCHE")):
+			names.append(k)
+	if names.is_empty():
+		return []
+	var sec = names[int(_pick(range(names.size())))]
+	var cand = []
+	for e in secs[sec]:
+		var h = Vector2i(int(e[0]), int(e[1]))
+		if DB.in_entry(0, h) or DB.in_entry(1, h) or is_pit(h) or tremors.has(h):
+			continue
+		cand.append(h)
+	if kind == "avalanche":
+		return cand
+	var pairs = 1 if nr < 9 else 2
+	var out = []
+	var tries = 0
+	while out.size() < pairs * 2 and not cand.is_empty() and tries < 40:
+		tries += 1
+		var c = _pick(cand)
+		var m = _mirror(c)
+		if out.has(c) or out.has(m) or c == m or not terr_map.has(m):
+			continue
+		if kind == "fratura" and terr(m)["k"] != "gelo_fragil":
+			continue
+		if kind == "raiz" and (unit_at(c) != null or unit_at(m) != null):
+			continue
+		var test = out.duplicate()
+		test.append(c)
+		test.append(m)
+		if _connected_without(test):
+			out = test
+	return out
+
+
+# o mapa continua inteiro (todas as casas andáveis ligadas) se estas casas ficarem bloqueadas?
+func _connected_without(blocked: Array) -> bool:
+	var open = []
+	for h in terr_map.keys():
+		if tt_of(terr_map[h]["k"]).get("pass", 0) and not blocked.has(h):
+			open.append(h)
+	if open.is_empty():
+		return false
+	var seen = {open[0]: true}
+	var q = [open[0]]
+	while not q.is_empty():
+		var c = q.pop_back()
+		for n in DB.nbrs(c):
+			if not seen.has(n) and open.has(n):
+				seen[n] = true
+				q.append(n)
+	return seen.size() == open.size()
+
+
+# quem cai numa fenda sai para a casa livre mais próxima
+func _eject(u) -> void:
+	if u.st != "field" or not is_pit(u.pos()):
+		return
+	var fr = DB.hexes.filter(func(h): return is_free(h) and not is_pit(h) and tt_of(terr(h)["k"]).get("pass", 0))
+	fr.sort_custom(func(a, c): return DB.dist(a, u.pos()) < DB.dist(c, u.pos()))
+	if fr.is_empty():
+		return
+	var to = fr[0]
+	var fpos = u.pos()
+	u.q = to.x
+	u.r = to.y
+	emitfx({"t": "move", "uid": u.uid, "from": fpos, "to": to})
+	await arrive(u)
+
+
+# a avalanche empurra 1 casa no sentido da descida
+func _shove_flow(u, def: Dictionary) -> void:
+	for e in def.get("flow", []):
+		if Vector2i(int(e[0]), int(e[1])) == u.pos():
+			var to = Vector2i(int(e[2]), int(e[3]))
+			if is_free(to) and not is_pit(to) and tt_of(terr(to)["k"]).get("pass", 0):
+				var fpos = u.pos()
+				u.q = to.x
+				u.r = to.y
+				emitfx({"t": "move", "uid": u.uid, "from": fpos, "to": to})
+				log_msg(-1, "%s foi empurrado 1 casa." % nm(u))
+				await arrive(u)
+			return
 
 
 func do_final_score() -> void:
