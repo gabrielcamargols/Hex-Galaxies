@@ -3395,12 +3395,13 @@ func _make_card(id: String) -> Control:
 	cost.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	cost.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	# selo de explosão na cor do tipo, com o ícone em tinta por cima
-	var ih = 38 if compact else 50
+	var ih = 46 if compact else 58
 	var iw = Control.new()
 	iw.custom_minimum_size = Vector2(0, ih + 4)
 	iw.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	v.add_child(iw)
-	if ResourceLoader.exists("res://ui/cartas/estouro.png"):
+	var own_ic = ResourceLoader.exists("res://ui/cartas/ic/%s.png" % id)
+	if not own_ic and ResourceLoader.exists("res://ui/cartas/estouro.png"):
 		var bst = TextureRect.new()
 		bst.texture = load("res://ui/cartas/estouro.png")
 		bst.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -3413,8 +3414,9 @@ func _make_card(id: String) -> Control:
 	ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	ic.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	ic.offset_top = ih * 0.22
-	ic.offset_bottom = -ih * 0.22
+	# ícone colorido próprio (adesivo pop) ocupa o selo inteiro; o antigo fica dentro do estouro
+	ic.offset_top = -ih * 0.12 if own_ic else ih * 0.22
+	ic.offset_bottom = ih * 0.04 if own_ic else -ih * 0.22
 	ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var ipath = "res://ui/cartas/ic/%s.png" % id
 	if not ResourceLoader.exists(ipath):

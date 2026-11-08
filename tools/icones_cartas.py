@@ -1,4 +1,4 @@
-"""Hex Galaxies - ícones das cartas: branco com contorno de tinta irregular (pincel), estilo HQ.
+"""(SUBSTITUÍDO por tools/icones_taticas.py) Hex Galaxies - ícones das cartas: branco com contorno de tinta irregular (pincel), estilo HQ.
 python3 tools/icones_cartas.py -> ui/cartas/ic/<id>.png a partir de ui/icons/<id>.png"""
 import os, random
 from PIL import Image, ImageFilter, ImageChops
