@@ -473,3 +473,220 @@ func flip(fname: String, pos: Vector3, size: float = 1.8, dur: float = 0.55, tin
 	var tw = create_tween()
 	tw.tween_property(s, "frame", FLIP_FRAMES - 1, dur)
 	tw.tween_callback(s.queue_free)
+
+
+# =====================================================================
+# RECEITAS DE VFX (Forja): efeitos 2D pintados montados em camadas 3D.
+# As tiras de quadros saem de tools/forja_vfx.py (vfx/<fac>/<nome>.png);
+# a montagem (tamanho, tempo, atraso, gotas, projétil, tremor) fica em data/vfx_receitas.json.
+# =====================================================================
+var receitas: Dictionary = {}
+var _fx_shader: Shader = null
+var _fx_shader_chao: Shader = null
+var _quad_cache: Dictionary = {}
+
+
+func _receitas_load() -> void:
+	if not receitas.is_empty():
+		return
+	var f = FileAccess.open("res://data/vfx_receitas.json", FileAccess.READ)
+	if f == null:
+		return
+	var d = JSON.parse_string(f.get_as_text())
+	if typeof(d) == TYPE_DICTIONARY:
+		receitas = d
+	_fx_shader = load("res://shaders/vfx_flip.gdshader")
+	_fx_shader_chao = load("res://shaders/vfx_flip_chao.gdshader")
+
+
+func has_fx(id: String) -> bool:
+	_receitas_load()
+	return receitas.has(id)
+
+
+func _rnd(v: Variant, def: float = 0.0) -> float:
+	if v == null:
+		return def
+	if typeof(v) == TYPE_ARRAY:
+		return randf_range(float(v[0]), float(v[1]))
+	return float(v)
+
+
+# quad pintado: devolve [nó, material]. size = largura em metros; altura sai da proporção do quadro
+func _fx_sprite(texname: String, n: int, size: float, mode: int, base: bool) -> Array:
+	var path = "res://vfx/%s.png" % texname
+	var tex = flip_cache.get(path)
+	if tex == null:
+		if not ResourceLoader.exists(path):
+			return []
+		tex = load(path)
+		flip_cache[path] = tex
+	var fw = float(tex.get_width()) / float(n)
+	var asp = float(tex.get_height()) / fw
+	var mi = MeshInstance3D.new()
+	var q = QuadMesh.new()
+	q.size = Vector2(1, asp)
+	mi.mesh = q
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.scale = Vector3.ONE * size
+	var m = ShaderMaterial.new()
+	m.shader = _fx_shader_chao if mode == 2 else _fx_shader
+	m.render_priority = 21 if mode != 2 else 2
+	m.set_shader_parameter("tex", tex)
+	m.set_shader_parameter("hframes", float(n))
+	m.set_shader_parameter("mode", mode)
+	m.set_shader_parameter("base_lift", asp * 0.5 if base else 0.0)
+	mi.material_override = m
+	mi.extra_cull_margin = 8.0
+	return [mi, m]
+
+
+func _screen_angle(a: Vector3, b: Vector3) -> float:
+	var cam = get_viewport().get_camera_3d()
+	if cam == null:
+		return 0.0
+	var pa = cam.unproject_position(a)
+	var pb = cam.unproject_position(b)
+	return atan2(-(pb.y - pa.y), pb.x - pa.x)
+
+
+## toca uma receita. at = onde acontece; from = de onde veio (ataque/tiro). Devolve o tempo até o impacto.
+func play_fx(id: String, at: Vector3, from: Variant = null, tint: Color = Color.WHITE) -> float:
+	_receitas_load()
+	if not receitas.has(id):
+		return 0.0
+	var r: Dictionary = receitas[id]
+	var hit_t = 0.0
+	if r.has("proj") and from != null:
+		hit_t = _fx_proj(r["proj"], from, at)
+		if r.has("hit"):
+			_fx_after(hit_t, func(): play_fx(str(r["hit"]), at, from, tint))
+		return hit_t
+	for L in r.get("layers", []):
+		var dl = _rnd(L.get("delay", 0.0))
+		if L.has("sub"):
+			_fx_after(dl, play_fx.bind(str(L["sub"]), at, from, tint))
+		elif L.has("drops"):
+			_fx_after(dl, _fx_drops.bind(L, at, from))
+		else:
+			_fx_after(dl, _fx_layer.bind(L, at, from, tint))
+	if r.has("shake") and board != null:
+		_fx_after(_rnd(r.get("shake_delay", 0.0)), func(): board.shake = max(board.shake, float(r["shake"])))
+	return float(r.get("hit_t", 0.0))
+
+
+func _fx_after(t: float, f: Callable) -> void:
+	if t <= 0.0:
+		f.call()
+		return
+	get_tree().create_timer(t).timeout.connect(f)
+
+
+func _fx_layer(L: Dictionary, at: Vector3, from: Variant, tint: Color) -> void:
+	var n = int(L.get("n", 16))
+	var mode = {"bill": 0, "pe": 1, "chao": 2}.get(str(L.get("mode", "bill")), 0)
+	var size = _rnd(L.get("size", 2.0), 2.0) * cam_k
+	var sp = _fx_sprite(str(L["tex"]), n, size, mode, bool(L.get("base", false)))
+	if sp.is_empty():
+		return
+	var mi: MeshInstance3D = sp[0]
+	var m: ShaderMaterial = sp[1]
+	var pos = at + Vector3(0, _rnd(L.get("y", 0.0)), 0)
+	if mode == 2:
+		pos.y = at.y + 0.04 + _rnd(L.get("y", 0.0))
+	if L.has("toward") and from != null:
+		# desloca na direção de quem atacou (ex.: garra aparece entre os dois)
+		var d = (from - at) * Vector3(1, 0, 1)
+		if d.length() > 0.01:
+			pos += d.normalized() * float(L["toward"])
+	mi.position = pos
+	var roll = deg_to_rad(_rnd(L.get("roll", 0.0)))
+	if bool(L.get("aim", false)) and from != null:
+		var a = _screen_angle(from, at)
+		if abs(a) > PI * 0.5:
+			m.set_shader_parameter("flip_x", 1.0)
+			a = a - PI if a > 0 else a + PI
+		roll += a
+	m.set_shader_parameter("roll", roll)
+	var col = tint * Color(str(L.get("tint", "#ffffff")))
+	m.set_shader_parameter("tint", col)
+	if float(L.get("fps", 0.0)) > 0.0:
+		m.set_shader_parameter("loop_fps", float(L["fps"]))
+	add_child(mi)
+	var dur = _rnd(L.get("dur", 0.6), 0.6) * DUR_MUL
+	var tw = mi.create_tween()
+	tw.tween_method(func(v): m.set_shader_parameter("frame", v), 0.0, float(n) - 0.01, dur)
+	if L.has("grow"):
+		var g = L["grow"]
+		mi.scale = Vector3.ONE * size * float(g[0])
+		tw.parallel().tween_property(mi, "scale", Vector3.ONE * size * float(g[1]), dur).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	if L.has("rise"):
+		tw.parallel().tween_property(mi, "position:y", pos.y + float(L["rise"]), dur)
+	tw.tween_callback(mi.queue_free)
+
+
+# gotas de tinta: billboards com gravidade, encolhem no fim
+func _fx_drops(L: Dictionary, at: Vector3, from: Variant) -> void:
+	var cnt = int(L.get("count", 8))
+	var away = Vector3.ZERO
+	if from != null and bool(L.get("away", true)):
+		away = ((at - from) * Vector3(1, 0, 1))
+		away = away.normalized() if away.length() > 0.01 else Vector3.ZERO
+	var g = float(L.get("grav", 12.0))
+	for i in range(cnt):
+		var size = _rnd(L.get("size", [0.18, 0.34])) * cam_k
+		var sp = _fx_sprite(str(L["drops"]), int(L.get("n", 8)), size, 0, false)
+		if sp.is_empty():
+			return
+		var mi: MeshInstance3D = sp[0]
+		var m: ShaderMaterial = sp[1]
+		m.set_shader_parameter("loop_fps", 14.0)
+		m.set_shader_parameter("frame", float(randi() % 8))
+		var a = randf() * TAU
+		var hv = Vector3(cos(a), 0, sin(a)) * _rnd(L.get("speed", [2.0, 5.0])) + away * _rnd(L.get("push", 2.0))
+		var v = hv + Vector3(0, _rnd(L.get("up", [2.5, 5.0])), 0)
+		var p0 = at + Vector3(0, _rnd(L.get("y", 0.6)), 0)
+		mi.position = p0
+		add_child(mi)
+		var life = _rnd(L.get("life", [0.5, 0.8])) * DUR_MUL
+		var floor_y = at.y + 0.05
+		var tw = mi.create_tween()
+		tw.tween_method(func(t):
+			var p = p0 + v * t + Vector3(0, -0.5 * g * t * t, 0)
+			p.y = max(p.y, floor_y)
+			mi.position = p
+			var vel = v + Vector3(0, -g * t, 0)
+			m.set_shader_parameter("roll", atan2(vel.y, Vector2(vel.x, vel.z).length()) - PI * 0.5)
+			mi.scale = Vector3.ONE * size * clamp(1.4 - t / life, 0.0, 1.0), 0.0, life, life)
+		tw.tween_callback(mi.queue_free)
+
+
+# projétil pintado em laço voando em arco, soltando gotas; devolve o tempo de voo
+func _fx_proj(P: Dictionary, from: Vector3, to: Vector3) -> float:
+	var size = float(P.get("size", 1.0)) * cam_k
+	var sp = _fx_sprite(str(P["tex"]), int(P.get("n", 8)), size, 0, false)
+	if sp.is_empty():
+		return 0.0
+	var mi: MeshInstance3D = sp[0]
+	var m: ShaderMaterial = sp[1]
+	m.set_shader_parameter("loop_fps", float(P.get("fps", 16.0)))
+	var a = from + Vector3(0, float(P.get("y", 0.9)), 0)
+	var b = to + Vector3(0, float(P.get("y", 0.9)) * 0.7, 0)
+	var dist = a.distance_to(b)
+	var t = clamp(dist / float(P.get("speed", 12.0)), 0.18, 0.9)
+	var arc = float(P.get("arc", 1.0)) * clamp(dist / 6.0, 0.3, 1.5)
+	mi.position = a
+	add_child(mi)
+	var trail = str(P.get("trail", ""))
+	var last = [0.0]
+	var tw = mi.create_tween()
+	tw.tween_method(func(u):
+		var p = a.lerp(b, u) + Vector3(0, sin(u * PI) * arc, 0)
+		mi.position = p
+		mi.scale = Vector3.ONE * size * (0.7 + 0.3 * min(1.0, u * 4.0))
+		if trail != "" and u - last[0] > 0.12:
+			last[0] = u
+			_fx_drops({"drops": trail, "count": 1, "speed": [0.2, 0.6], "up": [0.2, 0.8], "push": 0.0, "y": 0.0,
+				"size": [size * 0.22, size * 0.32], "life": [0.3, 0.45], "away": false}, p - Vector3(0, 0.0, 0), null), 0.0, 1.0, t)
+	tw.tween_callback(mi.queue_free)
+	return t

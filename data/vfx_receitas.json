@@ -1,0 +1,144 @@
+{
+ "_nota": "Receitas da Forja de VFX. Camada: tex (vfx/<tex>.png), n quadros, mode bill|pe|chao, size (m), dur (s), delay, y, roll [min,max] graus, aim (gira para a direção do ataque), toward (m em direção ao atacante), grow [ini,fim], rise, base (âncora no pé), tint. Gotas: drops, count, speed, up, push, grav, size, life. Projétil: proj {tex,n,size,speed,arc,fps,trail} + hit (receita no alvo). shake: tremor da câmera.",
+ "aby_impacto": {
+  "layers": [
+   {
+    "tex": "aby/respingo",
+    "n": 16,
+    "mode": "chao",
+    "size": 2.9,
+    "dur": 1.1,
+    "roll": [
+     0,
+     360
+    ]
+   },
+   {
+    "tex": "aby/impacto",
+    "n": 16,
+    "mode": "bill",
+    "size": 3.1,
+    "dur": 0.62,
+    "y": 0.9,
+    "roll": [
+     -30,
+     30
+    ]
+   },
+   {
+    "drops": "aby/gota",
+    "n": 8,
+    "count": 9,
+    "speed": [
+     1.5,
+     3.5
+    ],
+    "up": [
+     3.0,
+     5.5
+    ],
+    "push": 1.5,
+    "grav": 14,
+    "size": [
+     0.2,
+     0.36
+    ],
+    "life": [
+     0.55,
+     0.85
+    ],
+    "y": 0.9,
+    "delay": 0.04
+   }
+  ],
+  "shake": 0.25,
+  "nome": "Impacto"
+ },
+ "aby_garra": {
+  "layers": [
+   {
+    "tex": "aby/garra",
+    "n": 16,
+    "mode": "bill",
+    "size": 3.0,
+    "dur": 0.5,
+    "y": 0.9,
+    "aim": true,
+    "toward": 0.25
+   },
+   {
+    "sub": "aby_impacto",
+    "delay": 0.14
+   }
+  ],
+  "hit_t": 0.14,
+  "nome": "Garra (corpo a corpo)"
+ },
+ "aby_tiro": {
+  "proj": {
+   "tex": "aby/projetil",
+   "n": 8,
+   "size": 1.1,
+   "speed": 11,
+   "arc": 1.3,
+   "fps": 14,
+   "trail": "aby/gota"
+  },
+  "hit": "aby_impacto",
+  "nome": "Tiro de mutação"
+ },
+ "aby_coluna": {
+  "layers": [
+   {
+    "tex": "aby/respingo",
+    "n": 16,
+    "mode": "chao",
+    "size": 3.4,
+    "dur": 1.4,
+    "roll": [
+     0,
+     360
+    ]
+   },
+   {
+    "tex": "aby/coluna",
+    "n": 16,
+    "mode": "pe",
+    "size": 2.1,
+    "dur": 1.15,
+    "base": true,
+    "delay": 0.05
+   },
+   {
+    "drops": "aby/gota",
+    "n": 8,
+    "count": 12,
+    "speed": [
+     0.8,
+     2.4
+    ],
+    "up": [
+     5.0,
+     8.0
+    ],
+    "push": 0,
+    "grav": 13,
+    "size": [
+     0.2,
+     0.34
+    ],
+    "life": [
+     0.8,
+     1.2
+    ],
+    "y": 0.4,
+    "delay": 0.12,
+    "away": false
+   }
+  ],
+  "shake": 0.35,
+  "shake_delay": 0.05,
+  "nome": "Coluna de mutação (habilidade)",
+  "alvo": "self"
+ }
+}

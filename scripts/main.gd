@@ -186,6 +186,10 @@ func _ready() -> void:
 			_shots(a.substr(8))
 			return
 	for a in args:
+		if a.begins_with("--oficina"):
+			_open_oficina(a == "--oficina=auto", "aby")
+			return
+	for a in args:
 		if a.begins_with("--cenario="):
 			board.visible = true
 			galaxy.deactivate()
@@ -771,6 +775,13 @@ func _settings_panel() -> void:
 			_vfx_gallery())
 		gb.custom_minimum_size = Vector2(0, 40)
 		gb.tooltip_text = "Dispara o impacto de cada facção lado a lado no mapa atual, para conferir cor e leitura."
+	if stage != "battle":
+		_label(v, "FERRAMENTAS", 13, C_HUD)
+		var ob = _cbtn(v, "Oficina de VFX", C_ABIL, func():
+			dim.queue_free()
+			_open_oficina(false))
+		ob.custom_minimum_size = Vector2(0, 40)
+		ob.tooltip_text = "Palco para revisar os efeitos da Forja: câmera lenta, laço, fundos e lados."
 	var close = _cbtn(outer, "Fechar", C_GOLD, func(): dim.queue_free(), true)
 	_primary(close)
 	close.custom_minimum_size = Vector2(0, 42)
@@ -4192,6 +4203,22 @@ func _vfx_gallery() -> void:
 			vfx.flip("imp_" + f.to_lower(), p - Vector3(0, 0.75, 0), 3.0, 0.55)
 			vfx.flip("ring", _hex_pos(h, 0.0), 2.4, 0.5, DB.pal(f, "primary"), true)
 		await get_tree().create_timer(1.3).timeout
+
+
+# Oficina de VFX (palco à parte, scripts/oficina_vfx.gd). auto = toca tudo e fecha (gravação)
+func _open_oficina(auto: bool, fac: String = "aby") -> void:
+	board.visible = false
+	galaxy.deactivate()
+	fader.visible = false
+	ui.visible = false
+	var of = Node3D.new()
+	of.set_script(load("res://scripts/oficina_vfx.gd"))
+	of.fac = fac
+	add_child(of)
+	if auto:
+		await get_tree().create_timer(0.8).timeout
+		await of.auto(2)
+		get_tree().quit()
 
 
 func _unit_color(uid: int) -> Color:
