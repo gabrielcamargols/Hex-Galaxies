@@ -457,7 +457,7 @@ func _build_far(desert: bool) -> void:
 		if not desert:
 			# ilhas de Valak: o cenário fica em cima de uma ilhota
 			var isl0 = _mesh(holder, _cyl(1.2 * s * 0.6, 1.6 * s * 0.6, 0.6, 9), Color("#e8d29a"), Vector3(0, 0.15, 0))
-			isl0.material_overlay = outline_mat
+			isl0.material_overlay = null  # cores chapadas, sem contorno
 			_mesh(holder, _cyl(0.9 * s * 0.6, 1.2 * s * 0.6, 0.4, 9), Color("#7fb54a"), Vector3(0, 0.45, 0))
 			if _prop(holder, desert, h, Vector3(0, 0.6, 0), s * 0.55, 9):
 				continue
@@ -486,7 +486,7 @@ func _build_far(desert: bool) -> void:
 		else:
 			if _rnd(h, 5) < 0.6:
 				var isl = _mesh(holder, _cyl(1.2 * s, 1.6 * s, 0.6, 9), Color("#e8d29a"), Vector3(0, 0.15, 0))
-				isl.material_overlay = outline_mat
+				isl.material_overlay = null  # cores chapadas, sem contorno
 				_mesh(holder, _cyl(0.9 * s, 1.2 * s, 0.4, 9), Color("#7fb54a"), Vector3(0, 0.45, 0))
 				for j in range(2 + int(_rnd(h, 6) * 3)):
 					_pine(holder, Vector3((_rnd(h, j + 10) - 0.5) * 1.4 * s, 0.6, (_rnd(h, j + 20) - 0.5) * 1.4 * s), 0.9 + _rnd(h, j) * 0.5)
@@ -657,7 +657,7 @@ func _place_tile(h: Vector2i) -> void:
 # prisma unitário (altura 1 a partir de 0); topo com aro claro e centro colorido
 # tinta da cor do terreno: o mesmo tom, mais escuro e mais saturado
 func _ink_of(c: Color) -> Color:
-	return Color.from_hsv(c.h, min(1.0, c.s * 1.25 + 0.2), c.v * 0.72)
+	return c.darkened(0.13)   # costura quase imperceptível, tom sobre tom (cores chapadas, sem contorno)
 
 
 func _tile_mesh(c0: Color, c1: Color, cs: Color) -> ArrayMesh:
@@ -696,7 +696,7 @@ func _tile_mesh(c0: Color, c1: Color, cs: Color) -> ArrayMesh:
 	var rim_ink = _ink_of(c1)
 	var wob = []
 	for k in range(6):
-		wob.append(0.915 + randf() * 0.045)
+		wob.append(0.945 + randf() * 0.02)
 	for k in range(6):
 		var o1b = pts_o[k]
 		var o2b = pts_o[(k + 1) % 6]
@@ -1284,10 +1284,6 @@ func _model(parent: Node3D, mname: String, pos: Vector3, footprint: float, yaw: 
 			if prop_mat is ShaderMaterial:
 				prop_mat.set_shader_parameter("gamma", 2.2)
 				prop_mat.set_shader_parameter("shadow_tint", _planet_shadow())
-				if ResourceLoader.exists("res://shaders/tinta.gdshader"):
-					var im = ShaderMaterial.new()
-					im.shader = load("res://shaders/tinta.gdshader")
-					prop_mat.next_pass = im
 		var pm: Material = prop_mat
 		if mname.begins_with("cen_"):
 			pm = _paint_mat()
@@ -1302,7 +1298,7 @@ func _model(parent: Node3D, mname: String, pos: Vector3, footprint: float, yaw: 
 			first = false
 		else:
 			box = box.merge(ab)
-		mi.material_overlay = outline_mat
+		mi.material_overlay = null  # cores chapadas, sem contorno
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	var wide = max(box.size.x, box.size.z)
 	var k = footprint / wide if wide > 0.0001 else 1.0
@@ -1376,7 +1372,7 @@ func _ground_at(p: Vector3, desert: bool, foot: float) -> Vector3:
 	# Valak é cercado de água: cada peça fica numa ilhota de areia e grama
 	var r = max(0.7, foot * 0.62)
 	var isl = _mesh(scenery_root, _cyl(r, r * 1.22, 0.35, 9), Color("#e8d29a"), p + Vector3(0, 0.05, 0))
-	isl.material_overlay = outline_mat
+	isl.material_overlay = null  # cores chapadas, sem contorno
 	_mesh(scenery_root, _cyl(r * 0.8, r, 0.2, 9), Color("#7fb54a"), p + Vector3(0, 0.3, 0))
 	return p + Vector3(0, 0.4, 0)
 
@@ -1492,7 +1488,7 @@ func _build_rails() -> void:
 			var L = dirv.length()
 			for k in range(3):
 				var sl = _mesh(seg, _box(Vector3(0.62, 0.05, 0.12)), wood, Vector3(0, 0, L * (k + 0.5) / 3.0))
-				sl.material_overlay = outline_mat
+				sl.material_overlay = null  # cores chapadas, sem contorno
 			for sx in [-0.2, 0.2]:
 				_mesh(seg, _box(Vector3(0.05, 0.06, L + 0.02)), steel, Vector3(sx, 0.04, L * 0.5))
 
@@ -1575,7 +1571,7 @@ func sync_bananas(b: Dictionary, viewer: int) -> void:
 			var a = -0.5 + i * 0.5
 			var seg = _mesh(n, CapsuleMesh.new(), Color("#ffd23a"), Vector3(sin(a) * 0.16, 0.22 + cos(a) * 0.05, 0), Vector3(0, 0, PI / 2 + a))
 			seg.scale = Vector3(0.11, 0.14, 0.11)
-			seg.material_overlay = outline_mat
+			seg.material_overlay = null  # cores chapadas, sem contorno
 		var tip = _mesh(n, _cyl(0.02, 0.03, 0.08, 6), Color("#5a3a18"), Vector3(-0.26, 0.28, 0))
 		tip.rotation = Vector3(0, 0, 0.9)
 		var lab = Label3D.new()
@@ -2984,8 +2980,7 @@ func _flow_of(h: Vector2i) -> Variant:
 
 
 func _inked(mi: MeshInstance3D) -> MeshInstance3D:
-	mi.material_overlay = _outline_thick(0.03)
-	return mi
+	return mi   # cores chapadas, sem contorno
 
 
 func _sph(r: float, hgt: float = -1.0) -> SphereMesh:

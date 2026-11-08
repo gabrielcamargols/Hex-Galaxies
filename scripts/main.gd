@@ -67,6 +67,8 @@ var last_st: Dictionary = {}       # destaques atuais do tabuleiro (sem a carta)
 var dlg: Dictionary = {}           # falas (data/dialogos.json)
 var bubbles: Array = []            # balões de fala ativos
 var plates: Dictionary = {}        # uid -> placa de vida 2D (estilo da HUD)
+var rgb_on: bool = true          # desalinho RGB sobre o 3D (leve)
+var rgb_rect: ColorRect = null
 var vol = {"Musica": 80.0, "Efeitos": 90.0, "Vozes": 90.0}
 var res_pref: String = "1600x900"
 var fullscreen: bool = false
@@ -140,6 +142,18 @@ func _ready() -> void:
 	add_child(sfx)
 	vfx.sfx = sfx
 	get_tree().create_timer(1.5).timeout.connect(func(): sfx.warm())
+	# desalinho RGB sobre o 3D (fica abaixo da interface)
+	var rgb_layer = CanvasLayer.new()
+	rgb_layer.layer = -1
+	add_child(rgb_layer)
+	rgb_rect = ColorRect.new()
+	rgb_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	rgb_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var rm = ShaderMaterial.new()
+	rm.shader = load("res://shaders/rgb.gdshader")
+	rgb_rect.material = rm
+	rgb_layer.add_child(rgb_rect)
+	rgb_rect.visible = rgb_on
 	var layer = CanvasLayer.new()
 	add_child(layer)
 	ui = Control.new()
@@ -168,6 +182,8 @@ func _ready() -> void:
 		if parsed is Dictionary:
 			dlg = parsed
 	_load_prefs()
+	if rgb_rect != null:
+		rgb_rect.visible = rgb_on
 	_apply_settings.call_deferred()
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--uiscale="):
@@ -740,6 +756,16 @@ func _settings_panel() -> void:
 	qb.item_selected.connect(func(i):
 		render_q = qs[i][0]
 		_apply_settings()
+		_save_prefs())
+	var rgbc = CheckButton.new()
+	rgbc.text = "Efeito RGB (impressão)"
+	rgbc.button_pressed = rgb_on
+	rgbc.tooltip_text = "Desalinho de cor nas bordas, como nos quadrinhos. Desligue se o aparelho ficar lento."
+	v.add_child(rgbc)
+	rgbc.toggled.connect(func(on):
+		rgb_on = on
+		if rgb_rect != null:
+			rgb_rect.visible = rgb_on
 		_save_prefs())
 	_label(v, "JOGO", 13, C_HUD)
 	var fb = _cbtn(v, _fast_label(), C_HUD, func(): pass)
@@ -4824,6 +4850,9 @@ func _perf_guard(delta: float) -> void:
 		perf_done = true
 		var fps = perf_n / max(0.01, perf_t - 1.0)
 		if fps < 28.0:
+			if rgb_on and rgb_rect != null:
+				rgb_rect.visible = false
+				rgb_on = false
 			if render_q > 0.75:
 				render_q = 0.75
 				get_viewport().scaling_3d_scale = render_q
@@ -5396,6 +5425,7 @@ func _load_prefs() -> void:
 		ui_pref = str(cf.get_value("ui", "scale", "auto"))
 		fast_mode = bool(cf.get_value("ui", "fast", false))
 		voice_on = bool(cf.get_value("ui", "voice", true))
+		rgb_on = bool(cf.get_value("video", "rgb1", true))
 		for b in vol.keys():
 			vol[b] = float(cf.get_value("som", b, vol[b]))
 		res_pref = str(cf.get_value("video", "res", res_pref))
@@ -5413,6 +5443,7 @@ func _save_prefs() -> void:
 	cf.set_value("video", "res", res_pref)
 	cf.set_value("video", "full", fullscreen)
 	cf.set_value("video", "q", render_q)
+	cf.set_value("video", "rgb1", rgb_on)
 	cf.save("user://prefs.cfg")
 
 
