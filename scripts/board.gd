@@ -1491,24 +1491,52 @@ func sync_units() -> void:
 			unit_nodes.erase(uid)
 
 
+func _unit_fac_col(u) -> Color:
+	if u.barrier or u.crystal != "" or not DB.cards.has(u.cid):
+		return Color("#d9c9a8")
+	var f = DB.cards[u.cid]["f"]
+	return DB.pal(f, "primary")
+
+
+# faixa hexagonal (orientação igual à das casas): parte de fora em tinta, o resto branco
+# (o material tinge a faixa com a cor da facção)
+func _hex_band(ro: float, ri: float, ink: Color, ink_w: float) -> ArrayMesh:
+	var st = SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_normal(Vector3.UP)
+	var rm = ro - ink_w
+	for band in [[ro, rm, ink], [rm, ri + ink_w * 0.6, Color.WHITE], [ri + ink_w * 0.6, ri, ink]]:
+		for k in range(6):
+			var a1 = PI / 3.0 * k
+			var a2 = PI / 3.0 * (k + 1)
+			var o1 = Vector3(cos(a1), 0, sin(a1)) * band[0]
+			var o2 = Vector3(cos(a2), 0, sin(a2)) * band[0]
+			var i1 = Vector3(cos(a1), 0, sin(a1)) * band[1]
+			var i2 = Vector3(cos(a2), 0, sin(a2)) * band[1]
+			_tri(st, o1, band[2], o2, band[2], i2, band[2])
+			_tri(st, o1, band[2], i2, band[2], i1, band[2])
+	return st.commit()
+
+
 func _make_unit(u) -> void:
 	var node = Node3D.new()
 	add_child(node)
 	var sc = 0.75 if u.barrier else (1.15 if BIG.has(u.cid) else (1.08 if u.is_cmd else 1.0))
+	# base hexagonal do tamanho da casa, na cor principal da facção: preenchimento translúcido,
+	# aro grosso na cor e contorno de tinta (estilo HQ)
+	var fcol = _unit_fac_col(u)
 	var shadow = MeshInstance3D.new()
-	shadow.mesh = _disc(0.5, 16)
-	shadow.material_override = _overlay_mat(Color(0, 0, 0, 0.35))
+	shadow.mesh = _disc(INNER * 0.97, 6)
+	shadow.material_override = _overlay_mat(Color(fcol.r, fcol.g, fcol.b, 0.30))
 	shadow.position = Vector3(0, 0.02, 0)
 	node.add_child(shadow)
 	var ring = MeshInstance3D.new()
-	var tor = TorusMesh.new()
-	tor.inner_radius = 0.42
-	tor.outer_radius = 0.5
-	ring.mesh = tor
-	ring.material_override = _mat(Color("#3d8bff") if u.owner == me else Color("#ff7a2f"), true)
-	ring.position = Vector3(0, 0.04, 0)
-	ring.scale = Vector3(1, 0.4, 1)
+	ring.mesh = _hex_band(INNER * 0.97, INNER * 0.80, Color("#0a0410"), 0.045)
+	ring.material_override = _mat(fcol, true)
+	ring.material_override.vertex_color_use_as_albedo = true
+	ring.position = Vector3(0, 0.035, 0)
 	node.add_child(ring)
+	ring.set_meta("fcol", fcol)
 	var sprite: Variant = null
 	var body_h = 1.75 * sc
 	if u.crystal != "":
@@ -1794,7 +1822,7 @@ func _update_units(delta: float) -> void:
 				d["lunge"] = max(0.0, d["lunge"] - delta * 3.0)
 				sy *= 1.0 + 0.15 * sin(d["lunge"] * PI)
 			sprite.scale = Vector3(1.0, sy, 1.0)
-		d["ring"].material_override.albedo_color = Color("#ffffff") if selected else (Color("#3d8bff") if u.owner == me else Color("#ff7a2f"))
+		d["ring"].material_override.albedo_color = Color("#ffffff") if selected else d["ring"].get_meta("fcol", Color.WHITE)
 		# etiqueta de dano previsto / motivo
 		var tg = state.get("tags", {}).get(u.uid, null)
 		if tg != null:
