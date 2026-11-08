@@ -560,7 +560,10 @@ func play_fx(id: String, at: Vector3, from: Variant = null, tint: Color = Color.
 	var hit_t = 0.0
 	if r.has("proj") and from != null:
 		var P = _core_dict(r["proj"], ctx)
-		hit_t = _fx_proj2(P, from, at, tint, ctx) if P.has("parts") else _fx_proj(P, from, at)
+		if P.has("rajada"):
+			hit_t = _fx_volley(P, from, at, tint, ctx)
+		else:
+			hit_t = _fx_proj2(P, from, at, tint, ctx) if P.has("parts") else _fx_proj(P, from, at)
 		if r.has("hit"):
 			_fx_after(hit_t, func(): play_fx(str(r["hit"]), at, from, tint, follow, ctx))
 		return hit_t
@@ -949,6 +952,29 @@ func _fx_part(L: Dictionary, at: Vector3, from: Variant, tint: Color, follow: No
 		get_tree().create_timer(dur + cp.lifetime + 0.4).timeout.connect(cp.queue_free)
 		return
 	get_tree().create_timer(cp.lifetime * (1.0 + cp.lifetime_randomness) / max(0.01, cp.speed_scale) + 0.3).timeout.connect(cp.queue_free)
+
+
+# RAJADA: vários projéteis lado a lado (espinhos), cada um com leve desvio lateral, altura e atraso
+func _fx_volley(P: Dictionary, from: Vector3, to: Vector3, tint: Color, ctx: Dictionary) -> float:
+	var R: Dictionary = P["rajada"]
+	var n = int(R.get("n", 5))
+	var dir = (to - from) * Vector3(1, 0, 1)
+	var side = dir.normalized().cross(Vector3.UP) if dir.length() > 0.01 else Vector3.RIGHT
+	var gap = float(R.get("gap", 0.07))
+	var spread = float(R.get("spread", 0.45))
+	var last = 0.0
+	for i in n:
+		var k = (float(i) - (n - 1) * 0.5) / max(1.0, (n - 1) * 0.5)      # -1..1
+		var Pi = P.duplicate(true)
+		Pi.erase("rajada")
+		Pi["y"] = float(P.get("y", 0.9)) + float(R.get("dy", 0.0)) * (1.0 - abs(k)) + k * float(R.get("vy", 0.0)) + randf_range(-0.05, 0.05)
+		var f = from + side * k * spread * 0.35
+		var tt = to + side * k * spread
+		var dl = float(i) * gap + randf() * 0.03
+		last = max(last, dl + 0.0)
+		_fx_after(dl, func(): _fx_proj2(Pi, f, tt, tint, ctx))
+	var base = clamp(from.distance_to(to) / float(P.get("speed", 12.0)), 0.15, 0.9)
+	return base + last
 
 
 # projétil em partículas: miolo brilhando + rastro emitindo enquanto voa

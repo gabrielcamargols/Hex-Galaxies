@@ -419,6 +419,21 @@ def espinhos():
     return np.asarray(Image.fromarray((v * 255).astype(np.uint8)).resize((N, N), Image.LANCZOS)).astype(np.float32) / 255
 
 
+def agulha():
+    """espinho de baiacu de lado (ponta à direita), 256x64: base grossa afinando até a ponta; borda baixa (contorno), miolo alto"""
+    W, H = 256, 64
+    s = 4
+    im = Image.new("L", (W * s, H * s), 0)
+    d = ImageDraw.Draw(im)
+    d.polygon([(8 * s, 18 * s), (40 * s, 21 * s), (250 * s, 32 * s), (40 * s, 43 * s), (8 * s, 46 * s)], fill=255)
+    m = np.asarray(im).astype(np.float32) / 255 > 0.5
+    dist = ndi.distance_transform_edt(m) / (s * 9.0)
+    v = np.clip(dist, 0, 1) * 0.8 + m * 0.2
+    y, x = np.mgrid[0:H * s, 0:W * s]
+    v = np.clip(v + np.clip(1 - np.abs(y - 32 * s) / (2.2 * s), 0, 1) * m * 0.35, 0, 1)   # fio claro no centro
+    return np.asarray(Image.fromarray((v * 255).astype(np.uint8)).resize((W, H), Image.LANCZOS)).astype(np.float32) / 255
+
+
 def bolha():
     """bolha: anel fino + brilho no canto (intensidade alta no brilho)"""
     x, y = grid()
@@ -475,7 +490,7 @@ def veu():
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     for nm, fn in [("brilho", brilho), ("anel", anel), ("estrela", estrela), ("faisca", faisca), ("fumaca", fumaca),
-                   ("estilhaco", estilhaco), ("respingo", respingo), ("rasgo", rasgo), ("gota", gota), ("seta", seta), ("corrente", corrente), ("voronoi", voronoi), ("ponto", ponto), ("retalho", retalho), ("racha", racha), ("arpao", arpao), ("raio", raio), ("pinca_a", pinca_a), ("punho", punho), ("onda", onda), ("garras_chao", garras_chao), ("moeda", moeda), ("espinhos", espinhos), ("bolha", bolha), ("mina", mina), ("veu", veu)]:
+                   ("estilhaco", estilhaco), ("respingo", respingo), ("rasgo", rasgo), ("gota", gota), ("seta", seta), ("corrente", corrente), ("voronoi", voronoi), ("ponto", ponto), ("retalho", retalho), ("racha", racha), ("arpao", arpao), ("raio", raio), ("pinca_a", pinca_a), ("punho", punho), ("onda", onda), ("garras_chao", garras_chao), ("moeda", moeda), ("espinhos", espinhos), ("agulha", agulha), ("bolha", bolha), ("mina", mina), ("veu", veu)]:
         v = fn()
         if nm == "faisca":
             v = v[::-1]          # cabeça em cima: o topo da textura segue a velocidade
