@@ -227,12 +227,38 @@ def _paint(P, C):
     return out
 
 
+def euler_quat(rx, ry, rz):
+    """Y * X * Z (igual a rot_matrix) -> quaternion [x, y, z, w]"""
+    def q(ax, a):
+        s = math.sin(a / 2)
+        return np.array([ax[0] * s, ax[1] * s, ax[2] * s, math.cos(a / 2)])
+
+    def qm(a, b):
+        x1, y1, z1, w1 = a
+        x2, y2, z2, w2 = b
+        return np.array([w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2, w1 * y2 - x1 * z2 + y1 * w2 + z1 * x2,
+                         w1 * z2 + x1 * y2 - y1 * x2 + z1 * w2, w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2])
+    return qm(qm(q((0, 1, 0), ry), q((1, 0, 0), rx)), q((0, 0, 1), rz))
+
+
 class Scene:
-    """nós com nome, malha opcional, posição/rotação e filhos"""
+    """nós com nome, malha opcional, posição/rotação e filhos.
+    animações: scene.animate("nome", dur, {nó: {"rot": [(t, (rx,ry,rz)), ...], "pos": [(t, (x,y,z)), ...]}})
+    (t em segundos; o Godot cria um AnimationPlayer com elas; nomes terminados em _loop repetem)"""
 
     def __init__(self):
         self.nodes = []
         self.roots = []
+        self.anims = []
+
+    def animate(self, name, dur, tracks):
+        self.anims.append({"name": name, "dur": dur, "tracks": tracks})
+
+    def index(self, name):
+        for i, n in enumerate(self.nodes):
+            if n["name"] == name:
+                return i
+        raise KeyError(name)
 
     def add(self, name, mesh=None, at=(0, 0, 0), rot=(0, 0, 0), parent=None, smooth=False, paint=False):
         """smooth: normais suavizadas (formas arredondadas, quinas vivas acima de ~55 graus continuam)
@@ -312,6 +338,43 @@ class Scene:
             "buffers": [{"byteLength": len(buf)}],
             "materials": [{"name": "toon", "pbrMetallicRoughness": {"baseColorFactor": [1, 1, 1, 1], "metallicFactor": 0.0, "roughnessFactor": 1.0}, "doubleSided": True}],
         }
+        if self.anims:
+            ganims = []
+            for an in self.anims:
+                samplers, channels = [], []
+                for nname, tr in an["tracks"].items():
+                    ni = self.index(nname)
+                    for chan, keys in tr.items():
+                        times = np.array([k[0] for k in keys], dtype=np.float32)
+                        if chan == "rot":
+                            vals, prev = [], None
+                            for k in keys:
+                                qq = euler_quat(*k[1])
+                                if prev is not None and np.dot(prev, qq) < 0:
+                                    qq = -qq
+                                prev = qq
+                                vals.append(qq)
+                            vals = np.array(vals, dtype=np.float32)
+                            gp, ty = "rotation", "VEC4"
+                        else:
+                            vals = np.array([k[1] for k in keys], dtype=np.float32)
+                            gp, ty = "translation", "VEC3"
+                        iv = push(times, None)
+                        ov = push(vals, None)
+                        ai = len(accessors)
+                        accessors.append({"bufferView": iv, "componentType": 5126, "count": len(times), "type": "SCALAR",
+                                          "min": [float(times.min())], "max": [float(times.max())]})
+                        accessors.append({"bufferView": ov, "componentType": 5126, "count": len(vals), "type": ty})
+                        samplers.append({"input": ai, "output": ai + 1, "interpolation": "LINEAR"})
+                        channels.append({"sampler": len(samplers) - 1, "target": {"node": ni, "path": gp}})
+                ganims.append({"name": an["name"], "samplers": samplers, "channels": channels})
+            gltf["animations"] = ganims
+        for v in views:
+            if v.get("target") is None:
+                v.pop("target", None)
+        while len(buf) % 4:
+            buf += b"\0"
+        gltf["buffers"][0]["byteLength"] = len(buf)
         js = json.dumps(gltf).encode()
         while len(js) % 4:
             js += b" "
