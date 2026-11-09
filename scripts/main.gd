@@ -71,6 +71,8 @@ var bubbles: Array = []            # balões de fala ativos
 var plates: Dictionary = {}        # uid -> placa de vida 2D (estilo da HUD)
 var rgb_on: bool = true          # desalinho RGB sobre o 3D (leve)
 var rgb_rect: ColorRect = null
+var rgb_mask: SubViewport = null
+var rgb_mask_cam: Camera3D = null
 var vol = {"Musica": 80.0, "Efeitos": 90.0, "Vozes": 90.0}
 var res_pref: String = "1600x900"
 var fullscreen: bool = false
@@ -154,6 +156,19 @@ func _ready() -> void:
 	var rm = ShaderMaterial.new()
 	rm.shader = load("res://shaders/rgb.gdshader")
 	rgb_rect.material = rm
+	# máscara dos personagens: o RGB fica fraco neles e forte no cenário
+	rgb_mask = SubViewport.new()
+	rgb_mask.transparent_bg = true
+	rgb_mask.own_world_3d = false
+	rgb_mask.world_3d = get_viewport().world_3d
+	rgb_mask.size = Vector2i(640, 360)
+	rgb_mask.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	rgb_mask.msaa_3d = Viewport.MSAA_DISABLED
+	add_child(rgb_mask)
+	rgb_mask_cam = Camera3D.new()
+	rgb_mask_cam.cull_mask = 2
+	rgb_mask.add_child(rgb_mask_cam)
+	rm.set_shader_parameter("mask", rgb_mask.get_texture())
 	rgb_layer.add_child(rgb_rect)
 	rgb_rect.visible = rgb_on
 	var layer = CanvasLayer.new()
@@ -4900,6 +4915,23 @@ func _perf_guard(delta: float) -> void:
 
 
 func _process(_delta: float) -> void:
+	# a câmera da máscara acompanha a câmera do jogo
+	if rgb_mask != null:
+		var on = rgb_on and rgb_rect != null and rgb_rect.visible and board != null and board.cam != null
+		rgb_mask.render_target_update_mode = SubViewport.UPDATE_ALWAYS if on else SubViewport.UPDATE_DISABLED
+		if on:
+			var vs = get_viewport().get_visible_rect().size
+			var sz = Vector2i(int(vs.x * 0.5), int(vs.y * 0.5))
+			if rgb_mask.size != sz and sz.x > 8 and sz.y > 8:
+				rgb_mask.size = sz
+			var bc: Camera3D = board.cam
+			rgb_mask_cam.global_transform = bc.global_transform
+			rgb_mask_cam.fov = bc.fov
+			rgb_mask_cam.projection = bc.projection
+			rgb_mask_cam.size = bc.size
+			rgb_mask_cam.near = bc.near
+			rgb_mask_cam.far = bc.far
+			rgb_mask_cam.current = true
 	_perf_guard(_delta)
 	if stage == "select":
 		_update_tags()

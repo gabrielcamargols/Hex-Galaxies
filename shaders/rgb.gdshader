@@ -2,7 +2,9 @@
 shader_type canvas_item;
 
 uniform sampler2D scr : hint_screen_texture, filter_linear;
-uniform float shift = 4.5;   // pixels de separação no centro; cresce para as bordas
+uniform sampler2D mask : filter_linear;
+uniform float shift = 4.5;
+uniform float char_keep = 0.22;   // quanto do desalinho sobra nos personagens   // pixels de separação no centro; cresce para as bordas
 
 void fragment() {
 	vec2 uv = SCREEN_UV;
@@ -12,7 +14,9 @@ void fragment() {
 	vec3 base = texture(scr, uv, 0.0).rgb;
 	float lum = dot(base, vec3(0.299, 0.587, 0.114));
 	float sh = 1.0 - smoothstep(0.12, 0.62, lum);
-	vec2 o = normalize(c + vec2(0.0001, 0.0001)) * SCREEN_PIXEL_SIZE * shift * e * (1.0 + 1.9 * sh);
+	float cm = texture(mask, uv).a;
+	float keep = mix(1.0, char_keep, smoothstep(0.1, 0.9, cm));
+	vec2 o = normalize(c + vec2(0.0001, 0.0001)) * SCREEN_PIXEL_SIZE * shift * 1.25 * e * (1.0 + 1.9 * sh) * keep;
 	float r = texture(scr, uv + o, 0.0).r;
 	float g = texture(scr, uv, 0.0).g;
 	float b = texture(scr, uv - o, 0.0).b;

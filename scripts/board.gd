@@ -1702,6 +1702,14 @@ func _hex_band(ro: float, ri: float, ink: Color, ink_w: float) -> ArrayMesh:
 	return st.commit()
 
 
+# camada 2 = personagens: a máscara do efeito RGB só enxerga essa camada
+func _mask_layer(n: Node) -> void:
+	if n is VisualInstance3D:
+		n.layers = n.layers | 2
+	for c in n.get_children():
+		_mask_layer(c)
+
+
 func _make_unit(u) -> void:
 	var node = Node3D.new()
 	add_child(node)
@@ -1736,6 +1744,7 @@ func _make_unit(u) -> void:
 	elif DB.art.has(u.cid):
 		sprite = _figure(u.cid, body_h)
 		node.add_child(sprite)
+		_mask_layer(sprite)
 	else:
 		var col = Color(DB.factions[DB.cards[u.cid]["f"]]["color"])
 		var cap = CapsuleMesh.new()
