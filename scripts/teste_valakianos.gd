@@ -649,3 +649,13 @@ func _rei_manip() -> void:
 	r6 = await g6.act_manip(rei6)
 	ok(r6 and cr7.st == "dead" and e6.hp <= hp7 - 4, "cristal movido contra o inimigo também o atinge")
 	ok(a6.hp == ha7 - 2, "efeito do cristal especial no impacto (verde: -2 em inimigo ao lado)")
+
+	# Dinamitador: nem o ataque nem a carga atravessam estrutura sólida
+	var gd: Game = novo()
+	var dn = put(gd, "t_dinamite", 0, 5, 0)
+	var ed = put(gd, "t_basalto", 1, 3, 0)
+	ok(gd.attack_targets(dn).has(ed), "Dinamitador acerta alvo a 2 casas em campo aberto")
+	gd._make_barrier(0, H(4, 0), 4)
+	ok(not gd.attack_targets(dn).has(ed), "estrutura entre os dois bloqueia o ataque")
+	ok(not gd.ult_opts(dn).has(H(3, 0)), "a carga não pode ser posta atrás da estrutura")
+	ok(gd.ult_opts(dn).has(H(5, 1)), "carga em casa com linha livre continua válida")

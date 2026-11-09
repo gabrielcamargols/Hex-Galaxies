@@ -3120,7 +3120,7 @@ func ult_opts(u) -> Array:
 		"guardfirm":
 			return [p]
 		"timedcharge":
-			return DB.hexes.filter(func(h): return DB.dist(h, p) >= 1 and DB.dist(h, p) <= 2 and is_free(h) and not shells.any(func(sh): return sh["h"] == h))
+			return DB.hexes.filter(func(h): return DB.dist(h, p) >= 1 and DB.dist(h, p) <= 2 and is_free(h) and not shells.any(func(sh): return sh["h"] == h) and los(p, h))
 		"lumen", "nursing":
 			return allies_of(u).filter(func(x): return DB.dist(x.pos(), p) <= 2 and x.hp < x.maxhp).map(func(x): return x.pos())
 		"route":
