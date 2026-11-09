@@ -2550,11 +2550,12 @@
     "name": "Carga Temporizada",
     "kind": "ativa",
     "per": "round",
-    "text": "Ataque básico: o alvo sofre o dano e todas as unidades nas 6 casas ao redor dele (aliadas ou inimigas) sofrem 1. Ativa, 1 ação: coloca uma carga visível numa casa livre a até 2 casas; ela explode no início da próxima ativação do Dinamitador ou do próximo round (o que vier primeiro): 3 de dano na casa e 1 ao redor, em quem estiver lá."
+    "text": "Ataque básico (arremessado: passa por cima de estruturas): o alvo sofre o dano e todas as unidades nas 6 casas ao redor dele (aliadas ou inimigas) sofrem 1. Ativa, 1 ação: coloca uma carga visível numa casa livre a até 2 casas; ela explode no início da próxima ativação do Dinamitador ou do próximo round (o que vier primeiro): 3 de dano na casa e 1 ao redor, em quem estiver lá."
    },
    "k": {
     "ult": "timedcharge",
     "ultRound": true,
+    "arc": true,
     "after": "dynamite"
    }
   },

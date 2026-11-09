@@ -886,7 +886,7 @@ func attack_targets(a, fpos = null) -> Array:
 
 # linha de tiro: a granada passa por cima; o alvo marcado pela Batedora é visto por qualquer artilheiro Krieg
 func _sees(a, ap: Vector2i, t) -> bool:
-	if K(a).has("lob"):
+	if K(a).has("lob") or K(a).has("arc"):
 		return true
 	if DB.dist(ap, t.pos()) > 1 and fx_sum(t, "mark") > 0 and DB.cards[a.cid]["f"] == "KRI" and alc_of(a) >= 2:
 		if allies_of(a, true).any(func(x): return x.cid == "k_batedor" and not silenced(x)):
@@ -3120,7 +3120,7 @@ func ult_opts(u) -> Array:
 		"guardfirm":
 			return [p]
 		"timedcharge":
-			return DB.hexes.filter(func(h): return DB.dist(h, p) >= 1 and DB.dist(h, p) <= 2 and is_free(h) and not shells.any(func(sh): return sh["h"] == h) and los(p, h))
+			return DB.hexes.filter(func(h): return DB.dist(h, p) >= 1 and DB.dist(h, p) <= 2 and is_free(h) and not shells.any(func(sh): return sh["h"] == h))
 		"lumen", "nursing":
 			return allies_of(u).filter(func(x): return DB.dist(x.pos(), p) <= 2 and x.hp < x.maxhp).map(func(x): return x.pos())
 		"route":
