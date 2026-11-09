@@ -323,7 +323,32 @@ func _make_theme() -> Theme:
 	th.set_color("font_color", "Label", C_TXT)
 	th.set_color("default_color", "RichTextLabel", C_TXT)
 	th.set_color("font_color", "OptionButton", C_TXT)
+	# barras de rolagem grandes e fáceis de pegar no toque: trilho escuro + pegador azul
+	for bar in ["VScrollBar", "HScrollBar"]:
+		th.set_constant("minimum_grab_thickness", bar, 26)
+		th.set_stylebox("scroll", bar, _scroll_box(Color(0.04, 0.05, 0.12, 0.9), Color("#25308a")))
+		th.set_stylebox("grabber", bar, _scroll_box(C_HUD, Color("#8fa0ff")))
+		th.set_stylebox("grabber_highlight", bar, _scroll_box(C_HUD.lightened(0.2), Color("#c4ceff")))
+		th.set_stylebox("grabber_pressed", bar, _scroll_box(C_GOLD, Color("#fff6a0")))
+	th.set_constant("scrollbar_v_separation", "ScrollContainer", 14)
+	th.set_constant("scrollbar_h_separation", "ScrollContainer", 14)
 	return th
+
+
+# barra de rolagem grande (fácil de pegar com o dedo)
+func _fat_scroll(sc: ScrollContainer) -> void:
+	sc.get_v_scroll_bar().custom_minimum_size.x = 24
+	sc.get_h_scroll_bar().custom_minimum_size.y = 24
+
+
+func _scroll_box(bg: Color, border: Color) -> StyleBoxFlat:
+	var s = StyleBoxFlat.new()
+	s.bg_color = bg
+	s.border_color = border
+	s.set_border_width_all(2)
+	s.set_corner_radius_all(8)
+	s.set_content_margin_all(0)
+	return s
 
 
 # moldura tecnológica (9-slice gerado por tools/uigen.py), tingida com uma cor
@@ -924,11 +949,21 @@ func _rules_popup() -> void:
 		w.erase("rules_pop")
 		return
 	var p = _panel(ui)
-	p.custom_minimum_size = Vector2(760, 0)
+	# balão menor e com rolagem: cabe em celular e não cobre o campo
+	var vw = ui.get_viewport_rect().size
+	var pw = min(520.0, vw.x - 40.0)
+	p.custom_minimum_size = Vector2(pw, 0)
 	_place(p, Control.PRESET_CENTER)
-	var v = _vbox(p, 10)
-	_label(v, "COMO JOGAR", 24, C_GOLD)
-	var r = _rich(v, 720)
+	var v = _vbox(p, 8)
+	_label(v, "COMO JOGAR", 22, C_GOLD)
+	var sc = ScrollContainer.new()
+	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	sc.custom_minimum_size = Vector2(pw - 40.0, min(380.0, vw.y * 0.5))
+	v.add_child(sc)
+	_fat_scroll(sc)
+	var body = _vbox(sc, 0)
+	var r = _rich(body, int(pw - 80.0))
+	r.add_theme_font_size_override("normal_font_size", 14)
 	r.text = RULES
 	_cbtn(v, "Fechar", C_HUD, _rules_popup)
 	w["rules_pop"] = p
@@ -1375,6 +1410,7 @@ func _show_army() -> void:
 	var sc = ScrollContainer.new()
 	sc.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_fat_scroll(sc)
 	mid.add_child(sc)
 	var grid = GridContainer.new()
 	grid.columns = 3
@@ -1759,6 +1795,7 @@ func _army_detail_build() -> void:
 	det.add_theme_stylebox_override("panel", _flat(Color(0.03, 0.05, 0.11, 0.9), fc, 2, 12, 12))
 	var sc = ScrollContainer.new()
 	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_fat_scroll(sc)
 	det.add_child(sc)
 	var v = _vbox(sc, 7)
 	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -2198,6 +2235,7 @@ func _build_hud() -> void:
 	w["side_title"] = _label(sv, "", 26, C_GOLD)
 	var scroll = ScrollContainer.new()
 	scroll.custom_minimum_size = Vector2(min(600.0, vw.x - 60.0), min(420.0, vw.y - 190.0))
+	_fat_scroll(scroll)
 	sv.add_child(scroll)
 	w["side_body"] = _vbox(scroll, 8)
 	w["side_body"].size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -2748,6 +2786,7 @@ func _roster_w() -> float:
 func _roster_scroll(parent: Control) -> ScrollContainer:
 	var sc = ScrollContainer.new()
 	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_fat_scroll(sc)
 	parent.add_child(sc)
 	return sc
 
