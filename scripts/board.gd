@@ -225,6 +225,7 @@ func build(game: Game) -> void:
 	refresh_terrain()
 	_build_rails()
 	fit_camera(true)
+	_build_ships()
 
 
 # ================= céu de galáxias e planeta =================
@@ -318,6 +319,69 @@ func _build_backdrop() -> void:
 			ring.position = mi.position
 			ring.rotation = Vector3(0.35, 0, 0.25)
 			backdrop.add_child(ring)
+
+
+# ================= naves das facções no céu =================
+# cada facção com nave aparece de lado (perfil) no céu, atrás do lado dela; as demais entram aqui depois
+# nose: -1 = o nariz do modelo aponta para -X (o desenho fica de proa para o tabuleiro)
+const FAC_SHIPS = {"ABY": {"path": "res://models/nave_aby.glb", "nose": -1.0}}
+var ships_root: Node3D = null
+var ship_nodes: Array = []
+
+
+# a nave fica sempre de perfil para a câmera (eixo comprido na horizontal da tela), com o nariz
+# para o lado do tabuleiro; acompanha quando a câmera gira
+func _orient_ship(ship: Node3D) -> void:
+	var out: Vector2 = ship.get_meta("out")
+	var right = Vector2(cos(cam_yaw), -sin(cam_yaw))      # direita da tela, no plano do chão
+	var d = out.dot(right)
+	var nose_dir = right * (-1.0 if d > 0.15 else (1.0 if d < -0.15 else 1.0))   # nariz para o centro (ou para a direita)
+	var nose = float(ship.get_meta("nose"))
+	var axis = nose_dir * (-nose)             # direção em que o X local deve apontar
+	ship.rotation.y = atan2(-axis.y, axis.x)
+
+
+func _build_ships() -> void:
+	if ships_root != null and is_instance_valid(ships_root):
+		ships_root.queue_free()
+	ship_nodes = []
+	ships_root = null
+	if g == null or DB.maps[g.map_id].get("cave", false):
+		return   # a mina de Valak não tem céu
+	ships_root = Node3D.new()
+	add_child(ships_root)
+	for p in range(2):
+		var fac = String(g.P[p]["fac"])
+		if not FAC_SHIPS.has(fac) or not ResourceLoader.exists(FAC_SHIPS[fac]["path"]):
+			continue
+		var ps = load(FAC_SHIPS[fac]["path"])
+		var ship: Node3D = ps.instantiate()
+		var ec = world_xz(DB.entry_c[p])
+		var out = ec.normalized()
+		var len_w = PLAT * 1.0
+		ship.scale = Vector3.ONE * len_w
+		var c2 = out * (PLAT + len_w * 0.15)
+		ship.position = Vector3(c2.x, PLAT * 0.6, c2.y)
+		ship.set_meta("out", out)
+		ship.set_meta("nose", float(FAC_SHIPS[fac]["nose"]))
+		_orient_ship(ship)
+		for mi in ship.find_children("*", "MeshInstance3D", true, false):
+			var m = (mi as MeshInstance3D).mesh
+			for i in m.get_surface_count():
+				var mat = m.surface_get_material(i)
+				if mat is StandardMaterial3D:
+					var m2 = mat.duplicate()
+					m2.emission_enabled = true
+					m2.emission_texture = m2.albedo_texture
+					m2.emission_energy_multiplier = 0.9
+					(mi as MeshInstance3D).set_surface_override_material(i, m2)
+			(mi as MeshInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		ships_root.add_child(ship)
+		var base_y = ship.position.y
+		var tw = ship.create_tween().set_loops()
+		tw.tween_property(ship, "position:y", base_y + 0.6, 3.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		tw.tween_property(ship, "position:y", base_y - 0.6, 3.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		ship_nodes.append(ship)
 
 
 # altura do chão do planetoide: plano no meio, borda arredondada (raio RIM) com dunas
@@ -1993,6 +2057,9 @@ func _unit_goal(u) -> Vector2i:
 
 
 func _process(delta: float) -> void:
+	for sh in ship_nodes:
+		if is_instance_valid(sh):
+			_orient_ship(sh)
 	if core_node != null and is_instance_valid(core_node):
 		var orb = core_node.get_node_or_null("orb")
 		if orb != null:
