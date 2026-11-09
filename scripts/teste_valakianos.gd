@@ -68,6 +68,9 @@ func run() -> void:
 	await _cartografo()
 	await _sniper()
 	await _engenheiro()
+	await _rei_barreira()
+	await _rei_cristais()
+	await _rei_manip()
 	print("TESTE FIM falhas=%d" % falhas)
 
 
@@ -434,3 +437,181 @@ func _engenheiro() -> void:
 	ok(r and int(g.earth.get(H(5, 0), 0)) == 1, "casa elevada em 1 nível (permanente na partida)")
 	ok(g.h_of(H(5, 0)) == 1, "altura da casa agora é 1")
 	ok(g.unit_at(H(5, 0)) == null, "não cria objeto de ponte")
+
+
+func _rei() -> Array:
+	var g = novo()
+	var r = put(g, "rei_mina", 0, 5, 0)
+	return [g, r]
+
+
+func _quebra(g: Game, c: Game.Unit) -> void:
+	c.hp = 0
+	c.dying = -1
+	g.settle()
+
+
+func _rei_barreira() -> void:
+	print("-- Rei da Mina: Barreira de Valak")
+	var gr = _rei()
+	var g: Game = gr[0]
+	var rei: Game.Unit = gr[1]
+	ok(g.ult_kind(rei) == "valbarrier", "Rei tem a ativa Barreira de Valak")
+	var lines = g.val_lines(rei)
+	ok(not lines.is_empty(), "há linha de 5 casas livres a até 6 do Rei")
+	var L = lines[0]
+	var st: Vector2i = L[0]
+	var ends = []
+	for l2 in lines:
+		if l2[0] == st:
+			ends.append(l2[0] + l2[1] * 4)
+	var ans = [st]
+	if ends.size() > 1:
+		ans.append(L[0] + L[1] * 4)
+	ans.append_array([0, 1, 2, 1, 0])
+	var r = await ativa(g, rei, ans)
+	ok(r, "Barreira de Valak usada")
+	var crs = g.units.filter(func(x): return x.crystal != "" and x.sp_owner == 0 and x.st == "field")
+	ok(crs.size() == 5, "criou 5 cristais especiais (%d)" % crs.size())
+	var cols = []
+	for k in range(5):
+		var c = g.unit_at(st + L[1] * k)
+		cols.append(c.crystal if c != null else "?")
+	ok(cols == ["verde", "azul", "roxo", "azul", "verde"], "cores escolhidas uma a uma: %s" % str(cols))
+	ok(g.units.filter(func(x): return x.crystal != "" and x.sp_owner == 0 and x.exp == 0).size() == 5, "cristais não expiram sozinhos")
+	ok(rei.ult_used and not g.can_ult(rei), "uma vez por partida")
+	# sem 5 casas válidas: não pode usar e não gasta nada
+	var gr2 = _rei()
+	var g2: Game = gr2[0]
+	var rei2: Game.Unit = gr2[1]
+	for h in DB.hexes:
+		if h != rei2.pos() and DB.dist(h, rei2.pos()) <= 6 and not (h.x % 2 == 0 and h.y % 2 == 0):
+			g2.blocks[h] = true
+	g2.start_activation(rei2)
+	ok(g2.val_lines(rei2).is_empty() and not g2.can_ult(rei2) and not rei2.ult_used, "sem 5 casas válidas: não usa e não consome")
+
+
+func _rei_cristais() -> void:
+	print("-- Rei da Mina: cristais especiais")
+	var gr = _rei()
+	var g: Game = gr[0]
+	var rei: Game.Unit = gr[1]
+	var a = put(g, "t_basalto", 0, 3, 0)
+	var e = put(g, "t_basalto", 1, 3, 2)
+	a.hp = 5
+	e.hp = 9
+	var c = g._make_crystal(0, H(3, 1), "verde")
+	_quebra(g, c)
+	ok(a.hp == 7 and e.hp == 7, "verde especial: aliado +2 e inimigo -2 (%d/%d)" % [a.hp, e.hp])
+	var c2 = g._make_crystal(0, H(3, 1), "azul")
+	var m_a = g.mov_of(a)
+	var m_e = g.mov_of(e)
+	_quebra(g, c2)
+	ok(g.mov_of(a) == m_a + 1 and g.mov_of(e) == m_e - 1, "azul especial: aliado +1 Mov, inimigo -1")
+	var c3 = g._make_crystal(0, H(3, 1), "roxo")
+	var atk_a = g.atk_of(a, null)
+	var atk_e = g.atk_of(e, null)
+	_quebra(g, c3)
+	ok(g.atk_of(a, null) == atk_a + 2 and g.atk_of(e, null) == atk_e - 2, "roxo especial: aliado +2 ATQ, inimigo -2")
+	var c4 = g._make_crystal(0, H(3, 1), "roxo")
+	_quebra(g, c4)
+	ok(g.atk_of(a, null) == atk_a + 2 and g.atk_of(e, null) == atk_e - 2, "roxo reaplicado renova, não acumula")
+	var fxa = a.fx.filter(func(f): return f["k"] == "atk")
+	ok(fxa.size() == 1 and int(fxa[0]["till"]) == g.round_no + 1, "roxo vale até o fim do próximo round")
+	# cristal natural continua com o efeito do mapa
+	var gr3 = _rei()
+	var g3: Game = gr3[0]
+	var a3 = put(g3, "t_basalto", 0, 3, 0)
+	var e3 = put(g3, "t_basalto", 1, 3, 2)
+	a3.hp = 5
+	e3.hp = 5
+	var cn = g3._make_barrier(g3.NEUTRAL, H(3, 1), 1)
+	cn.crystal = "verde"
+	_quebra(g3, cn)
+	ok(a3.hp == 7 and e3.hp == 7, "cristal natural verde cura os dois lados")
+	# cristal que o Rei mexe vira especial
+	var cn2 = g3._make_barrier(g3.NEUTRAL, H(4, 1), 1)
+	cn2.crystal = "roxo"
+	ok(cn2.sp_owner == -1, "cristal natural começa sem dono")
+
+
+func _rei_manip() -> void:
+	print("-- Rei da Mina: Manipulação Mineral")
+	var gr = _rei()
+	var g: Game = gr[0]
+	var rei: Game.Unit = gr[1]
+	var c = g._make_crystal(0, H(4, 1), "verde")
+	g.start_activation(rei)
+	var modes = g.manip_modes(rei)
+	ok(modes.has("move") and modes.has("color") and modes.has("tunnel"), "modos disponíveis: %s" % str(modes))
+	# mover até 2 casas
+	var dst = g.manip_dests(c)
+	ok(not dst.is_empty() and dst.all(func(h): return DB.dist(h, c.pos()) <= 2), "destinos a até 2 casas")
+	fila = [modes.find("move"), H(4, 1), dst[0]]
+	var acts0 = g.act["actions"]
+	var r = await g.act_manip(rei)
+	ok(r and c.pos() == dst[0] and c.sp_owner == 0 and g.act["actions"] == acts0 - 1, "cristal movido, vira especial e custa 1 ação")
+	# mudar a cor (não faz as duas coisas: o movimento já gastou a ação, a cor é outra ação)
+	modes = g.manip_modes(rei)
+	fila = [modes.find("color"), c.pos(), 1]
+	r = await g.act_manip(rei)
+	ok(r and c.crystal == "roxo" and c.sp_owner == 0, "cor trocada (verde -> roxo, 2ª opção)")
+	ok(g.act["actions"] == acts0 - 2, "cada manipulação gasta 1 ação")
+	# rebaixar terreno alto
+	var g2: Game = _rei()[0]
+	var rei2 = g2.units.filter(func(x): return x.cid == "rei_mina")[0]
+	g2.earth[H(3, 1)] = 2 - g2.h_of(H(3, 1))
+	g2.load_map()
+	ok(g2.h_of(H(3, 1)) == 2, "terreno de teste com 2 níveis")
+	g2.start_activation(rei2)
+	var m2 = g2.manip_modes(rei2)
+	ok(m2.has("lower"), "terreno alto pode ser rebaixado")
+	fila = [m2.find("lower"), H(3, 1)]
+	r = await g2.act_manip(rei2)
+	var bl = g2.unit_at(H(3, 1))
+	ok(r and g2.h_of(H(3, 1)) == 1 and bl != null and bl.block and bl.barrier, "rebaixou 1 nível e deixou um bloco móvel")
+	ok(not g2.manip_lowerable(H(3, 1)), "casa de 1 nível não pode ser rebaixada")
+	# túnel
+	var g3: Game = _rei()[0]
+	var rei3 = g3.units.filter(func(x): return x.cid == "rei_mina")[0]
+	var al = put(g3, "t_basalto", 0, 4, 1)
+	var en = put(g3, "t_basalto", 1, 4, 2)
+	g3.start_activation(rei3)
+	var m3 = g3.manip_modes(rei3)
+	fila = [m3.find("tunnel"), H(3, 1), H(7, -2)]
+	r = await g3.act_manip(rei3)
+	ok(r and g3.tunnels.size() == 1 and g3.tunnel_hex(H(3, 1)) and g3.tunnel_hex(H(7, -2)), "túnel com duas entradas visíveis")
+	g3.end_activation()
+	g3.start_activation(al)
+	al.q = 4
+	al.r = 0
+	ok(g3.tunnel_exits(al) == [H(7, -2)] or g3.tunnel_exits(al).has(H(7, -2)), "aliado ao lado de uma entrada pode sair pela outra")
+	ok(g3.tunnel_exits(en).is_empty(), "inimigo não usa o túnel")
+	fila = [H(7, -2)]
+	r = await g3.act_mexit(al)
+	ok(r and al.pos() == H(7, -2) and g3.act["moved"], "saída pelo túnel usa a ação de movimento")
+	# saída ocupada
+	var g4: Game = _rei()[0]
+	var rei4 = g4.units.filter(func(x): return x.cid == "rei_mina")[0]
+	var a4 = put(g4, "t_basalto", 0, 4, 0)
+	put(g4, "t_basalto", 1, 7, -2)
+	g4.tunnels.append({"a": H(3, 1), "b": H(7, -2), "owner": 0})
+	ok(g4.tunnel_exits(a4).is_empty() or not g4.tunnel_exits(a4).has(H(7, -2)), "saída ocupada não vale")
+	# arremesso de estrutura
+	var g5: Game = _rei()[0]
+	var rei5 = g5.units.filter(func(x): return x.cid == "rei_mina")[0]
+	var e5 = put(g5, "t_basalto", 1, 4, -2)
+	var a5 = put(g5, "t_basalto", 1, 3, -2)
+	var st5 = g5._make_crystal(0, H(6, -1), "verde")
+	g5.start_activation(rei5)
+	var m5 = g5.manip_modes(rei5)
+	ok(m5.has("throw"), "arremesso disponível")
+	var hp_e = e5.hp
+	var hp_a = a5.hp
+	fila = [m5.find("throw"), H(6, -1), H(4, -2)]
+	r = await g5.act_manip(rei5)
+	var tm = g5.terrain_mods(rei5, e5)
+	ok(r and g5.act["attacked"], "conta como o ataque do Rei")
+	ok(st5.st == "dead", "estrutura destruída")
+	ok(e5.hp <= hp_e - 2, "inimigo atingido (%d -> %d)" % [hp_e, e5.hp])
+	ok(a5.hp == hp_a - 2, "efeito do cristal também no entorno do impacto (verde: -2 em inimigo ao lado)")

@@ -3036,6 +3036,17 @@ func _refresh_actbar() -> void:
 			bu.tooltip_text = ("Ativa · 1 ação · recarga %d round(s)\n%s" % [Game.ABIL_RECHARGE, act_ab["text"]]) if per2 == "round" else ("Ativa · 1 vez por partida · 1 ação\n%s" % act_ab["text"])
 			if game.ult_spent(u):
 				why.append("%s: já usada neste %s." % [act_ab["name"], "round" if per2 == "round" else "jogo"])
+		if k.has("manip"):
+			var ok_mp = game.can_manip(u) if live else game.can_start(u)
+			var bmp = _cbtn(box, "◆ Manipulação Mineral", C_ABIL, _on_manip)
+			bmp.disabled = not ok_mp or left <= 0
+			bmp.tooltip_text = "Ação especial · 1 ação\n" + DB.cards[u.cid]["ab"]["text"]
+		if live and game.can_mexit(u):
+			var bmx = _cbtn(box, "Entrar no túnel", C_MOVE, _on_mexit)
+			bmx.tooltip_text = "Movimento: uma peça aliada ao lado de uma entrada sai pela outra."
+		elif not live and game.act == null and game.tunnels.any(func(t): return t["owner"] == u.owner) and game.can_start(u):
+			var bmx2 = _cbtn(box, "Entrar no túnel", C_MOVE, _on_mexit)
+			bmx2.disabled = game.tunnel_exits(u).is_empty()
 		if live and game.can_cart(u):
 			var bct = _cbtn(box, "Empurrar carrinho", C_ABIL, _on_cart)
 			bct.tooltip_text = "1 ação: o carrinho anda até %d casas no trilho; o primeiro personagem atingido sofre %d e é empurrado." % [int(game.vrule("cart_steps", 3)), int(game.vrule("cart_dmg", 3))]
@@ -3671,6 +3682,38 @@ func _on_cart() -> void:
 	busy = true
 	refresh()
 	await game.act_cart(u)
+	busy = false
+	await after()
+
+
+func _on_manip() -> void:
+	var u = sel_or_act()
+	if u == null or not my_turn():
+		return
+	if game.act == null and game.can_start(u):
+		game.start_activation(u)
+	pend = null
+	am = ""
+	ab = false
+	busy = true
+	refresh()
+	await game.act_manip(u)
+	busy = false
+	await after()
+
+
+func _on_mexit() -> void:
+	var u = sel_or_act()
+	if u == null or not my_turn():
+		return
+	if game.act == null and game.can_start(u):
+		game.start_activation(u)
+	pend = null
+	am = ""
+	ab = false
+	busy = true
+	refresh()
+	await game.act_mexit(u)
 	busy = false
 	await after()
 
@@ -4727,6 +4770,11 @@ func _on_fx(e: Dictionary) -> void:
 			banner("A AREIA TREME", "saia das casas marcadas: o verme vem no próximo round")
 			if w.has("banner"):
 				w["banner"].add_theme_color_override("font_color", Color("#ff9a5a"))
+			for th in e["hexes"]:
+				vfx.dust_burst(_hex_pos(th, 0.0), false)
+		"rumble":
+			sfx.play("verme_rumor", -6.0, 0.9)
+			board.shake = max(board.shake, 0.2)
 			for th in e["hexes"]:
 				vfx.dust_burst(_hex_pos(th, 0.0), false)
 		"warn_map":

@@ -128,6 +128,7 @@ var track_loop: Array = []    # true = trilho fechado (anel): o carrinho dá a v
 const NEUTRAL = 2             # dono dos cristais (inimigo dos dois lados)
 var czones: Array = []    # Zonas de Cristal (Lithari): [{h, owner, until}] inimigos que entram ficam Lentos
 var fires: Array = []     # Incendiário: [{h, owner, until}] casas em chamas
+var tunnels: Array = []   # Rei da Mina: [{a, b, owner}] entradas de túnel ligadas
 var shells: Array = []    # Rádio: [{h, owner, round, src}] artilharia que cai no início do próximo round
 
 
@@ -484,7 +485,9 @@ func match_who(u, who) -> bool:
 
 func nm(u) -> String:
 	if u.crystal != "":
-		return "Cristal " + u.crystal
+		return ("Cristal especial " if u.sp_owner >= 0 else "Cristal ") + u.crystal
+	if u.block:
+		return "Bloco de pedra"
 	return "Barreira" if u.barrier else DB.cards[u.cid]["name"]
 
 
@@ -604,6 +607,10 @@ func exec_cmd(c: Array) -> void:
 			await act_tunnel(u, c[2])
 		"ult":
 			await act_ult(u)
+		"manip":
+			await act_manip(u)
+		"mexit":
+			await act_mexit(u)
 		"interact":
 			await act_interact(u)
 		"collect":
@@ -1401,8 +1408,11 @@ func _maze_ok(pick: Dictionary) -> bool:
 # cristal quebrado: efeito em todos os personagens ao lado (aliados e inimigos)
 func _crystal_burst(t) -> bool:
 	var hit = false
-	var who = units.filter(func(x): return x.st == "field" and not x.barrier and DB.dist(x.pos(), t.pos()) == 1)
-	abfx("crystal", t.pos(), t.uid)
+	var ctr = t.pos() if _burst_at == null else Vector2i(_burst_at)
+	var who = units.filter(func(x): return x.st == "field" and not x.barrier and (DB.dist(x.pos(), ctr) == 1 or (_burst_at != null and DB.dist(x.pos(), ctr) == 0)))
+	abfx("crystal", ctr, t.uid)
+	if t.sp_owner >= 0:
+		return _sp_effect(t, who)
 	match t.crystal:
 		"verde":
 			for x in who:
@@ -2777,6 +2787,295 @@ func bridge_opts(u) -> Array:
 	return DB.hexes.filter(func(h): return DB.dist(h, u.pos()) >= 1 and DB.dist(h, u.pos()) <= 2 and bridge_cell_ok(h))
 
 
+# ================= Rei da Mina: Manipulação Mineral =================
+const MANIP_R = 6
+
+
+func tunnel_hex(h: Vector2i) -> bool:
+	for t in tunnels:
+		if t["a"] == h or t["b"] == h:
+			return true
+	return false
+
+
+# casa livre onde o Rei pode pôr/mover cristais, blocos e entradas de túnel
+func val_hex_ok(h: Vector2i) -> bool:
+	if not valid_ground(h) or DB.in_entry(0, h) or DB.in_entry(1, h) or (core != null and core == h) or dyn.has(h) or tunnel_hex(h):
+		return false
+	return true
+
+
+func _edge_hex(h: Vector2i) -> bool:
+	for d in DB.DIRS:
+		if not DB.in_board(h + d):
+			return true
+	return false
+
+
+func manip_structs(u) -> Array:
+	return field().filter(func(x): return x.barrier and not x.soft and DB.dist(x.pos(), u.pos()) <= MANIP_R)
+
+
+func manip_dests(s) -> Array:
+	return DB.hexes.filter(func(h): return DB.dist(h, s.pos()) >= 1 and DB.dist(h, s.pos()) <= 2 and val_hex_ok(h))
+
+
+func manip_move_structs(u) -> Array:
+	return manip_structs(u).filter(func(x): return not manip_dests(x).is_empty())
+
+
+func manip_crystals(u) -> Array:
+	return manip_structs(u).filter(func(x): return x.crystal != "")
+
+
+func manip_lowerable(h: Vector2i) -> bool:
+	return val_hex_ok(h) and h_of(h) >= 2 and not _edge_hex(h) and not hole.has(h)
+
+
+func manip_lower_opts(u) -> Array:
+	return DB.hexes.filter(func(h): return DB.dist(h, u.pos()) >= 1 and DB.dist(h, u.pos()) <= MANIP_R and manip_lowerable(h))
+
+
+func manip_tunnel_opts(u) -> Array:
+	return DB.hexes.filter(func(h): return DB.dist(h, u.pos()) >= 1 and DB.dist(h, u.pos()) <= MANIP_R and val_hex_ok(h))
+
+
+# inimigos que o arremesso de estrutura pode atingir (até 6 casas do Rei, com linha de tiro)
+func throw_targets(u) -> Array:
+	return enemies_of(u).filter(func(t): return not t.barrier and DB.dist(u.pos(), t.pos()) <= MANIP_R and not has_fx(t, "veil") and not imprisoned(t) and los(u.pos(), t.pos()))
+
+
+func manip_modes(u) -> Array:
+	var out = []
+	if not is_live(u) or not K(u).has("manip") or act == null or act["actions"] < 1:
+		return out
+	if not manip_move_structs(u).is_empty():
+		out.append("move")
+	if not manip_crystals(u).is_empty():
+		out.append("color")
+	if not manip_lower_opts(u).is_empty():
+		out.append("lower")
+	if manip_tunnel_opts(u).size() >= 2:
+		out.append("tunnel")
+	if can_attack_now(u) and not manip_structs(u).is_empty() and not throw_targets(u).is_empty():
+		out.append("throw")
+	return out
+
+
+func can_manip(u) -> bool:
+	return not manip_modes(u).is_empty()
+
+
+const MANIP_LABEL = {"move": "Mover cristal/estrutura (até 2 casas)", "color": "Mudar a cor de um cristal", "lower": "Rebaixar terreno alto (vira bloco móvel)", "tunnel": "Criar túnel (duas entradas)", "throw": "Arremessar estrutura (ataque, 4 de dano)"}
+
+
+func _make_crystal(p: int, h: Vector2i, color: String) -> Unit:
+	var b = _make_barrier(NEUTRAL, h, 1)
+	b.crystal = color
+	b.sp_owner = p
+	return b
+
+
+# 5 cristais especiais em linha reta: lista de [início, direção] válidos
+func val_lines(u) -> Array:
+	var out = []
+	for h in DB.hexes:
+		if not val_hex_ok(h) or DB.dist(h, u.pos()) > MANIP_R:
+			continue
+		for d in DB.DIRS:
+			var ok = true
+			for k in range(5):
+				var c = h + d * k
+				if not DB.in_board(c) or DB.dist(c, u.pos()) > MANIP_R or not val_hex_ok(c):
+					ok = false
+					break
+			if ok:
+				out.append([h, d])
+	return out
+
+
+func val_start_opts(u) -> Array:
+	var seen = {}
+	for L in val_lines(u):
+		seen[L[0]] = true
+		seen[L[0] + L[1] * 4] = true
+	return seen.keys()
+
+
+# unidades de campo que sofrem o efeito de um cristal especial (aliados/inimigos do dono)
+func _sp_effect(t, who: Array) -> bool:
+	var hit = false
+	var sp = t.sp_owner
+	match t.crystal:
+		"verde":
+			for x in who:
+				if x.owner == sp:
+					heal(x, 2)
+				else:
+					damage(x, 2, null)
+					hit = true
+			log_msg(-1, "Cristal verde especial: aliados do Rei +2 de Vida, inimigos -2.")
+		"azul":
+			for x in who:
+				x.fx = x.fx.filter(func(f): return not f.get("once", false))
+				x.fx.append({"k": "mov", "v": 1 if x.owner == sp else -1, "until": "end", "once": true})
+				emitfx({"t": "passive", "kind": "power", "uid": x.uid})
+			log_msg(-1, "Cristal azul especial: aliados do Rei +1 de Movimento, inimigos -1 (próximo movimento, neste round).")
+		"roxo":
+			for x in who:
+				x.fx = x.fx.filter(func(f): return f.get("src", -1) != -77)
+				x.fx.append({"k": "atk", "v": 2 if x.owner == sp else -2, "till": round_no + 1, "src": -77})
+				emitfx({"t": "passive", "kind": "power", "uid": x.uid})
+			log_msg(-1, "Cristal roxo especial: aliados do Rei +2 de ATQ, inimigos -2 (até o fim do próximo round).")
+	return hit
+
+
+func act_manip(u) -> bool:
+	return await _run(["manip", u.uid], func(): return await _act_manip(u))
+
+
+func _act_manip(u) -> bool:
+	var modes = manip_modes(u)
+	if modes.is_empty():
+		return false
+	var p = u.owner
+	var labels = modes.map(func(m): return MANIP_LABEL[m])
+	var mi = await ask(p, {"t": "choice", "text": "Manipulação Mineral: o que fazer?", "opts": labels, "kind": "manip", "modes": modes, "uid": u.uid})
+	if mi == null or int(mi) < 0 or int(mi) >= modes.size():
+		return false
+	var mode = String(modes[int(mi)])
+	var nm_u = nm(u)
+	match mode:
+		"move":
+			var st = await pick_hex(p, "Manipulação: escolha o cristal/estrutura a mover (até 6 casas).", manip_move_structs(u).map(func(x): return x.pos()), "manip_s", true)
+			if st == null:
+				return false
+			var s = unit_at(st)
+			var dh = await pick_hex(p, "Manipulação: escolha o destino (até 2 casas da origem).", manip_dests(s), "manip_d", true)
+			if dh == null:
+				return false
+			act["actions"] -= 1
+			abfx("earth", s.pos(), u.uid)
+			s.q = dh.x
+			s.r = dh.y
+			if s.crystal != "":
+				s.sp_owner = p
+			abfx("earth", dh, u.uid)
+			emitfx({"t": "move", "uid": s.uid, "from": st, "to": dh})
+			log_msg(p, "%s move %s." % [nm_u, nm(s)])
+		"color":
+			var ch = await pick_hex(p, "Manipulação: escolha o cristal cuja cor mudar (até 6 casas).", manip_crystals(u).map(func(x): return x.pos()), "manip_s", true)
+			if ch == null:
+				return false
+			var c = unit_at(ch)
+			var others = ["verde", "azul", "roxo"].filter(func(k): return k != c.crystal)
+			var ci = await ask(p, {"t": "choice", "text": "Nova cor do cristal:", "opts": others.map(func(k): return k.capitalize()), "kind": "manip_color", "uid": u.uid})
+			var ni = int(ci) if ci != null else 0
+			c.crystal = others[clampi(ni, 0, others.size() - 1)]
+			c.sp_owner = p
+			act["actions"] -= 1
+			abfx("crystal", c.pos(), u.uid)
+			log_msg(p, "%s muda o cristal para %s (agora é especial)." % [nm_u, c.crystal])
+		"lower":
+			var lh = await pick_hex(p, "Manipulação: escolha o terreno alto a rebaixar (até 6 casas).", manip_lower_opts(u), "manip_s", true)
+			if lh == null:
+				return false
+			act["actions"] -= 1
+			earth[lh] = int(earth.get(lh, 0)) - 1
+			load_map()
+			var bl = _make_barrier(NEUTRAL, lh, 4)
+			bl.block = true
+			abfx("earth", lh, u.uid)
+			emitfx({"t": "rumble", "hexes": [lh]})
+			log_msg(p, "%s rebaixa o terreno em 1 nível e deixa um bloco de pedra móvel." % nm_u)
+		"tunnel":
+			var ta = await pick_hex(p, "Túnel: escolha a 1ª entrada (até 6 casas).", manip_tunnel_opts(u), "manip_d", true)
+			if ta == null:
+				return false
+			var tb = await pick_hex(p, "Túnel: escolha a 2ª entrada.", manip_tunnel_opts(u).filter(func(h): return h != ta), "manip_d", true)
+			if tb == null:
+				return false
+			act["actions"] -= 1
+			tunnels = tunnels.filter(func(t): return t["owner"] != p)
+			tunnels.append({"a": ta, "b": tb, "owner": p})
+			abfx("burrow", ta, u.uid)
+			abfx("burrow", tb, u.uid)
+			emitfx({"t": "rumble", "hexes": [ta, tb]})
+			log_msg(p, "%s abre um túnel entre duas entradas (visíveis para os dois)." % nm_u)
+		"throw":
+			var sh = await pick_hex(p, "Arremesso: escolha a estrutura a lançar (até 6 casas).", manip_structs(u).map(func(x): return x.pos()), "manip_s", true)
+			if sh == null:
+				return false
+			var tg = await pick_hex(p, "Arremesso: escolha o inimigo a atingir (até 6 casas).", throw_targets(u).map(func(x): return x.pos()), "enemy", true)
+			if tg == null:
+				return false
+			var s2 = unit_at(sh)
+			var t2 = unit_at(tg)
+			act["actions"] -= 1
+			act["attacked"] = true
+			var tm = terrain_mods(u, t2)
+			var packet = 4 + int(tm["atk"])
+			var red = reduction_of(t2, false, DB.dist(u.pos(), t2.pos()))
+			var dealt = max(0, packet - red - int(tm["cover"]) - int(tm["forest"]))
+			abfx("bombard", tg, u.uid)
+			emitfx({"t": "boom", "h": tg})
+			log_msg(p, "%s arremessa %s em %s (%d de dano)." % [nm_u, nm(s2), nm(t2), dealt])
+			damage(t2, dealt, u, true)
+			s2.hp = 0
+			s2.dying = u.uid
+			s2.st = "field"
+			if s2.crystal != "":
+				_burst_at = tg
+			settle()
+			_burst_at = null
+	await pace()
+	return true
+
+
+var _burst_at: Variant = null
+
+
+func can_mexit(u) -> bool:
+	return is_live(u) and act != null and act["actions"] >= 1 and not act["moved"] and not rooted(u) and not imprisoned(u) and not tunnel_exits(u).is_empty()
+
+
+func tunnel_exits(u) -> Array:
+	var out = []
+	if u.barrier or u.st != "field":
+		return out
+	for t in tunnels:
+		if t["owner"] != u.owner:
+			continue
+		for pr in [[t["a"], t["b"]], [t["b"], t["a"]]]:
+			if DB.dist(u.pos(), pr[0]) <= 1 and u.pos() != pr[1] and unit_at(pr[1]) == null and not cart_at(pr[1]) and not hole.has(pr[1]) and not is_pit(pr[1]):
+				out.append(pr[1])
+	return out
+
+
+func act_mexit(u) -> bool:
+	return await _run(["mexit", u.uid], func(): return await _act_mexit(u))
+
+
+func _act_mexit(u) -> bool:
+	if not can_mexit(u):
+		return false
+	var h = await pick_hex(u.owner, "Túnel: escolha a saída.", tunnel_exits(u), "move", true)
+	if h == null:
+		return false
+	act["actions"] -= 1
+	act["moved"] = true
+	act["from"] = u.pos()
+	var from_t = u.pos()
+	abfx("burrow", from_t, u.uid)
+	abfx("burrow", h, u.uid)
+	await move_unit(u, h, true)
+	_use_blue(u)
+	log_msg(u.owner, "%s atravessa o túnel." % nm(u))
+	if u.st == "field" and (in_zone(from_t) or in_zone(u.pos())):
+		await vibrate(int(vrule("move", 1)), "%s cruzou o túnel perto do buraco" % nm(u))
+	return true
+
+
 func ult_opts(u) -> Array:
 	var p = u.pos()
 	match ult_kind(u):
@@ -2807,6 +3106,8 @@ func ult_opts(u) -> Array:
 			return allies_of(u).filter(func(x): return DB.dist(x.pos(), p) <= 2).map(func(x): return x.pos())
 		"bridge":
 			return bridge_opts(u)
+		"valbarrier":
+			return val_start_opts(u)
 		"abyss":
 			if adj_free(p).is_empty():
 				return []
@@ -2856,6 +3157,13 @@ func ult_opts(u) -> Array:
 func ult_score(u, h: Vector2i) -> float:
 	var t = unit_at(h)
 	match ult_kind(u):
+		"valbarrier":
+			# linha que separa o Rei dos inimigos: conta os inimigos mais perto da linha que do Rei
+			var vs = 0.0
+			for e in enemies_of(u):
+				if not e.barrier and DB.dist(e.pos(), h) <= 3:
+					vs += 0.8
+			return vs + (1.0 if u.hp * 2 <= u.maxhp else 0.0)
 		"burrow":
 			var sb1 = 0.0
 			for e1 in enemies_of(u):
@@ -3030,7 +3338,8 @@ func _act_ult(u) -> bool:
 		"cartcharge": "escolha até onde avançar em linha reta (até 2) ou o alvo do impacto", "ferram": "escolha até onde avançar em linha reta (até 2) ou o alvo da investida",
 		"coat": "escolha o aliado adjacente a revestir", "rupture": "escolha a barreira adjacente a romper", "timedcharge": "escolha a casa da carga (até 2)",
 		"lumen": "escolha o aliado a curar (até 2 casas)", "nursing": "escolha o aliado a tratar (até 2 casas)", "route": "escolha o aliado que ganha a rota (até 2 casas)",
-		"bridge": "escolha a casa baixa a elevar (até 2 casas dele)"}
+		"bridge": "escolha a casa baixa a elevar (até 2 casas dele)",
+		"valbarrier": "escolha uma ponta da linha de 5 cristais (até 6 casas)"}
 	var h: Variant = null
 	if SELF_ULTS.has(kind):
 		h = u.pos()
@@ -3170,6 +3479,30 @@ func _act_ult(u) -> bool:
 			abfx("buff", h, u.uid)
 			emitfx({"t": "passive", "kind": "power", "uid": rt_t.uid})
 			log_msg(p, "%s traça uma rota: %s ganha +1 de Movimento e sobe 1 nível a mais." % [nm(u), nm(rt_t)])
+		"valbarrier":
+			var vb_ends = []
+			for vl in val_lines(u):
+				if vl[0] == h:
+					vb_ends.append(vl[0] + vl[1] * 4)
+				elif vl[0] + vl[1] * 4 == h:
+					vb_ends.append(vl[0])
+			var vb_o = h
+			if vb_ends.size() > 1:
+				vb_o = await pick_hex(p, "%s: escolha a outra ponta da linha." % uname, vb_ends, "ult", false)
+			else:
+				vb_o = vb_ends[0]
+			var vb_step = Vector2i(0, 0)
+			for d2 in DB.DIRS:
+				if h + d2 * 4 == vb_o:
+					vb_step = d2
+			var vb_cols = ["verde", "azul", "roxo"]
+			for k in range(5):
+				var vb_c = h + vb_step * k
+				var vb_ci = await ask(p, {"t": "choice", "text": "Cor do cristal %d de 5:" % (k + 1), "opts": ["Verde", "Azul", "Roxo"], "kind": "val_color", "uid": u.uid, "h": vb_c})
+				_make_crystal(p, vb_c, vb_cols[clampi(int(vb_ci) if vb_ci != null else 0, 0, 2)])
+				abfx("crystal", vb_c, u.uid)
+			emitfx({"t": "rumble", "hexes": [h, h + vb_step * 4]})
+			log_msg(p, "%s ergue a Barreira de Valak: 5 cristais especiais em linha." % nm(u))
 		"bridge":
 			var br_cells = [h]
 			var br_more = bridge_opts(u).filter(func(x): return x != h and DB.dist(x, h) == 1)
@@ -3181,7 +3514,7 @@ func _act_ult(u) -> bool:
 				earth[bc] = int(earth.get(bc, 0)) + 1
 				abfx("earth", bc, u.uid)
 			load_map()
-			emitfx({"t": "tremor", "hexes": br_cells})
+			emitfx({"t": "rumble", "hexes": br_cells})
 			log_msg(p, "%s eleva %d casa(s) e liga os terrenos (permanente)." % [nm(u), br_cells.size()])
 		"abyss":
 			var t = unit_at(h)
@@ -3224,7 +3557,7 @@ func _act_ult(u) -> bool:
 				abfx("earth", cur_h, u.uid)
 				done.append(cur_h)
 				load_map()
-				emitfx({"t": "tremor", "hexes": [cur_h]})
+				emitfx({"t": "rumble", "hexes": [cur_h]})
 				await pace()
 				if i == 2:
 					break

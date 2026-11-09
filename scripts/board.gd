@@ -1658,6 +1658,48 @@ func _make_heart() -> ImageTexture:
 
 
 # ================= peças =================
+var tunnel_nodes: Dictionary = {}
+
+
+# entradas dos túneis do Rei da Mina: visíveis para os dois jogadores
+func _sync_tunnels() -> void:
+	var want = {}
+	for t in g.tunnels:
+		want[t["a"]] = int(t["owner"])
+		want[t["b"]] = int(t["owner"])
+	for h in tunnel_nodes.keys():
+		if not want.has(h):
+			tunnel_nodes[h].queue_free()
+			tunnel_nodes.erase(h)
+	for h in want.keys():
+		if tunnel_nodes.has(h):
+			continue
+		var n = Node3D.new()
+		add_child(n)
+		var wp = world_xz(h)
+		n.position = Vector3(wp.x, top_y(h) + 0.03, wp.y)
+		var hole_d = MeshInstance3D.new()
+		hole_d.mesh = _disc(INNER * 0.6 * HX, 24)
+		hole_d.material_override = _mat(Color("#07030c"), true)
+		n.add_child(hole_d)
+		var ring = MeshInstance3D.new()
+		ring.mesh = _hex_band(INNER * 0.82 * HX, INNER * 0.62 * HX, Color("#0a0410"), 0.04)
+		ring.material_override = _mat(Color("#ffd37a"), true)
+		ring.material_override.vertex_color_use_as_albedo = true
+		ring.position = Vector3(0, 0.02, 0)
+		n.add_child(ring)
+		var lab = Label3D.new()
+		lab.text = "TÚNEL"
+		lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		lab.font_size = 40
+		lab.outline_size = 12
+		lab.pixel_size = 0.006
+		lab.modulate = Color("#ffe39a")
+		lab.position = Vector3(0, 0.7, 0)
+		n.add_child(lab)
+		tunnel_nodes[h] = n
+
+
 func sync_units() -> void:
 	if g == null:
 		return
@@ -1666,8 +1708,12 @@ func sync_units() -> void:
 		if u.st != "field":
 			continue
 		seen[u.uid] = true
+		if unit_nodes.has(u.uid) and u.crystal != "" and String(unit_nodes[u.uid].get("ckey", "")) != "%s%d" % [u.crystal, u.sp_owner]:
+			unit_nodes[u.uid]["node"].queue_free()
+			unit_nodes.erase(u.uid)
 		if not unit_nodes.has(u.uid):
 			_make_unit(u)
+	_sync_tunnels()
 	for uid in unit_nodes.keys():
 		if not seen.has(uid):
 			var n = unit_nodes[uid]
@@ -1736,6 +1782,10 @@ func _make_unit(u) -> void:
 	if u.crystal != "":
 		shadow.visible = false
 		ring.visible = false
+		if u.sp_owner >= 0:
+			ring.visible = true
+			ring.material_override = _mat(Color("#ffe08a"), true)
+			ring.material_override.vertex_color_use_as_albedo = true
 		_crystal_cluster(node, u.crystal, u.uid)
 		body_h = 1.6
 	elif u.barrier:
@@ -1809,7 +1859,7 @@ func _make_unit(u) -> void:
 	node.position = start
 	node.scale = Vector3(0.01, 0.01, 0.01)
 	unit_nodes[u.uid] = {"node": node, "sprite": sprite, "hp": hp, "heart": heart, "tag": tag, "flags": flags, "ring": ring,
-		"top": body_h, "hex": u.pos(), "path": [], "seg_t": 0.0, "from": start, "pop": 0.0, "flip": u.owner == 1, "bob": randf() * TAU, "hurt": 0.0, "lunge": 0.0}
+		"top": body_h, "hex": u.pos(), "path": [], "seg_t": 0.0, "from": start, "pop": 0.0, "flip": u.owner == 1, "bob": randf() * TAU, "hurt": 0.0, "lunge": 0.0, "ckey": "%s%d" % [u.crystal, u.sp_owner]}
 
 
 # personagem: a arte num cartão que encara a câmera, com as cores originais e sombra no chão

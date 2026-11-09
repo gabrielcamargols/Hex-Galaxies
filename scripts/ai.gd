@@ -206,7 +206,7 @@ static func run(g, u) -> void:
 		if g.can_ult(u):
 			var need = {"abyss": 7.0, "bombard": 4.0, "prison": 7.0, "stampede": 3.0, "orbital": 5.0, "earth": 3.0, "detonate": 4.0, "grenade": 3.0, "artillery": 3.0, "barricade": 2.0, "mend": 3.0, "plate": 1.2,
 				"burrow": 2.0, "bwall": 2.0, "rootweb": 1.8, "cartcharge": 3.0, "ferram": 3.0, "coat": 1.5, "rupture": 2.0, "quake": 3.0,
-				"timedcharge": 3.0, "guardfirm": 1.5, "lumen": 2.0, "nursing": 2.0, "route": 1.0}
+				"timedcharge": 3.0, "guardfirm": 1.5, "lumen": 2.0, "nursing": 2.0, "route": 1.0, "valbarrier": 1.5}
 			var kind_u = g.ult_kind(u)
 			if need.has(kind_u):
 				var bs = -1e9
@@ -215,6 +215,9 @@ static func run(g, u) -> void:
 				if bs >= need[kind_u]:
 					await g.act_ult(u)
 					continue
+		if g.K(u).has("manip") and g.can_manip(u) and g.manip_modes(u).has("throw") and g.round_no >= 4:
+			await g.act_manip(u)
+			continue
 		if g.can_attack_now(u):
 			var b = best_attack_from(g, u)
 			if b != null and b["s"] > 0.5:
@@ -388,6 +391,15 @@ static func answer(g, p: int, q: Dictionary) -> Variant:
 		"show":
 			return true
 		"choice":
+			if q.get("kind", "") == "manip":
+				var mi = q["modes"].find("throw")
+				return mi if mi >= 0 else 0
+			if q.get("kind", "") == "val_color":
+				# alterna verde e roxo (cura/ATQ), com azul no meio
+				var vh = q["h"]
+				return posmod(vh.x - vh.y, 3)
+			if q.get("kind", "") == "manip_color":
+				return 0
 			if q.get("kind", "") == "core":
 				var cu = g.by_uid(q["uid"])
 				return 2 if cu != null and cu.hp * 2 <= cu.maxhp else 1
@@ -409,6 +421,13 @@ static func answer(g, p: int, q: Dictionary) -> Variant:
 					"ult":
 						var cu = g.active_unit()
 						s = g.ult_score(cu if cu != null else g.commander(p), h)
+					"manip_s":
+						if t3 != null:
+							var ally_adj = 0
+							for al in g.allies_of(g.commander(p)):
+								if DB.dist(al.pos(), h) <= 1:
+									ally_adj += 1
+							s = (5.0 if t3.block else 2.0) - ally_adj
 					"enemy":
 						s = ((50.0 if t3.is_cmd else 0.0) + 20.0 - t3.hp - (30.0 if t3.barrier else 0.0)) if t3 != null else 0.0
 					"cart":
