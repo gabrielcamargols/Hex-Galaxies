@@ -1665,15 +1665,20 @@ var tunnel_nodes: Dictionary = {}
 func _sync_tunnels() -> void:
 	var want = {}
 	for t in g.tunnels:
-		want[t["a"]] = int(t["owner"])
-		want[t["b"]] = int(t["owner"])
+		want[t["a"]] = "TÚNEL"
+		want[t["b"]] = "TÚNEL"
+	for pt in g.live_portals():
+		want[pt["h"]] = "PORTAL"
 	for h in tunnel_nodes.keys():
 		if not want.has(h):
 			tunnel_nodes[h].queue_free()
 			tunnel_nodes.erase(h)
 	for h in want.keys():
-		if tunnel_nodes.has(h):
+		if tunnel_nodes.has(h) and String(tunnel_nodes[h].get_meta("kind", "")) == String(want[h]):
 			continue
+		if tunnel_nodes.has(h):
+			tunnel_nodes[h].queue_free()
+			tunnel_nodes.erase(h)
 		var n = Node3D.new()
 		add_child(n)
 		var wp = world_xz(h)
@@ -1684,12 +1689,13 @@ func _sync_tunnels() -> void:
 		n.add_child(hole_d)
 		var ring = MeshInstance3D.new()
 		ring.mesh = _hex_band(INNER * 0.82 * HX, INNER * 0.62 * HX, Color("#0a0410"), 0.04)
-		ring.material_override = _mat(Color("#ffd37a"), true)
+		ring.material_override = _mat(Color("#ffd37a") if String(want[h]) == "TÚNEL" else Color("#7ad8ff"), true)
 		ring.material_override.vertex_color_use_as_albedo = true
 		ring.position = Vector3(0, 0.02, 0)
 		n.add_child(ring)
 		var lab = Label3D.new()
-		lab.text = "TÚNEL"
+		n.set_meta("kind", String(want[h]))
+		lab.text = String(want[h])
 		lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		lab.font_size = 40
 		lab.outline_size = 12

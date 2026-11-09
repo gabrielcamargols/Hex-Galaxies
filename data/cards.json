@@ -1737,7 +1737,7 @@
    "id": "z_piloto",
    "f": "ZUK",
    "clan": "ZUK",
-   "name": "Zukunft Piloto",
+   "name": "Zukunft Atirador de Precisão",
    "role": "Atirador",
    "atk": 5,
    "int": 6,
@@ -1967,22 +1967,26 @@
    }
   },
   {
-   "id": "z_infect",
+   "id": "z_portais",
    "f": "ZUK",
    "clan": "ZUK",
-   "name": "Zukunft Infectado",
-   "role": "Híbrido",
-   "atk": 5,
+   "name": "Zukunft Guarda dos Portais",
+   "role": "Guardião de portais",
+   "atk": 4,
    "int": 8,
    "mov": 2,
-   "alc": 1,
+   "alc": 6,
    "src": "novo",
    "ab": {
-    "name": "Corrupção",
-    "text": "Se seu ataque causar dano, o alvo sofre mais 1 dano no fim deste round."
+    "name": "Portalis",
+    "kind": "ativa",
+    "per": "round",
+    "text": "1 ação: abre um portal visível numa casa livre a até 6 casas dele (um por vez). Aliados ao lado dele ou do portal atravessam com uma ação de movimento, e os ataques dele também podem partir do portal."
    },
    "k": {
-    "after": "pending"
+    "ult": "portalis",
+    "ultRound": true,
+    "portal": true
    }
   },
   {

@@ -128,6 +128,7 @@ var track_loop: Array = []    # true = trilho fechado (anel): o carrinho dá a v
 const NEUTRAL = 2             # dono dos cristais (inimigo dos dois lados)
 var czones: Array = []    # Zonas de Cristal (Lithari): [{h, owner, until}] inimigos que entram ficam Lentos
 var fires: Array = []     # Incendiário: [{h, owner, until}] casas em chamas
+var portals: Array = []   # Guarda dos Portais: [{h, uid, owner}] portal ligado à posição dele
 var tunnels: Array = []   # Rei da Mina: [{a, b, owner}] entradas de túnel ligadas
 var shells: Array = []    # Rádio: [{h, owner, round, src}] artilharia que cai no início do próximo round
 
@@ -861,6 +862,18 @@ func range_of(a, fpos: Vector2i, t) -> int:
 
 
 func attack_targets(a, fpos = null) -> Array:
+	var ts0 = _targets_from(a, fpos)
+	# Portalis: o Guarda dos Portais também ataca a partir do portal
+	if fpos == null and not a.barrier and a.st == "field" and K(a).has("portal"):
+		var ph = portal_of(a)
+		if ph != null and unit_at(ph) == null:
+			for t in _targets_from(a, ph):
+				if not ts0.has(t):
+					ts0.append(t)
+	return ts0
+
+
+func _targets_from(a, fpos = null) -> Array:
 	var ap = a.pos() if fpos == null else fpos
 	var hp = stand_h(ap)
 	var ts = []
@@ -2584,7 +2597,20 @@ func _act_attack(u, t) -> bool:
 		return false
 	act["actions"] -= 1
 	var zone = in_zone(u.pos())
+	var via: Variant = null
+	if K(u).has("portal") and not _targets_from(u).has(t):
+		via = portal_of(u)
+	var home = u.pos()
+	if via != null:
+		log_msg(u.owner, "%s ataca através do portal." % nm(u))
+		abfx("burrow", home, u.uid)
+		abfx("burrow", via, u.uid)
+		u.q = via.x
+		u.r = via.y
 	await resolve_attack(u, t)
+	if via != null:
+		u.q = home.x
+		u.r = home.y
 	if zone and winner == NONE:
 		await vibrate(int(vrule("act", 2)), "%s atacou perto do buraco" % nm(u))
 	return true
@@ -2796,7 +2822,22 @@ func tunnel_hex(h: Vector2i) -> bool:
 	for t in tunnels:
 		if t["a"] == h or t["b"] == h:
 			return true
+	for pt in live_portals():
+		if pt["h"] == h:
+			return true
 	return false
+
+
+# portais cujo Guarda ainda está em campo
+func live_portals() -> Array:
+	return portals.filter(func(pt): return by_uid(int(pt["uid"])) != null and by_uid(int(pt["uid"])).st == "field")
+
+
+func portal_of(u) -> Variant:
+	for pt in live_portals():
+		if int(pt["uid"]) == u.uid:
+			return pt["h"]
+	return null
 
 
 # casa livre onde o Rei pode pôr/mover cristais, blocos e entradas de túnel
@@ -3060,10 +3101,24 @@ func can_mexit(u) -> bool:
 	return is_live(u) and act != null and act["actions"] >= 1 and not act["moved"] and not rooted(u) and not imprisoned(u) and not tunnel_exits(u).is_empty()
 
 
+func _exit_ok(h: Vector2i) -> bool:
+	return DB.in_board(h) and unit_at(h) == null and not cart_at(h) and not hole.has(h) and not is_pit(h) and not blocks.has(h)
+
+
 func tunnel_exits(u) -> Array:
 	var out = []
 	if u.barrier or u.st != "field":
 		return out
+	for pt in live_portals():
+		if int(pt["owner"]) != u.owner:
+			continue
+		var gd = by_uid(int(pt["uid"]))
+		if u != gd and DB.dist(u.pos(), gd.pos()) <= 1 and _exit_ok(pt["h"]):
+			out.append(pt["h"])
+		if DB.dist(u.pos(), pt["h"]) <= 1:
+			for n in DB.nbrs(gd.pos()):
+				if n != u.pos() and _exit_ok(n) and not out.has(n):
+					out.append(n)
 	for t in tunnels:
 		if t["owner"] != u.owner:
 			continue
@@ -3129,6 +3184,8 @@ func ult_opts(u) -> Array:
 			return bridge_opts(u)
 		"valbarrier":
 			return val_start_opts(u)
+		"portalis":
+			return DB.hexes.filter(func(h): return DB.dist(h, p) >= 1 and DB.dist(h, p) <= 6 and val_hex_ok(h) and portal_of(u) != h)
 		"abyss":
 			if adj_free(p).is_empty():
 				return []
@@ -3178,6 +3235,13 @@ func ult_opts(u) -> Array:
 func ult_score(u, h: Vector2i) -> float:
 	var t = unit_at(h)
 	match ult_kind(u):
+		"portalis":
+			# portal perto dos inimigos (para atacar) e longe dos pontos de tiro dele
+			var ps = 0.0
+			for e in enemies_of(u):
+				if not e.barrier and DB.dist(e.pos(), h) <= range_of(u, h, e) and DB.dist(e.pos(), u.pos()) > range_of(u, u.pos(), e):
+					ps += 2.0 + (3.0 if e.is_cmd else 0.0)
+			return ps
 		"valbarrier":
 			# linha que separa o Rei dos inimigos: conta os inimigos mais perto da linha que do Rei
 			var vs = 0.0
@@ -3360,7 +3424,8 @@ func _act_ult(u) -> bool:
 		"coat": "escolha o aliado adjacente a revestir", "rupture": "escolha a barreira adjacente a romper", "timedcharge": "escolha a casa da carga (até 2)",
 		"lumen": "escolha o aliado a curar (até 2 casas)", "nursing": "escolha o aliado a tratar (até 2 casas)", "route": "escolha o aliado que ganha a rota (até 2 casas)",
 		"bridge": "escolha a 1ª casa baixa a elevar (até 2 casas dele; até 3 casas ligadas)",
-		"valbarrier": "escolha uma ponta da linha de 5 cristais (até 6 casas)"}
+		"valbarrier": "escolha uma ponta da linha de 5 cristais (até 6 casas)",
+		"portalis": "escolha a casa do portal (até 6 casas)"}
 	var h: Variant = null
 	if SELF_ULTS.has(kind):
 		h = u.pos()
@@ -3524,6 +3589,13 @@ func _act_ult(u) -> bool:
 				abfx("crystal", vb_c, u.uid)
 			emitfx({"t": "rumble", "hexes": [h, h + vb_step * 4]})
 			log_msg(p, "%s ergue a Barreira de Valak: 5 cristais especiais em linha." % nm(u))
+		"portalis":
+			portals = portals.filter(func(pt): return int(pt["uid"]) != u.uid)
+			portals.append({"h": h, "uid": u.uid, "owner": p})
+			abfx("burrow", h, u.uid)
+			abfx("burrow", u.pos(), u.uid)
+			emitfx({"t": "rumble", "hexes": [h]})
+			log_msg(p, "%s abre um portal em %s: aliados atravessam e ele ataca por lá." % [nm(u), t_name(h)])
 		"bridge":
 			var br_cells = [h]
 			for br_i in range(2):

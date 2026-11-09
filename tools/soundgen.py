@@ -359,7 +359,7 @@ PERFIS = {
     "z_piloto": ("human", "M", 1, ""), "z_naves": ("human", "M", 0, "young"), "z_diplo": ("human", "M", 1, "calm"),
     "z_duel": ("human", "M", 1, ""), "z_bio": ("human", "M", 1, ""), "z_hacker": ("human", "M", 0, "young"),
     "z_real": ("human", "M", 1, "old"), "z_cao": ("robot", "N", 1, "dog"), "z_dragao": ("robot", "N", 3, "dragon"),
-    "z_meca": ("robot", "N", 3, ""), "z_fenix": ("bird", "N", 2, "phoenix"), "z_infect": ("human", "M", 1, "corrupt"),
+    "z_meca": ("robot", "N", 3, ""), "z_fenix": ("bird", "N", 2, "phoenix"), "z_portais": ("robot", "N", 2, ""),
     "z_drone": ("robot", "N", 0, ""),
     "t_dinamite": ("human", "M", 1, "young"), "t_basalto": ("golem", "N", 3, ""), "t_lanterna": ("human", "F", 1, ""),
     "t_carrinho": ("robot", "N", 2, ""), "t_britadeira": ("human", "M", 3, "deep"), "t_fundidor": ("human", "F", 2, "deep"),

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://edmqd3j1vg64"
-path="res://.godot/imported/z_infect.webp-bb1d8acf854f4c597c26cebe273af199.ctex"
+uid="uid://cpvftrwaep51v"
+path="res://.godot/imported/z_portais.webp-25beb1772fadab33ec37c5874d6baa9f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://art/z_infect.webp"
-dest_files=["res://.godot/imported/z_infect.webp-bb1d8acf854f4c597c26cebe273af199.ctex"]
+source_file="res://art/z_portais.webp"
+dest_files=["res://.godot/imported/z_portais.webp-25beb1772fadab33ec37c5874d6baa9f.ctex"]
 
 [params]
 

@@ -3045,10 +3045,10 @@ func _refresh_actbar() -> void:
 			bmp.disabled = not ok_mp or left <= 0
 			bmp.tooltip_text = "Ação especial · 1 ação\n" + DB.cards[u.cid]["ab"]["text"]
 		if live and game.can_mexit(u):
-			var bmx = _cbtn(box, "Entrar no túnel", C_MOVE, _on_mexit)
-			bmx.tooltip_text = "Movimento: uma peça aliada ao lado de uma entrada sai pela outra."
-		elif not live and game.act == null and game.tunnels.any(func(t): return t["owner"] == u.owner) and game.can_start(u):
-			var bmx2 = _cbtn(box, "Entrar no túnel", C_MOVE, _on_mexit)
+			var bmx = _cbtn(box, "Atravessar túnel/portal", C_MOVE, _on_mexit)
+			bmx.tooltip_text = "Movimento: uma peça aliada ao lado de uma entrada de túnel (ou do portal/Guarda dos Portais) sai pelo outro lado."
+		elif not live and game.act == null and (game.tunnels.any(func(t): return t["owner"] == u.owner) or not game.live_portals().is_empty()) and game.can_start(u):
+			var bmx2 = _cbtn(box, "Atravessar túnel/portal", C_MOVE, _on_mexit)
 			bmx2.disabled = game.tunnel_exits(u).is_empty()
 		if live and game.can_cart(u):
 			var bct = _cbtn(box, "Empurrar carrinho", C_ABIL, _on_cart)
@@ -3690,6 +3690,7 @@ func _on_cart() -> void:
 
 
 const ULT_NEED = {
+	"portalis": "precisa de uma casa livre a até 6 casas.",
 	"coat": "precisa de um aliado a até 1 casa dela.", "rupture": "precisa de uma barreira ou cristal ao lado (a ativa vale a partir da posição atual).",
 	"quake": "precisa de um inimigo ao lado.", "lumen": "precisa de um aliado ferido a até 2 casas.", "nursing": "precisa de um aliado ferido a até 2 casas.",
 	"route": "precisa de um aliado a até 2 casas.", "bridge": "precisa de uma casa baixa livre a até 2 casas.", "cartcharge": "precisa de espaço livre em linha reta.",
