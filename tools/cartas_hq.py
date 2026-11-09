@@ -31,7 +31,7 @@ def frame(col):
         for x in range(0, W, step):
             t = y / H
             r = 0.4 + 3.4 * t ** 1.6
-            dd.ellipse((x + off - r, y - r, x + off + r, y + r), fill=col + (95,))
+            dd.polygon([(x + off + r * 1.15 * math.cos(math.radians(60 * i + 30)), y + r * 1.15 * math.sin(math.radians(60 * i + 30))) for i in range(6)], fill=col + (95,))
     mask = Image.new("L", (W, H), 0)
     ImageDraw.Draw(mask).polygon(cut_rect(6, 6, W - 16, H - 16, 18), fill=255)
     img.paste(Image.alpha_composite(img, dots), (0, 0), mask)

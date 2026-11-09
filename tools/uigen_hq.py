@@ -20,6 +20,11 @@ def poly(w, h, cut, inset=0):
     return [(i, i), (w - cut - i, i), (w - i, cut + i), (w - i, h - i), (cut + i, h - i), (i, h - cut - i)]
 
 
+def hexpts(x, y, r):
+    """hexágono (ponta para cima) com raio r"""
+    return [(x + r * math.cos(math.radians(60 * i + 30)), y + r * math.sin(math.radians(60 * i + 30))) for i in range(6)]
+
+
 def halftone(draw, w, h, step, col, rmax, region):
     """retícula: pontos que crescem na direção do canto inferior direito (grade a 45°)"""
     for gy in range(-step, h + step, step):
@@ -30,7 +35,7 @@ def halftone(draw, w, h, step, col, rmax, region):
             if t <= 0:
                 continue
             r = rmax * min(1.0, t)
-            draw.ellipse([x - r, y - r, x + r, y + r], fill=col)
+            draw.polygon(hexpts(x, y, r * 1.15), fill=col)
 
 
 def frame(name, w, h, cut, ink, shadow, stroke, fill, dots, dot_col, step, rmax, region, glow=None):

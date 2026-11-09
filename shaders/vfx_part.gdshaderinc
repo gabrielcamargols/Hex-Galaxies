@@ -1,3 +1,4 @@
+#include "res://shaders/hexdots.gdshaderinc"
 // partículas da Forja (estilo Hits & Impacts): rampa de cor pela intensidade, erosão pela idade,
 // borda em retícula de HQ. INSTANCE_CUSTOM.x = giro, .y = idade (0..1) — vindos do CPUParticles3D.
 uniform sampler2D tex : source_color, filter_linear_mipmap, repeat_disable;
@@ -37,7 +38,7 @@ void fragment() {
 	if (halftone > 0.0) {
 		vec2 g = FRAGCOORD.xy / dot_px;
 		g = mat2(vec2(0.7071, 0.7071), vec2(-0.7071, 0.7071)) * g;
-		float d = length(fract(g) - 0.5) * 1.41;
+		float d = hexd(g) * 2.0;
 		float dots = 1.0 - smoothstep(sqrt(a) - 0.08, sqrt(a) + 0.08, d);
 		a = mix(a, dots * step(0.02, a), halftone * (1.0 - smoothstep(0.75, 0.95, a)));
 	}

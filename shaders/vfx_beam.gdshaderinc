@@ -1,3 +1,4 @@
+#include "res://shaders/hexdots.gdshaderinc"
 // corrente/feixe entre dois pontos: o nó tem o eixo X = vetor do início ao fim (comprimento real);
 // a largura vira de frente para a câmera em volta desse eixo. UV.x repete a textura a cada "tile" metros.
 uniform sampler2D tex : source_color, filter_linear_mipmap, repeat_enable;
@@ -30,7 +31,7 @@ void fragment() {
 	float a = v;
 	if (halftone > 0.0) {
 		vec2 g = mat2(vec2(0.7071, 0.7071), vec2(-0.7071, 0.7071)) * (FRAGCOORD.xy / dot_px);
-		float d = length(fract(g) - 0.5) * 1.41;
+		float d = hexd(g) * 2.0;
 		float dots = 1.0 - smoothstep(sqrt(a) - 0.08, sqrt(a) + 0.08, d);
 		a = mix(a, dots * step(0.02, a), halftone * (1.0 - smoothstep(0.7, 0.95, a)));
 	}

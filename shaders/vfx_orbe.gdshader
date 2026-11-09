@@ -1,6 +1,7 @@
 // esfera do projétil (aula de projétil estilizado): ruído celular rolando + borda brilhante (fresnel),
 // cor pela rampa; a borda de fora se desfaz em retícula.
 shader_type spatial;
+#include "res://shaders/hexdots.gdshaderinc"
 render_mode unshaded, blend_mix, depth_draw_never, cull_back, depth_test_disabled;
 uniform sampler2D noise : filter_linear_mipmap, repeat_enable;
 uniform sampler2D ramp : source_color, filter_linear, repeat_disable;
@@ -16,7 +17,7 @@ void fragment() {
 	float v = clamp(n * 0.55 + n2 * 0.35 + fr * 0.9, 0.0, 1.0);
 	ALBEDO = texture(ramp, vec2(v, 0.5)).rgb * boost;
 	vec2 g = mat2(vec2(0.7071, 0.7071), vec2(-0.7071, 0.7071)) * (FRAGCOORD.xy / dot_px);
-	float d = length(fract(g) - 0.5) * 1.41;
+	float d = hexd(g) * 2.0;
 	float edge = 1.0 - smoothstep(0.55, 0.95, fr);
 	ALPHA = mix(1.0 - smoothstep(0.3, 0.6, d), 1.0, edge);
 }

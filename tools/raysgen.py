@@ -31,7 +31,12 @@ for k in range(6):
         pts.append((cx + r * math.cos(ang2), cy + r * math.sin(ang2)))
         side *= -1
     d.line(pts, fill=(255, 255, 255, 110), width=10 * SS, joint="curve")
-# retícula: pontos que crescem para as bordas
+def hexpts(x, y, r):
+    """hexágono (ponta para cima) com raio r"""
+    return [(x + r * math.cos(math.radians(60 * i + 30)), y + r * math.sin(math.radians(60 * i + 30))) for i in range(6)]
+
+
+# retícula: hexágonos que crescem para as bordas
 step = 22 * SS
 for gy in range(0, H * SS, step):
     for gx in range(0, W * SS, step):
@@ -40,7 +45,7 @@ for gy in range(0, H * SS, step):
         t = min(1.0, max(0.0, dist - 0.25))
         r = 1 + 6.5 * SS * t * t
         if r > 1.2:
-            d.ellipse([x - r, gy - r, x + r, gy + r], fill=(255, 255, 255, 90))
+            d.polygon(hexpts(x, gy, r * 1.15), fill=(255, 255, 255, 90))
 im = im.resize((W, H), Image.LANCZOS)
 im.save(os.path.join(os.path.dirname(__file__), "..", "ui", "rays.png"), optimize=True)
 print(im.size)
