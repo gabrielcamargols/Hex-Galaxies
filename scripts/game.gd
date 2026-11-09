@@ -128,7 +128,8 @@ var track_loop: Array = []    # true = trilho fechado (anel): o carrinho dá a v
 const NEUTRAL = 2             # dono dos cristais (inimigo dos dois lados)
 var czones: Array = []    # Zonas de Cristal (Lithari): [{h, owner, until}] inimigos que entram ficam Lentos
 var fires: Array = []     # Incendiário: [{h, owner, until}] casas em chamas
-var portals: Array = []   # Guarda dos Portais: [{h, uid, owner}] portal ligado à posição dele
+var portals: Array = []   # Guarda dos Portais: [{a, b, uid, owner}] a = ENTRADA, b = SAÍDA
+var portal_pick_a: Variant = null   # entrada já escolhida (a IA usa para pontuar a saída)
 var tunnels: Array = []   # Rei da Mina: [{a, b, owner}] entradas de túnel ligadas
 var shells: Array = []    # Rádio: [{h, owner, round, src}] artilharia que cai no início do próximo round
 
@@ -863,13 +864,13 @@ func range_of(a, fpos: Vector2i, t) -> int:
 
 func attack_targets(a, fpos = null) -> Array:
 	var ts0 = _targets_from(a, fpos)
-	# Portalis: o Guarda dos Portais também ataca a partir do portal
-	if fpos == null and not a.barrier and a.st == "field" and K(a).has("portal"):
-		var ph = portal_of(a)
-		if ph != null and unit_at(ph) == null:
-			for t in _targets_from(a, ph):
-				if not ts0.has(t):
-					ts0.append(t)
+	# Portalis: quem está ao lado da ENTRADA ataca a partir da SAÍDA
+	if fpos == null and not a.barrier and a.st == "field":
+		for pt in portal_out_of(a):
+			if unit_at(pt["b"]) == null:
+				for t in _targets_from(a, pt["b"]):
+					if not ts0.has(t):
+						ts0.append(t)
 	return ts0
 
 
@@ -2598,11 +2599,14 @@ func _act_attack(u, t) -> bool:
 	act["actions"] -= 1
 	var zone = in_zone(u.pos())
 	var via: Variant = null
-	if K(u).has("portal") and not _targets_from(u).has(t):
-		via = portal_of(u)
+	if not _targets_from(u).has(t):
+		for pt in portal_out_of(u):
+			if unit_at(pt["b"]) == null and _targets_from(u, pt["b"]).has(t):
+				via = pt["b"]
+				break
 	var home = u.pos()
 	if via != null:
-		log_msg(u.owner, "%s ataca através do portal." % nm(u))
+		log_msg(u.owner, "%s ataca através do portal (entra pela ENTRADA, sai pela SAÍDA)." % nm(u))
 		abfx("burrow", home, u.uid)
 		abfx("burrow", via, u.uid)
 		u.q = via.x
@@ -2823,7 +2827,7 @@ func tunnel_hex(h: Vector2i) -> bool:
 		if t["a"] == h or t["b"] == h:
 			return true
 	for pt in live_portals():
-		if pt["h"] == h:
+		if pt["a"] == h or pt["b"] == h:
 			return true
 	return false
 
@@ -2836,8 +2840,19 @@ func live_portals() -> Array:
 func portal_of(u) -> Variant:
 	for pt in live_portals():
 		if int(pt["uid"]) == u.uid:
-			return pt["h"]
+			return pt
 	return null
+
+
+# saídas de portal que u pode usar: precisa estar ao lado da ENTRADA de um portal do seu time
+func portal_out_of(u) -> Array:
+	var out = []
+	if u.barrier or u.st != "field":
+		return out
+	for pt in live_portals():
+		if int(pt["owner"]) == u.owner and DB.dist(u.pos(), pt["a"]) <= 1 and u.pos() != pt["b"]:
+			out.append(pt)
+	return out
 
 
 # casa livre onde o Rei pode pôr/mover cristais, blocos e entradas de túnel
@@ -3109,16 +3124,12 @@ func tunnel_exits(u) -> Array:
 	var out = []
 	if u.barrier or u.st != "field":
 		return out
-	for pt in live_portals():
-		if int(pt["owner"]) != u.owner:
-			continue
-		var gd = by_uid(int(pt["uid"]))
-		if u != gd and DB.dist(u.pos(), gd.pos()) <= 1 and _exit_ok(pt["h"]):
-			out.append(pt["h"])
-		if DB.dist(u.pos(), pt["h"]) <= 1:
-			for n in DB.nbrs(gd.pos()):
-				if n != u.pos() and _exit_ok(n) and not out.has(n):
-					out.append(n)
+	for pt in portal_out_of(u):
+		if _exit_ok(pt["b"]):
+			out.append(pt["b"])
+		for n in DB.nbrs(pt["b"]):
+			if n != u.pos() and _exit_ok(n) and not out.has(n):
+				out.append(n)
 	for t in tunnels:
 		if t["owner"] != u.owner:
 			continue
@@ -3185,7 +3196,8 @@ func ult_opts(u) -> Array:
 		"valbarrier":
 			return val_start_opts(u)
 		"portalis":
-			return DB.hexes.filter(func(h): return DB.dist(h, p) >= 1 and DB.dist(h, p) <= 6 and val_hex_ok(h) and portal_of(u) != h)
+			var po = DB.hexes.filter(func(h): return DB.dist(h, p) >= 1 and DB.dist(h, p) <= 6 and val_hex_ok(h))
+			return po if po.size() >= 2 else []
 		"abyss":
 			if adj_free(p).is_empty():
 				return []
@@ -3236,10 +3248,17 @@ func ult_score(u, h: Vector2i) -> float:
 	var t = unit_at(h)
 	match ult_kind(u):
 		"portalis":
-			# portal perto dos inimigos (para atacar) e longe dos pontos de tiro dele
+			if portal_pick_a == null:
+				# entrada: perto dos aliados que vão usar
+				var pe = 0.0
+				for al in allies_of(u, true):
+					if DB.dist(al.pos(), h) <= 1:
+						pe += 1.5
+				return pe
+			# saída: perto dos inimigos, longe do alcance da entrada
 			var ps = 0.0
 			for e in enemies_of(u):
-				if not e.barrier and DB.dist(e.pos(), h) <= range_of(u, h, e) and DB.dist(e.pos(), u.pos()) > range_of(u, u.pos(), e):
+				if not e.barrier and DB.dist(e.pos(), h) <= 6 and DB.dist(e.pos(), portal_pick_a) > 4:
 					ps += 2.0 + (3.0 if e.is_cmd else 0.0)
 			return ps
 		"valbarrier":
@@ -3425,7 +3444,7 @@ func _act_ult(u) -> bool:
 		"lumen": "escolha o aliado a curar (até 2 casas)", "nursing": "escolha o aliado a tratar (até 2 casas)", "route": "escolha o aliado que ganha a rota (até 2 casas)",
 		"bridge": "escolha a 1ª casa baixa a elevar (até 2 casas dele; até 3 casas ligadas)",
 		"valbarrier": "escolha uma ponta da linha de 5 cristais (até 6 casas)",
-		"portalis": "escolha a casa do portal (até 6 casas)"}
+		"portalis": "escolha a ENTRADA do portal (até 6 casas): por onde aliados e ataques entram"}
 	var h: Variant = null
 	if SELF_ULTS.has(kind):
 		h = u.pos()
@@ -3590,12 +3609,16 @@ func _act_ult(u) -> bool:
 			emitfx({"t": "rumble", "hexes": [h, h + vb_step * 4]})
 			log_msg(p, "%s ergue a Barreira de Valak: 5 cristais especiais em linha." % nm(u))
 		"portalis":
+			portal_pick_a = h
+			var po_b = ult_opts(u).filter(func(x): return x != h)
+			var hb = await pick_hex(p, "%s: escolha a SAÍDA do portal (até 6 casas): por onde aliados e ataques saem." % uname, po_b, "ult", false)
+			portal_pick_a = null
 			portals = portals.filter(func(pt): return int(pt["uid"]) != u.uid)
-			portals.append({"h": h, "uid": u.uid, "owner": p})
+			portals.append({"a": h, "b": hb, "uid": u.uid, "owner": p})
 			abfx("burrow", h, u.uid)
-			abfx("burrow", u.pos(), u.uid)
-			emitfx({"t": "rumble", "hexes": [h]})
-			log_msg(p, "%s abre um portal em %s: aliados atravessam e ele ataca por lá." % [nm(u), t_name(h)])
+			abfx("burrow", hb, u.uid)
+			emitfx({"t": "rumble", "hexes": [h, hb]})
+			log_msg(p, "%s abre o portal: ENTRADA em %s e SAÍDA em %s. Aliados ao lado da entrada atravessam e atacam pela saída." % [nm(u), t_name(h), t_name(hb)])
 		"bridge":
 			var br_cells = [h]
 			for br_i in range(2):

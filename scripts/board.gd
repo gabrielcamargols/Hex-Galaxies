@@ -1668,7 +1668,8 @@ func _sync_tunnels() -> void:
 		want[t["a"]] = "TÚNEL"
 		want[t["b"]] = "TÚNEL"
 	for pt in g.live_portals():
-		want[pt["h"]] = "PORTAL"
+		want[pt["a"]] = "ENTRADA"
+		want[pt["b"]] = "SAÍDA"
 	for h in tunnel_nodes.keys():
 		if not want.has(h):
 			tunnel_nodes[h].queue_free()
@@ -1689,7 +1690,7 @@ func _sync_tunnels() -> void:
 		n.add_child(hole_d)
 		var ring = MeshInstance3D.new()
 		ring.mesh = _hex_band(INNER * 0.82 * HX, INNER * 0.62 * HX, Color("#0a0410"), 0.04)
-		ring.material_override = _mat(Color("#ffd37a") if String(want[h]) == "TÚNEL" else Color("#7ad8ff"), true)
+		ring.material_override = _mat({"TÚNEL": Color("#ffd37a"), "ENTRADA": Color("#5ad7ff"), "SAÍDA": Color("#ff9a3a")}[String(want[h])], true)
 		ring.material_override.vertex_color_use_as_albedo = true
 		ring.position = Vector3(0, 0.02, 0)
 		n.add_child(ring)
@@ -1700,7 +1701,8 @@ func _sync_tunnels() -> void:
 		lab.font_size = 40
 		lab.outline_size = 12
 		lab.pixel_size = 0.006
-		lab.modulate = Color("#ffe39a")
+		lab.modulate = {"TÚNEL": Color("#ffe39a"), "ENTRADA": Color("#8fe6ff"), "SAÍDA": Color("#ffb868")}[String(want[h])]
+		lab.font_size = 56 if String(want[h]) != "TÚNEL" else 40
 		lab.position = Vector3(0, 0.7, 0)
 		n.add_child(lab)
 		tunnel_nodes[h] = n
