@@ -16,24 +16,24 @@ const INNER = 0.95        # aro bem fino, só para dar para contar as casas
 # [centro, borda, lateral] — cada tipo de terreno tem uma cor própria para não se confundir
 const PAL = {
 	"grass": ["#3c9a44", "#2c7a36", "#184a22"], "grass2": ["#52aa44", "#3c8834", "#22521e"],
-	"sand": ["#e09a48", "#c27a32", "#6e3a1a"], "dune": ["#f07c4a", "#d05a32", "#7a2a1a"],
+	"sand": ["#ecb870", "#cf9250", "#6c3c3a"], "dune": ["#e8845e", "#c45f4a", "#62303e"],
 	"wood": ["#b07840", "#8c5a2c", "#4e3018"], "ramp": ["#d09a58", "#b07a3a", "#5e3e20"],
 	"mud": ["#6a5238", "#4e3c28", "#2e2214"], "rubble": ["#8c8c9a", "#70707e", "#44444e"],
 	"quick": ["#8e8040", "#6e6230", "#3e3618"], "stone": ["#8e827c", "#726862", "#4a4240"],
-	"bone": ["#d8ccb0", "#bcae90", "#7e7058"], "cracked": ["#e0a058", "#c4803e", "#6e3a1a"],
+	"bone": ["#d8ccb0", "#bcae90", "#7e7058"], "cracked": ["#e6ac66", "#c88a4c", "#643638"],
 	"hole": ["#3a2418", "#24140c", "#120a04"],
-	"cave": ["#7a64e0", "#5a48c0", "#24186a"], "cave2": ["#6c56d4", "#4e3cb0", "#20145e"], "pit": ["#140a24", "#0c0618", "#05020a"],
+	"cave": ["#6a6cd2", "#4c52b2", "#1c2068"], "cave2": ["#5c5ec4", "#4146a2", "#181c5c"], "pit": ["#140a24", "#0c0618", "#05020a"],
 	"rubble_g": ["#6aa040", "#548232", "#2c4a1c"], "sand2": ["#d8903e", "#b8702c", "#6e3a1a"], "grass3": ["#389444", "#2a7434", "#184a22"],
 	# Abnara (selva viva)
 	"trilha": ["#7fb04a", "#639238", "#2e4e22"], "clareira": ["#cdb86e", "#ad9a52", "#5a4a2a"], "mata": ["#217044", "#185a36", "#0c3222"],
 	"raiz": ["#6a7a3a", "#4e5e2c", "#2a3416"], "rio": ["#2f76d8", "#2358b0", "#102e72"], "ponte": ["#c0723a", "#9a5428", "#52301a"],
 	"pedra": ["#8e8aa8", "#726e8c", "#3c3a54"],
 	# Gor'Aida (gelo instável)
-	"neve": ["#f4f8ff", "#d8e6f4", "#8ea6c0"], "neve_base": ["#fff0cc", "#ead6aa", "#9a8a6a"], "gelo": ["#9ce2ff", "#70c4ee", "#3a7aa8"],
+	"neve": ["#eef4ff", "#cddcf2", "#7c94c4"], "neve_base": ["#fff0cc", "#ead6aa", "#9a8a6a"], "gelo": ["#8ed8f4", "#62b0e2", "#306aa0"],
 	"gelo_f": ["#cdeeff", "#a6d4f0", "#5a8ab0"], "fenda": ["#102a66", "#1b4aa0", "#2f6fc0"], "gelo_alto": ["#c4e2f6", "#9cc6e6", "#4e7ea6"],
 	"aval": ["#f8e8f4", "#e6cce0", "#9a7a98"],
 }
-const ELEV = {"tarhut": "#c0583a", "posto": "#e0c060", "abnara": "#b6d88a", "goraida": "#ffffff"}  # tom que as casas altas puxam
+const ELEV = {"tarhut": "#b8664e", "posto": "#e0c060", "abnara": "#b6d88a", "goraida": "#ffffff"}  # tom que as casas altas puxam
 # planeta: o tabuleiro fica num platô e o chão se curva em volta (deserto contínuo)
 var PLAT = 18.5       # raio plano em volta do tabuleiro (ajustado ao tamanho do mapa)
 var HX: float = 1.0          # espaçamento das casas (mapas com "hex_scale": casas mais largas, mais respiro)
@@ -163,9 +163,10 @@ func build(game: Game) -> void:
 		ground.mesh = _planet_mesh(desert)
 		ground.position = Vector3.ZERO
 		ground.material_override = _hq_mat()
-		sun_light.light_energy = 0.55
-		sun_light.light_color = Color.WHITE
-		env.ambient_light_color = Color(0.85, 0.88, 0.95)
+		var pl = PLANET_LIGHT.get(g.map_id, [Color.WHITE, 0.55, Color(0.85, 0.88, 0.95)])
+		sun_light.light_energy = pl[1]
+		sun_light.light_color = pl[0]
+		env.ambient_light_color = pl[2]
 		env.ambient_light_energy = 0.32
 	_apply_planet_tint()
 	_apply_atmosphere()
@@ -362,14 +363,14 @@ func _planet_col(desert: bool, x: float, z: float, y: float, under: float) -> Co
 	if desert:
 		var ground = BASE_Y - 0.1 - (RIM - sqrt(max(0.0, RIM * RIM - min(d, RIM) * min(d, RIM))))
 		var crest = clamp((y - ground) / 1.3, 0.0, 1.0)
-		var c = Color("#d8893e").lerp(Color("#f4b45e"), crest)
-		return c.lerp(Color("#9a6440"), clamp(d / RIM, 0.0, 0.45))
+		var c = Color("#d89a5c").lerp(Color("#f0c27e"), crest)
+		return c.lerp(Color("#8a5a58"), clamp(d / RIM, 0.0, 0.55))
 	if bio == "jungle":
 		var gj = Color("#4c9e3c").lerp(Color("#2f7a34"), clamp(0.5 + 0.5 * sin(x * 0.31 + z * 0.17), 0.0, 1.0) * 0.6)
 		return gj.lerp(Color("#1d4a24"), clamp(d / RIM, 0.0, 0.7))
 	if bio == "ice":
-		var gi = Color("#f2f8ff").lerp(Color("#cfe4f6"), clamp(0.5 + 0.5 * sin(x * 0.27 - z * 0.21), 0.0, 1.0) * 0.7)
-		return gi.lerp(Color("#8eb4dc"), clamp(d / RIM, 0.0, 0.7))
+		var gi = Color("#eef4ff").lerp(Color("#c4d6f2"), clamp(0.5 + 0.5 * sin(x * 0.27 - z * 0.21), 0.0, 1.0) * 0.7)
+		return gi.lerp(Color("#7f9ccc"), clamp(d / RIM, 0.0, 0.75))
 	return Color("#1d86c8").lerp(Color("#0e3a78"), clamp(d / RIM, 0.0, 1.0))
 
 
@@ -775,13 +776,15 @@ func _overlay_mat(c: Color) -> StandardMaterial3D:
 
 
 # sombra de cada planeta (mesma em chão, cenário e modelos): Tarhut vinho-violeta, Valak azul-violeta
-const PLANET_SHADOW = {"tarhut": Color(0.62, 0.32, 0.46), "valak": Color(0.36, 0.30, 0.72), "abnara": Color(0.30, 0.34, 0.62), "goraida": Color(0.42, 0.52, 0.82)}
+const PLANET_SHADOW = {"tarhut": Color(0.52, 0.30, 0.52), "valak": Color(0.26, 0.26, 0.66), "abnara": Color(0.30, 0.34, 0.62), "goraida": Color(0.36, 0.46, 0.80)}
+# luz do sol e do ambiente de cada planeta: [cor do sol, energia, cor ambiente]
+const PLANET_LIGHT = {"tarhut": [Color("#ffe2bc"), 0.62, Color("#d8b8d8")], "goraida": [Color("#f2f6ff"), 0.58, Color("#b8cdf2")], "abnara": [Color("#fff4d8"), 0.55, Color("#c4d0f0")]}
 var tex_mats: Dictionary = {}
 
 
 # perspectiva atmosférica (guache): o fundo esfria e some numa névoa azul-violeta; só em planetas com ar
 func _apply_atmosphere() -> void:
-	var fog = {"abnara": [Color("#6f7bb8"), 0.0085]}
+	var fog = {"abnara": [Color("#6f7bb8"), 0.0085], "tarhut": [Color("#c98aa8"), 0.0075], "goraida": [Color("#9fb8e8"), 0.009], "posto": [Color("#3a3a9a"), 0.012]}
 	if g != null and fog.has(g.map_id):
 		env.fog_enabled = true
 		env.fog_light_color = fog[g.map_id][0]
