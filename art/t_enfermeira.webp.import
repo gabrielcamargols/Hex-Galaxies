@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ckh8tr5uu7r26"
-path="res://.godot/imported/p_golk.webp-6fff6bcd9d60678204377dff3125bb92.ctex"
+uid="uid://bw6ha33w3erxy"
+path="res://.godot/imported/t_enfermeira.webp-e18af28f6a6cad23a65ec7c44cbbacc9.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://art/p_golk.webp"
-dest_files=["res://.godot/imported/p_golk.webp-6fff6bcd9d60678204377dff3125bb92.ctex"]
+source_file="res://art/t_enfermeira.webp"
+dest_files=["res://.godot/imported/t_enfermeira.webp-e18af28f6a6cad23a65ec7c44cbbacc9.ctex"]
 
 [params]
 

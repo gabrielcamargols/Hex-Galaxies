@@ -40,8 +40,8 @@
    "cmd": "l_general"
   },
   "TER": {
-   "name": "Terramorfos de Gorh-Ka",
-   "short": "Terramorfos",
+   "name": "Valakianos, Refugiados de Valak",
+   "short": "Valakianos",
    "color": "#b08a52",
    "cmd": "rei_mina"
   }
@@ -2368,43 +2368,27 @@
    "id": "rei_mina",
    "f": "TER",
    "cmd": true,
-   "name": "Rei-da-Mina",
+   "name": "Rei da Mina",
    "role": "Comandante",
-   "atk": 6,
-   "int": 12,
-   "mov": 2,
-   "alc": 1,
+   "atk": 4,
+   "int": 10,
+   "mov": 3,
+   "alc": 6,
    "src": "novo",
    "ab": {
-    "name": "Ampliar Terreno",
-    "text": "Barreiras aliadas entram com +2 de Vida e minas aliadas causam +1 dano. Funciona enquanto ele está fora do campo."
+    "name": "Manipulação Mineral",
+    "kind": "especial",
+    "text": "Ação especial de manipulação: escolha 1 cristal ou estrutura móvel a até 6 casas e mova-o até 2 casas, ou mude a cor de um cristal. Terrenos altos (mais de 1 nível) podem ser rebaixados em 1, virando um bloco móvel. Também cria túneis e ataca arremessando estruturas (4 de dano, destrói a estrutura)."
    },
    "k": {
-    "terra": true,
-    "ult": "earth"
+    "manip": true,
+    "ult": "valbarrier"
    },
    "ab2": {
-    "name": "Erguer a Terra",
-    "text": "1 vez por partida, 1 ação: escolha até 3 casas a até 4 e suba ou desça cada uma 1 nível (de 0 a 3).",
-    "kind": "ativa"
-   }
-  },
-  {
-   "id": "golk",
-   "f": "TER",
-   "name": "Golk",
-   "role": "Muralha",
-   "atk": 2,
-   "int": 14,
-   "mov": 1,
-   "alc": 1,
-   "src": "novo",
-   "ab": {
-    "name": "Bloqueio de Pedra",
-    "text": "Um inimigo adjacente a Golk deve atacá-lo antes de seus aliados adjacentes, se Golk for alvo válido."
-   },
-   "k": {
-    "taunt": true
+    "name": "Barreira de Valak",
+    "kind": "ativa",
+    "per": "partida",
+    "text": "1 vez por partida, 1 ação: cria 5 cristais especiais em linha reta, em casas livres e consecutivas a até 6 casas dele, cada um na cor que você escolher. Bloqueiam passagem e tiros até serem quebrados."
    }
   },
   {
@@ -2412,97 +2396,102 @@
    "f": "TER",
    "name": "Perfurador",
    "role": "Batedor subterrâneo",
-   "atk": 4,
-   "int": 5,
+   "atk": 2,
+   "int": 8,
+   "mov": 3,
+   "alc": 1,
+   "src": "novo",
+   "ab": {
+    "name": "Perfuração Subterrânea",
+    "kind": "ativa",
+    "per": "round",
+    "text": "1 ação: entra no subsolo, anda até 2 casas e emerge numa casa livre. Pode causar 2 de dano a um inimigo adjacente à saída. A posição é sempre visível."
+   },
+   "k": {
+    "ult": "burrow",
+    "ultRound": true
+   }
+  },
+  {
+   "id": "t_basalto",
+   "f": "TER",
+   "name": "Golem de Basalto",
+   "role": "Muralha",
+   "atk": 2,
+   "int": 12,
    "mov": 2,
    "alc": 1,
    "src": "novo",
    "ab": {
-    "name": "Túnel",
-    "text": "1 ação: vá para qualquer casa livre a até 3 casas, atravessando peças e bloqueios."
+    "name": "Muralha de Basalto",
+    "kind": "ativa",
+    "per": "round",
+    "text": "1 ação: cria numa casa livre adjacente uma barreira de 4 de Vida, que bloqueia passagem e tiros. Dura até o fim do próximo round."
    },
    "k": {
-    "action": "tunnel"
+    "ult": "bwall",
+    "ultRound": true
    }
   },
   {
-   "id": "sismico",
+   "id": "t_carrinho",
    "f": "TER",
-   "name": "Sísmico",
-   "role": "Controle",
-   "atk": 4,
+   "name": "Carrinho de Minério",
+   "role": "Transporte",
+   "atk": 2,
+   "int": 8,
+   "mov": 3,
+   "alc": 1,
+   "src": "novo",
+   "ab": {
+    "name": "Carga de Impacto",
+    "kind": "ativa",
+    "per": "round",
+    "text": "1 ação: avança até 2 casas em linha reta. Ao encontrar uma unidade, para, causa 2 de dano e empurra 1 casa. Pode atacar normalmente depois, com a segunda ação."
+   },
+   "k": {
+    "ult": "cartcharge",
+    "ultRound": true
+   }
+  },
+  {
+   "id": "t_britadeira",
+   "f": "TER",
+   "name": "Britadeiro",
+   "role": "Demolidor",
+   "atk": 3,
    "int": 9,
-   "mov": 1,
+   "mov": 2,
    "alc": 1,
    "src": "novo",
    "ab": {
-    "name": "Onda Sísmica",
-    "text": "Ao entrar, empurre cada inimigo adjacente 1 casa para longe, se o destino estiver livre."
+    "name": "Triturar",
+    "kind": "passiva",
+    "text": "Seus ataques básicos causam +2 de dano a barreiras e construções destrutíveis. Cristais de Valak quebram com um único ataque."
    },
    "k": {
-    "entry": {
-     "t": "pushAllAdj"
-    }
+    "atkBarrier": 2
    }
   },
   {
-   "id": "t_pontes",
+   "id": "t_fundidor",
    "f": "TER",
-   "name": "Engenheiro de Pontes",
-   "role": "Construtor",
+   "name": "Fundidor",
+   "role": "Suporte de blindagem",
    "atk": 2,
-   "int": 7,
+   "int": 8,
    "mov": 2,
    "alc": 1,
    "src": "novo",
    "ab": {
-    "name": "Torre de Pedra",
-    "text": "Ao entrar, crie uma Barreira com 4 de Vida numa casa livre adjacente."
+    "name": "Revestimento Fundido",
+    "kind": "ativa",
+    "per": "round",
+    "text": "1 ação: um aliado a até 1 casa recebe -2 no próximo dano sofrido, até o início da próxima ativação do Fundidor."
    },
    "k": {
-    "entry": {
-     "t": "barrier",
-     "n": 4
-    }
-   }
-  },
-  {
-   "id": "t_estacas",
-   "f": "TER",
-   "name": "Atirador de Estacas",
-   "role": "Atirador",
-   "atk": 5,
-   "int": 5,
-   "mov": 2,
-   "alc": 4,
-   "src": "novo",
-   "ab": {
-    "name": "Estaca Perfurante",
-    "text": "Pode atacar a até 4 casas. Precisa de linha de visão."
-   },
-   "k": {}
-  },
-  {
-   "id": "t_medico",
-   "f": "TER",
-   "name": "Médico Mineral",
-   "role": "Suporte",
-   "atk": 2,
-   "int": 7,
-   "mov": 2,
-   "alc": 1,
-   "src": "novo",
-   "ab": {
-    "name": "Gel Mineral",
-    "text": "Ao entrar, restaure 3 de Vida de 1 aliado a até 2 casas. Pode escolher a si mesmo."
-   },
-   "k": {
-    "entry": {
-     "t": "heal",
-     "r": 2,
-     "n": 3,
-     "self": true
-    }
+    "ult": "coat",
+    "ultRound": true
    }
   },
   {
@@ -2510,41 +2499,105 @@
    "f": "TER",
    "name": "Demolidor de Fendas",
    "role": "Demolidor",
-   "atk": 5,
-   "int": 6,
-   "mov": 1,
+   "atk": 3,
+   "int": 9,
+   "mov": 2,
    "alc": 1,
    "src": "novo",
    "ab": {
-    "name": "Cratera",
-    "text": "Ao entrar, cause 2 dano a 1 inimigo a até 2 casas."
+    "name": "Ruptura",
+    "kind": "ativa",
+    "per": "round",
+    "text": "1 ação: causa 4 de dano a uma barreira adjacente. Se a destruir, empurra 1 casa o inimigo que estava logo atrás dela."
    },
    "k": {
-    "entry": {
-     "t": "dmg",
-     "r": 2,
-     "n": 2
-    }
+    "ult": "rupture",
+    "ultRound": true
    }
   },
   {
-   "id": "t_cartografo",
+   "id": "sismico",
    "f": "TER",
-   "name": "Cartógrafo Subterrâneo",
-   "role": "Estrategista",
+   "name": "Sísmico",
+   "role": "Controle",
    "atk": 2,
-   "int": 6,
+   "int": 10,
+   "mov": 2,
+   "alc": 1,
+   "src": "novo",
+   "ab": {
+    "name": "Onda Sísmica",
+    "kind": "ativa",
+    "per": "round",
+    "text": "1 ação: causa 1 de dano a todos os inimigos adjacentes e empurra cada um 1 casa para longe. Construções adjacentes sofrem 2 de dano."
+   },
+   "k": {
+    "ult": "quake",
+    "ultRound": true
+   }
+  },
+  {
+   "id": "t_dinamite",
+   "f": "TER",
+   "name": "Dinamitador",
+   "role": "Explosivo",
+   "atk": 2,
+   "int": 7,
    "mov": 2,
    "alc": 2,
    "src": "novo",
    "ab": {
-    "name": "Mapa de Túneis",
-    "text": "Ao entrar, olhe as 3 cartas do topo do seu baralho e devolva-as na ordem que quiser."
+    "name": "Carga Temporizada",
+    "kind": "ativa",
+    "per": "round",
+    "text": "Ataque básico: o alvo sofre o dano e todas as unidades nas 6 casas ao redor dele (aliadas ou inimigas) sofrem 1. Ativa, 1 ação: coloca uma carga visível numa casa livre a até 2 casas; ela explode no início da próxima ativação do Dinamitador ou do próximo round (o que vier primeiro): 3 de dano na casa e 1 ao redor, em quem estiver lá."
    },
    "k": {
-    "entry": {
-     "t": "top3"
-    }
+    "ult": "timedcharge",
+    "ultRound": true,
+    "after": "dynamite"
+   }
+  },
+  {
+   "id": "t_sentinela",
+   "f": "TER",
+   "name": "Sentinela de Pedra",
+   "role": "Guardião",
+   "atk": 2,
+   "int": 11,
+   "mov": 2,
+   "alc": 1,
+   "src": "novo",
+   "ab": {
+    "name": "Guarda Firme",
+    "kind": "ativa",
+    "per": "round",
+    "text": "1 ação: ela e os aliados adjacentes recebem -1 de dano até o início da próxima ativação da Sentinela."
+   },
+   "k": {
+    "ult": "guardfirm",
+    "ultRound": true
+   }
+  },
+  {
+   "id": "t_lanterna",
+   "f": "TER",
+   "name": "Lanterneira",
+   "role": "Suporte",
+   "atk": 1,
+   "int": 7,
+   "mov": 3,
+   "alc": 2,
+   "src": "novo",
+   "ab": {
+    "name": "Luz de Amparo",
+    "kind": "ativa",
+    "per": "round",
+    "text": "1 ação: cura 2 de Vida de um aliado a até 2 casas (3 se o aliado estiver ao lado de um cristal)."
+   },
+   "k": {
+    "ult": "lumen",
+    "ultRound": true
    }
   },
   {
@@ -2552,158 +2605,123 @@
    "f": "TER",
    "name": "Guarda-Raiz",
    "role": "Defensor",
-   "atk": 4,
-   "int": 9,
-   "mov": 1,
-   "alc": 1,
-   "src": "novo",
-   "ab": {
-    "name": "Raízes",
-    "text": "Sofre 1 a menos de dano de ataques enquanto estiver na sua metade do tabuleiro."
-   },
-   "k": {
-    "selfRedHome": 1
-   }
-  },
-  {
-   "id": "t_dinamite",
-   "f": "TER",
-   "clan": "TER",
-   "name": "Dinamitador",
-   "role": "Demolidor",
-   "atk": 4,
-   "int": 6,
-   "mov": 2,
-   "alc": 2,
-   "src": "novo",
-   "ab": {
-    "name": "Pavio Curto",
-    "text": "Quando é derrotado, explode: 2 de dano em cada peça adjacente, inclusive aliados."
-   },
-   "k": {
-    "deathBlast": 2
-   }
-  },
-  {
-   "id": "t_basalto",
-   "f": "TER",
-   "clan": "TER",
-   "name": "Golem de Basalto",
-   "role": "Tanque",
-   "atk": 3,
-   "int": 13,
-   "mov": 1,
-   "alc": 1,
-   "src": "novo",
-   "ab": {
-    "name": "Pele de Basalto",
-    "text": "Sofre 1 a menos de dano de cada ataque."
-   },
-   "k": {
-    "selfRed": 1
-   }
-  },
-  {
-   "id": "t_lanterna",
-   "f": "TER",
-   "clan": "TER",
-   "name": "Lanterneira",
-   "role": "Suporte",
-   "atk": 2,
-   "int": 7,
-   "mov": 2,
-   "alc": 2,
-   "src": "novo",
-   "ab": {
-    "name": "Facho de Carbureto",
-    "text": "Ao entrar, ilumine 1 inimigo a até 3 casas: ataques contra ele causam +1 dano até o fim do round."
-   },
-   "k": {
-    "entry": {
-     "t": "mark",
-     "r": 3,
-     "n": 1
-    }
-   }
-  },
-  {
-   "id": "t_carrinho",
-   "f": "TER",
-   "clan": "TER",
-   "name": "Carrinho de Minério",
-   "role": "Transporte",
    "atk": 2,
    "int": 10,
    "mov": 2,
    "alc": 1,
    "src": "novo",
    "ab": {
-    "name": "Carona na Caçamba",
-    "text": "Ao entrar, traga 1 aliado a até 3 casas para uma casa livre ao lado do carrinho."
+    "name": "Trama Protetora",
+    "kind": "ativa",
+    "per": "round",
+    "text": "1 ação: cria numa casa livre adjacente uma barreira de raízes de 3 de Vida. Bloqueia movimento, mas não tiros, e não dá abrigo. Dura até o fim do próximo round."
    },
    "k": {
-    "entry": {
-     "t": "pullAlly",
-     "r": 3
-    }
+    "ult": "rootweb",
+    "ultRound": true
    }
   },
   {
-   "id": "t_britadeira",
+   "id": "t_cartografo",
    "f": "TER",
-   "clan": "TER",
-   "name": "Britadeira",
-   "role": "Lutador",
-   "atk": 5,
-   "int": 8,
-   "mov": 2,
-   "alc": 1,
+   "name": "Cartógrafo Subterrâneo",
+   "role": "Estrategista",
+   "atk": 1,
+   "int": 7,
+   "mov": 3,
+   "alc": 2,
    "src": "novo",
    "ab": {
-    "name": "Quebra-Rocha",
-    "text": "+2 ATQ contra Barreiras e contra peças com 10 ou mais de Vida inicial."
+    "name": "Rota Traçada",
+    "kind": "ativa",
+    "per": "round",
+    "text": "1 ação: um aliado a até 2 casas ganha +1 de Movimento no próximo movimento e pode subir 1 nível adicional de terreno, até o fim do próximo round."
    },
    "k": {
-    "atkBig": 2
+    "ult": "route",
+    "ultRound": true
    }
   },
   {
-   "id": "t_fundidor",
+   "id": "t_sniper",
    "f": "TER",
-   "clan": "TER",
-   "name": "Fundidora",
-   "role": "Atirador",
-   "atk": 4,
+   "name": "Sniper",
+   "role": "Atirador de elite",
+   "atk": 3,
+   "int": 7,
+   "mov": 3,
+   "alc": 6,
+   "src": "novo",
+   "ab": {
+    "name": "Descarga Persistente",
+    "kind": "passiva",
+    "text": "Seu ataque aplica uma carga elétrica ao alvo, que o acompanha. No início da próxima ativação do alvo, cada inimigo do Sniper ao lado dele sofre 1 de dano elétrico, uma única vez. Sem ativa própria."
+   },
+   "k": {
+    "after": "elec"
+   }
+  },
+  {
+   "id": "t_enfermeira",
+   "f": "TER",
+   "name": "Enfermeira dos Cristais",
+   "role": "Suporte",
+   "atk": 1,
    "int": 7,
    "mov": 2,
-   "alc": 3,
+   "alc": 2,
    "src": "novo",
    "ab": {
-    "name": "Metal Derretido",
-    "text": "Ao atacar, cause 1 dano a cada outro inimigo adjacente ao alvo."
+    "name": "Tratamento Mineral",
+    "kind": "ativa",
+    "per": "round",
+    "text": "1 ação: cura 3 de Vida de um aliado a até 2 casas (4 se houver um cristal ao lado dela ou do alvo). O cristal não é consumido."
    },
    "k": {
-    "after": "splash"
+    "ult": "nursing",
+    "ultRound": true
    }
   },
   {
-   "id": "t_sentinela",
+   "id": "t_feram",
    "f": "TER",
-   "clan": "TER",
-   "name": "Sentinela de Pedra",
-   "role": "Guardião",
+   "name": "Golem Feram",
+   "role": "Investida",
    "atk": 3,
-   "int": 9,
-   "mov": 2,
+   "int": 11,
+   "mov": 3,
    "alc": 1,
    "src": "novo",
    "ab": {
-    "name": "Guarda de Cristal",
-    "text": "1 vez por round, pode receber o ataque destinado a um aliado adjacente."
+    "name": "Investida Escavadora",
+    "kind": "ativa",
+    "per": "round",
+    "text": "1 ação: avança até 2 casas em linha reta. Ao encontrar um inimigo, para, causa 2 de dano e empurra 1 casa. Contra uma construção, causa 4 de dano."
    },
    "k": {
-    "guard": true,
-    "guardOnce": true
+    "ult": "ferram",
+    "ultRound": true
+   }
+  },
+  {
+   "id": "t_pontes",
+   "f": "TER",
+   "name": "Engenheiro de Pontes",
+   "role": "Construtor",
+   "atk": 1,
+   "int": 8,
+   "mov": 2,
+   "alc": 2,
+   "src": "novo",
+   "ab": {
+    "name": "Conexão de Terrenos",
+    "kind": "ativa",
+    "per": "round",
+    "text": "1 ação: escolhe 1 ou 2 casas baixas livres, vizinhas e a até 2 casas dele, que formem um caminho entre terrenos, e eleva cada uma em 1 nível (até a altura dos terrenos ligados). A mudança fica até o fim da partida."
+   },
+   "k": {
+    "ult": "bridge",
+    "ultRound": true
    }
   }
  ],

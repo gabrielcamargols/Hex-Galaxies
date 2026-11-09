@@ -465,11 +465,6 @@ func match_who(u, who) -> bool:
 	return c["f"] == who or c.get("clan", "") == who
 
 
-func terra_on(p: int) -> bool:
-	var c = commander(p)
-	return c != null and c.st != "dead" and c.cid == "rei_mina"
-
-
 func nm(u) -> String:
 	if u.crystal != "":
 		return "Cristal " + u.crystal
@@ -1179,7 +1174,7 @@ func _add_mine(owner: int, h: Vector2i, n: int, src: int, cap: int = 1) -> void:
 	var mine = mines.filter(func(m): return m["src"] == src)
 	while mine.size() >= cap:
 		mines.erase(mine.pop_front())
-	mines.append({"owner": owner, "h": h, "n": n + (1 if terra_on(owner) else 0), "src": src})
+	mines.append({"owner": owner, "h": h, "n": n, "src": src})
 
 
 func _set_fire(owner: int, h: Vector2i) -> void:
@@ -2907,7 +2902,7 @@ func _act_ult(u) -> bool:
 				damage(e, 3, u)
 			settle()
 		"barricade":
-			var nb = 3 + (2 if terra_on(p) else 0)
+			var nb = 3
 			abfx("barrier", h, u.uid)
 			_make_barrier(p, h, nb)
 			log_msg(p, "%s ergue uma Barricada com %d de Vida." % [nm(u), nb])
@@ -3716,7 +3711,7 @@ func entry_effect(u) -> void:
 		"barrierZone":
 			var hz = await pick_hex(p, "%s: escolha uma casa livre adjacente para a Barreira." % name, adj_free(u.pos()), "place")
 			if hz != null:
-				var nz = n + (2 if terra_on(p) else 0)
+				var nz = n
 				abfx("barrier", hz, u.uid)
 				_make_barrier(p, hz, nz)
 				add_czone_area(p, hz, 1, 2)
@@ -3758,7 +3753,7 @@ func entry_effect(u) -> void:
 		"barrier":
 			var h8 = await pick_hex(p, "%s: escolha uma casa livre adjacente para a Barreira." % name, adj_free(u.pos()), "place")
 			if h8 != null:
-				var nn = n + (2 if terra_on(p) else 0)
+				var nn = n
 				abfx("barrier", h8, u.uid)
 				_make_barrier(p, h8, nn)
 				log_msg(p, "%s: Barreira com %d de Vida." % [name, nn])

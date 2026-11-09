@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bxdvhbq2fd326"
-path="res://.godot/imported/p_t_estacas.webp-7be4c4d4dab2156b8c26b36ae38b64e5.ctex"
+uid="uid://bqd6tgp22it0y"
+path="res://.godot/imported/t_feram.webp-97b3a7284b3c491a0f7ee46054ef0098.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://art/p_t_estacas.webp"
-dest_files=["res://.godot/imported/p_t_estacas.webp-7be4c4d4dab2156b8c26b36ae38b64e5.ctex"]
+source_file="res://art/t_feram.webp"
+dest_files=["res://.godot/imported/t_feram.webp-97b3a7284b3c491a0f7ee46054ef0098.ctex"]
 
 [params]
 

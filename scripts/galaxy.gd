@@ -7,8 +7,8 @@ signal planet_hover(id: String)
 signal planet_click(id: String)
 
 const PLANETS = [
-	{"id": "valak", "map": "posto", "name": "Valak", "sub": "Mina de cristais dos Terramorfos",
-		"desc": "Caverna de cristais numa mina abandonada pelos Terramorfos. O labirinto muda a cada partida e algo vive no buraco do centro.",
+	{"id": "valak", "map": "posto", "name": "Valak", "sub": "Mina de cristais dos Valakianos",
+		"desc": "Caverna de cristais numa mina de onde os Valakianos foram expulsos. O labirinto muda a cada partida e algo vive no buraco do centro.",
 		"r": 21.0, "size": 2.3, "speed": 0.055, "a0": 0.9, "tex": "valak",
 		"atm": Color(0.45, 0.8, 1.0, 0.9), "dive": Color("#2aa6c8"), "pick": true, "moon": true,
 		"arenas": [{"name": "Mina de Cristais", "map": "posto", "desc": "Labirinto de cristais, carrinhos nos trilhos e a Garra no fosso do centro."}]},

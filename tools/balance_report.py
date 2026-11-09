@@ -6,8 +6,8 @@ como as partidas terminam, uso e efeito das ativas dos líderes, tropas que mais
 """
 import json, sys, collections, math
 
-FN = {"FAU": "Faurianos", "ABY": "Abyssais", "KRI": "Krieg", "WAC": "Wächter", "ZUK": "Zukunft", "LIT": "Lithari", "TER": "Terramorfos"}
-LEAD = {"FAU": "Karo", "ABY": "Rhazur", "KRI": "Krieg Comandante", "WAC": "Mamute", "ZUK": "Dragão", "LIT": "Lithari General", "TER": "Rei-da-Mina"}
+FN = {"FAU": "Faurianos", "ABY": "Abyssais", "KRI": "Krieg", "WAC": "Wächter", "ZUK": "Zukunft", "LIT": "Lithari", "TER": "Valakianos"}
+LEAD = {"FAU": "Karo", "ABY": "Rhazur", "KRI": "Krieg Comandante", "WAC": "Mamute", "ZUK": "Dragão", "LIT": "Lithari General", "TER": "Rei da Mina"}
 
 
 def score(rs, fac):

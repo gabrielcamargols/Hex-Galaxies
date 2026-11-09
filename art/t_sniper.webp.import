@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://d0jxkplffn288"
-path="res://.godot/imported/p_t_medico.webp-8f7c80954927c27810e1a922a301c67d.ctex"
+uid="uid://dutukaqlm8plh"
+path="res://.godot/imported/t_sniper.webp-dd92f77d1ddb299eb0b10a104d71a256.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://art/p_t_medico.webp"
-dest_files=["res://.godot/imported/p_t_medico.webp-8f7c80954927c27810e1a922a301c67d.ctex"]
+source_file="res://art/t_sniper.webp"
+dest_files=["res://.godot/imported/t_sniper.webp-dd92f77d1ddb299eb0b10a104d71a256.ctex"]
 
 [params]
 
