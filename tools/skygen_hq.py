@@ -29,10 +29,21 @@ def field(n, sx, sy, seed):
 cols = [np.array([255, 62, 165], np.float32), np.array([41, 216, 255], np.float32), np.array([150, 80, 255], np.float32)]
 fields = [field(5, (260, 520), (120, 260), 1), field(4, (220, 480), (100, 220), 2), field(6, (300, 600), (140, 300), 3)]
 # retícula a 45°
-step = 9.0
+step = 18.0
 rx = (xx + yy) * 0.7071 / step
 ry = (xx - yy) * 0.7071 / step
-dd = np.hypot(rx - np.floor(rx) - 0.5, ry - np.floor(ry) - 0.5)
+# retícula de hexágonos: distância hexagonal até o centro da célula mais próxima (duas grades deslocadas)
+px_, py_ = rx, ry * 1.0
+sx_, sy_ = 1.0, 1.7320508
+a_x = np.mod(px_, sx_) - sx_ / 2
+a_y = np.mod(py_, sy_) - sy_ / 2
+b_x = np.mod(px_ - sx_ / 2, sx_) - sx_ / 2
+b_y = np.mod(py_ - sy_ / 2, sy_) - sy_ / 2
+use_a = (a_x ** 2 + a_y ** 2) < (b_x ** 2 + b_y ** 2)
+cx_ = np.where(use_a, a_x, b_x)
+cy_ = np.where(use_a, a_y, b_y)
+qx, qy = np.abs(cx_), np.abs(cy_)
+dd = np.maximum(qx * 0.8660254 + qy * 0.5, qy)
 for c, f in zip(cols, fields):
     body = np.clip(f, 0, 1)[..., None]
     img = img * (1 - body * 0.45) + c * body * 0.45 * 0.6          # corpo leve da nebulosa
@@ -77,5 +88,5 @@ for _ in range(16):
 
 out = os.path.join(os.path.dirname(__file__), "..", "sky", "espaco.jpg")
 im.convert("RGB").save(out, quality=90)
-im.convert("RGB").resize((1024, 512)).save("/tmp/claude-0/vit/sky_pv.png")
+im.convert("RGB").resize((1024, 512)).save("/tmp/claude-0/sky_pv.png")
 print("ok")
