@@ -9,7 +9,7 @@ Cada facção tem instrumentos, ritmo e personalidade próprios:
   wac  Wächter      tribal tecnológico de caça: tambores de guerra, pedra e metal, trompa grave, 6/8
   zuk  Zukunft      tecnologia avançada: sintetizadores limpos, arpejos, glitch, batida progressiva
   lit  Lithari      invasão cristalina: percussão de vidro, quartzo, grãos, polirritmo 5 contra 4, frio
-  ter  Terramorfos  sobrevivência subterrânea: picaretas, broca, cordas graves e violoncelo humano
+  ter  Valakianos   refugiados nas minas: violoncelo humano, picaretas, cristais e o drone sub-grave do Monstro do Túnel
 
 Uso: python tools/musica_faccoes.py [pasta_sounds] [fau,aby,...]   (precisa de ffmpeg)
 Gera sounds/musica_<id>.ogg (tema em loop) e sounds/entrada_<id>.ogg (música de entrada, ~8 s)
@@ -570,40 +570,80 @@ def lithari(dst):
 # =====================================================================
 # Terramorfos: mineração, máquinas e violoncelo humano
 # =====================================================================
-def terramorfos(dst):
-    tr = Track(88, 24, seed=77)
-    prog = [(36, [55, 60, 63]), (32, [56, 60, 63]), (39, [55, 58, 63]), (34, [55, 58, 62])]   # Dó m - Lá♭ - Mi♭ - Si♭
+def valakianos(dst):
+    """Valakianos, Refugiados de Valak: Ré menor, 76 BPM, 32 compassos.
+    1-8   Refúgio: violoncelo humano, marimba, pedra batida, pad quente (a comunidade abrigada)
+    9-16  A mina trabalha: picaretas, taiko, trompa e cristais tilintando (esperança, riqueza)
+    17-24 O pacto: drone sub-grave do Monstro do Túnel, broca, coração, tritono e cristais frios (o segredo do Rei)
+    25-32 Volta ao refúgio, mas o drone continua por baixo; termina em suspensão e reentra no começo"""
+    tr = Track(76, 32, seed=2026)
+    prog = [(38, [62, 65, 69]), (34, [58, 62, 65]), (43, [55, 58, 62]), (45, [57, 61, 64])]   # Rém - Si♭ - Solm - Lá
+    sinis = [(38, [62, 65, 69]), (39, [63, 67, 70]), (38, [62, 65, 68]), (37, [61, 65, 68])]   # Ré m - Mi♭ - Ré dim - Dó♯ (tensão)
+    theme = [(62, 1.5), (65, 0.5), (69, 1.0), (67, 1.0), (65, 2.0), (64, 1.0), (62, 1.0),
+             (58, 1.5), (60, 0.5), (62, 1.0), (65, 1.0), (64, 3.0), (None, 1.0)]
+    dark = [(62, 1.5), (63, 0.5), (69, 1.0), (68, 1.0), (65, 2.0), (63, 1.0), (62, 1.0),
+            (58, 1.5), (57, 0.5), (56, 1.0), (62, 1.0), (61, 3.0), (None, 1.0)]
     for bar in range(tr.bars):
-        root, ch = prog[(bar // 2) % 4]
         sec = bar // 8
-        # picaretas (bigornas) e impactos metálicos ritmados
-        tr.anvil(tr.T(bar, 0), 0.07, 0.75, -0.5)
-        tr.anvil(tr.T(bar, 1.5), 0.05, 0.9, 0.5)
-        tr.anvil(tr.T(bar, 2.5), 0.06, 0.75, -0.3)
-        if sec >= 1:
-            tr.anvil(tr.T(bar, 3.25), 0.04, 1.1, 0.4)
-            tr.taiko(tr.T(bar, 0), 0.22, True); tr.taiko(tr.T(bar, 2), 0.18)
-        tr.kick(tr.T(bar, 0), 0.4, 38); tr.kick(tr.T(bar, 2.5), 0.3, 38)
-        if sec == 2:
-            tr.snare(tr.T(bar, 1), 0.09); tr.snare(tr.T(bar, 3), 0.09)
-        # sintetizador grave
-        tr.bass(tr.T(bar, 0), root - 12 + 12, tr.beat * 2.4, 0.24, cut=320, dist=0.2)
-        tr.bass(tr.T(bar, 2.5), root - 12 + 12, tr.beat * 1.4, 0.2, cut=320, dist=0.2)
-        if bar % 4 == 2:
-            tr.drill(tr.T(bar, 1), tr.beat * 2.5, 0.03)
+        root, ch = (sinis if sec == 2 else prog)[(bar // 2) % 4]
+        # marimba: arpejo manso do refúgio
+        pat = [ch[0], ch[2], ch[1] + 12, ch[2]]
+        if sec != 2:
+            for i in range(4):
+                tr.marimba(tr.T(bar, i), pat[i] + (0 if sec != 1 else 12), 0.05 if sec != 1 else 0.04, -0.4 if i % 2 else 0.4)
+        # pedra batida: pulso suave
+        tr.stone(tr.T(bar, 0), 0.07, -0.3)
+        if sec in (1, 3):
+            tr.stone(tr.T(bar, 2.5), 0.05, 0.3)
+        # pad quente
         if bar % 2 == 0:
-            tr.pad([n - 12 for n in ch], tr.T(bar), tr.bar * 2, 0.04, cut=800, det=0.06)   # cordas graves
-    # violoncelo: o lado humano, esperança
-    cel = [(55, 1.5), (58, 0.5), (60, 1.0), (63, 1.0), (62, 2.0), (58, 1.0), (60, 1.0),
-           (55, 1.5), (56, 0.5), (58, 1.0), (60, 1.0), (55, 4.0)]
-    for start in (4, 12, 20):
-        tr.cello(cel, tr.T(start), 0.1)
-    tr.cello([(67, 2.0), (65, 1.0), (63, 1.0), (62, 2.0), (63, 1.0), (65, 1.0), (67, 4.0), (70, 4.0)], tr.T(16), 0.06)
-    tr.riser(tr.T(7), tr.bar, 0.03); tr.riser(tr.T(15), tr.bar, 0.04)
-    return tr.render(dst, 3.0, 0.45, 1.4)
+            tr.pad([n - 12 for n in ch], tr.T(bar), tr.bar * 2, 0.045 if sec != 2 else 0.035, cut=900 if sec != 2 else 600, det=0.06 if sec != 2 else 0.14)
+        # baixo
+        if sec != 2:
+            tr.bass(tr.T(bar, 0), root, tr.beat * 3.2, 0.2, cut=330, dist=0.1)
+        if sec == 1:
+            # mina trabalhando
+            tr.anvil(tr.T(bar, 0.5), 0.05, 0.85, -0.5)
+            tr.anvil(tr.T(bar, 2), 0.04, 1.0, 0.5)
+            tr.anvil(tr.T(bar, 3.5), 0.04, 0.85, -0.2)
+            tr.taiko(tr.T(bar, 0), 0.2, True)
+            tr.taiko(tr.T(bar, 2), 0.14)
+            tr.kick(tr.T(bar, 0), 0.3, 40)
+            for i, m in enumerate([ch[2] + 24, ch[0] + 24, ch[1] + 24]):
+                tr.glass(tr.T(bar, i * 4 / 3), m, 0.035, -0.5 + 0.5 * i, 4.0)
+            if bar % 4 == 3:
+                tr.horn(ch[0] - 12, tr.T(bar, 0), tr.bar, 0.05)
+        if sec == 2:
+            # o monstro: drone sub-grave, respiração, coração, broca distante
+            tr.bass(tr.T(bar, 0), 26 if bar % 4 < 2 else 25, tr.bar * 1.05, 0.3, cut=140, dist=0.35, slide=-1 if bar % 2 else 0)
+            tr.heart(tr.T(bar, 0), 0.2)
+            tr.heart(tr.T(bar, 1.5), 0.12)
+            tr.grains(tr.T(bar, 0), tr.bar, 36 + (bar % 3), 0.025, 25)
+            if bar % 2 == 1:
+                tr.drill(tr.T(bar, 1), tr.beat * 2.5, 0.03)
+            tr.glass(tr.T(bar, 1), ch[1] + 24, 0.03, -0.7, 6.0)
+            tr.glass(tr.T(bar, 3), ch[0] + 30, 0.025, 0.7, 7.0)   # tritono frio sobre a raiz
+            if bar % 4 == 3:
+                tr.boom(tr.T(bar, 3.5), 0.08)
+        if sec == 3:
+            # o drone ainda respira por baixo
+            tr.bass(tr.T(bar, 0), 26, tr.bar * 1.0, 0.1, cut=120, dist=0.2)
+            if bar % 4 == 2:
+                tr.heart(tr.T(bar, 0), 0.1)
+    # violoncelo: o lado humano
+    tr.cello(theme, tr.T(0), 0.09)
+    tr.cello(theme, tr.T(4), 0.1)
+    tr.cello([(n + 12 if n else n, d) for n, d in theme], tr.T(12), 0.06)
+    tr.cello(dark, tr.T(16), 0.1)
+    tr.cello([(n - 12 if n else n, d) for n, d in dark], tr.T(20), 0.08)
+    tr.cello(theme, tr.T(24), 0.09)
+    tr.cello([(62, 2.0), (65, 1.0), (69, 1.0), (70, 4.0), (70, 4.0)], tr.T(28), 0.07)   # termina em Si♭ suspenso, volta ao Ré
+    tr.riser(tr.T(15), tr.bar, 0.03)
+    tr.riser(tr.T(23), tr.bar, 0.04)
+    return tr.render(dst, 3.5, 0.45, 1.4)
 
 
-TRACKS = {"fau": faurianos, "aby": abyssais, "kri": krieg, "wac": wachter, "zuk": zukunft, "lit": lithari, "ter": terramorfos}
+TRACKS = {"fau": faurianos, "aby": abyssais, "kri": krieg, "wac": wachter, "zuk": zukunft, "lit": lithari, "ter": valakianos}
 
 
 
@@ -743,20 +783,23 @@ def e_lithari(dst):
     return _entry_render(tr, dst)
 
 
-def e_terramorfos(dst):
-    tr = Track(88, 4, seed=777, tail=4)
+def e_valakianos(dst):
+    tr = Track(88, 4, seed=7777, tail=4)
     for bar in range(3):
-        tr.anvil(tr.T(bar, 0), 0.08, 0.75, -0.5); tr.anvil(tr.T(bar, 1.5), 0.06, 0.9, 0.5); tr.anvil(tr.T(bar, 2.5), 0.07, 0.75, -0.3)
-        tr.taiko(tr.T(bar, 0), 0.25, True); tr.taiko(tr.T(bar, 2), 0.2)
-        tr.bass(tr.T(bar, 0), 36, tr.beat * 2.4, 0.26, cut=320, dist=0.2)
-    tr.drill(tr.T(1, 2), tr.beat * 4, 0.05)
-    tr.cello([(55, 1.5), (58, 0.5), (60, 1.0), (63, 1.0), (62, 2.0), (63, 1.0), (65, 1.0), (67, 4.0)], tr.T(0, 0), 0.12)
-    _ending_hit(tr, 3, 36, [55, 60, 63])
-    tr.cello([(67, 3.5)], tr.T(3), 0.1)
+        tr.stone(tr.T(bar, 0), 0.09, -0.3); tr.stone(tr.T(bar, 2), 0.07, 0.3)
+        tr.anvil(tr.T(bar, 1.5), 0.05, 0.85, 0.4)
+        tr.taiko(tr.T(bar, 0), 0.22, True)
+        tr.bass(tr.T(bar, 0), 38, tr.beat * 3.4, 0.24, cut=320, dist=0.15)
+        tr.glass(tr.T(bar, 1), 74 + 3 * bar, 0.04, -0.4 + 0.4 * bar, 4.0)
+    tr.bass(tr.T(1, 0), 26, tr.bar * 2, 0.18, cut=130, dist=0.3)
+    tr.cello([(62, 1.5), (65, 0.5), (69, 1.0), (67, 1.0), (65, 2.0), (64, 1.0), (62, 1.0), (62, 4.0)], tr.T(0, 0), 0.12)
+    tr.heart(tr.T(2, 2), 0.15)
+    _ending_hit(tr, 3, 38, [62, 65, 69])
+    tr.cello([(62, 3.5)], tr.T(3), 0.1)
     return _entry_render(tr, dst)
 
 
-ENTRIES = {"fau": e_faurianos, "aby": e_abyssais, "kri": e_krieg, "wac": e_wachter, "zuk": e_zukunft, "lit": e_lithari, "ter": e_terramorfos}
+ENTRIES = {"fau": e_faurianos, "aby": e_abyssais, "kri": e_krieg, "wac": e_wachter, "zuk": e_zukunft, "lit": e_lithari, "ter": e_valakianos}
 
 
 if __name__ == "__main__":
