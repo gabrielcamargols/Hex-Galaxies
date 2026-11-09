@@ -3036,6 +3036,9 @@ func _refresh_actbar() -> void:
 			bu.tooltip_text = ("Ativa · 1 ação · recarga %d round(s)\n%s" % [Game.ABIL_RECHARGE, act_ab["text"]]) if per2 == "round" else ("Ativa · 1 vez por partida · 1 ação\n%s" % act_ab["text"])
 			if game.ult_spent(u):
 				why.append("%s: já usada neste %s." % [act_ab["name"], "round" if per2 == "round" else "jogo"])
+			elif left > 0 and (live or game.can_start(u)) and game.ult_opts(u).is_empty():
+				why.append("%s: %s" % [act_ab["name"], ULT_NEED.get(game.ult_kind(u), "nenhum alvo ou casa válida agora.")])
+				bu.tooltip_text += "\n(Indisponível agora: %s)" % ULT_NEED.get(game.ult_kind(u), "sem alvo válido.")
 		if k.has("manip"):
 			var ok_mp = game.can_manip(u) if live else game.can_start(u)
 			var bmp = _cbtn(box, "◆ Manipulação Mineral", C_ABIL, _on_manip)
@@ -3684,6 +3687,14 @@ func _on_cart() -> void:
 	await game.act_cart(u)
 	busy = false
 	await after()
+
+
+const ULT_NEED = {
+	"coat": "precisa de um aliado a até 1 casa dela.", "rupture": "precisa de uma barreira ou cristal ao lado (a ativa vale a partir da posição atual).",
+	"quake": "precisa de um inimigo ao lado.", "lumen": "precisa de um aliado ferido a até 2 casas.", "nursing": "precisa de um aliado ferido a até 2 casas.",
+	"route": "precisa de um aliado a até 2 casas.", "bridge": "precisa de uma casa baixa livre a até 2 casas.", "cartcharge": "precisa de espaço livre em linha reta.",
+	"ferram": "precisa de espaço livre em linha reta.", "bwall": "precisa de uma casa livre adjacente.", "rootweb": "precisa de uma casa livre adjacente.",
+	"burrow": "precisa de uma casa livre a até 2 casas.", "valbarrier": "precisa de 5 casas livres em linha reta a até 6 casas.", "timedcharge": "precisa de uma casa livre a até 2 casas."}
 
 
 func _on_manip() -> void:
