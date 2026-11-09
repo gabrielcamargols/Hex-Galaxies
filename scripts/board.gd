@@ -74,6 +74,7 @@ var sun_light: DirectionalLight3D
 var drag: Variant = null                  # {uid, start, on}
 var pan: Variant = null
 # toque: dedos ativos e gesto de dois dedos (pinça/giro/inclinação)
+var touch_t: Dictionary = {}
 var touches: Dictionary = {}
 var multi: bool = false
 var gest: Variant = null
@@ -2455,10 +2456,20 @@ func _touch_event(event: InputEvent) -> bool:
 	# true = evento consumido pelo controle de toque
 	if event is InputEventScreenTouch:
 		var st = event as InputEventScreenTouch
+		var now_ms = Time.get_ticks_msec()
 		if st.pressed:
+			# dedos "fantasma" (toque perdido fora da janela, p. ex.) travavam todos os cliques depois do zoom
+			for ti in touches.keys():
+				if ti != st.index and now_ms - int(touch_t.get(ti, 0)) > 1200:
+					touches.erase(ti)
+					touch_t.erase(ti)
 			touches[st.index] = st.position
+			touch_t[st.index] = now_ms
+			if touches.size() < 2:
+				multi = false
 		else:
 			touches.erase(st.index)
+			touch_t.erase(st.index)
 		if touches.size() >= 2:
 			if drag != null and drag["on"]:
 				return true
@@ -2476,6 +2487,7 @@ func _touch_event(event: InputEvent) -> bool:
 	if event is InputEventScreenDrag:
 		var sd = event as InputEventScreenDrag
 		touches[sd.index] = sd.position
+		touch_t[sd.index] = Time.get_ticks_msec()
 		if multi and touches.size() >= 2:
 			var now = _gest_state()
 			if gest != null:
@@ -2560,7 +2572,7 @@ func _unhandled_input(event: InputEvent) -> void:
 							_apply_overlay(hv)
 					return
 			if pan != null:
-				if mm.position.distance_to(pan["start"]) > 6.0:
+				if mm.position.distance_to(pan["start"]) > 12.0:
 					pan["moved"] = true
 				if pan["moved"]:
 					cam_goal = null
