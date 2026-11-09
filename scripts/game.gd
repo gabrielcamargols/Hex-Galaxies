@@ -2780,7 +2780,8 @@ func bridge_cell_ok(h: Vector2i) -> bool:
 	for n in DB.nbrs(h):
 		if not is_pit(n):
 			tallest = max(tallest, h_of(n))
-	return h_of(h) < tallest and h_of(h) < 3
+	# em terreno plano (sem nada mais alto por perto) ainda dá para erguer a casa até o nível 1
+	return h_of(h) < max(tallest, 1) and h_of(h) < 3
 
 
 func bridge_opts(u) -> Array:
@@ -3338,7 +3339,7 @@ func _act_ult(u) -> bool:
 		"cartcharge": "escolha até onde avançar em linha reta (até 2) ou o alvo do impacto", "ferram": "escolha até onde avançar em linha reta (até 2) ou o alvo da investida",
 		"coat": "escolha o aliado adjacente a revestir", "rupture": "escolha a barreira adjacente a romper", "timedcharge": "escolha a casa da carga (até 2)",
 		"lumen": "escolha o aliado a curar (até 2 casas)", "nursing": "escolha o aliado a tratar (até 2 casas)", "route": "escolha o aliado que ganha a rota (até 2 casas)",
-		"bridge": "escolha a casa baixa a elevar (até 2 casas dele)",
+		"bridge": "escolha a 1ª casa baixa a elevar (até 2 casas dele; até 3 casas ligadas)",
 		"valbarrier": "escolha uma ponta da linha de 5 cristais (até 6 casas)"}
 	var h: Variant = null
 	if SELF_ULTS.has(kind):
@@ -3505,11 +3506,14 @@ func _act_ult(u) -> bool:
 			log_msg(p, "%s ergue a Barreira de Valak: 5 cristais especiais em linha." % nm(u))
 		"bridge":
 			var br_cells = [h]
-			var br_more = bridge_opts(u).filter(func(x): return x != h and DB.dist(x, h) == 1)
-			if not br_more.is_empty():
-				var br_h2 = await pick_hex(p, "%s: elevar também uma casa vizinha (ou Pular)." % uname, br_more, "ult", true)
-				if br_h2 != null:
-					br_cells.append(br_h2)
+			for br_i in range(2):
+				var br_more = bridge_opts(u).filter(func(x): return not br_cells.has(x) and br_cells.any(func(c): return DB.dist(x, c) == 1))
+				if br_more.is_empty():
+					break
+				var br_h2 = await pick_hex(p, "%s: elevar também uma casa vizinha (%d de 3) ou Pular." % [uname, br_cells.size() + 1], br_more, "ult", true)
+				if br_h2 == null:
+					break
+				br_cells.append(br_h2)
 			for bc in br_cells:
 				earth[bc] = int(earth.get(bc, 0)) + 1
 				abfx("earth", bc, u.uid)

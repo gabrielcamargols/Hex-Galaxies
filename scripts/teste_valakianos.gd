@@ -430,7 +430,8 @@ func _engenheiro() -> void:
 	g.terr_map[H(6, 0)] = {"k": "colina", "h": 1}
 	g.terr_map[H(5, 1)] = {"k": "colina", "h": 1}
 	ok(g.bridge_cell_ok(H(5, 0)), "casa baixa ao lado de terreno mais alto é elegível")
-	ok(not g.bridge_cell_ok(H(2, 3)), "casa sem terreno mais alto por perto não é elegível")
+	g.terr_map[H(2, 3)] = {"k": "colina", "h": 1}
+	ok(not g.bridge_cell_ok(H(2, 3)), "casa de nível 1 sem terreno mais alto por perto não é elegível")
 	var opts = g.bridge_opts(e)
 	ok(opts.has(H(5, 0)), "Engenheiro enxerga a casa a elevar")
 	var r = await ativa(g, e, [H(5, 0), null])
@@ -615,3 +616,11 @@ func _rei_manip() -> void:
 	ok(st5.st == "dead", "estrutura destruída")
 	ok(e5.hp <= hp_e - 2, "inimigo atingido (%d -> %d)" % [hp_e, e5.hp])
 	ok(a5.hp == hp_a - 2, "efeito do cristal também no entorno do impacto (verde: -2 em inimigo ao lado)")
+
+	# mapa plano (Valak): a habilidade precisa funcionar, e liga até 3 casas
+	var gp = novo()
+	var ep = put(gp, "t_pontes", 0, 5, 0)
+	ok(gp.bridge_opts(ep).size() > 0, "no mapa plano há casas para elevar")
+	var rp = await ativa(gp, ep, [H(4, 0), H(4, 1), H(3, 1)])
+	ok(rp and gp.h_of(H(4, 0)) == 1 and gp.h_of(H(4, 1)) == 1 and gp.h_of(H(3, 1)) == 1, "eleva 3 casas ligadas em 1 nível")
+	ok(not gp.bridge_cell_ok(H(4, 0)), "no plano, a casa não passa do nível 1")

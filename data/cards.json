@@ -2717,7 +2717,7 @@
     "name": "Conexão de Terrenos",
     "kind": "ativa",
     "per": "round",
-    "text": "1 ação: escolhe 1 ou 2 casas baixas livres, vizinhas e a até 2 casas dele, que formem um caminho entre terrenos, e eleva cada uma em 1 nível (até a altura dos terrenos ligados). A mudança fica até o fim da partida."
+    "text": "1 ação: escolhe de 1 a 3 casas baixas livres, vizinhas entre si e a até 2 casas dele, e eleva cada uma em 1 nível (até a altura dos terrenos ligados; em terreno plano, até o nível 1). A mudança fica até o fim da partida."
    },
    "k": {
     "ult": "bridge",
