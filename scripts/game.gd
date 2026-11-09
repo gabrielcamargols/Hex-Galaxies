@@ -16,6 +16,9 @@ const CMD_ROUND = 4          # round em que os comandantes entram
 const CORE_ROUNDS = [2, 4, 6, 8]   # rounds em que o núcleo surge (fica 2 rounds)
 const NONE = -1
 const DRAW = 2
+# Recarga das habilidades ativas comuns (em rounds). 1 = a ativa usada no round 3 volta no round 4.
+# É um valor provisório de teste dos Valakianos, não uma decisão final: mude aqui para ajustar.
+const ABIL_RECHARGE = 1
 
 
 class Unit:
@@ -51,6 +54,10 @@ class Unit:
 	var venoms: int = 0               # Bayak: marcas de veneno já aplicadas na partida
 	var dose_used: bool = false       # Médico Krieg: Última Dose já usada
 	var crystal: String = ""          # Valak: cristal (verde, azul, roxo) - barreira neutra de 1 de Vida
+	var exp: int = 0                  # barreira temporária: some ao fim deste round (0 = permanente)
+	var soft: bool = false            # barreira de raízes: bloqueia movimento, mas não tiros e não dá abrigo
+	var sp_owner: int = -1            # cristal especial do Rei da Mina: time dele (-1 = cristal natural)
+	var block: bool = false           # bloco móvel nascido de um terreno rebaixado pelo Rei
 
 	func pos() -> Vector2i:
 		return Vector2i(q, r)
@@ -255,7 +262,7 @@ func stand_h(h: Vector2i) -> int:
 	return h_of(h)
 
 
-func can_step(a: Vector2i, b: Vector2i, climber: bool = false) -> bool:
+func can_step(a: Vector2i, b: Vector2i, climber: bool = false, extra: int = 0) -> bool:
 	var ta = terr(a)
 	var tb = terr(b)
 	if climber:
@@ -263,8 +270,10 @@ func can_step(a: Vector2i, b: Vector2i, climber: bool = false) -> bool:
 	if not tt_of(tb["k"]).get("pass", 0):
 		return false
 	var dh = int(tb["h"]) - int(ta["h"])
-	if abs(dh) >= 2:
+	if dh <= -2 or dh >= 2 + extra:
 		return false
+	if extra > 0 and dh >= 1:
+		return true   # Rota Traçada: sobe 1 nível a mais
 	if dh == 1 and not (tt_of(tb["k"]).get("climb", 0) or ta["k"] == "rampa"):
 		return false
 	return true
@@ -309,8 +318,16 @@ func barrier_at(h: Vector2i) -> bool:
 	return false
 
 
+# barreira que bloqueia tiros e dá abrigo (a de raízes só bloqueia o movimento)
+func solid_barrier_at(h: Vector2i) -> bool:
+	for u in units:
+		if u.barrier and not u.soft and u.st == "field" and u.q == h.x and u.r == h.y:
+			return true
+	return false
+
+
 func top_of(h: Vector2i) -> int:
-	return h_of(h) + max(int(tt_of(terr(h)["k"]).get("top", 0)), 2 if barrier_at(h) else 0)
+	return h_of(h) + max(int(tt_of(terr(h)["k"]).get("top", 0)), 2 if solid_barrier_at(h) else 0)
 
 
 func is_free(h: Vector2i) -> bool:
@@ -675,6 +692,8 @@ func atk_of(a, t) -> int:
 			v += int(k["atkIsolated"])
 		if k.has("atkBig") and (t.barrier or int(DB.cards[t.cid]["int"]) >= 10):
 			v += int(k["atkBig"])
+		if k.has("atkBarrier") and t.barrier:
+			v += int(k["atkBarrier"])
 		if not t.barrier and K(t).has("air") and alc_of(a) >= 3:
 			v += int(K(t)["air"])
 	if k.has("atkAllyAdj"):
@@ -716,6 +735,10 @@ func reduction_of(t, peek: bool = false, d: int = 1) -> int:
 	if t.eq == "placas":
 		red += 1
 	red += fx_sum(t, "red")
+	if has_fx(t, "coat"):
+		red += fx_sum(t, "coat")
+		if not peek:
+			t.fx = t.fx.filter(func(f): return f["k"] != "coat")
 	if k.has("selfRed"):
 		red += int(k["selfRed"])
 	if k.has("selfRedHome") and home_half(t.owner, t.pos()):
@@ -813,7 +836,7 @@ func terrain_mods(a, t, fpos = null) -> Dictionary:
 		for c in DB.nbrs(t.pos()):
 			if no_cover:
 				break
-			var is_cov = tt_of(terr(c)["k"]).get("cover", 0) or barrier_at(c)
+			var is_cov = tt_of(terr(c)["k"]).get("cover", 0) or solid_barrier_at(c)
 			if not is_cov:
 				continue
 			var top = top_of(c)
@@ -888,6 +911,7 @@ func can_enter(u, h: Vector2i) -> bool:
 func move_opts(u, mov: int) -> Array:
 	var start = u.pos()
 	var cl = K(u).has("climbAll")
+	var ex = 1 if has_fx(u, "climb1") else 0
 	var best = {start: 0}
 	var queue = [{"h": start, "c": 0}]
 	while not queue.is_empty():
@@ -896,7 +920,7 @@ func move_opts(u, mov: int) -> Array:
 		if n["c"] > 0 and tt_of(terr(n["h"])["k"]).get("sink", 0):
 			continue
 		for m in DB.nbrs(n["h"]):
-			if not can_enter(u, m) or not can_step(n["h"], m, cl):
+			if not can_enter(u, m) or not can_step(n["h"], m, cl, ex):
 				continue
 			var c = n["c"] + step_cost(n["h"], m, cl)
 			if c > mov:
@@ -1092,6 +1116,7 @@ func settle() -> void:
 			continue
 		t.st = "dead"
 		t.eq = ""
+		_drop_src_fx(t.uid)
 		if not t.barrier:
 			fallen.append(t.uid)
 		if t.crystal != "":
@@ -1208,7 +1233,7 @@ func _shell_tick() -> void:
 			var a = unit_at(n)
 			if a != null:
 				damage(a, 1, src)
-		log_msg(sh["owner"], "A artilharia atinge a casa marcada.")
+		log_msg(sh["owner"], "A carga explode na casa marcada." if sh.get("kind", "") == "charge" else "A artilharia atinge a casa marcada.")
 		await pace()
 	settle()
 
@@ -1936,6 +1961,11 @@ func end_round() -> void:
 			if t != null:
 				heal(t, int(K(k)["endHeal"]))
 				log_msg(p, "%s restaura 1 de Vida de %s." % [nm(k), nm(t)])
+	for bx in units:
+		if bx.barrier and bx.st == "field" and bx.exp > 0 and bx.exp <= round_no:
+			bx.st = "dead"
+			emitfx({"t": "die", "uid": bx.uid, "h": bx.pos()})
+			log_msg(-1, "%s se desfaz." % ("A barreira de raízes" if bx.soft else "A barreira"))
 	for u in units:
 		u.fx = u.fx.filter(func(f): return f.get("until", "") != "end" and int(f.get("till", 999)) > round_no and not ((f["k"] == "root" or f["k"] == "prison") and int(f["end"]) <= round_no))
 	czones = czones.filter(func(z): return int(z["until"]) > round_no)
@@ -2390,6 +2420,7 @@ func start_activation(u) -> void:
 	_send_cmd(["start", u.uid])
 	act = _new_act(u, 2, false)
 	log_msg(u.owner, "Ativa %s." % nm(u))
+	_act_begin(u)
 
 
 func deploy(u, h: Vector2i, via_obj: bool = false) -> void:
@@ -2417,6 +2448,7 @@ func _deploy(u, h: Vector2i, via_obj: bool = false) -> void:
 			log_msg(p, "Engenho Improvisado: a peça entra com as 2 ações, mas não pode atacar.")
 		act = _new_act(u, actions, cant)
 		log_msg(p, "Implanta %s." % nm(u))
+		_act_begin(u)
 		if not cant and pl["hand"].has("reforco"):
 			var yes = await ask(p, {"t": "yesno", "text": "Usar Reforço Acelerado? A peça entra com as 2 ações, mas não pode atacar neste turno.", "kind": "reforco"})
 			if yes:
@@ -2610,7 +2642,7 @@ func ult_kind(u) -> String:
 # ativa já gasta: "1 vez por partida" (comandantes) ou "1 vez por round" (ultRound)
 func ult_spent(u) -> bool:
 	if K(u).has("ultRound"):
-		return u.ult_round == round_no
+		return u.ult_round >= 0 and round_no < u.ult_round + ABIL_RECHARGE
 	return u.ult_used
 
 
@@ -2645,9 +2677,136 @@ func stampede_path(u, end: Vector2i) -> Array:
 	return []
 
 
+# ================= Valakianos: ajudantes =================
+# ativas sem alvo: não pedem escolha, valem para a própria peça
+const SELF_ULTS = ["quake", "guardfirm"]
+
+
+# casa onde alguém pode emergir, ser empurrado ou ser posto: livre, pisável, fora de buracos
+func valid_ground(h: Vector2i) -> bool:
+	return is_free(h) and not is_pit(h) and not hole.has(h) and int(tt_of(terr(h)["k"]).get("pass", 0)) == 1
+
+
+# destino do empurrão de 1 casa na direção dir (o empurrão exige casa livre e válida)
+func push_dir_dest(t, dir: Vector2i) -> Variant:
+	var d = t.pos() + dir
+	if not DB.in_board(d) or not valid_ground(d) or not can_step(t.pos(), d):
+		return null
+	return d
+
+
+# efeitos "até o início da próxima ativação" da peça uid terminam quando ela sai do jogo
+func _drop_src_fx(uid: int) -> void:
+	for x in units:
+		if x.fx.is_empty():
+			continue
+		x.fx = x.fx.filter(func(f): return not (f.get("until", "") == "act" and int(f.get("src", -1)) == uid))
+
+
+# início da ativação de u: acabam os efeitos dela e a carga elétrica do Sniper descarrega
+func _act_begin(u) -> void:
+	_drop_src_fx(u.uid)
+	if not has_fx(u, "elec") or u.barrier:
+		return
+	var ef = u.fx.filter(func(f): return f["k"] == "elec")[0]
+	u.fx = u.fx.filter(func(f): return f["k"] != "elec")
+	var sp = int(ef.get("sp", -1))
+	var src = by_uid(int(ef.get("src", -1)))
+	var hits = field().filter(func(x): return not x.barrier and x.owner != sp and x != u and DB.dist(x.pos(), u.pos()) == 1)
+	abfx("bolt", u.pos(), int(ef.get("src", -1)))
+	if hits.is_empty():
+		return
+	log_msg(sp, "Descarga elétrica de %s: 1 de dano em %d inimigo(s) do Sniper ao lado." % [nm(u), hits.size()])
+	for x in hits:
+		abfx("bolt", x.pos(), int(ef.get("src", -1)))
+		damage(x, 1, src)
+	settle()
+
+
+func near_crystal(h: Vector2i) -> bool:
+	for x in field():
+		if x.crystal != "" and DB.dist(x.pos(), h) == 1:
+			return true
+	return false
+
+
+# investida em linha reta (Carrinho de Minério, Golem Feram): casas livres até 2 e a unidade encontrada
+func charge_line(u, d: Vector2i, feram: bool) -> Dictionary:
+	var steps = []
+	var cur = u.pos()
+	var hit = null
+	for k in range(2):
+		var c = cur + d
+		if not DB.in_board(c) or blocks.has(c) or cart_at(c) or is_pit(c) or hole.has(c) or not can_step(cur, c):
+			break
+		var t = unit_at(c)
+		if t != null:
+			if t.owner != u.owner and (feram or not t.barrier):
+				hit = t
+			break
+		steps.append(c)
+		cur = c
+	return {"steps": steps, "hit": hit}
+
+
+func charge_opts(u, feram: bool) -> Array:
+	var out = []
+	for d in _dirs():
+		var L = charge_line(u, d, feram)
+		if L["hit"] == null and L["steps"].is_empty():
+			continue
+		for st in L["steps"]:
+			out.append(st)
+		if L["hit"] != null:
+			out.append(L["hit"].pos())
+	return out
+
+
+# casa baixa que o Engenheiro pode elevar em 1 nível (sem passar da altura dos terrenos ao redor)
+func bridge_cell_ok(h: Vector2i) -> bool:
+	if not valid_ground(h) or DB.in_entry(0, h) or DB.in_entry(1, h) or (core != null and core == h) or dyn.has(h):
+		return false
+	var tallest = -99
+	for n in DB.nbrs(h):
+		if not is_pit(n):
+			tallest = max(tallest, h_of(n))
+	return h_of(h) < tallest and h_of(h) < 3
+
+
+func bridge_opts(u) -> Array:
+	return DB.hexes.filter(func(h): return DB.dist(h, u.pos()) >= 1 and DB.dist(h, u.pos()) <= 2 and bridge_cell_ok(h))
+
+
 func ult_opts(u) -> Array:
 	var p = u.pos()
 	match ult_kind(u):
+		# ---- Valakianos ----
+		"burrow":
+			return DB.hexes.filter(func(h): return DB.dist(h, p) >= 1 and DB.dist(h, p) <= 2 and valid_ground(h))
+		"bwall", "rootweb":
+			return DB.nbrs(p).filter(func(h): return valid_ground(h))
+		"cartcharge":
+			return charge_opts(u, false)
+		"ferram":
+			return charge_opts(u, true)
+		"coat":
+			return allies_of(u).filter(func(x): return DB.dist(x.pos(), p) == 1).map(func(x): return x.pos())
+		"rupture":
+			return field().filter(func(x): return x.barrier and DB.dist(x.pos(), p) == 1).map(func(x): return x.pos())
+		"quake":
+			if enemies_of(u).any(func(x): return DB.dist(x.pos(), p) == 1):
+				return [p]
+			return []
+		"guardfirm":
+			return [p]
+		"timedcharge":
+			return DB.hexes.filter(func(h): return DB.dist(h, p) >= 1 and DB.dist(h, p) <= 2 and is_free(h) and not shells.any(func(sh): return sh["h"] == h))
+		"lumen", "nursing":
+			return allies_of(u).filter(func(x): return DB.dist(x.pos(), p) <= 2 and x.hp < x.maxhp).map(func(x): return x.pos())
+		"route":
+			return allies_of(u).filter(func(x): return DB.dist(x.pos(), p) <= 2).map(func(x): return x.pos())
+		"bridge":
+			return bridge_opts(u)
 		"abyss":
 			if adj_free(p).is_empty():
 				return []
@@ -2697,6 +2856,72 @@ func ult_opts(u) -> Array:
 func ult_score(u, h: Vector2i) -> float:
 	var t = unit_at(h)
 	match ult_kind(u):
+		"burrow":
+			var sb1 = 0.0
+			for e1 in enemies_of(u):
+				if not e1.barrier and DB.dist(e1.pos(), h) == 1:
+					sb1 = max(sb1, 2.0 + (3.0 if e1.hp <= 2 else 0.0) + (3.0 if e1.is_cmd else 0.0))
+			return sb1
+		"bwall", "rootweb":
+			var sw = 0.0
+			for e2 in enemies_of(u):
+				if DB.dist(e2.pos(), h) <= 3:
+					sw += 0.7
+			for a2 in allies_of(u):
+				if DB.dist(a2.pos(), h) == 1:
+					sw += 0.5
+			return sw
+		"cartcharge", "ferram":
+			if t == null:
+				return 0.0
+			return 3.0 + (3.0 if t.hp <= 2 else 0.0) + (2.0 if t.is_cmd else 0.0) - (1.5 if t.barrier else 0.0)
+		"coat":
+			if t == null:
+				return 0.0
+			var sc2 = 0.0
+			for e3 in enemies_of(u):
+				if DB.dist(e3.pos(), t.pos()) <= 3:
+					sc2 += 0.7
+			return sc2 + (1.0 if t.hp <= 6 else 0.0)
+		"rupture":
+			if t == null or t.owner == u.owner:
+				return -5.0
+			var behind = unit_at(h + (h - u.pos()))
+			return 2.0 + (3.0 if behind != null and behind.owner != u.owner and not behind.barrier else 0.0)
+		"quake":
+			var sq = 0.0
+			for e4 in enemies_of(u):
+				if DB.dist(e4.pos(), u.pos()) == 1:
+					sq += 1.0 if e4.barrier else 2.0 + (3.0 if e4.hp <= 1 else 0.0) + (3.0 if e4.is_cmd else 0.0)
+			return sq
+		"timedcharge":
+			var st2 = 0.0
+			if t != null:
+				st2 += 3.0 if t.owner != u.owner else -4.0
+			for n3 in DB.nbrs(h):
+				var o3 = unit_at(n3)
+				if o3 != null:
+					st2 += 1.0 if o3.owner != u.owner else -2.0
+			# o inimigo ainda pode se mexer: vale mais cercar quem está perto
+			for e5 in enemies_of(u):
+				if DB.dist(e5.pos(), h) <= 2:
+					st2 += 0.4
+			return st2
+		"guardfirm":
+			var sg2 = 0.0
+			var near_e = enemies_of(u).filter(func(x): return DB.dist(x.pos(), u.pos()) <= 3).size()
+			if near_e > 0:
+				sg2 = 0.6 * float(1 + allies_of(u).filter(func(x): return DB.dist(x.pos(), u.pos()) == 1).size())
+			return sg2
+		"lumen", "nursing":
+			if t == null:
+				return 0.0
+			var amt = (3 if near_crystal(h) else 2) if ult_kind(u) == "lumen" else (4 if (near_crystal(h) or near_crystal(u.pos())) else 3)
+			return float(min(t.maxhp - t.hp, amt)) + (2.0 if t.is_cmd else 0.0)
+		"route":
+			if t == null:
+				return 0.0
+			return 1.0 if enemies_of(u).any(func(x): return DB.dist(x.pos(), t.pos()) <= 6) else 0.0
 		"abyss", "prison":
 			if t == null:
 				return 0.0
@@ -2798,10 +3023,19 @@ func _act_ult(u) -> bool:
 		return false
 	var p = u.owner
 	var kind = ult_kind(u)
-	var ab2 = DB.cards[u.cid].get("ab2", {})
+	var ab2 = DB.active_of(u.cid)
 	var uname = ab2.get("name", "Ativa")
-	var texts = {"mend": "escolha o Abyssal a restaurar (até 3 casas)", "plate": "escolha o aliado adjacente a reforçar", "detonate": "escolha a mina a detonar", "barricade": "escolha a casa adjacente da Barricada", "grenade": "escolha o alvo da granada (até 3, passa por cima de obstáculos)", "artillery": "escolha a casa que a artilharia vai atingir no início do próximo round (até 5)", "abyss": "escolha o inimigo a puxar (até 8 casas)", "bombard": "escolha a casa do bombardeio (até 6)", "prison": "escolha o inimigo a prender (até 4)", "earth": "escolha a 1ª casa a mudar de altura (até 4)", "stampede": "escolha até onde avançar em linha reta", "orbital": "escolha onde pousar (até 5)"}
-	var h = await pick_hex(p, "%s: %s." % [uname, texts.get(kind, "escolha")], ult_opts(u), "ult", true)
+	var texts = {"mend": "escolha o Abyssal a restaurar (até 3 casas)", "plate": "escolha o aliado adjacente a reforçar", "detonate": "escolha a mina a detonar", "barricade": "escolha a casa adjacente da Barricada", "grenade": "escolha o alvo da granada (até 3, passa por cima de obstáculos)", "artillery": "escolha a casa que a artilharia vai atingir no início do próximo round (até 5)", "abyss": "escolha o inimigo a puxar (até 8 casas)", "bombard": "escolha a casa do bombardeio (até 6)", "prison": "escolha o inimigo a prender (até 4)", "earth": "escolha a 1ª casa a mudar de altura (até 4)", "stampede": "escolha até onde avançar em linha reta", "orbital": "escolha onde pousar (até 5)",
+		"burrow": "escolha onde emergir (até 2 casas)", "bwall": "escolha a casa adjacente da muralha", "rootweb": "escolha a casa adjacente das raízes",
+		"cartcharge": "escolha até onde avançar em linha reta (até 2) ou o alvo do impacto", "ferram": "escolha até onde avançar em linha reta (até 2) ou o alvo da investida",
+		"coat": "escolha o aliado adjacente a revestir", "rupture": "escolha a barreira adjacente a romper", "timedcharge": "escolha a casa da carga (até 2)",
+		"lumen": "escolha o aliado a curar (até 2 casas)", "nursing": "escolha o aliado a tratar (até 2 casas)", "route": "escolha o aliado que ganha a rota (até 2 casas)",
+		"bridge": "escolha a casa baixa a elevar (até 2 casas dele)"}
+	var h: Variant = null
+	if SELF_ULTS.has(kind):
+		h = u.pos()
+	else:
+		h = await pick_hex(p, "%s: %s." % [uname, texts.get(kind, "escolha")], ult_opts(u), "ult", true)
 	if h == null:
 		return false
 	act["actions"] -= 1
@@ -2815,6 +3049,140 @@ func _act_ult(u) -> bool:
 	emitfx({"t": "passive", "kind": "ability", "uid": u.uid})
 	await pace()
 	match kind:
+		# ---- Valakianos ----
+		"burrow":
+			abfx("burrow", u.pos(), u.uid)
+			await move_unit(u, h, true)
+			abfx("burrow", h, u.uid)
+			if u.st == "field":
+				var vb_t = enemies_of(u).filter(func(x): return not x.barrier and DB.dist(x.pos(), u.pos()) == 1)
+				if not vb_t.is_empty():
+					var vb_h = await pick_hex(p, "%s: 2 de dano em um inimigo ao lado da saída (ou Pular)." % uname, vb_t, "enemy", true)
+					if vb_h != null:
+						var vb_e = unit_at(vb_h)
+						emitfx({"t": "strike", "from": u.uid, "to": vb_e.uid, "ranged": false})
+						damage(vb_e, 2, u)
+						log_msg(p, "%s emerge e causa 2 de dano em %s." % [nm(u), nm(vb_e)])
+						settle()
+		"bwall", "rootweb":
+			var bw_soft = kind == "rootweb"
+			var bw_n = 3 if bw_soft else 4
+			abfx("barrier", h, u.uid)
+			_make_barrier(p, h, bw_n, round_no + 1, bw_soft)
+			log_msg(p, "%s cria %s com %d de Vida (some ao fim do próximo round)." % [nm(u), "uma trama de raízes" if bw_soft else "uma muralha de basalto", bw_n])
+		"cartcharge", "ferram":
+			var ch_f = kind == "ferram"
+			var ch_from = u.pos()
+			var ch_dir = Vector2i.ZERO
+			var ch_L = {"steps": [], "hit": null}
+			for d in _dirs():
+				var Lx = charge_line(u, d, ch_f)
+				if Lx["steps"].has(h) or (Lx["hit"] != null and Lx["hit"].pos() == h):
+					ch_dir = d
+					ch_L = Lx
+					break
+			var ch_moved = false
+			for c in ch_L["steps"]:
+				abfx("stomp", c, u.uid)
+				await move_unit(u, c, true)
+				ch_moved = true
+				if u.st != "field" or winner != NONE or c == h:
+					break
+			if u.st == "field" and ch_L["hit"] != null and ch_L["hit"].pos() == h:
+				var ch_t = ch_L["hit"]
+				var ch_dmg = 4 if (ch_f and ch_t.barrier) else 2
+				emitfx({"t": "strike", "from": u.uid, "to": ch_t.uid, "ranged": false})
+				damage(ch_t, ch_dmg, u, true)
+				log_msg(p, "%s: %s sofre %d." % [uname, nm(ch_t), ch_dmg])
+				settle()
+				if ch_t.st == "field" and not ch_t.barrier and winner == NONE:
+					var ch_to = push_dir_dest(ch_t, ch_dir)
+					if ch_to != null:
+						abfx("push", ch_t.pos(), u.uid)
+						await move_unit(ch_t, ch_to)
+			# o deslocamento do Carrinho perto do buraco vale +3 de vibração (no lugar do +1 de andar)
+			if not ch_f and ch_moved and winner == NONE and (in_zone(ch_from) or (u.st == "field" and in_zone(u.pos()))):
+				await vibrate(3, "%s avançou perto do buraco" % nm(u))
+		"coat":
+			var ct_t = unit_at(h)
+			ct_t.fx = ct_t.fx.filter(func(f): return not (f["k"] == "coat" and int(f.get("src", -1)) == u.uid))
+			ct_t.fx.append({"k": "coat", "v": 2, "src": u.uid, "until": "act"})
+			abfx("barrier", h, u.uid)
+			emitfx({"t": "passive", "kind": "shield", "uid": ct_t.uid})
+			log_msg(p, "%s reveste %s: -2 no próximo dano sofrido." % [nm(u), nm(ct_t)])
+		"rupture":
+			var rp_b = unit_at(h)
+			var rp_dir = h - u.pos()
+			abfx("blast", h, u.uid)
+			emitfx({"t": "strike", "from": u.uid, "to": rp_b.uid, "ranged": false})
+			damage(rp_b, 4, u, true)
+			settle()
+			if rp_b.st == "dead":
+				var rp_e = unit_at(h + rp_dir)
+				if rp_e != null and rp_e.owner != p and not rp_e.barrier:
+					var rp_to = push_dir_dest(rp_e, rp_dir)
+					if rp_to != null:
+						abfx("push", rp_e.pos(), u.uid)
+						log_msg(p, "A barreira rompe e empurra %s." % nm(rp_e))
+						await move_unit(rp_e, rp_to)
+		"quake":
+			abfx("quake", u.pos(), u.uid)
+			var qk_en = enemies_of(u).filter(func(x): return DB.dist(x.pos(), u.pos()) == 1)
+			for qx in qk_en:
+				damage(qx, 2 if qx.barrier else 1, u)
+			settle()
+			for qx2 in qk_en:
+				if qx2.st == "field" and not qx2.barrier and winner == NONE:
+					var qk_to = push_dir_dest(qx2, qx2.pos() - u.pos())
+					if qk_to != null:
+						abfx("push", qx2.pos(), u.uid)
+						await move_unit(qx2, qk_to)
+		"timedcharge":
+			shells.append({"h": h, "owner": p, "round": round_no, "src": u.uid, "kind": "charge"})
+			abfx("mark", h, u.uid)
+			log_msg(p, "%s planta uma carga: explode no início do próximo round." % nm(u))
+		"guardfirm":
+			var gf_group = [u]
+			for gx in allies_of(u):
+				if DB.dist(gx.pos(), u.pos()) == 1:
+					gf_group.append(gx)
+			for gx2 in gf_group:
+				gx2.fx = gx2.fx.filter(func(f): return not (f["k"] == "red" and f.get("until", "") == "act" and int(f.get("src", -1)) == u.uid))
+				gx2.fx.append({"k": "red", "v": 1, "until": "act", "src": u.uid})
+				emitfx({"t": "passive", "kind": "shield", "uid": gx2.uid})
+			abfx("barrier", u.pos(), u.uid)
+			log_msg(p, "%s firma a guarda: -1 de dano para %d peça(s) até a próxima ativação." % [nm(u), gf_group.size()])
+		"lumen", "nursing":
+			var lm_t = unit_at(h)
+			var lm_n = 0
+			if kind == "lumen":
+				lm_n = 3 if near_crystal(h) else 2
+			else:
+				lm_n = 4 if (near_crystal(h) or near_crystal(u.pos())) else 3
+			abfx("heal", h, u.uid)
+			var lm_got = heal(lm_t, lm_n)
+			log_msg(p, "%s cura %d de Vida de %s." % [nm(u), lm_got, nm(lm_t)])
+		"route":
+			var rt_t = unit_at(h)
+			rt_t.fx = rt_t.fx.filter(func(f): return not (int(f.get("src", -1)) == u.uid and (f["k"] == "mov" or f["k"] == "climb1")))
+			rt_t.fx.append({"k": "mov", "v": 1, "once": true, "till": round_no + 1, "src": u.uid})
+			rt_t.fx.append({"k": "climb1", "till": round_no + 1, "src": u.uid})
+			abfx("buff", h, u.uid)
+			emitfx({"t": "passive", "kind": "power", "uid": rt_t.uid})
+			log_msg(p, "%s traça uma rota: %s ganha +1 de Movimento e sobe 1 nível a mais." % [nm(u), nm(rt_t)])
+		"bridge":
+			var br_cells = [h]
+			var br_more = bridge_opts(u).filter(func(x): return x != h and DB.dist(x, h) == 1)
+			if not br_more.is_empty():
+				var br_h2 = await pick_hex(p, "%s: elevar também uma casa vizinha (ou Pular)." % uname, br_more, "ult", true)
+				if br_h2 != null:
+					br_cells.append(br_h2)
+			for bc in br_cells:
+				earth[bc] = int(earth.get(bc, 0)) + 1
+				abfx("earth", bc, u.uid)
+			load_map()
+			emitfx({"t": "tremor", "hexes": br_cells})
+			log_msg(p, "%s eleva %d casa(s) e liga os terrenos (permanente)." % [nm(u), br_cells.size()])
 		"abyss":
 			var t = unit_at(h)
 			var spots = adj_free(u.pos())
@@ -3068,8 +3436,10 @@ func _act_scarab(p: int, mode: String) -> bool:
 	return true
 
 
-func _make_barrier(p: int, h: Vector2i, n: int) -> void:
+func _make_barrier(p: int, h: Vector2i, n: int, exp: int = 0, soft: bool = false) -> Unit:
 	var b = Unit.new()
+	b.exp = exp
+	b.soft = soft
 	b.uid = next_uid
 	next_uid += 1
 	b.cid = "barrier"
@@ -3083,6 +3453,7 @@ func _make_barrier(p: int, h: Vector2i, n: int) -> void:
 	b.activated = true
 	units.append(b)
 	emitfx({"t": "summon", "uid": b.uid, "h": h})
+	return b
 
 
 # ================= ataque =================
@@ -3227,6 +3598,11 @@ func resolve_attack(a, t) -> void:
 			log_msg(p, "%s foi envenenado: perde 1 de Vida a cada round." % nm(target))
 		if after == "slowHit":
 			apply_slow(target, a)
+		if after == "elec" and not target.barrier:
+			target.fx = target.fx.filter(func(f): return not (f["k"] == "elec" and int(f.get("src", -1)) == a.uid))
+			target.fx.append({"k": "elec", "src": a.uid, "sp": a.owner, "till": round_no + 1})
+			abfx("zap", target.pos(), a.uid)
+			log_msg(p, "%s está carregado de eletricidade." % nm(target))
 		if after == "rootCharge" and act != null and act["uid"] == a.uid and act["moved"] and act.has("from") and DB.dist(act["from"], a.pos()) >= 2:
 			apply_root(target, a)
 		if after == "breakRoot" and rooted(target):
@@ -3255,6 +3631,19 @@ func resolve_attack(a, t) -> void:
 		_set_fire(p, target.pos())
 		abfx("burn", target.pos(), a.uid)
 		log_msg(p, "Terra Queimada: a casa de %s pega fogo até o fim do próximo round." % nm(target))
+	if after == "dynamite":
+		# Dinamitador: o alvo recebe o ataque; todas as unidades nas 6 casas ao redor (aliadas ou inimigas) sofrem 1,
+		# com altura e abrigo aplicados a cada uma
+		abfx("blast", target.pos(), a.uid)
+		var near_d = 0
+		for x in field():
+			if x != target and DB.dist(x.pos(), target.pos()) == 1:
+				var tmx = terrain_mods(a, x)
+				var dd = max(0, 1 + int(tmx["atk"]) - int(tmx["cover"]) - int(tmx["forest"]))
+				damage(x, dd, a, true)
+				near_d += 1
+		if near_d > 0:
+			log_msg(p, "%s: a explosão atinge %d unidade(s) ao redor do alvo." % [DB.cards[a.cid]["ab"]["name"], near_d])
 	if after == "splash" or after == "burn":
 		var ss = enemies_of(a).filter(func(x): return x != target and DB.dist(x.pos(), target.pos()) == 1)
 		abfx("splash", target.pos(), a.uid)

@@ -229,6 +229,13 @@ func _ready() -> void:
 			await pv.run(a.substr(10), board)
 			get_tree().quit()
 			return
+		if a.begins_with("--teste="):
+			var tn = Node.new()
+			tn.set_script(load("res://scripts/teste_%s.gd" % a.substr(8)))
+			add_child(tn)
+			await tn.run()
+			get_tree().quit()
+			return
 		if a.begins_with("--balance="):
 			var n = int(a.substr(10))
 			var outp = "user://balance.json"
@@ -1254,9 +1261,21 @@ func _tex_rect(tex: Texture2D, size: Vector2) -> TextureRect:
 	return t
 
 
+# "ATIVA · 1 AÇÃO · RECARGA 1 ROUND" (ativas que voltam a cada round) ou "1 VEZ POR PARTIDA"
+func _per_label(a: Dictionary) -> String:
+	if a.get("per", "partida") == "round":
+		return "ATIVA · 1 AÇÃO · RECARGA %d ROUND%s" % [Game.ABIL_RECHARGE, "" if Game.ABIL_RECHARGE == 1 else "S"]
+	return "ATIVA · 1 VEZ POR PARTIDA"
+
+
 # tipo da habilidade (como ela é usada)
 func _ab_kind(c: Dictionary) -> Array:
 	var k = c.get("k", {})
+	var abk = c.get("ab", {}).get("kind", "")
+	if abk == "ativa":
+		return [_per_label(c["ab"]), C_ABIL]
+	if abk == "especial":
+		return ["AÇÃO ESPECIAL", C_ABIL]
 	if k.has("action"):
 		return ["ATIVA · GASTA 1 AÇÃO", C_ABIL]
 	if k.has("entry"):
@@ -1560,7 +1579,8 @@ func _army_refresh() -> void:
 	chips.add_theme_constant_override("v_separation", 4)
 	chips.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	cv.add_child(chips)
-	_ab_chip(chips, "PASSIVA", C_CARD, cc["ab"]["name"])
+	var abk2 = cc["ab"].get("kind", "")
+	_ab_chip(chips, "ATIVA" if abk2 == "ativa" else ("ESPECIAL" if abk2 == "especial" else "PASSIVA"), C_GOLD if abk2 == "ativa" or abk2 == "especial" else C_CARD, cc["ab"]["name"])
 	if cc.has("ab2"):
 		var k2 = cc["ab2"].get("kind", "ativa")
 		_ab_chip(chips, "ATIVA" if k2 != "passiva" else "PASSIVA", C_GOLD if k2 != "passiva" else C_CARD, cc["ab2"]["name"])
@@ -1847,7 +1867,7 @@ func _army_detail_build() -> void:
 	_ab_box(v, kd[0], kd[1], c["ab"]["name"], c["ab"]["text"], dw)
 	if c.has("ab2"):
 		var k2 = c["ab2"].get("kind", "ativa")
-		_ab_box(v, "ATIVA · 1 VEZ POR PARTIDA" if k2 != "passiva" else "PASSIVA", C_GOLD if k2 != "passiva" else C_CARD, c["ab2"]["name"], c["ab2"]["text"], dw)
+		_ab_box(v, _per_label(c["ab2"]) if k2 != "passiva" else "PASSIVA", C_GOLD if k2 != "passiva" else C_CARD, c["ab2"]["name"], c["ab2"]["text"], dw)
 	# impacto no jogo
 	var im = _impact(c)
 	_label(v, "IMPACTO NO JOGO", 12, C_HUD)
@@ -2921,7 +2941,10 @@ func _refresh_ucard() -> void:
 				txt += "[i]Entra no round %d[/i]\n" % Game.CMD_ROUND
 			if u.eq != "":
 				txt += "Equipado: %s\n" % DB.tactics[u.eq]["name"]
-			var passive = "ativa (gasta 1 ação)" if c["k"].has("action") else "passiva (não gasta ação)"
+			var abk3 = c["ab"].get("kind", "")
+			var passive = "ativa (gasta 1 ação)" if (c["k"].has("action") or abk3 == "ativa") else ("ação especial" if abk3 == "especial" else "passiva (não gasta ação)")
+			if abk3 == "ativa" and c["ab"].get("per", "partida") == "round":
+				passive = "ativa · 1 ação · recarga %d round(s)" % Game.ABIL_RECHARGE + (" · [color=#ff8a6a]JÁ USADA[/color]" if game.ult_spent(u) else "")
 			txt += "[color=#ffab40][b]%s[/b][/color] [color=#8fb8cc](%s)[/color]\n%s" % [c["ab"]["name"], passive, c["ab"]["text"]]
 			if c.has("ab2"):
 				var a2 = c["ab2"]
@@ -3004,14 +3027,15 @@ func _refresh_actbar() -> void:
 			var bab = _cbtn(box, DB.cards[u.cid]["ab"]["name"], C_ABIL, func(): _toggle_ab(), ab)
 			bab.disabled = left <= 0 or (moved and k.get("action", "") == "tunnel")
 			bab.tooltip_text = "Habilidade ativa: 1 ação. Casas ROXAS."
-		if k.has("ult") and DB.cards[u.cid].has("ab2"):
+		var act_ab = DB.active_of(u.cid)
+		if k.has("ult") and not act_ab.is_empty():
 			var ok_ult = (game.can_ult(u) if live else (game.can_start(u) and not game.ult_spent(u) and not game.ult_opts(u).is_empty()))
-			var bu = _cbtn(box, "★ " + DB.cards[u.cid]["ab2"]["name"], C_ABIL, _on_ult)
+			var bu = _cbtn(box, "★ " + act_ab["name"], C_ABIL, _on_ult)
 			bu.disabled = not ok_ult or left <= 0
-			var per2 = DB.cards[u.cid]["ab2"].get("per", "partida")
-			bu.tooltip_text = "Ativa · 1 vez por %s · 1 ação\n%s" % [per2, DB.cards[u.cid]["ab2"]["text"]]
+			var per2 = act_ab.get("per", "partida")
+			bu.tooltip_text = ("Ativa · 1 ação · recarga %d round(s)\n%s" % [Game.ABIL_RECHARGE, act_ab["text"]]) if per2 == "round" else ("Ativa · 1 vez por partida · 1 ação\n%s" % act_ab["text"])
 			if game.ult_spent(u):
-				why.append("%s: já usada neste %s." % [DB.cards[u.cid]["ab2"]["name"], "round" if per2 == "round" else "jogo"])
+				why.append("%s: já usada neste %s." % [act_ab["name"], "round" if per2 == "round" else "jogo"])
 		if live and game.can_cart(u):
 			var bct = _cbtn(box, "Empurrar carrinho", C_ABIL, _on_cart)
 			bct.tooltip_text = "1 ação: o carrinho anda até %d casas no trilho; o primeiro personagem atingido sofre %d e é empurrado." % [int(game.vrule("cart_steps", 3)), int(game.vrule("cart_dmg", 3))]

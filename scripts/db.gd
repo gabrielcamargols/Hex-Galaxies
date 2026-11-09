@@ -145,6 +145,17 @@ func in_entry(p: int, h: Vector2i) -> bool:
 	return entry[p].has(h)
 
 
+# a habilidade ativa da carta: fica em "ab" (kind ativa) quando a peça só tem ela, senão em "ab2"
+func active_of(cid: String) -> Dictionary:
+	var c = cards[cid]
+	if c.get("ab", {}).get("kind", "") == "ativa":
+		return c["ab"]
+	var a2 = c.get("ab2", {})
+	if a2.get("kind", "ativa") == "passiva":
+		return {}
+	return a2
+
+
 func card_name(cid: String) -> String:
 	if cid == "barrier":
 		return "Barreira"
