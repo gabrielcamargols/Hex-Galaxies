@@ -624,3 +624,28 @@ func _rei_manip() -> void:
 	var rp = await ativa(gp, ep, [H(4, 0), H(4, 1), H(3, 1)])
 	ok(rp and gp.h_of(H(4, 0)) == 1 and gp.h_of(H(4, 1)) == 1 and gp.h_of(H(3, 1)) == 1, "eleva 3 casas ligadas em 1 nível")
 	ok(not gp.bridge_cell_ok(H(4, 0)), "no plano, a casa não passa do nível 1")
+
+	# mover a estrutura contra um inimigo: ele é atingido e a estrutura se destrói
+	var g6: Game = _rei()[0]
+	var rei6 = g6.units.filter(func(x): return x.cid == "rei_mina")[0]
+	var e6 = put(g6, "t_basalto", 1, 3, 1)
+	var a6 = put(g6, "t_basalto", 1, 2, 1)
+	var c6 = g6._make_crystal(0, H(5, -1), "verde")
+	var bl6 = g6._make_barrier(g6.NEUTRAL, H(3, -1), 4)
+	bl6.block = true
+	g6.start_activation(rei6)
+	ok(g6.manip_dests(bl6, rei6).has(e6.pos()), "enemigo a 2 casas da estrutura é destino válido")
+	var hp6 = e6.hp
+	var m6 = g6.manip_modes(rei6)
+	fila = [m6.find("move"), H(3, -1), H(3, 1)]
+	var r6 = await g6.act_manip(rei6)
+	ok(r6 and e6.hp == hp6 - 4 and bl6.st == "dead", "bloco movido contra o inimigo causa 4 e é destruído (%d -> %d)" % [hp6, e6.hp])
+	ok(not g6.act["attacked"], "manipulação não gasta o ataque do Rei")
+	var hp7 = e6.hp
+	var ha7 = a6.hp
+	var cr7 = g6._make_crystal(0, H(4, 0), "verde")
+	m6 = g6.manip_modes(rei6)
+	fila = [m6.find("move"), H(4, 0), H(3, 1)]
+	r6 = await g6.act_manip(rei6)
+	ok(r6 and cr7.st == "dead" and e6.hp <= hp7 - 4, "cristal movido contra o inimigo também o atinge")
+	ok(a6.hp == ha7 - 2, "efeito do cristal especial no impacto (verde: -2 em inimigo ao lado)")

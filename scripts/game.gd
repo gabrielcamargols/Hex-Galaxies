@@ -2817,12 +2817,41 @@ func manip_structs(u) -> Array:
 	return field().filter(func(x): return x.barrier and not x.soft and DB.dist(x.pos(), u.pos()) <= MANIP_R)
 
 
-func manip_dests(s) -> Array:
-	return DB.hexes.filter(func(h): return DB.dist(h, s.pos()) >= 1 and DB.dist(h, s.pos()) <= 2 and val_hex_ok(h))
+# destinos do movimento (até 2 casas): casas livres ou um inimigo do Rei, que é atingido pela estrutura
+func manip_dests(s, rei = null) -> Array:
+	var out = DB.hexes.filter(func(h): return DB.dist(h, s.pos()) >= 1 and DB.dist(h, s.pos()) <= 2 and val_hex_ok(h))
+	if rei != null:
+		for t in enemies_of(rei):
+			var d = DB.dist(s.pos(), t.pos())
+			if t.barrier or d < 1 or d > 2 or DB.dist(rei.pos(), t.pos()) > MANIP_R or has_fx(t, "veil") or imprisoned(t):
+				continue
+			# a 2 casas, precisa de uma casa livre no meio do caminho
+			if d == 2 and not DB.nbrs(s.pos()).any(func(m): return DB.dist(m, t.pos()) == 1 and (val_hex_ok(m) or unit_at(m) == null and is_free(m) and not is_pit(m))):
+				continue
+			out.append(t.pos())
+	return out
 
 
 func manip_move_structs(u) -> Array:
-	return manip_structs(u).filter(func(x): return not manip_dests(x).is_empty())
+	return manip_structs(u).filter(func(x): return not manip_dests(x, u).is_empty())
+
+
+# a estrutura atinge o inimigo (4 de dano com altura e abrigo vistos do Rei) e é destruída
+func _struct_hit(u, s2, t2) -> void:
+	var tm = terrain_mods(u, t2)
+	var packet = 4 + int(tm["atk"])
+	var red = reduction_of(t2, false, DB.dist(u.pos(), t2.pos()))
+	var dealt = max(0, packet - red - int(tm["cover"]) - int(tm["forest"]))
+	abfx("bombard", t2.pos(), u.uid)
+	emitfx({"t": "boom", "h": t2.pos()})
+	log_msg(u.owner, "%s lança %s contra %s (%d de dano)." % [nm(u), nm(s2), nm(t2), dealt])
+	damage(t2, dealt, u, true)
+	s2.hp = 0
+	s2.dying = u.uid
+	if s2.crystal != "":
+		_burst_at = t2.pos()
+	settle()
+	_burst_at = null
 
 
 func manip_crystals(u) -> Array:
@@ -2867,7 +2896,7 @@ func can_manip(u) -> bool:
 	return not manip_modes(u).is_empty()
 
 
-const MANIP_LABEL = {"move": "Mover cristal/estrutura (até 2 casas)", "color": "Mudar a cor de um cristal", "lower": "Rebaixar terreno alto (vira bloco móvel)", "tunnel": "Criar túnel (duas entradas)", "throw": "Arremessar estrutura (ataque, 4 de dano)"}
+const MANIP_LABEL = {"move": "Mover cristal/estrutura (até 2 casas; inimigo no destino é atingido)", "color": "Mudar a cor de um cristal", "lower": "Rebaixar terreno alto (vira bloco móvel)", "tunnel": "Criar túnel (duas entradas)", "throw": "Arremessar estrutura (ataque, 4 de dano)"}
 
 
 func _make_crystal(p: int, h: Vector2i, color: String) -> Unit:
@@ -2952,10 +2981,15 @@ func _act_manip(u) -> bool:
 			if st == null:
 				return false
 			var s = unit_at(st)
-			var dh = await pick_hex(p, "Manipulação: escolha o destino (até 2 casas da origem).", manip_dests(s), "manip_d", true)
+			var dh = await pick_hex(p, "Manipulação: escolha o destino (até 2 casas) — um inimigo ali é atingido e a estrutura se destrói.", manip_dests(s, u), "manip_d", true)
 			if dh == null:
 				return false
 			act["actions"] -= 1
+			var hit_t = unit_at(dh)
+			if hit_t != null and hit_t.owner != p and not hit_t.barrier:
+				await _struct_hit(u, s, hit_t)
+				await pace()
+				return true
 			abfx("earth", s.pos(), u.uid)
 			s.q = dh.x
 			s.r = dh.y
@@ -3014,21 +3048,7 @@ func _act_manip(u) -> bool:
 			var t2 = unit_at(tg)
 			act["actions"] -= 1
 			act["attacked"] = true
-			var tm = terrain_mods(u, t2)
-			var packet = 4 + int(tm["atk"])
-			var red = reduction_of(t2, false, DB.dist(u.pos(), t2.pos()))
-			var dealt = max(0, packet - red - int(tm["cover"]) - int(tm["forest"]))
-			abfx("bombard", tg, u.uid)
-			emitfx({"t": "boom", "h": tg})
-			log_msg(p, "%s arremessa %s em %s (%d de dano)." % [nm_u, nm(s2), nm(t2), dealt])
-			damage(t2, dealt, u, true)
-			s2.hp = 0
-			s2.dying = u.uid
-			s2.st = "field"
-			if s2.crystal != "":
-				_burst_at = tg
-			settle()
-			_burst_at = null
+			_struct_hit(u, s2, t2)
 	await pace()
 	return true
 
