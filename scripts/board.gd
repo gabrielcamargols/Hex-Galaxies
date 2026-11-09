@@ -838,10 +838,30 @@ func _mat(c: Color, unshaded: bool = false) -> StandardMaterial3D:
 	return m
 
 
+# peças feitas de formas simples ficam pintadas em guache: manchas de hexágonos em 3 tons da própria cor
+var paint_cols: Dictionary = {}
+
+
+func _gouache(col: Color) -> ShaderMaterial:
+	var key = col.to_html(false)
+	if not paint_cols.has(key):
+		var m = ShaderMaterial.new()
+		m.shader = load("res://shaders/pincel.gdshader")
+		m.set_shader_parameter("seed", float(key.hash() % 97))
+		m.set_shader_parameter("c_dark", col.darkened(0.22))
+		m.set_shader_parameter("c_mid", col)
+		m.set_shader_parameter("c_light", col.lightened(0.16))
+		m.set_shader_parameter("edge", 0.0)
+		m.set_shader_parameter("patch_scale", 4.5)
+		m.set_shader_parameter("shadow_tint", _planet_shadow())
+		paint_cols[key] = m
+	return paint_cols[key]
+
+
 func _mesh(parent: Node3D, mesh: Mesh, col: Color, pos: Vector3, rot: Vector3 = Vector3.ZERO) -> MeshInstance3D:
 	var mi = MeshInstance3D.new()
 	mi.mesh = mesh
-	mi.material_override = _mat(col)
+	mi.material_override = _gouache(col) if (g != null and g.map_id != "abnara" and col.a > 0.99) else _mat(col)
 	mi.position = pos
 	mi.rotation = rot
 	parent.add_child(mi)

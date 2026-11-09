@@ -38,7 +38,7 @@ void fragment() {
 		base *= 0.96 + h21t(hexid(g2)) * 0.08;
 		base *= 0.97 + h21t(hexid(g3)) * 0.06;
 	}
-	if (greenish > 0.5) {
+	if (wnrm_t.y > 0.6) {
 		// poucos tufos pequenos e espaçados, o resto do chão fica chapado
 		vec2 uv = wpos_t.xz * tuft_scale;
 		float cell = h21t(hexid(uv));
@@ -46,7 +46,7 @@ void fragment() {
 		float pick = step(0.86, cell);
 		float tuft = pick * (1.0 - smoothstep(0.30, 0.62, dd));
 		base *= 1.0 - 0.12 * tuft;
-		base += vec3(0.03, 0.05, 0.0) * tuft * (1.0 - smoothstep(0.0, 0.3, dd));
+		base += mix(vec3(0.0, 0.0, 0.03), vec3(0.03, 0.05, 0.0), greenish) * tuft * (1.0 - smoothstep(0.0, 0.3, dd));
 	}
 	ALBEDO = pow(clamp(base, 0.0, 1.0), vec3(gamma));
 	if (!FRONT_FACING) {
