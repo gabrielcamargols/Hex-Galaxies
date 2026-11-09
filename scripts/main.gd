@@ -5253,9 +5253,8 @@ func _game_over() -> void:
 	var reason = ""
 	if not game.final_score.is_empty():
 		var f = game.final_score
-		reason = "Fim do round 10. Vida dos comandantes %d x %d; aliados %d x %d." % [f["c"][0], f["c"][1], f["s"][0], f["s"][1]]
-		if f.has("sc") and (f["sc"][0] + f["sc"][1]) > 0:
-			reason += " (escaravelhos incluídos: %d x %d)" % [f["sc"][0], f["sc"][1]]
+		var tt = f.get("t", [0, 0])
+		reason = "Fim do round 10. Soma da vida dos personagens: %d x %d." % [tt[0], tt[1]]
 	elif game.flagged != Game.NONE:
 		reason = "Tempo esgotado: %s ficou sem tempo." % ("você" if game.flagged == me else _opp())
 	elif win == Game.DRAW:

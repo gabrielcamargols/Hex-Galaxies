@@ -2200,19 +2200,20 @@ func _shove_flow(u, def: Dictionary) -> void:
 
 
 func do_final_score() -> void:
+	# desempate do fim do round 10: vence quem tiver mais vida somada nos personagens restantes
+	# (comandantes e aliados, mais os escaravelhos de cada lado); barreiras não contam
 	var c = [commander(0).hp + scarabs_of(0), commander(1).hp + scarabs_of(1)]
 	var s = [0, 0]
 	for u in field():
-		if not u.is_cmd and not u.barrier:
+		if not u.barrier:
 			s[u.owner] += u.hp
-	final_score = {"c": c, "s": s, "sc": [scarabs_of(0), scarabs_of(1)]}
-	if c[0] != c[1]:
-		winner = 0 if c[0] > c[1] else 1
-	elif s[0] != s[1]:
-		winner = 0 if s[0] > s[1] else 1
+	var tot = [s[0] + scarabs_of(0), s[1] + scarabs_of(1)]
+	final_score = {"c": c, "s": s, "sc": [scarabs_of(0), scarabs_of(1)], "t": tot}
+	if tot[0] != tot[1]:
+		winner = 0 if tot[0] > tot[1] else 1
 	else:
 		winner = DRAW
-	log_msg(-1, "Fim do round 10. Vida dos comandantes (com escaravelhos): %d × %d. Aliados: %d × %d." % [c[0], c[1], s[0], s[1]])
+	log_msg(-1, "Fim do round 10. Soma da vida dos personagens: %d × %d." % [tot[0], tot[1]])
 	changed.emit()
 
 
