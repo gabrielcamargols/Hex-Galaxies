@@ -2277,7 +2277,7 @@ func _apply_overlay(h: Vector2i) -> void:
 		"at":
 			col = Color(1.0, 0.30, 0.30, 0.68)
 		"pk":
-			col = Color(0.02, 0.0, 0.05, 0.82)
+			col = Color(0.80, 0.58, 1.0, 0.92)
 		"sel":
 			col = Color(0.31, 0.82, 1.0, 0.6)
 		"prev":
@@ -2315,10 +2315,22 @@ func _apply_overlay(h: Vector2i) -> void:
 			warn_tiles[h] = true
 		else:
 			warn_tiles.erase(h)
-	tile["label"].visible = lab_txt != "" and not show_warn
-	if lab_txt != "" and not show_warn:
-		tile["label"].text = lab_txt
-		tile["label"].modulate = state.get("label_colors", {}).get(h, Color.WHITE)
+	# casa de escolha: hexágono roxo com um X preto no meio (fácil de achar)
+	var is_pick = hl == "pk" and lab_txt == "" and hover != h
+	var lb = tile["label"]
+	lb.visible = (lab_txt != "" and not show_warn) or is_pick
+	lb.font_size = 64
+	lb.outline_modulate = Color.BLACK
+	if is_pick:
+		lb.text = "X"
+		lb.font_size = 128
+		lb.modulate = Color.BLACK
+		lb.outline_modulate = Color(1, 1, 1, 0.9)
+		lb.outline_size = 14
+	elif lab_txt != "" and not show_warn:
+		lb.outline_size = 18
+		lb.text = lab_txt
+		lb.modulate = state.get("label_colors", {}).get(h, Color.WHITE)
 
 
 # ================= efeitos =================

@@ -3026,7 +3026,7 @@ func _refresh_actbar() -> void:
 		if k.has("action"):
 			var bab = _cbtn(box, DB.cards[u.cid]["ab"]["name"], C_ABIL, func(): _toggle_ab(), ab)
 			bab.disabled = left <= 0 or (moved and k.get("action", "") == "tunnel")
-			bab.tooltip_text = "Habilidade ativa: 1 ação. Casas ROXAS."
+			bab.tooltip_text = "Habilidade ativa: 1 ação. Casas com X."
 		var act_ab = DB.active_of(u.cid)
 		if k.has("ult") and not act_ab.is_empty():
 			var ok_ult = (game.can_ult(u) if live else (game.can_start(u) and not game.ult_spent(u) and not game.ult_opts(u).is_empty()))
@@ -3117,7 +3117,7 @@ func _refresh_prompt() -> void:
 		text = "[b]%s[/b]" % q.get("text", "")
 		match q["t"]:
 			"hex":
-				text += "\n[color=#8fb8cc](clique numa casa [color=#b06cff][b]ROXA[/b][/color])[/color]"
+				text += "\n[color=#8fb8cc](clique numa casa com [color=#b06cff][b]X[/b][/color])[/color]"
 				if q.get("optional", false):
 					_button(box, "Pular", func(): _answer(null))
 			"yesno":
