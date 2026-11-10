@@ -305,6 +305,12 @@ func _build_ui() -> void:
 	_btn(row2, "Fundo", Color("#A957EC"), func():
 		fundo_i = (fundo_i + 1) % FUNDOS.size()
 		_apply_fundo())
+	var fb = _btn(row2, "Facção: " + fac.to_upper(), Color("#FF8236"), func(): pass)
+	fb.pressed.connect(func():
+		var i = FACS.find(fac)
+		fac = FACS[(i + 1) % FACS.size()]
+		fb.text = "Facção: " + fac.to_upper()
+		_trocar_facao())
 	_btn(row2, "Lados", Color("#A957EC"), func():
 		trocado = not trocado
 		_build_figs())
@@ -326,6 +332,22 @@ func _build_ui() -> void:
 	info.position = Vector2(20, -44)
 	info.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	ui.add_child(info)
+
+
+const FACS = ["aby", "ter", "fau"]
+
+
+# troca a facção mostrada: lista de ataques e primeiro personagem dessa facção
+func _trocar_facao() -> void:
+	vfx._receitas_load()
+	for i in range(LADOS.size()):
+		for id in vfx.receitas.keys():
+			if str(id).begins_with(fac + "_") and str(vfx.receitas[id].get("personagem", "")) == LADOS[i][0]:
+				lado_i = i
+				_fill_list()
+				_build_figs()
+				return
+	_fill_list()
 
 
 func _fill_list() -> void:
