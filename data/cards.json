@@ -2382,7 +2382,7 @@
    "ab": {
     "name": "Manipulação Mineral",
     "kind": "especial",
-    "text": "Ação especial de manipulação: escolha 1 cristal ou estrutura móvel a até 6 casas e mova-o até 2 casas, ou mude a cor de um cristal. Terrenos altos (mais de 1 nível) podem ser rebaixados em 1, virando um bloco móvel. Também cria túneis e ataca arremessando estruturas (4 de dano, destrói a estrutura)."
+    "text": "Ação especial de manipulação: escolha 1 cristal ou estrutura móvel a até 6 casas e mova-o até 2 casas, ou mude a cor de um cristal. Terrenos altos (mais de 1 nível) podem ser rebaixados em 1, virando um bloco móvel, e ruínas, rochas, raízes e plantas podem ser arrancadas do chão e viram blocos móveis. Também cria túneis e ataca arremessando estruturas (4 de dano, destrói a estrutura)."
    },
    "k": {
     "manip": true,

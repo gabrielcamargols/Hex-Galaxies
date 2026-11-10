@@ -2922,6 +2922,23 @@ func manip_lower_opts(u) -> Array:
 	return DB.hexes.filter(func(h): return DB.dist(h, u.pos()) >= 1 and DB.dist(h, u.pos()) <= MANIP_R and manip_lowerable(h))
 
 
+# obstáculos de terreno que o Rei arranca e transforma em bloco móvel (ruínas, rochas, raízes, plantas...)
+const MANIP_OBST = {"ruina": "escombros", "ruina_alta": "escombros", "galpao": "escombros", "rocha": "escombros", "ossada": "", "raiz": "", "planta": ""}
+
+
+func manip_obst_ok(h: Vector2i) -> bool:
+	var k = String(terr(h)["k"])
+	if not MANIP_OBST.has(k) or not blocks.has(h) or unit_at(h) != null or cart_at(h) or hole.has(h) or is_pit(h):
+		return false
+	if DB.in_entry(0, h) or DB.in_entry(1, h) or (core != null and core == h) or tunnel_hex(h) or tremors.has(h):
+		return false
+	return DB.in_board(h)
+
+
+func manip_obst_opts(u) -> Array:
+	return DB.hexes.filter(func(h): return DB.dist(h, u.pos()) >= 1 and DB.dist(h, u.pos()) <= MANIP_R and manip_obst_ok(h))
+
+
 func manip_tunnel_opts(u) -> Array:
 	return DB.hexes.filter(func(h): return DB.dist(h, u.pos()) >= 1 and DB.dist(h, u.pos()) <= MANIP_R and val_hex_ok(h))
 
@@ -2941,6 +2958,8 @@ func manip_modes(u) -> Array:
 		out.append("color")
 	if not manip_lower_opts(u).is_empty():
 		out.append("lower")
+	if not manip_obst_opts(u).is_empty():
+		out.append("rip")
 	if manip_tunnel_opts(u).size() >= 2:
 		out.append("tunnel")
 	if can_attack_now(u) and not manip_structs(u).is_empty() and not throw_targets(u).is_empty():
@@ -2952,7 +2971,7 @@ func can_manip(u) -> bool:
 	return not manip_modes(u).is_empty()
 
 
-const MANIP_LABEL = {"move": "Mover cristal/estrutura (até 2 casas; inimigo no destino é atingido)", "color": "Mudar a cor de um cristal", "lower": "Rebaixar terreno alto (vira bloco móvel)", "tunnel": "Criar túnel (duas entradas)", "throw": "Arremessar estrutura (ataque, 4 de dano)"}
+const MANIP_LABEL = {"move": "Mover cristal/estrutura (até 2 casas; inimigo no destino é atingido)", "color": "Mudar a cor de um cristal", "lower": "Rebaixar terreno alto (vira bloco móvel)", "rip": "Arrancar ruína, rocha, raiz ou planta (vira bloco móvel)", "tunnel": "Criar túnel (duas entradas)", "throw": "Arremessar estrutura (ataque, 4 de dano)"}
 
 
 func _make_crystal(p: int, h: Vector2i, color: String) -> Unit:
@@ -3079,6 +3098,22 @@ func _act_manip(u) -> bool:
 			abfx("earth", lh, u.uid)
 			emitfx({"t": "rumble", "hexes": [lh]})
 			log_msg(p, "%s rebaixa o terreno em 1 nível e deixa um bloco de pedra móvel." % nm_u)
+		"rip":
+			var rh = await pick_hex(p, "Manipulação: escolha a ruína, rocha, raiz ou planta a arrancar (até 6 casas).", manip_obst_opts(u), "manip_s", true)
+			if rh == null:
+				return false
+			act["actions"] -= 1
+			var rk = String(terr(rh)["k"])
+			var then_k = String(MANIP_OBST[rk])
+			if then_k == "":
+				then_k = String(DB.maps[map_id]["plain"])
+			dyn[rh] = {"k": then_k, "until": 999, "then": ""}
+			load_map()
+			var rb = _make_barrier(NEUTRAL, rh, 4)
+			rb.block = true
+			abfx("earth", rh, u.uid)
+			emitfx({"t": "rumble", "hexes": [rh]})
+			log_msg(p, "%s arranca %s do chão e a transforma em um bloco móvel." % [nm_u, String(tt_of(rk)["name"]).to_lower()])
 		"tunnel":
 			var ta = await pick_hex(p, "Túnel: escolha a 1ª entrada (até 6 casas).", manip_tunnel_opts(u), "manip_d", true)
 			if ta == null:

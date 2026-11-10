@@ -572,6 +572,34 @@ func _rei_manip() -> void:
 	var bl = g2.unit_at(H(3, 1))
 	ok(r and g2.h_of(H(3, 1)) == 1 and bl != null and bl.block and bl.barrier, "rebaixou 1 nível e deixou um bloco móvel")
 	ok(not g2.manip_lowerable(H(3, 1)), "casa de 1 nível não pode ser rebaixada")
+	# Abnara: a ponte do meio liga as duas margens; o Rei arranca ruínas e plantas
+	DB.set_map("abnara")
+	var ga = Game.new()
+	ga.tree = null
+	ga.pace_time = 0.0
+	ga.cpu = [false, false]
+	ga.setup([{"fac": "TER", "picks": [], "start": []}, {"fac": "TER", "picks": [], "start": []}], "abnara")
+	ga.round_no = 1
+	ga.question.connect(func(_p, _q): ga.answered.emit.call_deferred(fila.pop_front() if not fila.is_empty() else null))
+	ok(ga.can_step(H(-1, 0), H(0, 0)) and ga.can_step(H(0, 0), H(1, 0)), "ponte do meio de Abnara é atravessável (margens ligadas)")
+	var reia = put(ga, "rei_mina", 0, -3, 0)
+	ga.start_activation(reia)
+	var ma = ga.manip_modes(reia)
+	ok(ma.has("rip"), "Rei pode arrancar obstáculos de Abnara: %s" % str(ma))
+	var alvo = H(-4, 1)
+	ok(String(ga.terr(alvo)["k"]).begins_with("ruina") and ga.blocks.has(alvo), "alvo é uma ruína")
+	fila = [ma.find("rip"), alvo]
+	r = await ga.act_manip(reia)
+	var rbk = ga.unit_at(alvo)
+	ok(r and rbk != null and rbk.block and rbk.barrier and not ga.blocks.has(alvo) and ga.terr(alvo)["k"] == "escombros", "ruína arrancada vira bloco móvel e o chão fica livre")
+	var pl = H(-3, 1)
+	ok(ga.terr(pl)["k"] == "planta" and ga.manip_obst_ok(pl), "planta predadora pode ser arrancada")
+	ga.act["actions"] = 1
+	ma = ga.manip_modes(reia)
+	fila = [ma.find("rip"), pl]
+	r = await ga.act_manip(reia)
+	ok(r and ga.unit_at(pl) != null and ga.terr(pl)["k"] != "planta", "planta arrancada vira bloco")
+	DB.set_map("posto")
 	# túnel
 	var g3: Game = _rei()[0]
 	var rei3 = g3.units.filter(func(x): return x.cid == "rei_mina")[0]
