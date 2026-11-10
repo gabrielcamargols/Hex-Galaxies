@@ -215,7 +215,10 @@ func _ready() -> void:
 			return
 	for a in args:
 		if a.begins_with("--oficina"):
-			_open_oficina(a == "--oficina=auto", "aby")
+			# --oficina | --oficina=auto | --oficina=ter | --oficina=ter,auto
+			var op = a.substr(10).split(",") if a.length() > 10 else PackedStringArray()
+			var of_fac = "ter" if "ter" in op else "aby"
+			_open_oficina("auto" in op, of_fac)
 			return
 	for a in args:
 		if a.begins_with("--cenario="):
@@ -4457,7 +4460,9 @@ func _fx_dmg(h: Vector2i, amt: int, uid: int) -> void:
 	var hf = hit_fac.get(uid, "")
 	hit_fac.erase(uid)
 	if amt > 0:
-		if hf != "":
+		if hf == "@ter":
+			pass       # o impacto já veio na receita do ataque (Forja)
+		elif hf != "":
 			# assinatura de impacto da facção atacante (Manual de VFX)
 			vfx.impact(p, DB.pal(hf, "secondary"), clamp(amt / 4.0, 0.6, 1.8) * k)
 			vfx.flip("imp_" + hf.to_lower(), p - Vector3(0, 0.75, 0), clamp(2.3 + amt * 0.22, 2.5, 4.0), 0.55)
@@ -4501,8 +4506,77 @@ func _fx_die(p: Vector3, c: Color) -> void:
 	sfx.play("derrota", -3.0)
 
 
+# ---------------- VFX dos Valakianos (receitas ter_* da Forja, data/vfx_receitas.json) ----------------
+var ter_fx: Dictionary = {}      # cid -> {nucleo, ataque, habilidades} (data/vfx_personagens.json)
+# habilidade (tipo do abfx do motor) -> receita, por personagem
+const TER_ABFX = {
+	"rei_mina": {"crystal": "ter_rei_barreira", "earth": "ter_rei_manip", "burrow": "ter_rei_tunel"},
+	"perfurador": {"burrow": "ter_perf_furo"},
+	"t_basalto": {"barrier": "ter_basalto_muralha"},
+	"t_carrinho": {"push": "ter_carrinho_carga_hit"},
+	"t_fendas": {"blast": "ter_fendas_ruptura", "push": "ter_carrinho_carga_hit"},
+	"sismico": {"quake": "ter_sismico_onda"},
+	"t_dinamite": {"mark": "ter_dina_carga", "bombard": "ter_dina_boom", "blast": "ter_dina_boom"},
+	"t_sentinela": {"barrier": "ter_sentinela_guarda"},
+	"t_fundidor": {"barrier": "ter_fundidor_reves"},
+	"t_lanterna": {"heal": "ter_lanterna_amparo"},
+	"t_enfermeira": {"heal": "ter_enfermeira_tratamento"},
+	"t_cartografo": {"buff": "ter_cartografo_rota"},
+	"t_raiz": {"barrier": "ter_raiz_trama"},
+	"t_feram": {"push": "ter_feram_investida_hit"},
+	"t_pontes": {"earth": "ter_pontes_conexao"},
+	"t_sniper": {"bolt": "ter_sniper_hit"},
+}
+
+
+func _ter_load() -> void:
+	if not ter_fx.is_empty():
+		return
+	var f = FileAccess.open("res://data/vfx_personagens.json", FileAccess.READ)
+	if f == null:
+		return
+	var d = JSON.parse_string(f.get_as_text())
+	if typeof(d) == TYPE_DICTIONARY:
+		for k in d:
+			if typeof(d[k]) == TYPE_DICTIONARY and str(d[k].get("ataque", "")).begins_with("ter_"):
+				ter_fx[k] = d[k]
+
+
+# receita de ataque básico do personagem (só Valakianos), ou ""
+func _ter_attack_id(uid: int) -> String:
+	_ter_load()
+	var u: Variant = game.by_uid(uid) if game != null else null
+	if u == null or u.barrier or not ter_fx.has(u.cid):
+		return ""
+	var id = str(ter_fx[u.cid]["ataque"])
+	return id if vfx.has_fx(id) else ""
+
+
+func _ter_ctx(cid: String) -> Dictionary:
+	return {"nucleo": Color(str(ter_fx[cid]["nucleo"]))} if ter_fx.has(cid) and ter_fx[cid].has("nucleo") else {}
+
+
+# habilidades dos Valakianos: toca a receita e devolve true se tratou o evento
+func _ter_abfx(e: Dictionary) -> bool:
+	_ter_load()
+	var u: Variant = game.by_uid(e["uid"]) if game != null else null
+	if u == null or u.barrier or not TER_ABFX.has(u.cid):
+		return false
+	var id = str(TER_ABFX[u.cid].get(e["k"], ""))
+	if id == "" or not vfx.has_fx(id):
+		return false
+	var at = _hex_pos(e["h"], 0.0)
+	var from: Variant = _hex_pos(u.pos(), 0.0) if u.st == "field" else null
+	if str(vfx.receitas[id].get("alvo", "")) == "self":
+		from = null
+	vfx.play_fx(id, at, from, Color.WHITE, null, _ter_ctx(u.cid))
+	return true
+
+
 # efeitos 2.5D das habilidades: cada tipo tem seu desenho, cor e som
 func _on_abfx(e: Dictionary) -> void:
+	if _ter_abfx(e):
+		return
 	var g0 = _hex_pos(e["h"], 0.0)
 	var fc = _unit_color(e["uid"]).lightened(0.35)
 	var lit = false
@@ -4608,6 +4682,17 @@ func _on_fx(e: Dictionary) -> void:
 			var k = _fx_scale()
 			_comic_pop(tgt, (["ZAP!", "PEW!", "FZZT!", "VUSH!"] if e["ranged"] else ["POW!", "BAM!", "WHAM!", "SOC!", "TUM!"]).pick_random())
 			_voice(e["from"], "atk", -2.0)
+			var ter_id = _ter_attack_id(e["from"])
+			if ter_id != "":
+				# Valakianos: ataque pintado pela Forja (golpe/projétil + impacto próprios)
+				var fu: Variant = game.by_uid(e["from"])
+				var tu: Variant = game.by_uid(e["to"])
+				var ht = vfx.play_fx(ter_id, _hex_pos(tu.pos(), 0.0), _hex_pos(fu.pos(), 0.0), Color.WHITE, null, _ter_ctx(fu.cid))
+				impact_delay = max(ht, 0.12)
+				impact_until = now + int(impact_delay * 1000.0) + 40
+				hit_fac[e["to"]] = "@ter"
+				sfx.play("tiro_energia" if e["ranged"] else "vfx_boom", -3.0, 1.0 if e["ranged"] else 1.2)
+				return
 			if e["ranged"]:
 				var style = _shot_style(e["from"])
 				# disparo: clarão na arma do atacante

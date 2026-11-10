@@ -9,7 +9,7 @@ const FUNDOS = {
 	"Neutro": [Color("#8c909e"), Color("#6c7080"), Color("#2a2c36")],
 	"Claro": [Color("#e9e4d8"), Color("#cfc8b6"), Color("#7d8794")],
 }
-const LADOS = [["rhazur", "k_tank"], ["rayak", "k_tank"], ["strahl", "k_tank"], ["bayak", "k_tank"], ["sapturne", "k_tank"], ["balu", "k_tank"], ["oncus", "k_tank"], ["moby", "k_tank"], ["sterina", "k_front"], ["klang", "k_tank"], ["kling", "k_tank"], ["inkshadow", "k_tank"], ["banker", "k_tank"], ["a_lumina", "k_tank"], ["a_medusa", "k_tank"], ["a_garra", "k_tank"], ["a_vespertina", "k_tank"]]
+const LADOS = [["rhazur", "k_tank"], ["rayak", "k_tank"], ["strahl", "k_tank"], ["bayak", "k_tank"], ["sapturne", "k_tank"], ["balu", "k_tank"], ["oncus", "k_tank"], ["moby", "k_tank"], ["sterina", "k_front"], ["klang", "k_tank"], ["kling", "k_tank"], ["inkshadow", "k_tank"], ["banker", "k_tank"], ["a_lumina", "k_tank"], ["a_medusa", "k_tank"], ["a_garra", "k_tank"], ["a_vespertina", "k_tank"], ["rei_mina", "k_tank"], ["perfurador", "k_tank"], ["t_basalto", "k_tank"], ["t_carrinho", "k_tank"], ["t_britadeira", "k_tank"], ["t_fundidor", "k_tank"], ["t_fendas", "k_tank"], ["sismico", "k_tank"], ["t_dinamite", "k_tank"], ["t_sentinela", "k_tank"], ["t_lanterna", "k_tank"], ["t_raiz", "k_tank"], ["t_cartografo", "k_tank"], ["t_sniper", "k_tank"], ["t_enfermeira", "k_tank"], ["t_feram", "k_tank"], ["t_pontes", "k_tank"]]
 const EXTRAS = ["k_front", "k_sniper"]     # inimigos vizinhos do alvo (descargas, áreas)
 
 var vfx: Node3D
@@ -358,10 +358,22 @@ func auto(n: int = 2, pausa: float = 2.2, fundos: Array = [0, 1]) -> void:
 		if str(id).begins_with(fac + "_") and not str(id).contains("_z_"):
 			ids.append(id)
 	ids.sort()
+	if fac == "ter":
+		fundos = [1]             # Valak (caverna)
+	var fe = OS.get_environment("OFICINA_FUNDOS")
+	if fe != "":
+		fundos = Array(fe.split(",")).map(func(x): return int(x))
+	if painel != null:
+		painel.visible = false      # gravação limpa: só o palco e a legenda
+	var only = OS.get_environment("OFICINA_IDS")
+	if only != "":
+		var keep = Array(only.split(","))
+		ids = ids.filter(func(i): return keep.any(func(k): return str(i).contains(k)))
 	for fi in fundos:
 		fundo_i = fi
 		_apply_fundo()
 		for id in ids:
 			for i in range(n):
+				legenda(str(vfx.receitas[id].get("nome", id)))
 				tocar(id)
 				await get_tree().create_timer(pausa).timeout

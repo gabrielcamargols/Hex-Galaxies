@@ -148,5 +148,139 @@
    "aby_vesper_sombra",
    "aby_vesper_passo"
   ]
+ },
+ "rei_mina": {
+  "nucleo": "#a957ec",
+  "motivo": "cristal de Valak roxo",
+  "ataque": "ter_rei_cristal",
+  "habilidades": [
+   "ter_rei_manip",
+   "ter_rei_barreira",
+   "ter_rei_tunel"
+  ]
+ },
+ "perfurador": {
+  "nucleo": "#ffac45",
+  "motivo": "broca de bronze",
+  "ataque": "ter_perf_broca",
+  "habilidades": [
+   "ter_perf_furo"
+  ]
+ },
+ "t_basalto": {
+  "nucleo": "#4cd4bd",
+  "motivo": "olho de energia turquesa",
+  "ataque": "ter_basalto_soco",
+  "habilidades": [
+   "ter_basalto_muralha"
+  ]
+ },
+ "t_carrinho": {
+  "nucleo": "#a957ec",
+  "motivo": "carga de cristal",
+  "ataque": "ter_carrinho_batida",
+  "habilidades": [
+   "ter_carrinho_carga"
+  ]
+ },
+ "t_britadeira": {
+  "nucleo": "#ffd24a",
+  "motivo": "luz de sinalização",
+  "ataque": "ter_brit_marteleta",
+  "habilidades": []
+ },
+ "t_fundidor": {
+  "nucleo": "#ff6a1f",
+  "motivo": "metal derretido",
+  "ataque": "ter_fundidor_gota",
+  "habilidades": [
+   "ter_fundidor_reves"
+  ]
+ },
+ "t_fendas": {
+  "nucleo": "#4cd4bd",
+  "motivo": "sobra de energia nas fendas",
+  "ataque": "ter_fendas_picareta",
+  "habilidades": [
+   "ter_fendas_ruptura"
+  ]
+ },
+ "sismico": {
+  "nucleo": "#ffac45",
+  "motivo": "tremor e pedra",
+  "ataque": "ter_sismico_pisao",
+  "habilidades": [
+   "ter_sismico_onda"
+  ]
+ },
+ "t_dinamite": {
+  "nucleo": "#ff6a1f",
+  "motivo": "fogo da dinamite",
+  "ataque": "ter_dina_lancar",
+  "habilidades": [
+   "ter_dina_carga"
+  ]
+ },
+ "t_sentinela": {
+  "nucleo": "#e6bd85",
+  "motivo": "pedra clara",
+  "ataque": "ter_sentinela_golpe",
+  "habilidades": [
+   "ter_sentinela_guarda"
+  ]
+ },
+ "t_lanterna": {
+  "nucleo": "#ffe9a0",
+  "motivo": "luz da lanterna",
+  "ataque": "ter_lanterna_luz",
+  "habilidades": [
+   "ter_lanterna_amparo"
+  ]
+ },
+ "t_raiz": {
+  "nucleo": "#8bd34a",
+  "motivo": "raízes vivas",
+  "ataque": "ter_raiz_chicote",
+  "habilidades": [
+   "ter_raiz_trama"
+  ]
+ },
+ "t_cartografo": {
+  "nucleo": "#4cd4bd",
+  "motivo": "mapa luminoso",
+  "ataque": "ter_cartografo_bussola",
+  "habilidades": [
+   "ter_cartografo_rota"
+  ]
+ },
+ "t_sniper": {
+  "nucleo": "#4cd4bd",
+  "motivo": "eletricidade turquesa",
+  "ataque": "ter_sniper_tiro",
+  "habilidades": []
+ },
+ "t_enfermeira": {
+  "nucleo": "#b8ffdf",
+  "motivo": "cristal curativo",
+  "ataque": "ter_enfermeira_cristal",
+  "habilidades": [
+   "ter_enfermeira_tratamento"
+  ]
+ },
+ "t_feram": {
+  "nucleo": "#ffac45",
+  "motivo": "ferro e poeira",
+  "ataque": "ter_feram_cabecada",
+  "habilidades": [
+   "ter_feram_investida"
+  ]
+ },
+ "t_pontes": {
+  "nucleo": "#4cd4bd",
+  "motivo": "ferramentas e cabos turquesa",
+  "ataque": "ter_pontes_chave",
+  "habilidades": [
+   "ter_pontes_conexao"
+  ]
  }
 }
