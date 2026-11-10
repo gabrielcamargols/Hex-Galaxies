@@ -420,5 +420,107 @@
   "motivo": "Drako",
   "ataque": "fau_drako_ataque",
   "habilidades": []
+ },
+ "k_cmd": {
+  "nucleo": "#FF742B",
+  "motivo": "Krieg Comandante",
+  "ataque": "kri_k_cmd_ataque",
+  "habilidades": []
+ },
+ "k_front": {
+  "nucleo": "#2864B4",
+  "motivo": "Krieg Frontliner",
+  "ataque": "kri_k_front_ataque",
+  "habilidades": []
+ },
+ "k_tank": {
+  "nucleo": "#F3AD58",
+  "motivo": "Krieg Tank",
+  "ataque": "kri_k_tank_ataque",
+  "habilidades": []
+ },
+ "k_sniper": {
+  "nucleo": "#FF742B",
+  "motivo": "Krieg Sniper",
+  "ataque": "kri_k_sniper_ataque",
+  "habilidades": []
+ },
+ "k_brawler": {
+  "nucleo": "#2864B4",
+  "motivo": "Krieg Brawler",
+  "ataque": "kri_k_brawler_ataque",
+  "habilidades": []
+ },
+ "k_demol": {
+  "nucleo": "#F3AD58",
+  "motivo": "Krieg Demolidor",
+  "ataque": "kri_k_demol_ataque",
+  "habilidades": []
+ },
+ "k_medico": {
+  "nucleo": "#FF742B",
+  "motivo": "Krieg Médico de Campo",
+  "ataque": "kri_k_medico_ataque",
+  "habilidades": []
+ },
+ "k_eng": {
+  "nucleo": "#2864B4",
+  "motivo": "Krieg Engenheiro de Cerco",
+  "ataque": "kri_k_eng_ataque",
+  "habilidades": []
+ },
+ "k_incend": {
+  "nucleo": "#F3AD58",
+  "motivo": "Krieg Incendiário",
+  "ataque": "kri_k_incend_ataque",
+  "habilidades": []
+ },
+ "k_assalt": {
+  "nucleo": "#FF742B",
+  "motivo": "Krieg Assaltante Leve",
+  "ataque": "kri_k_assalt_ataque",
+  "habilidades": []
+ },
+ "k_estandarte": {
+  "nucleo": "#2864B4",
+  "motivo": "Krieg Porta-Estandarte",
+  "ataque": "kri_k_estandarte_ataque",
+  "habilidades": []
+ },
+ "k_morteiro": {
+  "nucleo": "#F3AD58",
+  "motivo": "Krieg Morteiro",
+  "ataque": "kri_k_morteiro_ataque",
+  "habilidades": []
+ },
+ "k_escudeiro": {
+  "nucleo": "#FF742B",
+  "motivo": "Krieg Escudeiro",
+  "ataque": "kri_k_escudeiro_ataque",
+  "habilidades": []
+ },
+ "k_batedor": {
+  "nucleo": "#2864B4",
+  "motivo": "Krieg Batedora",
+  "ataque": "kri_k_batedor_ataque",
+  "habilidades": []
+ },
+ "k_radio": {
+  "nucleo": "#F3AD58",
+  "motivo": "Krieg Operador de Rádio",
+  "ataque": "kri_k_radio_ataque",
+  "habilidades": []
+ },
+ "k_sapador": {
+  "nucleo": "#FF742B",
+  "motivo": "Krieg Sapadora",
+  "ataque": "kri_k_sapador_ataque",
+  "habilidades": []
+ },
+ "k_granadeiro": {
+  "nucleo": "#2864B4",
+  "motivo": "Krieg Granadeiro",
+  "ataque": "kri_k_granadeiro_ataque",
+  "habilidades": []
  }
 }
