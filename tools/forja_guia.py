@@ -76,6 +76,18 @@ def _cores_opostas(no):
     return ("#FFAC45" in s or "#FFD97A" in s) and ("#4CD4BD" in s or "#B8FFDF" in s)
 
 
+def aplica(receita):
+    """usado pela FORJA (vfx_ter.py e demais geradores): corrige a receita na hora de gravar"""
+    _ajusta(receita, {"valor": 0, "tempo": 0})
+    return receita
+
+
+def audita_receita(receita):
+    out = {"valor": 0, "tempo": 0}
+    _audita(receita, out)
+    return out
+
+
 def main():
     aplicar = "--aplicar" in sys.argv
     todas = "--todas" in sys.argv

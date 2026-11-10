@@ -5,7 +5,10 @@ Cores: âmbar #FFAC45 (corpo), turquesa #4CD4BD (ajuda/energia), roxo de cristal
 AJUDA x ATAQUE (regra do diretor): ajuda é turquesa, sobe, anel que fecha, sem preto e sem tremor; ataque é âmbar,
 explode para fora, estilhaços pretos, poeira, tremor.
 python3 tools/vfx_ter.py   (precisa das texturas: python3 tools/forja_tex_ter.py)"""
-import json, os
+import json, os, sys
+
+sys.path.insert(0, os.path.dirname(__file__))
+from forja_guia import aplica, audita_receita   # regras do guia de VFX (valor, tempo, dissipação)
 
 ROOT = os.path.join(os.path.dirname(__file__), "..")
 AMB = ["#292C35", "#493D3D", "#FFAC45", "#FFD97A", "#FFF6DC"]
@@ -487,10 +490,17 @@ if __name__ == "__main__":
     d = json.load(open(p))
     for k in [k for k in d if k.startswith("ter_")]:
         del d[k]
+    for k in R:
+        R[k] = aplica(R[k])
+        falhas = audita_receita(R[k])
+        if falhas["valor"] or falhas["tempo"]:
+            raise SystemExit("guia de VFX violado em %s: %s" % (k, falhas))
     d.update(R)
     json.dump(d, open(p, "w"), ensure_ascii=False, indent=1)
     q = os.path.join(ROOT, "data", "vfx_personagens.json")
     pd = json.load(open(q))
+    for k in N:
+        N[k] = aplica(N[k])
     pd.update(N)
     json.dump(pd, open(q, "w"), ensure_ascii=False, indent=1)
     print(len(R), "receitas ter_*,", len(N), "personagens")
