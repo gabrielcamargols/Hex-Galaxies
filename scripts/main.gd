@@ -4621,7 +4621,7 @@ func _ter_load() -> void:
 	var d = JSON.parse_string(f.get_as_text())
 	if typeof(d) == TYPE_DICTIONARY:
 		for k in d:
-			if typeof(d[k]) == TYPE_DICTIONARY and str(d[k].get("ataque", "")).begins_with("ter_"):
+			if typeof(d[k]) == TYPE_DICTIONARY and (str(d[k].get("ataque", "")).begins_with("ter_") or str(d[k].get("ataque", "")).begins_with("fau_")):
 				ter_fx[k] = d[k]
 
 
