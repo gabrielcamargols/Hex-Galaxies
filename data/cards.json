@@ -2392,7 +2392,7 @@
     "name": "Barreira de Valak",
     "kind": "ativa",
     "per": "partida",
-    "text": "1 vez por partida, 1 ação: cria 5 cristais especiais em linha reta, em casas livres e consecutivas a até 6 casas dele, cada um na cor que você escolher. Bloqueiam passagem e tiros até serem quebrados."
+    "text": "1 vez por partida, 1 ação: cria de 2 a 5 cristais especiais em linha, em casas livres a até 6 casas dele. Você escolhe onde a barreira começa e onde termina (até 4 casas entre as pontas) e a cor de cada cristal. Bloqueiam passagem e tiros até serem quebrados."
    }
   },
   {
@@ -2451,7 +2451,7 @@
     "name": "Carga de Impacto",
     "kind": "ativa",
     "per": "round",
-    "text": "1 ação: avança até 2 casas em linha reta. Ao encontrar uma unidade, para, causa 2 de dano e empurra 1 casa. Pode atacar normalmente depois, com a segunda ação."
+    "text": "1 ação: avança até 2 casas na direção que você escolher (não precisa ser em linha reta). Ao encontrar uma unidade, para, causa 2 de dano e empurra 1 casa. Pode atacar normalmente depois, com a segunda ação."
    },
    "k": {
     "ult": "cartcharge",
@@ -2701,7 +2701,7 @@
     "name": "Investida Escavadora",
     "kind": "ativa",
     "per": "round",
-    "text": "1 ação: avança até 2 casas em linha reta. Ao encontrar um inimigo, para, causa 2 de dano e empurra 1 casa. Contra uma construção, causa 4 de dano."
+    "text": "1 ação: avança até 2 casas na direção que você escolher (não precisa ser em linha reta). Ao encontrar um inimigo, para, causa 2 de dano e empurra 1 casa. Contra uma construção, causa 4 de dano."
    },
    "k": {
     "ult": "ferram",

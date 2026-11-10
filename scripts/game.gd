@@ -2285,14 +2285,15 @@ func storm_on() -> bool:
 	return DB.maps[map_id].has("dunes") and (round_no % DUNE_EVERY == 0 or (round_no > 1 and (round_no - 1) % DUNE_EVERY == 0))
 
 
-# Abnara: a partir do round 6 chove (dano -3), o céu escurece e raios caem na mata
+# Abnara: nos rounds 6 e 7 chove (dano -3), o céu escurece e raios caem na mata
 const RAIN_ROUND = 6
 const RAIN_PEN = 3
 const FIRE_ROUNDS = 3
+const RAIN_ROUNDS = 2   # a chuva dura 2 rounds (6 e 7) e depois passa
 
 
 func rain_on() -> bool:
-	return map_id == "abnara" and round_no >= RAIN_ROUND
+	return map_id == "abnara" and round_no >= RAIN_ROUND and round_no < RAIN_ROUND + RAIN_ROUNDS
 
 
 func burning_near(u) -> bool:
@@ -2313,8 +2314,12 @@ func _ignite(h: Vector2i) -> bool:
 
 # chuva, raios e incêndio da mata (rodam no começo de cada round a partir do round 6)
 func _rain_events() -> void:
-	if not rain_on():
+	if round_no < RAIN_ROUND:
 		return
+	if round_no == RAIN_ROUND + RAIN_ROUNDS:
+		log_msg(-1, "A chuva passou: os ataques voltam ao dano normal.")
+		emitfx({"t": "rain_end"})
+		await pace()
 	if round_no == RAIN_ROUND:
 		log_msg(-1, "Começa a chover! Todos os ataques causam %d a menos de dano (ninguém enxerga direito)." % RAIN_PEN)
 		emitfx({"t": "rain_start"})
@@ -2343,7 +2348,7 @@ func _rain_events() -> void:
 	for h in DB.hexes:
 		if String(terr(h)["k"]) == "mata":
 			matas.append(h)
-	for i in range(3):
+	for i in range(3 if rain_on() else 0):
 		var tgt: Vector2i = DB.hexes[rng.randi() % DB.hexes.size()]
 		if not matas.is_empty() and rng.randf() < 0.5:
 			tgt = matas[rng.randi() % matas.size()]
@@ -2789,8 +2794,55 @@ func charge_line(u, d: Vector2i, feram: bool) -> Dictionary:
 	return {"steps": steps, "hit": hit}
 
 
+# Carrinho de Minério: anda até 2 casas por qualquer caminho (sem linha reta); plano por casa-alvo
+func cart_charge_plans(u) -> Dictionary:
+	var plans = {}
+	var par = {u.pos(): null}
+	var dist = {u.pos(): 0}
+	var q = [u.pos()]
+	while not q.is_empty():
+		var cur: Vector2i = q.pop_front()
+		if int(dist[cur]) >= 2:
+			continue
+		for nb in DB.nbrs(cur):
+			if par.has(nb) or not DB.in_board(nb) or blocks.has(nb) or cart_at(nb) or is_pit(nb) or hole.has(nb) or not can_step(cur, nb):
+				continue
+			par[nb] = cur
+			dist[nb] = int(dist[cur]) + 1
+			var t = unit_at(nb)
+			var path = []
+			var c2 = cur
+			while c2 != u.pos():
+				path.push_front(c2)
+				c2 = par[c2]
+			if t == null:
+				path.append(nb)
+				plans[nb] = {"steps": path, "hit": null, "dir": nb - cur}
+				q.append(nb)
+			else:
+				if t.owner != u.owner and not t.barrier:
+					plans[nb] = {"steps": path, "hit": t, "dir": nb - cur}
+	return plans
+
+
+func charge_plan(u, feram: bool, h: Vector2i) -> Dictionary:
+	if not feram:
+		var pl = cart_charge_plans(u)
+		if pl.has(h):
+			return pl[h]
+		return {"steps": [], "hit": null, "dir": Vector2i.ZERO}
+	for d in _dirs():
+		var Lx = charge_line(u, d, true)
+		if Lx["steps"].has(h) or (Lx["hit"] != null and Lx["hit"].pos() == h):
+			Lx["dir"] = d
+			return Lx
+	return {"steps": [], "hit": null, "dir": Vector2i.ZERO}
+
+
 func charge_opts(u, feram: bool) -> Array:
 	var out = []
+	if not feram:
+		return cart_charge_plans(u).keys()
 	for d in _dirs():
 		var L = charge_line(u, d, feram)
 		if L["hit"] == null and L["steps"].is_empty():
@@ -2981,30 +3033,24 @@ func _make_crystal(p: int, h: Vector2i, color: String) -> Unit:
 	return b
 
 
-# 5 cristais especiais em linha reta: lista de [início, direção] válidos
-func val_lines(u) -> Array:
-	var out = []
-	for h in DB.hexes:
-		if not val_hex_ok(h) or DB.dist(h, u.pos()) > MANIP_R:
-			continue
-		for d in DB.DIRS:
-			var ok = true
-			for k in range(5):
-				var c = h + d * k
-				if not DB.in_board(c) or DB.dist(c, u.pos()) > MANIP_R or not val_hex_ok(c):
-					ok = false
-					break
-			if ok:
-				out.append([h, d])
-	return out
+# Barreira de Valak: o Rei escolhe onde a linha começa e termina (2 a 5 cristais, até 4 casas entre as pontas)
+func val_line_cells(u, a: Vector2i, b: Vector2i) -> Array:
+	var d = DB.dist(a, b)
+	if d < 1 or d > 4:
+		return []
+	var cells = line_hexes(a, b, 0.0)
+	for c in cells:
+		if not DB.in_board(c) or DB.dist(c, u.pos()) > MANIP_R or not val_hex_ok(c):
+			return []
+	return cells
+
+
+func val_end_opts(u, a: Vector2i) -> Array:
+	return DB.hexes.filter(func(h): return not val_line_cells(u, a, h).is_empty())
 
 
 func val_start_opts(u) -> Array:
-	var seen = {}
-	for L in val_lines(u):
-		seen[L[0]] = true
-		seen[L[0] + L[1] * 4] = true
-	return seen.keys()
+	return DB.hexes.filter(func(h): return DB.dist(h, u.pos()) <= MANIP_R and val_hex_ok(h) and not val_end_opts(u, h).is_empty())
 
 
 # unidades de campo que sofrem o efeito de um cristal especial (aliados/inimigos do dono)
@@ -3474,11 +3520,11 @@ func _act_ult(u) -> bool:
 	var uname = ab2.get("name", "Ativa")
 	var texts = {"mend": "escolha o Abyssal a restaurar (até 3 casas)", "plate": "escolha o aliado adjacente a reforçar", "detonate": "escolha a mina a detonar", "barricade": "escolha a casa adjacente da Barricada", "grenade": "escolha o alvo da granada (até 3, passa por cima de obstáculos)", "artillery": "escolha a casa que a artilharia vai atingir no início do próximo round (até 5)", "abyss": "escolha o inimigo a puxar (até 8 casas)", "bombard": "escolha a casa do bombardeio (até 6)", "prison": "escolha o inimigo a prender (até 4)", "earth": "escolha a 1ª casa a mudar de altura (até 4)", "stampede": "escolha até onde avançar em linha reta", "orbital": "escolha onde pousar (até 5)",
 		"burrow": "escolha onde emergir (até 2 casas)", "bwall": "escolha a casa adjacente da muralha", "rootweb": "escolha a casa adjacente das raízes",
-		"cartcharge": "escolha até onde avançar em linha reta (até 2) ou o alvo do impacto", "ferram": "escolha até onde avançar em linha reta (até 2) ou o alvo da investida",
+		"cartcharge": "escolha até onde avançar (até 2 casas, qualquer direção) ou o alvo do impacto", "ferram": "escolha até onde avançar em linha reta (até 2) ou o alvo da investida",
 		"coat": "escolha o aliado adjacente a revestir", "rupture": "escolha a barreira adjacente a romper", "timedcharge": "escolha a casa da carga (até 2)",
 		"lumen": "escolha o aliado a curar (até 2 casas)", "nursing": "escolha o aliado a tratar (até 2 casas)", "route": "escolha o aliado que ganha a rota (até 2 casas)",
 		"bridge": "escolha a 1ª casa baixa a elevar (até 2 casas dele; até 3 casas ligadas)",
-		"valbarrier": "escolha uma ponta da linha de 5 cristais (até 6 casas)",
+		"valbarrier": "escolha onde a barreira começa (até 6 casas); depois, onde termina",
 		"portalis": "escolha a ENTRADA do portal (até 6 casas): por onde aliados e ataques entram"}
 	var h: Variant = null
 	if SELF_ULTS.has(kind):
@@ -3522,14 +3568,8 @@ func _act_ult(u) -> bool:
 		"cartcharge", "ferram":
 			var ch_f = kind == "ferram"
 			var ch_from = u.pos()
-			var ch_dir = Vector2i.ZERO
-			var ch_L = {"steps": [], "hit": null}
-			for d in _dirs():
-				var Lx = charge_line(u, d, ch_f)
-				if Lx["steps"].has(h) or (Lx["hit"] != null and Lx["hit"].pos() == h):
-					ch_dir = d
-					ch_L = Lx
-					break
+			var ch_L = charge_plan(u, ch_f, h)
+			var ch_dir: Vector2i = ch_L["dir"]
 			var ch_moved = false
 			for c in ch_L["steps"]:
 				abfx("stomp", c, u.uid)
@@ -3620,29 +3660,18 @@ func _act_ult(u) -> bool:
 			emitfx({"t": "passive", "kind": "power", "uid": rt_t.uid})
 			log_msg(p, "%s traça uma rota: %s ganha +1 de Movimento e sobe 1 nível a mais." % [nm(u), nm(rt_t)])
 		"valbarrier":
-			var vb_ends = []
-			for vl in val_lines(u):
-				if vl[0] == h:
-					vb_ends.append(vl[0] + vl[1] * 4)
-				elif vl[0] + vl[1] * 4 == h:
-					vb_ends.append(vl[0])
-			var vb_o = h
-			if vb_ends.size() > 1:
-				vb_o = await pick_hex(p, "%s: escolha a outra ponta da linha." % uname, vb_ends, "ult", false)
-			else:
-				vb_o = vb_ends[0]
-			var vb_step = Vector2i(0, 0)
-			for d2 in DB.DIRS:
-				if h + d2 * 4 == vb_o:
-					vb_step = d2
+			var vb_o = await pick_hex(p, "%s: escolha onde a barreira termina (até 4 casas da 1ª ponta)." % uname, val_end_opts(u, h), "ult", false)
+			if vb_o == null:
+				return false
+			var vb_cells = val_line_cells(u, h, vb_o)
 			var vb_cols = ["verde", "azul", "roxo"]
-			for k in range(5):
-				var vb_c = h + vb_step * k
-				var vb_ci = await ask(p, {"t": "choice", "text": "Cor do cristal %d de 5:" % (k + 1), "opts": ["Verde", "Azul", "Roxo"], "kind": "val_color", "uid": u.uid, "h": vb_c})
+			for k in range(vb_cells.size()):
+				var vb_c = vb_cells[k]
+				var vb_ci = await ask(p, {"t": "choice", "text": "Cor do cristal %d de %d:" % [k + 1, vb_cells.size()], "opts": ["Verde", "Azul", "Roxo"], "kind": "val_color", "uid": u.uid, "h": vb_c})
 				_make_crystal(p, vb_c, vb_cols[clampi(int(vb_ci) if vb_ci != null else 0, 0, 2)])
 				abfx("crystal", vb_c, u.uid)
-			emitfx({"t": "rumble", "hexes": [h, h + vb_step * 4]})
-			log_msg(p, "%s ergue a Barreira de Valak: 5 cristais especiais em linha." % nm(u))
+			emitfx({"t": "rumble", "hexes": [h, vb_o]})
+			log_msg(p, "%s ergue a Barreira de Valak: %d cristais especiais em linha." % [nm(u), vb_cells.size()])
 		"portalis":
 			portal_pick_a = h
 			var po_b = ult_opts(u).filter(func(x): return x != h)

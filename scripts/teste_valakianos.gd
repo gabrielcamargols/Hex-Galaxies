@@ -156,6 +156,16 @@ func _carrinho_e_feram() -> void:
 	ok(e.pos() == H(5, -2), "Carrinho empurra 1 casa")
 	ok(g.vib == 0, "fora da zona não gera vibração")
 	ok(g.act["actions"] == 1 and g.can_attack_now(c), "usa 1 ação e ainda pode atacar normalmente")
+	# Carrinho: qualquer direção e caminho (não precisa ser reto)
+	var gc = novo()
+	var cc = put(gc, "t_carrinho", 0, 5, 1)
+	var opc = gc.charge_opts(cc, false)
+	var curvo = H(6, -1)   # (5,0) e depois (6,-1): faz curva
+	ok(opc.has(curvo) and not opc.has(H(5, 1)), "Carrinho pode avançar 2 casas fazendo curva")
+	var pl = gc.charge_plan(cc, false, curvo)
+	ok(pl["steps"].size() == 2 and pl["steps"][1] == curvo, "caminho com 2 passos termina na casa escolhida")
+	var r0 = await ativa(gc, cc, [curvo])
+	ok(r0 and cc.pos() == curvo, "Carrinho anda em curva")
 	# vibração: +3 no deslocamento perto do buraco (no lugar do +1)
 	var gv = novo()
 	var cv = put(gv, "t_carrinho", 0, 5, 0)
@@ -458,28 +468,27 @@ func _rei_barreira() -> void:
 	var g: Game = gr[0]
 	var rei: Game.Unit = gr[1]
 	ok(g.ult_kind(rei) == "valbarrier", "Rei tem a ativa Barreira de Valak")
-	var lines = g.val_lines(rei)
-	ok(not lines.is_empty(), "há linha de 5 casas livres a até 6 do Rei")
-	var L = lines[0]
-	var st: Vector2i = L[0]
-	var ends = []
-	for l2 in lines:
-		if l2[0] == st:
-			ends.append(l2[0] + l2[1] * 4)
-	var ans = [st]
-	if ends.size() > 1:
-		ans.append(L[0] + L[1] * 4)
-	ans.append_array([0, 1, 2, 1, 0])
+	var starts = g.val_start_opts(rei)
+	ok(not starts.is_empty(), "há casas livres para começar a barreira a até 6 do Rei")
+	var st: Vector2i = starts[0]
+	var ends = g.val_end_opts(rei, st)
+	ok(not ends.is_empty() and ends.all(func(e): return DB.dist(e, st) <= 4), "o fim da barreira é livre, a até 4 casas do começo")
+	var en5 = ends.filter(func(e): return DB.dist(e, st) == 4)
+	var fim: Vector2i = en5[0] if not en5.is_empty() else ends[0]
+	var cells = g.val_line_cells(rei, st, fim)
+	var ans = [st, fim]
+	for k in range(cells.size()):
+		ans.append([0, 1, 2, 1, 0][k])
 	var r = await ativa(g, rei, ans)
 	ok(r, "Barreira de Valak usada")
 	var crs = g.units.filter(func(x): return x.crystal != "" and x.sp_owner == 0 and x.st == "field")
-	ok(crs.size() == 5, "criou 5 cristais especiais (%d)" % crs.size())
+	ok(crs.size() == cells.size(), "criou %d cristais especiais (%d)" % [cells.size(), crs.size()])
 	var cols = []
-	for k in range(5):
-		var c = g.unit_at(st + L[1] * k)
+	for k in range(cells.size()):
+		var c = g.unit_at(cells[k])
 		cols.append(c.crystal if c != null else "?")
-	ok(cols == ["verde", "azul", "roxo", "azul", "verde"], "cores escolhidas uma a uma: %s" % str(cols))
-	ok(g.units.filter(func(x): return x.crystal != "" and x.sp_owner == 0 and x.exp == 0).size() == 5, "cristais não expiram sozinhos")
+	ok(cols == ["verde", "azul", "roxo", "azul", "verde"].slice(0, cells.size()), "cores escolhidas uma a uma: %s" % str(cols))
+	ok(g.units.filter(func(x): return x.crystal != "" and x.sp_owner == 0 and x.exp == 0).size() == cells.size(), "cristais não expiram sozinhos")
 	ok(rei.ult_used and not g.can_ult(rei), "uma vez por partida")
 	# sem 5 casas válidas: não pode usar e não gasta nada
 	var gr2 = _rei()
@@ -489,7 +498,7 @@ func _rei_barreira() -> void:
 		if h != rei2.pos() and DB.dist(h, rei2.pos()) <= 6 and not (h.x % 2 == 0 and h.y % 2 == 0):
 			g2.blocks[h] = true
 	g2.start_activation(rei2)
-	ok(g2.val_lines(rei2).is_empty() and not g2.can_ult(rei2) and not rei2.ult_used, "sem 5 casas válidas: não usa e não consome")
+	ok(g2.val_start_opts(rei2).is_empty() and not g2.can_ult(rei2) and not rei2.ult_used, "sem 2 casas vizinhas válidas: não usa e não consome")
 
 
 func _rei_cristais() -> void:
@@ -599,6 +608,13 @@ func _rei_manip() -> void:
 	fila = [ma.find("rip"), pl]
 	r = await ga.act_manip(reia)
 	ok(r and ga.unit_at(pl) != null and ga.terr(pl)["k"] != "planta", "planta arrancada vira bloco")
+	ok(ga.rain_on() == false, "round 1 não chove")
+	ga.round_no = 6
+	ok(ga.rain_on(), "round 6 chove")
+	ga.round_no = 7
+	ok(ga.rain_on(), "round 7 ainda chove")
+	ga.round_no = 8
+	ok(not ga.rain_on(), "round 8 a chuva já passou (dura 2 rounds)")
 	DB.set_map("posto")
 	# túnel
 	var g3: Game = _rei()[0]
