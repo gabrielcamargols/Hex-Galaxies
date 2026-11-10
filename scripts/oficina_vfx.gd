@@ -276,8 +276,19 @@ func _build_ui() -> void:
 	tl.add_theme_font_size_override("font_size", 24)
 	tl.add_theme_color_override("font_color", Color("#FFD12E"))
 	v.add_child(tl)
+	# lista de ataques com barra de rolagem (no celular a tela é baixa e os ataques não cabiam)
+	var sc = ScrollContainer.new()
+	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	sc.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_ALWAYS
+	var vp = get_viewport().get_visible_rect().size
+	sc.custom_minimum_size = Vector2(300, clampf(vp.y * 0.42, 150.0, 560.0))
+	sc.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	v.add_child(sc)
+	var barra = sc.get_v_scroll_bar()
+	barra.custom_minimum_size.x = 16.0   # barra grossa, fácil de arrastar com o dedo
 	lista = VBoxContainer.new()
-	v.add_child(lista)
+	lista.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sc.add_child(lista)
 	_fill_list()
 	var row = HBoxContainer.new()
 	v.add_child(row)
