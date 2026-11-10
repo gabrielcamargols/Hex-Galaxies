@@ -41,7 +41,27 @@ def faixas(m, borda=0.022, corpo=0.075, lo=LO, mid=MID, hi=HI):
     return np.clip(v, 0, 1) * m
 
 
+def acabamento(v, seed):
+    """pincelada de HQ: borda irregular (não lisa), hachura diagonal no corpo e brilho riscado no miolo.
+    Deixa a forma com detalhe pintado à mão, em vez de chapada e simples."""
+    H, W = v.shape
+    m = v > 0.05
+    def ruido(sd, esc, oit):
+        return fbm(sd, n=max(H, W), esc=esc, oit=oit)[:H, :W]
+    ruido_b = ruido(seed, 22, 2)                      # borda que treme
+    ruido_c = ruido(seed + 7, 9, 3)                   # manchas de tinta
+    v = np.where(m & (ruido_b < 0.14), 0.0, v)        # bordas comidas em pequenos lascados
+    yy, xx = np.mgrid[0:H, 0:W]
+    hachura = ((xx + yy + (ruido_c * 12).astype(int)) // max(3, max(H, W) // 40)) % 2 == 0
+    corpo = (v > LO + 0.05) & (v < MID + 0.05) & (ruido_c > 0.45)
+    v = np.where(corpo & hachura, v * 0.78, v)        # hachura escura de tinta
+    brilho = (v > HI - 0.04) & (ruido_c > 0.6)
+    v = np.where(brilho & hachura, 0.99, v)           # riscos de luz no miolo
+    return np.clip(v, 0, 1)
+
+
 def salva(nome, v):
+    v = acabamento(v, sum(map(ord, nome)))
     a = (np.clip(v, 0, 1) * 255).astype(np.uint8)
     Image.fromarray(np.dstack([a, a, a, a]), "RGBA").save(os.path.join(OUT, nome + ".png"))
     return a
