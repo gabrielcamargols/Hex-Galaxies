@@ -199,6 +199,7 @@ func _ready() -> void:
 		if parsed is Dictionary:
 			dlg = parsed
 	_load_prefs()
+	_build_fs_button()
 	if rgb_rect != null:
 		rgb_rect.visible = rgb_on
 	_apply_settings.call_deferred()
@@ -717,6 +718,82 @@ func _apply_settings() -> void:
 			DisplayServer.window_set_size(sz)
 			var scr2 = DisplayServer.screen_get_usable_rect()
 			DisplayServer.window_set_position(scr2.position + (scr2.size - sz) / 2)
+
+
+# ---- botão de tela cheia (canto superior direito): desktop, navegador e Android ----
+var fs_btn: Button = null
+
+
+func _is_full() -> bool:
+	var m = DisplayServer.window_get_mode()
+	return m == DisplayServer.WINDOW_MODE_FULLSCREEN or m == DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN
+
+
+func _build_fs_button() -> void:
+	if not OS.get_cmdline_user_args().is_empty():
+		return   # modos de teste/captura não mostram o botão
+	var lay = CanvasLayer.new()
+	lay.layer = 19
+	add_child(lay)
+	fs_btn = Button.new()
+	fs_btn.flat = true
+	fs_btn.focus_mode = Control.FOCUS_NONE
+	fs_btn.tooltip_text = "Tela cheia / janela (F11)"
+	var touch = OS.has_feature("mobile") or OS.has_feature("web") or DisplayServer.is_touchscreen_available()
+	var sz = 56.0 if touch else 40.0
+	fs_btn.custom_minimum_size = Vector2(sz, sz)
+	fs_btn.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	fs_btn.offset_left = -sz - 8.0
+	fs_btn.offset_right = -8.0
+	fs_btn.offset_top = 8.0
+	fs_btn.offset_bottom = 8.0 + sz
+	fs_btn.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	fs_btn.modulate = Color(1, 1, 1, 0.75)
+	lay.add_child(fs_btn)
+	fs_btn.draw.connect(_draw_fs_icon)
+	fs_btn.pressed.connect(_toggle_fullscreen)
+	get_window().size_changed.connect(func(): fs_btn.queue_redraw())
+
+
+func _draw_fs_icon() -> void:
+	var b = fs_btn
+	var full = _is_full()
+	var r = Rect2(Vector2.ZERO, b.size)
+	b.draw_rect(r, Color(0.02, 0.04, 0.09, 0.55), true)
+	b.draw_rect(r, Color(0.55, 0.75, 1.0, 0.7), false, 1.5)
+	var c = Color(0.85, 0.93, 1.0)
+	var m = b.size.x * 0.26
+	var l = b.size.x * 0.2
+	var x0 = m
+	var x1 = b.size.x - m
+	var y0 = m
+	var y1 = b.size.y - m
+	if not full:
+		# cantos apontando para fora: entrar em tela cheia
+		b.draw_polyline(PackedVector2Array([Vector2(x0, y0 + l), Vector2(x0, y0), Vector2(x0 + l, y0)]), c, 2.5)
+		b.draw_polyline(PackedVector2Array([Vector2(x1 - l, y0), Vector2(x1, y0), Vector2(x1, y0 + l)]), c, 2.5)
+		b.draw_polyline(PackedVector2Array([Vector2(x0, y1 - l), Vector2(x0, y1), Vector2(x0 + l, y1)]), c, 2.5)
+		b.draw_polyline(PackedVector2Array([Vector2(x1 - l, y1), Vector2(x1, y1), Vector2(x1, y1 - l)]), c, 2.5)
+	else:
+		# cantos apontando para dentro: voltar ao modo janela
+		b.draw_polyline(PackedVector2Array([Vector2(x0, y0 + l), Vector2(x0 + l, y0 + l), Vector2(x0 + l, y0)]), c, 2.5)
+		b.draw_polyline(PackedVector2Array([Vector2(x1 - l, y0), Vector2(x1 - l, y0 + l), Vector2(x1, y0 + l)]), c, 2.5)
+		b.draw_polyline(PackedVector2Array([Vector2(x0, y1 - l), Vector2(x0 + l, y1 - l), Vector2(x0 + l, y1)]), c, 2.5)
+		b.draw_polyline(PackedVector2Array([Vector2(x1 - l, y1), Vector2(x1 - l, y1 - l), Vector2(x1, y1 - l)]), c, 2.5)
+
+
+func _toggle_fullscreen() -> void:
+	if not OS.has_feature("web") and not OS.has_feature("mobile"):
+		fullscreen = not _is_full()
+		_apply_settings()
+		_save_prefs()
+	elif _is_full():
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+	else:
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+	if fs_btn != null:
+		fs_btn.queue_redraw()
+		get_tree().create_timer(0.4).timeout.connect(func(): fs_btn.queue_redraw())
 
 
 func _settings_panel() -> void:
@@ -4044,6 +4121,10 @@ func _start_res_drag(uid: int) -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and (event as InputEventKey).keycode == KEY_F11:
+		_toggle_fullscreen()
+		get_viewport().set_input_as_handled()
+		return
 	if game == null:
 		return
 	if card_drag != null:
