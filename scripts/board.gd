@@ -324,7 +324,15 @@ func _build_backdrop() -> void:
 # ================= naves das facções no céu =================
 # cada facção com nave aparece de lado (perfil) no céu, atrás do lado dela; as demais entram aqui depois
 # nose: -1 = o nariz do modelo aponta para -X (o desenho fica de proa para o tabuleiro)
-const FAC_SHIPS = {"ABY": {"path": "res://models/nave_aby.glb", "nose": -1.0}}
+const FAC_SHIPS = {
+	"ABY": {"path": "res://models/nave_aby.glb", "nose": -1.0},
+	"FAU": {"path": "res://models/nave_fau.glb", "nose": -1.0},
+	"KRI": {"path": "res://models/nave_kri.glb", "nose": -1.0},
+	"WAC": {"path": "res://models/nave_wac.glb", "nose": -1.0},
+	"TER": {"path": "res://models/nave_ter.glb", "nose": -1.0},
+	"LIT": {"path": "res://models/nave_lit.glb", "nose": -1.0},
+	"ZUK": {"path": "res://models/nave_zuk.glb", "nose": -1.0},
+}
 var ships_root: Node3D = null
 var ship_nodes: Array = []
 
