@@ -368,7 +368,7 @@ func _build_ships() -> void:
 		var out = ec.normalized()
 		var len_w = PLAT * 1.0
 		ship.scale = Vector3.ONE * len_w
-		var c2 = out * (PLAT + len_w * 0.15)
+		var c2 = out * (PLAT + len_w * 1.1)   # bem atrás da borda: não tapa a visão ampla do mapa (cosmético)
 		ship.position = Vector3(c2.x, PLAT * 0.6, c2.y)
 		ship.set_meta("out", out)
 		ship.set_meta("nose", float(FAC_SHIPS[fac]["nose"]))
