@@ -425,7 +425,9 @@
   "nucleo": "#FF742B",
   "motivo": "Krieg Comandante",
   "ataque": "kri_k_cmd_ataque",
-  "habilidades": []
+  "habilidades": [
+   "kri_cmd_bombardeio"
+  ]
  },
  "k_front": {
   "nucleo": "#2864B4",
@@ -440,7 +442,7 @@
   "habilidades": []
  },
  "k_sniper": {
-  "nucleo": "#FF742B",
+  "nucleo": "#F3AD58",
   "motivo": "Krieg Sniper",
   "ataque": "kri_k_sniper_ataque",
   "habilidades": []
@@ -518,9 +520,12 @@
   "habilidades": []
  },
  "k_granadeiro": {
-  "nucleo": "#2864B4",
+  "nucleo": "#FF742B",
   "motivo": "Krieg Granadeiro",
   "ataque": "kri_k_granadeiro_ataque",
-  "habilidades": []
+  "habilidades": [
+   "kri_gran_granada",
+   "kri_gran_saraivada"
+  ]
  }
 }

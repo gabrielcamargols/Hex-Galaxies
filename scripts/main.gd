@@ -218,7 +218,10 @@ func _ready() -> void:
 		if a.begins_with("--oficina"):
 			# --oficina | --oficina=auto | --oficina=ter | --oficina=ter,auto
 			var op = a.substr(10).split(",") if a.length() > 10 else PackedStringArray()
-			var of_fac = "ter" if "ter" in op else "aby"
+			var of_fac = "aby"
+			for fx in ["ter", "fau", "kri"]:
+				if fx in op:
+					of_fac = fx
 			_open_oficina("auto" in op, of_fac)
 			return
 	for a in args:
@@ -4609,6 +4612,9 @@ const TER_ABFX = {
 	"t_feram": {"push": "ter_feram_investida_hit"},
 	"t_pontes": {"earth": "ter_pontes_conexao"},
 	"t_sniper": {"bolt": "ter_sniper_hit"},
+	# Krieg
+	"k_cmd": {"bombard": "kri_cmd_bombardeio"},
+	"k_granadeiro": {"blast": "kri_gran_granada", "explode": "kri_gran_saraivada"},
 }
 
 

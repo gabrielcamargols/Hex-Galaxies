@@ -709,20 +709,54 @@ func _fx_layer(L: Dictionary, at: Vector3, from: Variant, tint: Color) -> void:
 	tw.tween_callback(mi.queue_free)
 
 
-# modelo 3D (ex.: dinamite de Meshy): sobe e gira no lugar, encolhe no fim do tempo de vida
-func _fx_modelo(L: Dictionary, at: Vector3) -> void:
+# modelo 3D (ex.: dinamite, projétil): instancia a cena, com "escala" (os modelos Meshy têm ~2 de altura) e "rot" em graus
+func _modelo_node(L: Dictionary) -> Node3D:
 	var ps = load(str(L["modelo"]))
 	if not (ps is PackedScene):
+		return null
+	var pivot = Node3D.new()
+	var m: Node3D = ps.instantiate()
+	var r = L.get("rot", [0, 0, 0])
+	m.rotation_degrees = Vector3(float(r[0]), float(r[1]), float(r[2]))
+	pivot.add_child(m)
+	for mi in m.find_children("*", "MeshInstance3D", true, false):
+		(mi as MeshInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	return pivot
+
+
+# camada de modelo 3D: sobe e gira no lugar e encolhe no fim; com "queda", despenca de "y" até o chão (projétil do céu)
+func _fx_modelo(L: Dictionary, at: Vector3) -> void:
+	var root = _modelo_node(L)
+	if root == null:
 		return
-	var root: Node3D = ps.instantiate()
-	var esc = float(L.get("escala", 0.5)) * cam_k
-	var dur = _rnd(L.get("life", 1.2), 1.2) * DUR_MUL
-	var y0 = at.y + _rnd(L.get("y", 0.0))
+	var esc = float(L.get("escala", 0.35)) * cam_k
+	var dur = _rnd(L.get("life", 1.2), 1.2) * (1.0 if L.has("queda") else DUR_MUL)
+	var y0 = at.y + _rnd(L.get("y", 0.0)) * (cam_k if L.has("queda") else 1.0)
 	root.position = Vector3(at.x, y0, at.z)
-	root.scale = Vector3.ONE * esc * 0.2
 	add_child(root)
-	var giro = deg_to_rad(float(L.get("giro", 360.0)))
 	var tw = root.create_tween()
+	if L.has("queda"):
+		var off = L.get("de", [0, 0])            # deslocamento horizontal de onde vem (cai em diagonal)
+		root.position += Vector3(float(off[0]), 0, float(off[1])) * cam_k
+		root.scale = Vector3.ONE * esc
+		var alvo = Vector3(at.x, at.y + 0.3, at.z)
+		root.look_at_from_position(root.position, alvo, Vector3.UP)
+		tw.tween_property(root, "position", alvo, dur)
+		tw.tween_callback(root.queue_free)
+		return
+	if L.has("pousa"):
+		# cai girando até o chão em "pousa" segundos, fica parado e encolhe no fim
+		var tp = float(L["pousa"])
+		root.scale = Vector3.ONE * esc
+		root.rotation.z = deg_to_rad(float(L.get("giro", 360.0)))
+		tw.set_parallel(true)
+		tw.tween_property(root, "position:y", at.y + float(L.get("chao", 0.35)), tp).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		tw.tween_property(root, "rotation:z", deg_to_rad(float(L.get("deita", 70.0))), tp)
+		tw.tween_property(root, "scale", Vector3.ZERO, dur * 0.25).set_delay(dur * 0.75)
+		tw.chain().tween_callback(root.queue_free)
+		return
+	root.scale = Vector3.ONE * esc * 0.2
+	var giro = deg_to_rad(float(L.get("giro", 360.0)))
 	tw.set_parallel(true)
 	tw.tween_property(root, "position:y", y0 + float(L.get("rise", 0.6)) * cam_k, dur).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tw.tween_property(root, "rotation:y", giro, dur)
@@ -1034,6 +1068,17 @@ func _fx_proj2(P: Dictionary, from: Vector3, to: Vector3, tint: Color, ctx: Dict
 	if P.has("rastro"):
 		var tr = _fx_rastro_mesh(P["rastro"])
 		holder.add_child(tr)
+	if P.has("modelo"):
+		# modelo 3D voando: o holder olha para a frente (-Z); "rot" acerta o nariz do modelo; "giro" = graus/s de cambalhota
+		var MD: Dictionary = P["modelo"]
+		var mn = _modelo_node(MD)
+		if mn != null:
+			mn.scale = Vector3.ONE * float(MD.get("escala", 0.2)) * cam_k
+			holder.add_child(mn)
+			var gv = deg_to_rad(float(MD.get("giro", 0.0)))
+			if gv != 0.0:
+				var tg = mn.create_tween().set_loops()
+				tg.tween_property(mn, "rotation:x", gv, 1.0).as_relative()
 	var beams: Array = []          # [mesh, material, papel] — arpão e cabo, atualizados no voo
 	if P.has("arpao"):
 		for bl in _beam_pair(P["arpao"], "arpao", tint):

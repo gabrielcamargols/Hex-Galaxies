@@ -409,4 +409,15 @@ func auto(n: int = 2, pausa: float = 2.2, fundos: Array = [0, 1]) -> void:
 			for i in range(n):
 				legenda(str(vfx.receitas[id].get("nome", id)))
 				tocar(id)
+				var fotos = OS.get_environment("OFICINA_FOTOS")      # revisão: salva quadros do efeito nesta pasta
+				if fotos != "":
+					Engine.time_scale = 0.2          # câmera lenta: os quadros caem no instante pedido mesmo com fps baixo
+					var t_ant = 0.0
+					for tf in Array(OS.get_environment("OFICINA_FOTOS_T").split(",")):
+						await get_tree().create_timer(float(tf) - t_ant).timeout
+						t_ant = float(tf)
+						await RenderingServer.frame_post_draw
+						get_viewport().get_texture().get_image().save_png("%s/%s_%s.png" % [fotos, id, tf])
+					await get_tree().create_timer(1.6).timeout      # deixa o efeito sumir antes do próximo
+					continue
 				await get_tree().create_timer(pausa).timeout

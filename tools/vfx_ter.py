@@ -350,7 +350,7 @@ def receitas():
     add("dina_carga", "DINAMITADOR · Carga Temporizada (coloca a carga)", "t_dinamite",
         {"alvo": "meio", "layers": [
             # dinamite 3D (modelo Meshy): sobe e gira no lugar (não é mais o ícone de partícula)
-            {"modelo": "res://models/dinamite/dinamite.fbx", "escala": 30, "life": 1.2, "y": 2.4, "rise": 0.6, "giro": 360},
+            {"modelo": "res://models/dinamite/dinamite.fbx", "escala": 0.35, "life": 1.2, "y": 2.4, "pousa": 0.28, "giro": 300},
             poeira(5, 0.28, 0.2, 1.1), anel_chao(2.2, AMB2, 0.3, 0.45), pontos(10, "#FFAC45", 0.3, 0.3),
             estrela(1.0, AMB, 0.3, 0.2, 0.3, False)], "shake": 0.12, "shake_delay": 0.28})
 
