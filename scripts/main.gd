@@ -4891,6 +4891,21 @@ func _fx_phoenix(p: Vector3) -> void:
 	vfx.flip("fire", p, 2.4, 0.9)
 
 
+# símbolo da facção de quem bateu, no alvo, no instante do impacto (Krieg têm o seu nos próprios efeitos)
+const SIMBOLO_FACS = ["ABY", "ZUK", "FAU", "TER"]
+
+
+func _simbolo_hit(from_uid: int, at: Vector3) -> void:
+	var f = _unit_fac(from_uid)
+	if not SIMBOLO_FACS.has(f) or not vfx.has_fx("simbolo_" + f):
+		return
+	var wait = max(0.0, impact_delay - 0.05) if Time.get_ticks_msec() < impact_until else 0.0
+	if wait > 0.0:
+		await get_tree().create_timer(wait).timeout
+	if vfx != null:
+		vfx.play_fx("simbolo_" + f, at, null, Color.WHITE)
+
+
 func _storm_end() -> void:
 	if vfx != null:
 		vfx.sandstorm(false)
@@ -4903,6 +4918,9 @@ func _on_fx(e: Dictionary) -> void:
 	match e["t"]:
 		"strike":
 			board.lunge(e["from"])
+			var stu: Variant = game.by_uid(e["to"])
+			if stu != null:
+				_simbolo_hit.call_deferred(e["from"], _hex_pos(stu.pos(), 0.0))
 			var a: Variant = _unit_pos(e["from"], 1.0)
 			var tgt: Variant = _unit_pos(e["to"], 0.9)
 			var col = _vfx_color(e["from"])
@@ -4910,7 +4928,9 @@ func _on_fx(e: Dictionary) -> void:
 			if a == null or tgt == null:
 				return
 			var k = _fx_scale()
-			_comic_pop(tgt, (["ZAP!", "PEW!", "FZZT!", "VUSH!"] if e["ranged"] else ["POW!", "BAM!", "WHAM!", "SOC!", "TUM!"]).pick_random())
+			# onde o símbolo da facção aparece, ele é a marca do golpe (sem o balão de onomatopeia por cima)
+			if not SIMBOLO_FACS.has(_unit_fac(e["from"])):
+				_comic_pop(tgt, (["ZAP!", "PEW!", "FZZT!", "VUSH!"] if e["ranged"] else ["POW!", "BAM!", "WHAM!", "SOC!", "TUM!"]).pick_random())
 			_voice(e["from"], "atk", -2.0)
 			var ter_id = _ter_attack_id(e["from"], e["ranged"])
 			if ter_id != "":
