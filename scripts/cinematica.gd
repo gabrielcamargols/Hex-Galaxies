@@ -54,7 +54,8 @@ func _setup() -> void:
 	sub = SubViewport.new()
 	sub.size = Vector2i(768, 768)
 	sub.render_target_update_mode = SubViewport.UPDATE_ALWAYS
-	sub.msaa_3d = Viewport.MSAA_2X
+	# no navegador/celular o campo é desenhado duas vezes durante a cena: sem MSAA para não pesar
+	sub.msaa_3d = Viewport.MSAA_DISABLED if (OS.has_feature("web") or OS.has_feature("mobile")) else Viewport.MSAA_2X
 	add_child(sub)
 	sub_cam = Camera3D.new()
 	sub_cam.cull_mask = 1

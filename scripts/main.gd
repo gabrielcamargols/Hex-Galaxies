@@ -2163,6 +2163,10 @@ func _start_match(sides) -> void:
 	board.visible = true
 	board.build(game)
 	board.cam.make_current()
+	if not autotest or OS.get_environment("HG_WARM") != "":
+		if fader.color.a < 0.99:
+			fader.color.a = 1.0
+		await _prewarm()
 	if intro:
 		intro = false
 		# chegada: a câmera desce do alto do planeta até o tabuleiro
@@ -2180,6 +2184,7 @@ func _start_match(sides) -> void:
 		ui.modulate.a = 1.0
 		if fader.color.a > 0.0:
 			_fade(0.0, 0.4)
+	board.shake = 0.0
 	vfx.setup_ambient(game.map_id)
 	sfx.stop_all_loops()
 	if game.map_id == "tarhut" or game.map_id == "goraida":
@@ -4507,6 +4512,114 @@ func _open_oficina(auto: bool, fac: String = "aby") -> void:
 		get_tree().quit()
 
 
+# ================= aquecimento (evita as travadas da 1ª vez) =================
+# No navegador/Android (renderizador de compatibilidade) cada shader é compilado e cada textura é enviada
+# à placa de vídeo na primeira vez em que aparece: era isso que travava a troca de round, a cinemática
+# dos líderes e os golpes/nocautes. Aqui tudo é desenhado uma vez com a tela coberta, antes do jogo começar.
+var warm_keep: Array = []          # mantém texturas e modelos carregados (sem recarregar do disco no meio da luta)
+
+
+func _res_names(dir: String, ext: String) -> Array:
+	var out = []
+	for f in DirAccess.get_files_at(dir):
+		var n = f
+		if n.ends_with(".import"):
+			n = n.trim_suffix(".import")
+		elif n.ends_with(".remap"):
+			n = n.trim_suffix(".remap")
+		if n.ends_with(ext) and not out.has(n):
+			out.append(n)
+	return out
+
+
+func _prewarm() -> void:
+	vfx._receitas_load()
+	# na frente da câmera (dentro do quadro, coberto pelo fader)
+	var cb = board.cam.global_transform
+	var c = cb.origin - cb.basis.z * 8.0
+	var src = cb.basis.x * -2.0
+	var keep_sfx = vfx.sfx
+	vfx.sfx = null                       # sem sons durante o aquecimento
+	# texturas e modelos dos efeitos ficam na memória a partida inteira
+	for n in _res_names("res://vfx/tex", ".png"):
+		var t = load("res://vfx/tex/" + n)
+		if t != null:
+			warm_keep.append(t)
+	for id in vfx.receitas:
+		var r = vfx.receitas[id]
+		if typeof(r) != TYPE_DICTIONARY:
+			continue
+		for L in r.get("layers", []):
+			if typeof(L) == TYPE_DICTIONARY and L.has("modelo"):
+				warm_keep.append(load(str(L["modelo"])))
+		var pr = r.get("proj", {})
+		if typeof(pr) == TYPE_DICTIONARY and pr.has("modelo"):
+			warm_keep.append(load(str(pr["modelo"]["modelo"])))
+	# todas as receitas da Forja (habilidades e ataques de todas as facções)
+	for id in vfx.receitas:
+		if typeof(vfx.receitas[id]) == TYPE_DICTIONARY:
+			vfx.play_fx(id, c, c + src, Color.WHITE)
+	# efeitos pintados genéricos (de pé e no chão) e os efeitos de código
+	for n in _res_names("res://vfx", ".png"):
+		var nm = n.trim_suffix(".png")
+		vfx.flip(nm, c, 1.0, 0.3)
+		vfx.flip(nm, c, 1.0, 0.3, Color.WHITE, true)
+	vfx.summon_fx(c, Color.WHITE)
+	vfx.death_fx(c, Color.WHITE)
+	vfx.heal_fx(c)
+	vfx.explosion(c)
+	vfx.dust_burst(c, true)
+	vfx.impact(c, Color.WHITE)
+	for st in ["bala", "laser", "cristal", "energia", "arco", ""]:
+		vfx.projectile(c + src, c, Color.WHITE, st)
+	# telas de impacto (KO, NO LIMITE, NOCAUTE) e shaders da cinemática dos líderes
+	var holder = Control.new()
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	holder.modulate.a = 0.02
+	ui.add_child(holder)
+	for n in _res_names("res://ui/splash", ".png"):
+		var tr = TextureRect.new()
+		tr.texture = load("res://ui/splash/" + n)
+		warm_keep.append(tr.texture)
+		tr.size = Vector2(8, 8)
+		holder.add_child(tr)
+	var cine: Script = load("res://scripts/cinematica.gd")
+	warm_keep.append(cine)
+	var quads: Array = []
+	for k in cine.get_script_constant_map():
+		var code = cine.get_script_constant_map()[k]
+		if str(k).begins_with("SH_") and typeof(code) == TYPE_STRING:
+			var sh = Shader.new()
+			sh.code = code
+			var m = ShaderMaterial.new()
+			m.shader = sh
+			var mi = MeshInstance3D.new()
+			var q = QuadMesh.new()
+			q.size = Vector2(0.05, 0.05)
+			mi.mesh = q
+			mi.material_override = m
+			mi.position = c
+			board.add_child(mi)
+			quads.append(mi)
+	# vozes das peças desta partida
+	var seen = {}
+	for u in game.units:
+		if u.barrier or seen.has(u.cid):
+			continue
+		seen[u.cid] = true
+		for kind in ["atk", "dor", "fala", "prov"]:
+			sfx.has_sound("v_%s_%s" % [u.cid, kind])
+	for i in range(5):
+		await get_tree().process_frame
+	for q in quads:
+		q.queue_free()
+	holder.queue_free()
+	vfx.sfx = keep_sfx
+	board.shake = 0.0
+	perf_t = 0.0                         # a medição de desempenho começa depois do aquecimento
+	perf_n = 0
+
+
 func _unit_color(uid: int) -> Color:
 	var u: Variant = game.by_uid(uid) if game != null else null
 	if u == null or u.barrier:
@@ -4818,7 +4931,8 @@ func _on_fx(e: Dictionary) -> void:
 				var big = du2.is_cmd
 				_later(d, _hq_splash.bind("nocaute" if big else "ko", _hex_pos(e["h"], 1.2)))
 				_later(d + 0.05, func():
-					_hitstop(0.22 if big else 0.09)
+					if big:
+						_hitstop(0.06)
 					board.quake()
 					sfx.play("vfx_boom", -1.0 if big else -4.0, 0.7 if big else 0.85, 0.0))
 				if big:
