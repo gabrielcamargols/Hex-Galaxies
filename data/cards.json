@@ -1981,7 +1981,7 @@
     "name": "Portalis",
     "kind": "ativa",
     "per": "round",
-    "text": "1 ação: escolhe 2 casas livres a até 6 casas dele, uma ENTRADA e uma SAÍDA, ambas visíveis (um portal por vez). Aliados ao lado da entrada atravessam com uma ação de movimento e saem na saída, e seus ataques também partem da saída."
+    "text": "1 ação: escolhe 2 casas livres a até 6 casas dele, uma ENTRADA e uma SAÍDA, ambas visíveis (um portal por vez). Aliados ao lado da entrada atravessam com uma ação de movimento e saem na saída. Aliados que alcançam a entrada (dentro do seu alcance) podem atacar o portal: ataques básicos, habilidades e táticas saem pela saída, com o alcance contado a partir dela."
    },
    "k": {
     "ult": "portalis",

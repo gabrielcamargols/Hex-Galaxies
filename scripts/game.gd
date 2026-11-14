@@ -866,13 +866,12 @@ func range_of(a, fpos: Vector2i, t) -> int:
 
 func attack_targets(a, fpos = null) -> Array:
 	var ts0 = _targets_from(a, fpos)
-	# Portalis: quem está ao lado da ENTRADA ataca a partir da SAÍDA
+	# Portalis: quem alcança a ENTRADA ataca o portal e o ataque sai pela SAÍDA (alcance contado de lá)
 	if fpos == null and not a.barrier and a.st == "field":
-		for pt in portal_out_of(a):
-			if unit_at(pt["b"]) == null:
-				for t in _targets_from(a, pt["b"]):
-					if not ts0.has(t):
-						ts0.append(t)
+		for b in portal_fire(a):
+			for t in _targets_from(a, b):
+				if not ts0.has(t):
+					ts0.append(t)
 	return ts0
 
 
@@ -2612,13 +2611,13 @@ func _act_attack(u, t) -> bool:
 	var zone = in_zone(u.pos())
 	var via: Variant = null
 	if not _targets_from(u).has(t):
-		for pt in portal_out_of(u):
-			if unit_at(pt["b"]) == null and _targets_from(u, pt["b"]).has(t):
-				via = pt["b"]
+		for b in portal_fire(u):
+			if _targets_from(u, b).has(t):
+				via = b
 				break
 	var home = u.pos()
 	if via != null:
-		log_msg(u.owner, "%s ataca através do portal (entra pela ENTRADA, sai pela SAÍDA)." % nm(u))
+		log_msg(u.owner, "%s ataca o portal: o ataque sai pela SAÍDA." % nm(u))
 		abfx("burrow", home, u.uid)
 		abfx("burrow", via, u.uid)
 		u.q = via.x
@@ -2699,7 +2698,20 @@ func ult_spent(u) -> bool:
 
 
 func can_ult(u) -> bool:
-	return is_live(u) and act["actions"] >= 1 and ult_kind(u) != "" and not ult_spent(u) and not ult_opts(u).is_empty()
+	if not (is_live(u) and act["actions"] >= 1 and ult_kind(u) != "" and not ult_spent(u)):
+		return false
+	if not ult_opts(u).is_empty():
+		return true
+	return ult_portal_ok(u) and _portal_any(u, func(): return not ult_opts(u).is_empty())
+
+
+# habilidades que movem a própria peça não passam pelo portal (seria teletransporte)
+const ULT_NO_PORTAL = ["burrow", "cartcharge", "ferram", "stampede", "orbital", "portalis"]
+
+
+func ult_portal_ok(u) -> bool:
+	var k = ult_kind(u)
+	return k != "" and not SELF_ULTS.has(k) and not ULT_NO_PORTAL.has(k)
 
 
 func _dirs() -> Array:
@@ -2912,6 +2924,75 @@ func portal_out_of(u) -> Array:
 		if int(pt["owner"]) == u.owner and DB.dist(u.pos(), pt["a"]) <= 1 and u.pos() != pt["b"]:
 			out.append(pt)
 	return out
+
+
+# Portalis: saídas por onde u pode mandar ataques, habilidades e táticas. Basta alcançar a ENTRADA com o
+# seu ALC (corpo a corpo: ao lado; à distância: com linha de visão) e a SAÍDA estar livre.
+func portal_fire(u) -> Array:
+	var out = []
+	if u.barrier or u.st != "field":
+		return out
+	var reach = max(1, alc_of(u))
+	for pt in live_portals():
+		if int(pt["owner"]) != u.owner or u.pos() == pt["b"] or unit_at(pt["b"]) != null:
+			continue
+		var d = DB.dist(u.pos(), pt["a"])
+		if d <= reach and (d <= 1 or los(u.pos(), pt["a"])) and not out.has(pt["b"]):
+			out.append(pt["b"])
+	return out
+
+
+# avalia f com u posto (só por um instante) na casa h
+func _at(u, h: Vector2i, f: Callable) -> Variant:
+	var hm = u.pos()
+	u.q = h.x
+	u.r = h.y
+	var r = f.call()
+	u.q = hm.x
+	u.r = hm.y
+	return r
+
+
+func _portal_any(u, ok: Callable) -> bool:
+	for b in portal_fire(u):
+		if _at(u, b, ok):
+			return true
+	return false
+
+
+# de onde a habilidade/tática parte: null = da própria peça; senão a SAÍDA do portal escolhida
+func _portal_origin(u, ok: Callable, what: String) -> Variant:
+	var outs = portal_fire(u).filter(func(b): return _at(u, b, ok))
+	if outs.is_empty():
+		return null
+	var here = ok.call()
+	var ph = pre_hex
+	pre_hex = null
+	var opts = ([u.pos()] if here else []) + outs
+	var h: Variant = null
+	if opts.size() == 1:
+		h = opts[0]
+	else:
+		h = await pick_hex(u.owner, "%s: de onde parte? Toque na própria peça (daqui) ou na SAÍDA do portal." % what, opts, "portal_origin", false)
+	pre_hex = ph
+	return h if (h != null and h != u.pos()) else null
+
+
+func _portal_in(u, via: Vector2i) -> Vector2i:
+	var home = u.pos()
+	log_msg(u.owner, "%s age através do portal: sai pela SAÍDA." % nm(u))
+	abfx("burrow", home, u.uid)
+	abfx("burrow", via, u.uid)
+	u.q = via.x
+	u.r = via.y
+	return home
+
+
+func _portal_out(u, via: Vector2i, home: Vector2i) -> void:
+	# volta para casa se ainda está na saída e a casa de origem continua livre
+	if u.st == "field" and u.pos() == via and unit_at(home) == null:
+		u.q = home.x
+		u.r = home.y
 
 
 # casa livre onde o Rei pode pôr/mover cristais, blocos e entradas de túnel
@@ -3521,6 +3602,20 @@ func act_ult(u) -> bool:
 func _act_ult(u) -> bool:
 	if not can_ult(u):
 		return false
+	var pv: Variant = null
+	if ult_portal_ok(u):
+		pv = await _portal_origin(u, func(): return not ult_opts(u).is_empty(), DB.active_of(u.cid).get("name", "Ativa"))
+	if pv == null:
+		return await _act_ult_run(u)
+	var home = _portal_in(u, pv)
+	var r = await _act_ult_run(u)
+	_portal_out(u, pv, home)
+	return r
+
+
+func _act_ult_run(u) -> bool:
+	if not can_ult(u):
+		return false
 	var p = u.owner
 	var kind = ult_kind(u)
 	var ab2 = DB.active_of(u.cid)
@@ -3689,7 +3784,7 @@ func _act_ult(u) -> bool:
 			abfx("burrow", h, u.uid)
 			abfx("burrow", hb, u.uid)
 			emitfx({"t": "rumble", "hexes": [h, hb]})
-			log_msg(p, "%s abre o portal: ENTRADA em %s e SAÍDA em %s. Aliados ao lado da entrada atravessam e atacam pela saída." % [nm(u), t_name(h), t_name(hb)])
+			log_msg(p, "%s abre o portal: ENTRADA em %s e SAÍDA em %s. Aliados atravessam pela entrada e quem alcança a entrada ataca pela saída." % [nm(u), t_name(h), t_name(hb)])
 		"bridge":
 			var br_cells = [h]
 			for br_i in range(2):
@@ -4698,7 +4793,22 @@ func active_unit() -> Variant:
 	return by_uid(act["uid"]) if act != null else null
 
 
+# táticas que podem sair pela SAÍDA do portal (as que miram a partir do ativo)
+const TAC_PORTAL = ["pulso", "granada", "sinalizador", "gancho", "onda", "orbital", "kit"]
+
+
 func tactic_playable(p: int, id: String) -> bool:
+	if _tac_here(p, id):
+		return true
+	if not TAC_PORTAL.has(id):
+		return false
+	var u = active_unit()
+	if u == null or u.st != "field":
+		return false
+	return _portal_any(u, func(): return _tac_here(p, id))
+
+
+func _tac_here(p: int, id: String) -> bool:
 	var A = act
 	if A == null or A["p"] != p or A["tactic"] or not P[p]["hand"].has(id):
 		return false
@@ -4885,6 +4995,23 @@ func play_tactic(p: int, id: String, drop: Variant = null) -> bool:
 
 
 func _play_tactic(p: int, id: String, drop: Variant = null) -> bool:
+	if not tactic_playable(p, id):
+		return false
+	var u0 = active_unit()
+	var pv: Variant = null
+	if TAC_PORTAL.has(id) and u0 != null:
+		pre_hex = drop
+		pv = await _portal_origin(u0, func(): return _tac_here(p, id), DB.tactics[id]["name"])
+		pre_hex = null
+	if pv == null:
+		return await _play_tactic_run(p, id, drop)
+	var home = _portal_in(u0, pv)
+	var r = await _play_tactic_run(p, id, drop)
+	_portal_out(u0, pv, home)
+	return r
+
+
+func _play_tactic_run(p: int, id: String, drop: Variant = null) -> bool:
 	if not tactic_playable(p, id):
 		return false
 	var A = act

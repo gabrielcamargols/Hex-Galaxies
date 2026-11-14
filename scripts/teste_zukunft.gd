@@ -74,6 +74,40 @@ func run() -> void:
 	var okat = await g.act_attack(sn, en)
 	ok(okat and en.hp < hp and sn.pos() == home, "ataque feito pelo portal e o atirador não saiu do lugar")
 	g.end_activation()
+	# quem tem alcance ataca o portal de longe (dentro do ALC e com linha de visão); corpo a corpo precisa estar ao lado
+	var longe = DB.hexes.filter(func(h): return DB.dist(h, PA) == 2 and g.is_free(h) and h != PB and g.los(h, PA) and DB.dist(h, en.pos()) > 6)
+	ok(not longe.is_empty(), "há casa a 2 da entrada para o teste de alcance")
+	if not longe.is_empty():
+		sn.q = longe[0].x
+		sn.r = longe[0].y
+		ok(g.alc_of(sn) >= 2 and g.attack_targets(sn).has(en), "atirador a 2 casas da entrada ataca pelo portal")
+		var mel = put(g, "z_vang", 0, longe[0].x, longe[0].y)
+		sn.q = home.x
+		sn.r = home.y
+		ok(g.alc_of(mel) <= 1 and not g.attack_targets(mel).has(en), "corpo a corpo a 2 casas da entrada não usa o portal")
+		mel.st = "dead"
+		# tática pela saída: Sinalizador (até 4 casas) marca um inimigo que só a saída alcança
+		sn.q = longe[0].x
+		sn.r = longe[0].y
+		g.P[0]["hand"].append("sinalizador")
+		g.start_activation(sn)
+		ok(g.tactic_playable(0, "sinalizador"), "Sinalizador jogável pelo portal")
+		fila = [en.pos()]   # só a saída serve: o jogo não pergunta a origem
+		var rt = await g.play_tactic(0, "sinalizador")
+		ok(rt and g.has_fx(en, "mark") and sn.pos() == longe[0], "Sinalizador saiu pela saída e o atirador voltou ao lugar")
+		g.end_activation()
+		sn.q = home.x
+		sn.r = home.y
+		# habilidade pela saída: Granadeiro Krieg (ALC 2, granada até 3) a 2 casas da entrada
+		var gr = put(g, "k_granadeiro", 0, longe[0].x, longe[0].y)
+		g.start_activation(gr)
+		ok(g.can_ult(gr), "habilidade disponível só pelo portal")
+		var hp2 = en.hp
+		fila = [en.pos()]
+		var ru = await g.act_ult(gr)
+		ok(ru and en.hp < hp2 and gr.pos() == longe[0], "granada saiu pela saída e o Granadeiro voltou ao lugar")
+		g.end_activation()
+		gr.st = "dead"
 	# travessia de aliados: só entrando pela entrada
 	var al2 = put(g, "z_tank", 0, adj[2].x, adj[2].y)
 	g.start_activation(al2)
