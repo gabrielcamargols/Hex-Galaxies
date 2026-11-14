@@ -902,11 +902,11 @@
    "atk": 4,
    "int": 12,
    "mov": 2,
-   "alc": 1,
+   "alc": 3,
    "src": "cat",
    "ab": {
     "name": "Ordem de Guerra",
-    "text": "Outras unidades Krieg a até 2 casas recebem +1 ATQ. Fora do campo, meça desde o centro da sua entrada. Glória do Clã: 1 vez por round, quando uma unidade Krieg a até 3 casas do Comandante derruba um inimigo, você compra 1 carta."
+    "text": "Outras unidades Krieg a até 2 casas recebem +1 ATQ. Fora do campo, meça desde o centro da sua entrada. Glória do Clã: 1 vez por round, quando uma unidade Krieg a até 3 casas do Comandante derruba um inimigo, você compra 1 carta. Sabre e Pistola: ataca a até 3 casas, mas de longe causa 2 a menos. O golpe corpo a corpo causa Sangramento: o inimigo perde 1 de Vida no início de cada um dos 2 próximos rounds."
    },
    "k": {
     "auraAtk": {
@@ -914,6 +914,9 @@
      "who": "KRI"
     },
     "ult": "bombard",
+    "atkRanged": -2,
+    "after": "bleedMelee",
+    "bleedRounds": 2,
     "gloria": 3
    },
    "ab2": {

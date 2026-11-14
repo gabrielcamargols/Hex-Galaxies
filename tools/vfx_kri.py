@@ -136,8 +136,9 @@ def especiais():
         sangue(12, 0.05, 0.95, 1.1),
         {"shake": 0.3, "shake_delay": 0.03, "layers": []}))
     add("kri_cmd_bombardeio", "Comandante · Bombardeio (marca, projétil do céu, cratera)", "k_cmd", merge(
-        {"layers": mira(2.6, 0.5, 0.0, 0.1)[:1] + simbolo_marcado(1.9, 0.55, 0.0, 0.35) + [
-            anel_chao(3.4, LARANJA, 0.0, 0.5, dentes=False, fecha=True),
+        {"layers": [
+            # o símbolo é a mira: chega grande e fecha sobre o alvo
+            *[{**L, "curve": [[0, 1.7], [0.7, 1.0], [1, 0.95]]} for L in simbolo_marcado(2.3, 0.6, 0.0, 0.35)],
             *simbolo_marcado(1.5, 0.6, 0.0, 2.6, em="from"),
             {"modelo": PROJETIL, "escala": 0.7, "rot": [-90, 0, 0], "life": 0.46, "y": 5.5, "de": [2.2, -1.0], "queda": True, "delay": 0.12},
             {"p": "faisca", "mode": "vel", "amount": 10, "size": [0.1, 0.9], "speed": [10, 16], "dir": [0, -1, 0], "spread": 6,
@@ -147,6 +148,37 @@ def especiais():
                     # o símbolo fica queimado na cratera
                     {**simbolo(2.2, 1.8, 0.66, chao=True, ramp=["#0E0F14", "#16181F", "#3A1A0C", "#8A3A12"]), "angle": [0, 0]},
                     fumaca_suja(4, 0.78, 0.9, 1.5, 1.1)], "hit_t": 0.58}))
+
+    # Pistola (ataque de longe, mais fraco): clarão na arma, traçante curto, acerto seco
+    add("kri_k_cmd_tiro", "Comandante · Pistola (ataque de longe)", "k_cmd",
+        {"layers": [*simbolo_marcado(1.0, 0.45, 0.0, 2.0, em="from"),
+                    {"em": "from", **luz("#ff742b", 2.4, 2.4, 0.14, 1.0, 0.3)},
+                    {"em": "from", **estrela(0.9, LARANJA, 0.0, 0.12, 1.0)},
+                    {"sub": "kri_cmd_bala", "delay": 0.06}], "hit_t": 0.26})
+    add("kri_cmd_bala", "Comandante · Bala da pistola", "k_cmd",
+        {"hit": "kri_cmd_bala_hit",
+         "proj": {"speed": 34, "arc": 0.0, "y": 1.0,
+                  "modelo": {"modelo": PROJETIL, "escala": 0.07, "rot": [-90, 0, 0]},
+                  "arpao": {"tex": "feixe", "len": 1.8, "width": 0.14, "tile": 1.8, "blend_top": "mix", "ramp": ["#8A3A12", "#FF742B", "#F3AD58", "#FFF6DC"],
+                            "boost": 1.0, "halftone": 0.0, "sombra": 1.2, "nucleo": False},
+                  "parts": [{"p": "faisca", "blend": "mix", "mode": "vel", "trail": True, "amount": 6, "size": [0.04, 0.3], "speed": [0.5, 2],
+                             "life": 0.14, "ramp": ["#FF742B", "#F3AD58", "#FFF6DC"], "alpha": [[0, 1], [1, 0]], "curve": [[0, 1], [1, 0]]}]}})
+    add("kri_cmd_bala_hit", "Comandante · Acerto da pistola", "k_cmd", merge(
+        {"layers": [luz("#ff742b", 1.8, 2.0, 0.16, 0.95), estrela(1.0, LARANJA, 0.0, 0.14, 0.95),
+                    faisca(6, None, 0.0, 0.95, (5, 10), (0.08, 0.5), 0.2, 40, "away")]},
+        sangue(6, 0.0, 0.95, 0.7, chao=False),
+        {"shake": 0.12, "shake_delay": 0.0, "layers": []}))
+    # Sangramento: o corte volta a abrir no início do round (o símbolo vermelho no chão é do tabuleiro e dá um pulo)
+    add("kri_cmd_sangramento", "Comandante · Sangramento (tique no início do round)", "k_cmd",
+        {"alvo": "self", "layers": [
+            luz("#c8322c", 2.2, 2.4, 0.3, 0.9),
+            {"p": "respingo", "blend": "mix", "amount": 2, "size": 1.3, "life": 0.34, "life_rand": 0.08, "angle": [0, 360],
+             "curve": [[0, 0.3], [0.25, 1.0], [1, 1.1]], "erode": 1.0, "erode_pow": 1.6, "ramp": SANGUE, "alpha": FIM, "y": 1.0},
+            {"p": "gota", "blend": "mix", "mode": "vel", "amount": 14, "size": [0.12, 0.42], "speed": [3, 7], "dir": [0, 1, 0], "spread": 55,
+             "grav": -18, "damp": [1, 2], "life": 0.55, "curve": [[0, 1.0], [1, 0.5]], "ramp": SANGUE, "alpha": FIM, "y": 1.0},
+            {"p": "respingo", "mode": "chao", "amount": 1, "size": 1.2, "life": 1.3, "life_rand": 0, "y": 0.0, "angle": [0, 360],
+             "curve": [[0, 0.3], [0.12, 1.0], [1, 1.0]], "erode": 1.0, "erode_pow": 2.5, "ramp": SANGUE[:3], "alpha": FIM, "delay": 0.12}],
+         "shake": 0.1, "shake_delay": 0.0})
 
     # ---------- SNIPER ----------
     add("kri_k_sniper_ataque", "Sniper · Mira Travada e tiro (ataque)", "k_sniper",
@@ -195,7 +227,8 @@ def especiais():
     return R
 
 
-HABS = {"k_cmd": ["kri_cmd_bombardeio"], "k_sniper": [], "k_granadeiro": ["kri_gran_granada", "kri_gran_saraivada"]}
+LONGE = {"k_cmd": "kri_k_cmd_tiro"}
+HABS = {"k_cmd": ["kri_cmd_bombardeio", "kri_cmd_sangramento"], "k_sniper": [], "k_granadeiro": ["kri_gran_granada", "kri_gran_saraivada"]}
 
 
 def main():
@@ -213,6 +246,8 @@ def main():
         falhas = audita_receita(rec["kri_%s_ataque" % cid])
         assert not falhas["valor"] and not falhas["tempo"], (cid, falhas)
         pers[cid] = {"nucleo": nucleo, "motivo": c["name"], "ataque": "kri_%s_ataque" % cid, "habilidades": []}
+        if cid in LONGE:
+            pers[cid]["ataque_longe"] = LONGE[cid]
     esp = especiais()
     for rid, d in esp.items():
         rec[rid] = aplica(d)

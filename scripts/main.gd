@@ -2565,6 +2565,12 @@ func refresh() -> void:
 		st["labels"][sh["h"]] = "ARTILHARIA"
 		st["label_colors"][sh["h"]] = Color("#ffcc55")
 	board.sync_traps(traps)
+	# Sangramento do Comandante Krieg: símbolo vermelho girando sob o alvo
+	var bleeds = []
+	for bu in game.field():
+		if game.has_fx(bu, "bleed"):
+			bleeds.append({"uid": bu.uid, "h": bu.pos()})
+	board.sync_bleeds(bleeds)
 	board.sync_bananas(game.bananas, me)
 	board.sync_core(game.core, game.core_next if game.core == null or game.core_next != game.core else null)
 	if game.core != null:
@@ -4744,7 +4750,7 @@ const TER_ABFX = {
 	"t_pontes": {"earth": "ter_pontes_conexao"},
 	"t_sniper": {"bolt": "ter_sniper_hit"},
 	# Krieg
-	"k_cmd": {"bombard": "kri_cmd_bombardeio"},
+	"k_cmd": {"bombard": "kri_cmd_bombardeio", "bleed": "kri_cmd_sangramento"},
 	"k_granadeiro": {"blast": "kri_gran_granada", "explode": "kri_gran_saraivada"},
 }
 
@@ -4763,12 +4769,14 @@ func _ter_load() -> void:
 
 
 # receita de ataque básico do personagem (só Valakianos), ou ""
-func _ter_attack_id(uid: int) -> String:
+func _ter_attack_id(uid: int, ranged: bool = false) -> String:
 	_ter_load()
 	var u: Variant = game.by_uid(uid) if game != null else null
 	if u == null or u.barrier or not ter_fx.has(u.cid):
 		return ""
 	var id = str(ter_fx[u.cid]["ataque"])
+	if ranged and vfx.has_fx(str(ter_fx[u.cid].get("ataque_longe", ""))):
+		id = str(ter_fx[u.cid]["ataque_longe"])
 	return id if vfx.has_fx(id) else ""
 
 
@@ -4795,6 +4803,8 @@ func _ter_abfx(e: Dictionary) -> bool:
 
 # efeitos 2.5D das habilidades: cada tipo tem seu desenho, cor e som
 func _on_abfx(e: Dictionary) -> void:
+	if e["k"] == "bleed":
+		board.bleed_pop(e["h"])
 	if _ter_abfx(e):
 		return
 	var g0 = _hex_pos(e["h"], 0.0)
@@ -4902,7 +4912,7 @@ func _on_fx(e: Dictionary) -> void:
 			var k = _fx_scale()
 			_comic_pop(tgt, (["ZAP!", "PEW!", "FZZT!", "VUSH!"] if e["ranged"] else ["POW!", "BAM!", "WHAM!", "SOC!", "TUM!"]).pick_random())
 			_voice(e["from"], "atk", -2.0)
-			var ter_id = _ter_attack_id(e["from"])
+			var ter_id = _ter_attack_id(e["from"], e["ranged"])
 			if ter_id != "":
 				# Valakianos: ataque pintado pela Forja (golpe/projétil + impacto próprios)
 				var fu: Variant = game.by_uid(e["from"])

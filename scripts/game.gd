@@ -695,6 +695,8 @@ func atk_of(a, t) -> int:
 			v += int(k["atkVsRoot"])
 		if k.has("atkMelee") and DB.dist(a.pos(), t.pos()) == 1:
 			v += int(k["atkMelee"])
+		if k.has("atkRanged") and DB.dist(a.pos(), t.pos()) > 1:
+			v += int(k["atkRanged"])
 		if k.has("atkMoved") and act != null and act["uid"] == a.uid and act["moved"]:
 			v += int(k["atkMoved"])
 		if k.has("atkTwin") and field().any(func(x): return x.owner == a.owner and x.cid == "caninus_black"):
@@ -1721,6 +1723,9 @@ func start_round() -> void:
 	if winner != NONE:
 		return
 	_fire_tick()
+	await _bleed_tick()
+	if winner != NONE:
+		return
 	await _shell_tick()
 	if winner != NONE:
 		return
@@ -4241,6 +4246,11 @@ func resolve_attack(a, t) -> void:
 			target.fx.append({"k": "dazed", "v": 1, "until": "end"})
 			abfx("silence", target.pos(), a.uid)
 			log_msg(p, "Nuvem de Tinta: %s está cego (-2 ATQ)." % nm(target))
+		if after == "bleedMelee" and not target.barrier and DB.dist(a.pos(), target.pos()) == 1:
+			# Comandante Krieg: o sabre abre um corte; renova (não acumula) se golpear de novo
+			target.fx = target.fx.filter(func(f): return f["k"] != "bleed")
+			target.fx.append({"k": "bleed", "src": a.uid, "n": int(k.get("bleedRounds", 2))})
+			log_msg(p, "Sangramento: %s perde 1 de Vida no início de cada um dos próximos %d rounds." % [nm(target), int(k.get("bleedRounds", 2))])
 		if after == "rootHit":
 			abfx("glue", target.pos(), a.uid)
 			target.fx.append({"k": "root", "end": round_no + 1})
@@ -4447,6 +4457,25 @@ func _hunt(a, first) -> void:
 				return
 			await resolve_attack(a, t2)
 			return
+
+
+# Comandante Krieg: Sangramento tira 1 de Vida no início de cada round, por N rounds
+func _bleed_tick() -> void:
+	var hit = false
+	for t in units.duplicate():
+		if t.st != "field":
+			continue
+		for f in t.fx.filter(func(x): return x["k"] == "bleed"):
+			var by = by_uid(int(f["src"]))
+			abfx("bleed", t.pos(), int(f["src"]))
+			f["n"] = int(f["n"]) - 1
+			log_msg(by.owner if by != null else -1, "Sangramento: %s perde 1 de Vida%s." % [nm(t), "" if int(f["n"]) > 0 else " (o corte fecha)"])
+			damage(t, 1, by)
+			hit = true
+		t.fx = t.fx.filter(func(x): return not (x["k"] == "bleed" and int(x["n"]) <= 0))
+	if hit:
+		settle()
+		await pace()
 
 
 # Drako: veneno tira 1 de Vida por round e cura 1 aliado a até 5 casas de Drako (ou ele mesmo)

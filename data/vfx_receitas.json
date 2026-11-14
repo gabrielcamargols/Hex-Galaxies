@@ -47772,64 +47772,11 @@
   "personagem": "k_cmd",
   "layers": [
    {
-    "p": "anel",
-    "blend": "mix",
-    "amount": 1,
-    "size": 2.6,
-    "life": 0.5,
-    "life_rand": 0,
-    "angle": [
-     0,
-     0
-    ],
-    "curve": [
-     [
-      0,
-      1.5
-     ],
-     [
-      0.8,
-      0.6
-     ],
-     [
-      1,
-      0.55
-     ]
-    ],
-    "ramp": [
-     "#303744",
-     "#8A3A12",
-     "#FF742B",
-     "#F3AD58",
-     "#F2E6CC"
-    ],
-    "alpha": [
-     [
-      0,
-      0
-     ],
-     [
-      0.2,
-      1
-     ],
-     [
-      0.85,
-      1
-     ],
-     [
-      1,
-      0
-     ]
-    ],
-    "y": 0.1,
-    "delay": 0.0
-   },
-   {
     "p": "krieg_simbolo_sombra",
     "blend": "mix",
     "amount": 1,
-    "size": 2.014,
-    "life": 0.55,
+    "size": 2.4379999999999997,
+    "life": 0.6,
     "life_rand": 0,
     "angle": [
      0,
@@ -47846,19 +47793,15 @@
     "curve": [
      [
       0,
-      0.4
+      1.7
      ],
      [
-      0.18,
-      1.15
-     ],
-     [
-      0.35,
+      0.7,
       1.0
      ],
      [
       1,
-      1.05
+      0.95
      ]
     ],
     "halftone": 0.3,
@@ -47885,8 +47828,8 @@
     "p": "krieg_simbolo",
     "blend": "mix",
     "amount": 1,
-    "size": 1.9,
-    "life": 0.55,
+    "size": 2.3,
+    "life": 0.6,
     "life_rand": 0,
     "angle": [
      0,
@@ -47903,19 +47846,15 @@
     "curve": [
      [
       0,
-      0.4
+      1.7
      ],
      [
-      0.18,
-      1.15
-     ],
-     [
-      0.35,
+      0.7,
       1.0
      ],
      [
       1,
-      1.05
+      0.95
      ]
     ],
     "halftone": 0.3,
@@ -47937,51 +47876,6 @@
       0
      ]
     ]
-   },
-   {
-    "p": "anel",
-    "mode": "chao",
-    "amount": 1,
-    "size": 3.4,
-    "life": 0.5,
-    "life_rand": 0,
-    "y": 0.0,
-    "curve": [
-     [
-      0,
-      1.8
-     ],
-     [
-      1,
-      0.5
-     ]
-    ],
-    "erode": 1.0,
-    "erode_pow": 1.1,
-    "halftone": 0.8,
-    "dot": 8,
-    "ramp": [
-     "#303744",
-     "#8A3A12",
-     "#FF742B",
-     "#F3AD58",
-     "#F2E6CC"
-    ],
-    "alpha": [
-     [
-      0,
-      0
-     ],
-     [
-      0.3,
-      1
-     ],
-     [
-      1,
-      0
-     ]
-    ],
-    "delay": 0.0
    },
    {
     "p": "krieg_simbolo_sombra",
@@ -50712,6 +50606,655 @@
    }
   ],
   "shake": 0.5,
+  "shake_delay": 0.0
+ },
+ "kri_k_cmd_tiro": {
+  "nome": "KRIEG · Comandante · Pistola (ataque de longe)",
+  "personagem": "k_cmd",
+  "layers": [
+   {
+    "p": "krieg_simbolo_sombra",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.06,
+    "life": 0.45,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "ramp": [
+     "#0E0F14",
+     "#16181F",
+     "#16181F",
+     "#1E1410"
+    ],
+    "delay": 0.0,
+    "y": 1.98,
+    "curve": [
+     [
+      0,
+      0.4
+     ],
+     [
+      0.18,
+      1.15
+     ],
+     [
+      0.35,
+      1.0
+     ],
+     [
+      1,
+      1.05
+     ]
+    ],
+    "halftone": 0.3,
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.12,
+      0.9
+     ],
+     [
+      0.7,
+      0.9
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "em": "from"
+   },
+   {
+    "p": "krieg_simbolo",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.0,
+    "life": 0.45,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "ramp": [
+     "#16181F",
+     "#8A3A12",
+     "#FF742B",
+     "#FFB060"
+    ],
+    "delay": 0.0,
+    "y": 2.0,
+    "curve": [
+     [
+      0,
+      0.4
+     ],
+     [
+      0.18,
+      1.15
+     ],
+     [
+      0.35,
+      1.0
+     ],
+     [
+      1,
+      1.05
+     ]
+    ],
+    "halftone": 0.3,
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.12,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "em": "from"
+   },
+   {
+    "em": "from",
+    "luz": "#ff742b",
+    "energia": 2.4,
+    "alcance": 2.4,
+    "dur": 0.14,
+    "y": 1.0,
+    "delay": 0.3
+   },
+   {
+    "em": "from",
+    "p": "estrela4",
+    "blend": "mix",
+    "amount": 1,
+    "size": 0.9,
+    "life": 0.12,
+    "life_rand": 0,
+    "angle": [
+     -12,
+     12
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.18,
+      1.2
+     ],
+     [
+      1,
+      0.25
+     ]
+    ],
+    "ramp": [
+     "#303744",
+     "#8A3A12",
+     "#FF742B",
+     "#F3AD58",
+     "#F2E6CC"
+    ],
+    "boost": 1.1,
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.0,
+    "nucleo": true
+   },
+   {
+    "sub": "kri_cmd_bala",
+    "delay": 0.06
+   }
+  ],
+  "hit_t": 0.26
+ },
+ "kri_cmd_bala": {
+  "nome": "KRIEG · Comandante · Bala da pistola",
+  "personagem": "k_cmd",
+  "hit": "kri_cmd_bala_hit",
+  "proj": {
+   "speed": 34,
+   "arc": 0.0,
+   "y": 1.0,
+   "modelo": {
+    "modelo": "res://models/kri_projetil/projetil.fbx",
+    "escala": 0.07,
+    "rot": [
+     -90,
+     0,
+     0
+    ]
+   },
+   "arpao": {
+    "tex": "feixe",
+    "len": 1.8,
+    "width": 0.14,
+    "tile": 1.8,
+    "blend_top": "mix",
+    "ramp": [
+     "#8A3A12",
+     "#FF742B",
+     "#F3AD58",
+     "#F2E6CC"
+    ],
+    "boost": 1.0,
+    "halftone": 0.0,
+    "sombra": 1.2,
+    "nucleo": false
+   },
+   "parts": [
+    {
+     "p": "faisca",
+     "blend": "mix",
+     "mode": "vel",
+     "trail": true,
+     "amount": 6,
+     "size": [
+      0.04,
+      0.3
+     ],
+     "speed": [
+      0.5,
+      2
+     ],
+     "life": 0.14,
+     "ramp": [
+      "#FF742B",
+      "#F3AD58",
+      "#F2E6CC"
+     ],
+     "alpha": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       0
+      ]
+     ],
+     "curve": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       0
+      ]
+     ]
+    }
+   ]
+  }
+ },
+ "kri_cmd_bala_hit": {
+  "nome": "KRIEG · Comandante · Acerto da pistola",
+  "personagem": "k_cmd",
+  "layers": [
+   {
+    "luz": "#ff742b",
+    "energia": 1.8,
+    "alcance": 2.0,
+    "dur": 0.16,
+    "y": 0.95,
+    "delay": 0.0
+   },
+   {
+    "p": "estrela4",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.0,
+    "life": 0.14,
+    "life_rand": 0,
+    "angle": [
+     -12,
+     12
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.18,
+      1.2
+     ],
+     [
+      1,
+      0.25
+     ]
+    ],
+    "ramp": [
+     "#303744",
+     "#8A3A12",
+     "#FF742B",
+     "#F3AD58",
+     "#F2E6CC"
+    ],
+    "boost": 1.1,
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.95,
+    "delay": 0.0,
+    "nucleo": true
+   },
+   {
+    "p": "faisca",
+    "mode": "vel",
+    "amount": 6,
+    "size": [
+     0.08,
+     0.5
+    ],
+    "speed": [
+     5,
+     10
+    ],
+    "spread": 40,
+    "grav": -12,
+    "damp": [
+     5,
+     9
+    ],
+    "life": 0.2,
+    "curve": [
+     [
+      0,
+      1.3
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#FFAC45",
+     "#FFD97A",
+     "#F2EBDD"
+    ],
+    "boost": 1.5,
+    "y": 0.95,
+    "delay": 0.0,
+    "dir": "away",
+    "lift": 0.15
+   },
+   {
+    "p": "gota",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 4,
+    "size": [
+     0.14,
+     0.5
+    ],
+    "speed": [
+     2.8,
+     7.0
+    ],
+    "dir": "away",
+    "lift": 0.35,
+    "spread": 32,
+    "grav": -18,
+    "damp": [
+     1,
+     2
+    ],
+    "life": 0.5,
+    "curve": [
+     [
+      0,
+      1.0
+     ],
+     [
+      1,
+      0.5
+     ]
+    ],
+    "ramp": [
+     "#1E0A0E",
+     "#5A0F16",
+     "#A3161C",
+     "#C8322C"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.95,
+    "delay": 0.0
+   },
+   {
+    "p": "respingo",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.0499999999999998,
+    "life": 0.32,
+    "life_rand": 0,
+    "aim": true,
+    "toward": -0.45,
+    "curve": [
+     [
+      0,
+      0.4
+     ],
+     [
+      0.25,
+      1.0
+     ],
+     [
+      1,
+      1.1
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.6,
+    "ramp": [
+     "#1E0A0E",
+     "#5A0F16",
+     "#A3161C",
+     "#C8322C"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.95,
+    "delay": 0.0
+   }
+  ],
+  "shake": 0.12,
+  "shake_delay": 0.0
+ },
+ "kri_cmd_sangramento": {
+  "nome": "KRIEG · Comandante · Sangramento (tique no início do round)",
+  "personagem": "k_cmd",
+  "alvo": "self",
+  "layers": [
+   {
+    "luz": "#c8322c",
+    "energia": 2.2,
+    "alcance": 2.4,
+    "dur": 0.3,
+    "y": 0.9,
+    "delay": 0.0
+   },
+   {
+    "p": "respingo",
+    "blend": "mix",
+    "amount": 2,
+    "size": 1.3,
+    "life": 0.34,
+    "life_rand": 0.08,
+    "angle": [
+     0,
+     360
+    ],
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      0.25,
+      1.0
+     ],
+     [
+      1,
+      1.1
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.6,
+    "ramp": [
+     "#1E0A0E",
+     "#5A0F16",
+     "#A3161C",
+     "#C8322C"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0
+   },
+   {
+    "p": "gota",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 14,
+    "size": [
+     0.12,
+     0.42
+    ],
+    "speed": [
+     3,
+     7
+    ],
+    "dir": [
+     0,
+     1,
+     0
+    ],
+    "spread": 55,
+    "grav": -18,
+    "damp": [
+     1,
+     2
+    ],
+    "life": 0.55,
+    "curve": [
+     [
+      0,
+      1.0
+     ],
+     [
+      1,
+      0.5
+     ]
+    ],
+    "ramp": [
+     "#1E0A0E",
+     "#5A0F16",
+     "#A3161C",
+     "#C8322C"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0
+   },
+   {
+    "p": "respingo",
+    "mode": "chao",
+    "amount": 1,
+    "size": 1.2,
+    "life": 1.2,
+    "life_rand": 0,
+    "y": 0.0,
+    "angle": [
+     0,
+     360
+    ],
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      0.12,
+      1.0
+     ],
+     [
+      1,
+      1.0
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 2.5,
+    "ramp": [
+     "#1E0A0E",
+     "#5A0F16",
+     "#A3161C"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.12
+   }
+  ],
+  "shake": 0.1,
   "shake_delay": 0.0
  }
 }

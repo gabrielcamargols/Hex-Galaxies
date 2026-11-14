@@ -143,6 +143,7 @@ func build(game: Game) -> void:
 	swirl_nodes = []
 	banana_nodes.clear()
 	trap_nodes.clear()
+	bleed_nodes.clear()
 	core_node = null
 	core_next_node = null
 	core_at = null
@@ -1789,6 +1790,83 @@ func sync_traps(list: Array) -> void:
 			sw.tween_property(m, "rotation:z", 0.12, 0.5).set_trans(Tween.TRANS_SINE)
 			sw.tween_property(m, "rotation:z", -0.12, 0.5).set_trans(Tween.TRANS_SINE)
 		trap_nodes[k] = n
+
+
+# ---- Sangramento (Comandante Krieg): símbolo vermelho girando devagar no chão sob o alvo ----
+var bleed_nodes: Dictionary = {}
+var _bleed_mats: Array = []
+
+
+func _bleed_mat(i: int) -> StandardMaterial3D:
+	if _bleed_mats.is_empty():
+		for spec in [["res://vfx/tex/krieg_simbolo_chao_sombra.png", Color(0.06, 0.0, 0.02, 0.92)], ["res://vfx/tex/krieg_simbolo_chao.png", Color("#ff2434")]]:
+			var m = StandardMaterial3D.new()
+			m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+			m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+			m.cull_mode = BaseMaterial3D.CULL_DISABLED
+			m.albedo_color = spec[1]
+			m.albedo_texture = load(spec[0]) if ResourceLoader.exists(spec[0]) else null
+			m.no_depth_test = false
+			m.render_priority = 2
+			_bleed_mats.append(m)
+	return _bleed_mats[i]
+
+
+func sync_bleeds(list: Array) -> void:
+	var vivos = {}
+	for t in list:
+		vivos[int(t["uid"])] = t["h"]
+	for uid in bleed_nodes.keys():
+		if not vivos.has(uid):
+			var n: Node3D = bleed_nodes[uid]
+			bleed_nodes.erase(uid)
+			var tw = n.create_tween()
+			tw.tween_property(n, "scale", Vector3.ONE * 0.01, 0.25)
+			tw.tween_callback(n.queue_free)
+	for uid in vivos.keys():
+		var h: Vector2i = vivos[uid]
+		if not tiles.has(h):
+			continue
+		var at = Vector3(world_xz(h).x, top_y(h) + 0.07, world_xz(h).y)
+		if bleed_nodes.has(uid):
+			var n0: Node3D = bleed_nodes[uid]
+			if n0.position.distance_to(at) > 0.01:
+				n0.create_tween().tween_property(n0, "position", at, 0.3)
+			continue
+		var n = Node3D.new()
+		n.position = at
+		scenery_root.add_child(n)
+		var spin = Node3D.new()
+		n.add_child(spin)
+		for i in range(2):
+			var q = MeshInstance3D.new()
+			var qm = QuadMesh.new()
+			qm.size = Vector2.ONE * (2.15 if i == 0 else 1.95)
+			qm.orientation = PlaneMesh.FACE_Y
+			q.mesh = qm
+			q.material_override = _bleed_mat(i)
+			q.position.y = 0.005 * i
+			q.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			spin.add_child(q)
+		n.set_meta("spin", spin)
+		var sp = spin.create_tween().set_loops()
+		sp.tween_property(spin, "rotation:y", TAU, 9.0).from(0.0)
+		n.scale = Vector3.ONE * 0.01
+		n.create_tween().tween_property(n, "scale", Vector3.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		bleed_nodes[uid] = n
+
+
+# quando o Sangramento tica: o símbolo dá um pulo leve e cresce um pouco
+func bleed_pop(h: Vector2i) -> void:
+	for uid in bleed_nodes:
+		var n: Node3D = bleed_nodes[uid]
+		if Vector2(n.position.x, n.position.z).distance_to(world_xz(h)) < 0.3:
+			var spin: Node3D = n.get_meta("spin")
+			var tw = spin.create_tween().set_parallel(true)
+			tw.tween_property(spin, "position:y", 0.32, 0.16).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+			tw.tween_property(spin, "scale", Vector3.ONE * 1.3, 0.16).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+			tw.chain().tween_property(spin, "position:y", 0.0, 0.32).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+			tw.tween_property(spin, "scale", Vector3.ONE, 0.32).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 func _make_heart() -> ImageTexture:

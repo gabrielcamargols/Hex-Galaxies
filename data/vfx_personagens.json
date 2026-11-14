@@ -426,8 +426,10 @@
   "motivo": "Krieg Comandante",
   "ataque": "kri_k_cmd_ataque",
   "habilidades": [
-   "kri_cmd_bombardeio"
-  ]
+   "kri_cmd_bombardeio",
+   "kri_cmd_sangramento"
+  ],
+  "ataque_longe": "kri_k_cmd_tiro"
  },
  "k_front": {
   "nucleo": "#2864B4",
