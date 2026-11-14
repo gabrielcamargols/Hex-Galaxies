@@ -107,6 +107,7 @@ func set_map(id: String) -> void:
 		for h in hexes:
 			if dist(h, entry_c[p]) <= 1:
 				e.append(h)
+		e = _lado_a_lado(e, entry_c[p])
 		entry.append(e)
 
 
@@ -139,6 +140,37 @@ func obj_at(h: Vector2i) -> Variant:
 		if int(o["q"]) == h.x and int(o["r"]) == h.y:
 			return o
 	return null
+
+
+# as duas peças iniciais (primeiro e último da entrada) ficam lado a lado, na linha de visão do jogador:
+# escolhe o par mais perpendicular à direção do centro do mapa
+func _wxz(h: Vector2i) -> Vector2:
+	return Vector2(1.5 * h.y, -sqrt(3.0) * (h.x + h.y / 2.0))
+
+
+func _lado_a_lado(e: Array, c: Vector2i) -> Array:
+	var wc = _wxz(c)
+	var inward = (-wc).normalized() if wc.length() > 0.001 else Vector2(0, 1)
+	var lat = Vector2(-inward.y, inward.x)
+	var best = null
+	var best_s = -INF
+	for i in range(e.size()):
+		for j in range(e.size()):
+			if i == j:
+				continue
+			var d = _wxz(e[j]) - _wxz(e[i])
+			var sc = abs(d.dot(lat)) - 0.5 * abs(d.dot(inward))
+			if sc > best_s:
+				best_s = sc
+				best = [i, j]
+	if best == null:
+		return e
+	var out = [e[best[0]]]
+	for k in range(e.size()):
+		if k != best[0] and k != best[1]:
+			out.append(e[k])
+	out.append(e[best[1]])
+	return out
 
 
 func in_entry(p: int, h: Vector2i) -> bool:
