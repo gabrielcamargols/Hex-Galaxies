@@ -3476,6 +3476,85 @@ func _jungle_tree(root: Node3D, pos: Vector3, s: float, h: Vector2i, i: int) -> 
 		mi.material_override = mat
 
 
+# ---- modelos do Nature Kit da Kenney (CC0), repintados com a paleta de cada bioma ----
+# cada material do kit tem um nome (folhas, casca, pedra...); a paleta troca a cor e o jogo aplica a pintura do mapa
+const KPAL = {
+	"jungle": {"grass": "#3c9a44", "leafsGreen": "#2f8a3e", "leafsDark": "#236e36", "leafsFall": "#8abf4a",
+		"dirt": "#6a4a3e", "dirtDark": "#4a3030", "woodBark": "#4a2e26", "woodBarkDark": "#3a2228", "wood": "#a07850", "woodDark": "#6a4a3e",
+		"woodInner": "#d8b890", "woodBirch": "#e8dcc0", "stone": "#9a96b8", "stoneDark": "#76739a", "water": "#5ec8f0",
+		"colorRed": "#f438a9", "colorRedDark": "#b0207a", "colorPurple": "#a957ec", "colorYellow": "#ffd12e", "colorWhite": "#fff0fa", "colorTan": "#e8c890", "_defaultMat": "#e8e0f0"},
+	"snow": {"grass": "#f2f8ff", "leafsGreen": "#3c806a", "leafsDark": "#2f6a5a", "leafsFall": "#5a8a7a",
+		"dirt": "#7a5a3e", "dirtDark": "#5a3d22", "woodBark": "#5a3d22", "woodBarkDark": "#4a301c", "wood": "#8a6040", "woodDark": "#5a3d22",
+		"woodInner": "#d8c0a0", "woodBirch": "#efe8dc", "stone": "#d8f2ff", "stoneDark": "#9cd4f4", "water": "#9cd4f4",
+		"colorRed": "#f438a9", "colorRedDark": "#b0207a", "colorPurple": "#a957ec", "colorYellow": "#ffd12e", "colorWhite": "#ffffff", "colorTan": "#e8c890", "_defaultMat": "#e8f4ff"},
+}
+var _kmats: Dictionary = {}
+
+
+func _kmat(pal: String, mname: String, orig: Color) -> Material:
+	var key = pal + ":" + mname
+	if not _kmats.has(key):
+		var col = Color(KPAL[pal][mname]) if KPAL[pal].has(mname) else orig
+		_kmats[key] = _gouache(col)   # pincelada do jogo (manchas claras e escuras), igual às árvores antigas
+	return _kmats[key]
+
+
+# coloca o modelo com a base no chão e a altura "alt" (ou a largura, se "por_largura")
+func _kenney(parent: Node3D, mname: String, pos: Vector3, alt: float, yaw: float, pal: String, por_largura: bool = false) -> bool:
+	var sc = _scene_of("kenney/" + mname)
+	if sc == null:
+		return false
+	var inst: Node3D = sc.instantiate()
+	var meshes = inst.find_children("*", "MeshInstance3D", true, false)
+	var box = AABB()
+	var first = true
+	for mi in meshes:
+		var m: Mesh = mi.mesh
+		for si in range(m.get_surface_count()):
+			var sm = m.surface_get_material(si)
+			var nm2 = sm.resource_name if sm != null else "_defaultMat"
+			var oc = sm.albedo_color if sm is BaseMaterial3D else Color.WHITE
+			mi.set_surface_override_material(si, _kmat(pal, nm2, oc))
+		mi.material_overlay = null
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+		var ab = _rel_xf(inst, mi) * mi.get_aabb()
+		box = ab if first else box.merge(ab)
+		first = false
+	var ref = max(box.size.x, box.size.z) if por_largura else box.size.y
+	var k = alt / ref if ref > 0.0001 else 1.0
+	var holder = Node3D.new()
+	holder.position = pos
+	holder.rotation = Vector3(0, yaw, 0)
+	parent.add_child(holder)
+	holder.add_child(inst)
+	inst.scale = Vector3.ONE * k
+	inst.position = Vector3(-(box.position.x + box.size.x / 2.0) * k, -box.position.y * k, -(box.position.z + box.size.z / 2.0) * k)
+	return true
+
+
+func _rel_xf(root: Node, n: Node) -> Transform3D:
+	var t = Transform3D.IDENTITY
+	var c = n
+	while c != null and c != root:
+		if c is Node3D:
+			t = (c as Node3D).transform * t
+		c = c.get_parent()
+	return t
+
+
+const K_SELVA = ["tree_detailed", "tree_fat", "tree_blocks", "tree_default", "tree_oak", "tree_tall"]
+const K_PALMA = ["tree_palmDetailedTall", "tree_palmBend", "tree_palmTall"]
+const K_MOITA = ["plant_bushLarge", "plant_bushDetailed", "plant_bush", "grass_leafsLarge"]
+const K_FLOR = ["flower_purpleA", "flower_redB", "flower_yellowA", "mushroom_redGroup", "mushroom_tanTall", "mushroom_red"]
+const K_RUINA = ["statue_columnDamaged", "statue_column", "statue_head", "statue_ring"]
+const K_PINHO = ["tree_pineTallA_detailed", "tree_pineTallB_detailed", "tree_pineRoundC", "tree_pineSmallB", "tree_pineGroundA", "tree_pineDefaultA"]
+const K_PEDRA_NEVE = ["stone_tallC", "stone_tallF", "stone_largeB", "stone_largeD"]
+
+
+func _kpick(list: Array, h: Vector2i, salt: int) -> String:
+	return list[int(_rnd(h, salt) * list.size()) % list.size()]
+
+
 func _wild_props(root: Node3D, h: Vector2i, k: String) -> bool:
 	match k:
 		"mata":
@@ -3484,9 +3563,12 @@ func _wild_props(root: Node3D, h: Vector2i, k: String) -> bool:
 			var a0 = _rnd(h, 2) * TAU
 			for i in range(3):
 				var aa = a0 + TAU / 3.0 * i
-				_jungle_tree(root, Vector3(cos(aa) * rr0, 0, sin(aa) * rr0), 0.62 + _rnd(h, i + 9) * 0.18, h, i + int(_rnd(h, 3) * 3))
-			for i in range(3):
-				_mesh(root, _sph(0.16, 0.12), Color("#3c9a44"), Vector3((_rnd(h, i + 20) - 0.5) * 1.2, 0.05, (_rnd(h, i + 21) - 0.5) * 1.1))
+				var tp = Vector3(cos(aa) * rr0, 0, sin(aa) * rr0)
+				var lista = K_PALMA if _rnd(h, i + 60) < 0.3 else K_SELVA
+				if not _kenney(root, _kpick(lista, h, i + 61), tp, 0.95 + _rnd(h, i + 9) * 0.3, _rnd(h, i + 62) * TAU, "jungle"):
+					_jungle_tree(root, tp, 0.62 + _rnd(h, i + 9) * 0.18, h, i + int(_rnd(h, 3) * 3))
+			for i in range(2):
+				_kenney(root, _kpick(K_MOITA, h, i + 70), Vector3((_rnd(h, i + 20) - 0.5) * 1.1, 0, (_rnd(h, i + 21) - 0.5) * 1.0), 0.22 + _rnd(h, i + 22) * 0.1, _rnd(h, i + 23) * TAU, "jungle")
 		"raiz":
 			var holder = Node3D.new()
 			holder.rotation = Vector3(0, _rnd(h, 2) * TAU, 0)
@@ -3599,10 +3681,10 @@ func _wild_props(root: Node3D, h: Vector2i, k: String) -> bool:
 			for i in range(5):
 				_mesh(head, _sph(0.035, 0.035), Color("#fff0fa"), Vector3(-0.05 + _rnd(h, i + 30) * 0.2, 0.32, -0.15 + i * 0.07))
 		"trilha", "clareira":
-			for i in range(3):
-				_mesh(root, _cyl(0.0, 0.05, 0.14, 4), Color("#4f8a22") if k == "trilha" else Color("#9a8a3a"), Vector3((_rnd(h, i) - 0.5) * 1.0, 0.07, (_rnd(h, i + 9) - 0.5) * 0.9))
-			if _rnd(h, 33) > 0.7:
-				_mesh(root, _sph(0.06), Color("#f438a9") if _rnd(h, 34) > 0.5 else Color("#ffe27a"), Vector3((_rnd(h, 35) - 0.5) * 0.9, 0.08, (_rnd(h, 36) - 0.5) * 0.9))
+			for i in range(2):
+				_kenney(root, "grass_large" if k == "trilha" else "grass_leafsLarge", Vector3((_rnd(h, i) - 0.5) * 1.0, 0, (_rnd(h, i + 9) - 0.5) * 0.9), 0.14, _rnd(h, i + 4) * TAU, "jungle")
+			if _rnd(h, 33) > 0.6:
+				_kenney(root, _kpick(K_FLOR, h, 34), Vector3((_rnd(h, 35) - 0.5) * 0.9, 0, (_rnd(h, 36) - 0.5) * 0.9), 0.2, _rnd(h, 37) * TAU, "jungle")
 		"neve", "neve_base":
 			for i in range(2):
 				if _rnd(h, i + 50) > 0.45:
@@ -3672,26 +3754,43 @@ func _build_wild(kind: String) -> void:
 		var s = (0.9 + _rnd(h, 8) * 0.6) * (0.8 if d == 1 else 1.0 + d * 0.08)
 		var roll = _rnd(h, 11)
 		if kind == "jungle":
+			var yw = _rnd(h, 4) * TAU
 			if roll < 0.62:
-				_jungle_tree(holder, Vector3.ZERO, s * 1.3, h, int(_rnd(h, 3) * 3))
+				var lj = K_PALMA if _rnd(h, 14) < 0.3 else K_SELVA
+				if not _kenney(holder, _kpick(lj, h, 15), Vector3.ZERO, 1.9 * s, yw, "jungle"):
+					_jungle_tree(holder, Vector3.ZERO, s * 1.3, h, int(_rnd(h, 3) * 3))
+				if _rnd(h, 16) > 0.6:
+					_kenney(holder, _kpick(K_FLOR, h, 17), Vector3(0.45 * s, 0, 0.2 * s), 0.3 * s, yw, "jungle")
 			elif roll < 0.8:
-				for i in range(3):
-					_inked(_mesh(holder, _sph(0.3 * s, 0.4 * s), Color("#3fa04a").lerp(Color("#2f8a3e"), _rnd(h, i)), Vector3((_rnd(h, i + 1) - 0.5) * 0.8 * s, 0.15 * s, (_rnd(h, i + 2) - 0.5) * 0.8 * s)))
+				for i in range(2):
+					_kenney(holder, _kpick(K_MOITA, h, i + 18), Vector3((_rnd(h, i + 1) - 0.5) * 0.8 * s, 0, (_rnd(h, i + 2) - 0.5) * 0.8 * s), (0.45 + _rnd(h, i + 3) * 0.25) * s, yw + i, "jungle")
+				_kenney(holder, _kpick(K_FLOR, h, 24), Vector3(0.3 * s, 0, -0.3 * s), 0.28 * s, yw, "jungle")
 			elif roll < 0.92:
-				_inked(_mesh(holder, _cyl(0.2 * s, 0.26 * s, 1.6 * s, 8), Color("#b0acbe"), Vector3(0, 0.8 * s, 0), Vector3(0, 0, (_rnd(h, 4) - 0.5) * 0.3)))
-				_mesh(holder, _box(Vector3(0.5 * s, 0.08 * s, 0.5 * s)), Color("#4ea844"), Vector3(0, 1.62 * s, 0))
+				_kenney(holder, _kpick(K_RUINA, h, 25), Vector3.ZERO, 1.3 * s, yw, "jungle")
+				if _rnd(h, 26) > 0.5:
+					_kenney(holder, "grass_leafsLarge", Vector3(0.35 * s, 0, 0.1 * s), 0.25 * s, yw, "jungle")
 			else:
-				_inked(_mesh(holder, _sph(0.5 * s, 0.6 * s), Color("#8e8a7c"), Vector3(0, 0.2 * s, 0)))
+				_kenney(holder, "rock_largeA" if _rnd(h, 27) > 0.5 else "rock_largeC", Vector3.ZERO, 1.1 * s, yw, "jungle", true)
+				if _rnd(h, 28) > 0.5:
+					_kenney(holder, "stump_oldTall" if _rnd(h, 29) > 0.5 else "log_large", Vector3(0.5 * s, 0, 0), 0.45 * s, yw, "jungle")
 		else:
-			if roll < 0.45:
+			var yw2 = _rnd(h, 4) * TAU
+			if roll < 0.25:
 				for i in range(3):
 					var ht = (1.0 + _rnd(h, i + 3) * 1.4) * s
 					_inked(_mesh(holder, _cyl(0.0, 0.32 * s, ht, 5), Color("#9cd4f4").lerp(Color("#d8f2ff"), _rnd(h, i + 6)), Vector3((_rnd(h, i) - 0.5) * 0.7 * s, ht * 0.5, (_rnd(h, i + 9) - 0.5) * 0.7 * s), Vector3((_rnd(h, i + 12) - 0.5) * 0.3, 0, (_rnd(h, i + 15) - 0.5) * 0.3)))
-			elif roll < 0.75:
-				_inked(_mesh(holder, _sph(0.6 * s, 0.5 * s), Color("#ffffff"), Vector3(0, 0.05, 0)))
+			elif roll < 0.42:
+				# rochas cobertas de gelo e um monte de neve
+				_kenney(holder, _kpick(K_PEDRA_NEVE, h, 30), Vector3.ZERO, (0.8 + _rnd(h, 31) * 0.6) * s, yw2, "snow")
+				_inked(_mesh(holder, _sph(0.4 * s, 0.3 * s), Color("#ffffff"), Vector3(0.4 * s, 0.05, 0.2 * s)))
+			elif roll < 0.92 or d < 2:
+				# pinheiros: 1 a 3 juntos, de alturas diferentes
+				var np = 1 + int(_rnd(h, 32) * 3)
+				for i in range(np):
+					var off = Vector3((_rnd(h, i + 33) - 0.5) * 0.9 * s, 0, (_rnd(h, i + 36) - 0.5) * 0.9 * s) if i > 0 else Vector3.ZERO
+					if not _kenney(holder, _kpick(K_PINHO, h, i + 39), off, (1.5 + _rnd(h, i + 42) * 0.9) * s * (1.0 if i == 0 else 0.7), yw2 + i, "snow"):
+						_mesh(holder, _cyl(0.0, 0.42 * s, 1.2 * s, 8), Color("#2f6a5a"), off + Vector3(0, 0.6 * s, 0))
 			else:
-				# pinheiro com neve
-				_mesh(holder, _cyl(0.05 * s, 0.07 * s, 0.35 * s, 6), Color("#5a3d22"), Vector3(0, 0.17 * s, 0))
-				for i in range(3):
-					var w = 0.42 * s * (1.0 - i * 0.24)
-					_inked(_mesh(holder, _cyl(0.0, w, 0.55 * s, 8), [Color("#2f6a5a"), Color("#3c806a"), Color("#e8f4ff")][i], Vector3(0, 0.45 * s + i * 0.3 * s, 0)))
+				# acampamento abandonado na neve
+				var acamp = ["tent_detailedClosed", "log_stackLarge", "campfire_stones", "stump_round"]
+				_kenney(holder, acamp[int(_rnd(h, 45) * 4) % 4], Vector3.ZERO, 0.9 * s, yw2, "snow", true)
