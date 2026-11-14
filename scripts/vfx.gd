@@ -606,6 +606,8 @@ func play_fx(id: String, at: Vector3, from: Variant = null, tint: Color = Color.
 			_fx_after(dl, play_fx.bind(str(L["sub"]), at2, from, tint, follow, ctx))
 		elif L.has("drops"):
 			_fx_after(dl, _fx_drops.bind(L, at2, from))
+		elif L.has("modelo"):
+			_fx_after(dl, _fx_modelo.bind(L, at2))
 		elif L.has("p"):
 			_fx_after(dl, _fx_part.bind(L, at2, from, tint, follow))
 		else:
@@ -705,6 +707,28 @@ func _fx_layer(L: Dictionary, at: Vector3, from: Variant, tint: Color) -> void:
 	if L.has("rise"):
 		tw.parallel().tween_property(mi, "position:y", pos.y + float(L["rise"]), dur)
 	tw.tween_callback(mi.queue_free)
+
+
+# modelo 3D (ex.: dinamite de Meshy): sobe e gira no lugar, encolhe no fim do tempo de vida
+func _fx_modelo(L: Dictionary, at: Vector3) -> void:
+	var ps = load(str(L["modelo"]))
+	if not (ps is PackedScene):
+		return
+	var root: Node3D = ps.instantiate()
+	var esc = float(L.get("escala", 0.5)) * cam_k
+	var dur = _rnd(L.get("life", 1.2), 1.2) * DUR_MUL
+	var y0 = at.y + _rnd(L.get("y", 0.0))
+	root.position = Vector3(at.x, y0, at.z)
+	root.scale = Vector3.ONE * esc * 0.2
+	add_child(root)
+	var giro = deg_to_rad(float(L.get("giro", 360.0)))
+	var tw = root.create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(root, "position:y", y0 + float(L.get("rise", 0.6)) * cam_k, dur).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_property(root, "rotation:y", giro, dur)
+	tw.tween_property(root, "scale", Vector3.ONE * esc, dur * 0.2)
+	tw.tween_property(root, "scale", Vector3.ZERO, dur * 0.3).set_delay(dur * 0.7)
+	tw.chain().tween_callback(root.queue_free)
 
 
 # gotas de tinta: billboards com gravidade, encolhem no fim

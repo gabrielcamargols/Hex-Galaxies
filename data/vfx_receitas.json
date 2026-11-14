@@ -26125,67 +26125,12 @@
   "alvo": "meio",
   "layers": [
    {
-    "p": "dinamite",
-    "blend": "mix",
-    "amount": 1,
-    "one_shot": true,
+    "modelo": "res://models/dinamite/dinamite.fbx",
+    "escala": 30,
     "life": 1.2,
-    "life_rand": 0,
-    "size": 0.9,
-    "dir": [
-     0,
-     -1,
-     0
-    ],
-    "spread": 0,
-    "speed": [
-     6,
-     6
-    ],
-    "damp": [
-     10,
-     10
-    ],
     "y": 2.4,
-    "spin": [
-     -40,
-     -40
-    ],
-    "curve": [
-     [
-      0,
-      1
-     ],
-     [
-      0.9,
-      1
-     ],
-     [
-      1,
-      0
-     ]
-    ],
-    "ramp": [
-     "#292C35",
-     "#493D3D",
-     "#FFAC45",
-     "#FFD97A",
-     "#F2E6CC"
-    ],
-    "alpha": [
-     [
-      0,
-      1
-     ],
-     [
-      0.7,
-      1
-     ],
-     [
-      1,
-      0
-     ]
-    ]
+    "rise": 0.6,
+    "giro": 360
    },
    {
     "p": "fumaca",
