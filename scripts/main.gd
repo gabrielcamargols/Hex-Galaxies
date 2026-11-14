@@ -2546,16 +2546,25 @@ func refresh() -> void:
 				st["labels"][h] = "+ ENTRAR"
 				st["label_colors"][h] = C_DEPLOY.lightened(0.4)
 	# bombas escondidas do Rappy: só o dono vê
+	# minas da Sapturne e cargas do Dinamitador ficam flutuando na casa (modelo 3D, os dois lados veem)
+	var traps = []
 	for mn in game.mines:
-		if mn["owner"] == me:
+		var su0 = game.by_uid(int(mn["src"])) if int(mn["src"]) > 0 else null
+		if not mn.get("hidden", false) and su0 != null and su0.cid == "sapturne":
+			traps.append({"k": "m%d_%d_%d" % [int(mn["src"]), mn["h"].x, mn["h"].y], "h": mn["h"], "m": "mina"})
+		elif mn["owner"] == me:
 			st["labels"][mn["h"]] = "BOMBA" if mn.get("hidden", false) else "MINA"
 			st["label_colors"][mn["h"]] = Color("#ff9a3a")
 	for fr in game.fires:
 		st["labels"][fr["h"]] = "FOGO"
 		st["label_colors"][fr["h"]] = Color("#ff6a2a")
 	for sh in game.shells:
+		if sh.get("kind", "") == "charge":
+			traps.append({"k": "c%d_%d_%d" % [int(sh["src"]), sh["h"].x, sh["h"].y], "h": sh["h"], "m": "dinamite"})
+			continue
 		st["labels"][sh["h"]] = "ARTILHARIA"
 		st["label_colors"][sh["h"]] = Color("#ffcc55")
+	board.sync_traps(traps)
 	board.sync_bananas(game.bananas, me)
 	board.sync_core(game.core, game.core_next if game.core == null or game.core_next != game.core else null)
 	if game.core != null:
@@ -2738,7 +2747,7 @@ func _tick_clock(delta: float) -> void:
 func _refresh_top() -> void:
 	var who = "Você" if game.cur == me else _opp()
 	var status = "Fim de jogo" if game.winner != Game.NONE else ("Sua vez" if game.cur == me else ("Vez do " + _opp().to_lower() + (" (jogando...)" if busy or opp_thinking else "")))
-	title_base = "%s  ·  Round %d/10  ·  %s" % [game.map_name, game.round_no, status]
+	title_base = "%s  ·  Round %d/%d  ·  %s" % [game.map_name, game.round_no, Game.LAST_ROUND, status]
 	_apply_title()
 	var tcol = C_GOLD if game.winner != Game.NONE else (C_YOU if game.cur == me else C_CPU)
 	w["title"].add_theme_color_override("font_color", tcol)
@@ -4555,6 +4564,15 @@ func _prewarm() -> void:
 		var pr = r.get("proj", {})
 		if typeof(pr) == TYPE_DICTIONARY and pr.has("modelo"):
 			warm_keep.append(load(str(pr["modelo"]["modelo"])))
+	# minas e cargas que ficam flutuando no terreno: carrega e desenha uma vez
+	for tk in board.TRAP_MODELS:
+		var tps = board._trap_scene(board.TRAP_MODELS[tk]["cena"])
+		if tps != null:
+			var tn: Node3D = tps.instantiate()
+			tn.position = c
+			tn.scale = Vector3.ONE * 0.3
+			vfx.add_child(tn)
+			get_tree().create_timer(1.0).timeout.connect(tn.queue_free)
 	# todas as receitas da Forja (habilidades e ataques de todas as facções)
 	for id in vfx.receitas:
 		if typeof(vfx.receitas[id]) == TYPE_DICTIONARY:

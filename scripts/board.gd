@@ -142,6 +142,7 @@ func build(game: Game) -> void:
 	cart_nodes = []
 	swirl_nodes = []
 	banana_nodes.clear()
+	trap_nodes.clear()
 	core_node = null
 	core_next_node = null
 	core_at = null
@@ -1706,6 +1707,88 @@ func sync_bananas(b: Dictionary, viewer: int) -> void:
 		lab.position = Vector3(0, 0.62, 0)
 		n.add_child(lab)
 		banana_nodes[h] = n
+
+
+# ---- armadilhas visíveis no terreno: modelo 3D flutuando na casa até explodir ----
+# lista de {"k": chave única, "h": casa, "m": "mina" | "dinamite"}
+const TRAP_MODELS = {
+	"mina": {"cena": "res://models/aby_mina/mina.scn", "escala": 0.5, "y": 1.05, "cor": Color("#a957ec"), "giro": 18.0},
+	"dinamite": {"cena": "res://models/dinamite/dinamite_leve.scn", "escala": 0.55, "y": 1.15, "cor": Color("#ff7a2a"), "giro": 0.0},
+}
+var trap_nodes: Dictionary = {}
+var _trap_scenes: Dictionary = {}
+
+
+func _trap_scene(path: String) -> PackedScene:
+	if not _trap_scenes.has(path):
+		_trap_scenes[path] = load(path) if ResourceLoader.exists(path) else null
+	return _trap_scenes[path]
+
+
+func sync_traps(list: Array) -> void:
+	var vivos = {}
+	for t in list:
+		vivos[t["k"]] = t
+	for k in trap_nodes.keys():
+		if not vivos.has(k):
+			var n: Node3D = trap_nodes[k]
+			trap_nodes.erase(k)
+			var tw = n.create_tween()
+			tw.tween_property(n, "scale", Vector3.ONE * 0.01, 0.12)
+			tw.tween_callback(n.queue_free)
+	for k in vivos.keys():
+		var t = vivos[k]
+		var h: Vector2i = t["h"]
+		if not tiles.has(h):
+			continue
+		var base_y = top_y(h) + 0.05
+		if trap_nodes.has(k):
+			trap_nodes[k].position.y = base_y
+			continue
+		var cfg = TRAP_MODELS.get(t["m"], null)
+		if cfg == null:
+			continue
+		var ps = _trap_scene(cfg["cena"])
+		if ps == null:
+			continue
+		var n = Node3D.new()
+		n.position = Vector3(world_xz(h).x, base_y, world_xz(h).y)
+		scenery_root.add_child(n)
+		# brilho no chão marcando a casa
+		var col: Color = cfg["cor"]
+		var ring = _mesh(n, _disc(0.62, 24), col, Vector3(0, 0.02, 0))
+		ring.material_override = _mat(Color(col.lightened(0.15), 0.6), true)
+		ring.material_override.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		ring.material_overlay = null
+		var rt = ring.create_tween().set_loops()
+		rt.tween_property(ring, "scale", Vector3(1.15, 1, 1.15), 0.7).set_trans(Tween.TRANS_SINE)
+		rt.tween_property(ring, "scale", Vector3.ONE, 0.7).set_trans(Tween.TRANS_SINE)
+		# o modelo: cai do alto, para no ar e fica flutuando e balançando
+		var bob = Node3D.new()
+		n.add_child(bob)
+		var m: Node3D = ps.instantiate()
+		m.scale = Vector3.ONE * float(cfg["escala"])
+		for mi in m.find_children("*", "MeshInstance3D", true, false):
+			(mi as MeshInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		bob.add_child(m)
+		var fy = float(cfg["y"])
+		bob.position.y = fy + 2.6
+		var tw = bob.create_tween()
+		tw.tween_property(bob, "position:y", fy, 0.45).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tw.tween_callback(func():
+			var lp = bob.create_tween().set_loops()
+			lp.tween_property(bob, "position:y", fy + 0.09, 1.1).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+			lp.tween_property(bob, "position:y", fy - 0.05, 1.1).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT))
+		var g = float(cfg["giro"])
+		if g > 0.0:
+			var sp = m.create_tween().set_loops()
+			sp.tween_property(m, "rotation:y", TAU, 360.0 / g).from(0.0)
+		else:
+			# dinamite: balança de leve, como um pavio prestes a acabar
+			var sw = m.create_tween().set_loops()
+			sw.tween_property(m, "rotation:z", 0.12, 0.5).set_trans(Tween.TRANS_SINE)
+			sw.tween_property(m, "rotation:z", -0.12, 0.5).set_trans(Tween.TRANS_SINE)
+		trap_nodes[k] = n
 
 
 func _make_heart() -> ImageTexture:

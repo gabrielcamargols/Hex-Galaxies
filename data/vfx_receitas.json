@@ -5678,64 +5678,6 @@
   "alvo": "meio",
   "layers": [
    {
-    "p": "mina",
-    "blend": "mix",
-    "amount": 1,
-    "one_shot": true,
-    "life": 1.8,
-    "life_rand": 0,
-    "size": 0.85,
-    "dir": [
-     0,
-     -1,
-     0
-    ],
-    "spread": 0,
-    "speed": [
-     7,
-     7
-    ],
-    "damp": [
-     12,
-     12
-    ],
-    "y": 2.6,
-    "spin": [
-     -30,
-     -30
-    ],
-    "curve": [
-     [
-      0,
-      1
-     ],
-     [
-      0.9,
-      1
-     ],
-     [
-      1,
-      0
-     ]
-    ],
-    "ramp": [
-     "#12061c",
-     "#301342",
-     "#a957ec",
-     "#7fe3ff"
-    ],
-    "alpha": [
-     [
-      0,
-      1
-     ],
-     [
-      1,
-      1
-     ]
-    ]
-   },
-   {
     "p": "gota",
     "blend": "mix",
     "mode": "vel",
@@ -26124,14 +26066,6 @@
   "personagem": "t_dinamite",
   "alvo": "meio",
   "layers": [
-   {
-    "modelo": "res://models/dinamite/dinamite.fbx",
-    "escala": 0.35,
-    "life": 1.2,
-    "y": 2.4,
-    "pousa": 0.28,
-    "giro": 300
-   },
    {
     "p": "fumaca",
     "blend": "mix",
