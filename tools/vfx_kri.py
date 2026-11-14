@@ -93,6 +93,33 @@ def explosao(k=1.0, delay=0.0, y=0.8, tremor=0.5):
                     fumaca_suja(int(4 * k), delay + 0.14, 0.6, 1.1 * k)]})
 
 
+# símbolo oficial dos Krieg (vfx/tex/krieg_simbolo.png): branco com retícula, a rampa pinta
+SIMBOLO_RAMP = ["#16181F", "#8A3A12", "#FF742B", "#F3AD58"]
+
+
+def simbolo(size=1.2, life=0.4, delay=0.0, y=1.8, chao=False, ramp=None, em=None):
+    L = {"p": "krieg_simbolo", "blend": "mix", "amount": 1, "size": size, "life": life, "life_rand": 0, "angle": [0, 0],
+         "ramp": ramp or SIMBOLO_RAMP, "delay": delay}
+    if chao:
+        L.update({"mode": "chao", "y": 0.02, "curve": [[0, 1.35], [0.18, 1.0], [1, 1.0]], "erode": 1.0, "erode_pow": 2.2,
+                  "alpha": [[0, 0], [0.12, 1], [0.75, 1], [1, 0]]})
+    else:
+        L.update({"y": y, "curve": [[0, 0.4], [0.18, 1.15], [0.35, 1.0], [1, 1.05]], "halftone": 0.3,
+                  "alpha": [[0, 0], [0.12, 1], [0.7, 1], [1, 0]]})
+    if em:
+        L["em"] = em
+    return L
+
+
+def simbolo_marcado(size=1.2, life=0.4, delay=0.0, y=1.8, em=None):
+    """símbolo com sombra escura por trás (destaca em qualquer chão) e o desenho em laranja por cima"""
+    fundo = simbolo(size * 1.06, life, delay, y - 0.02, em=em, ramp=["#0E0F14", "#16181F", "#16181F", "#1E1410"])
+    fundo["p"] = "krieg_simbolo_sombra"
+    fundo["alpha"] = [[0, 0], [0.12, 0.9], [0.7, 0.9], [1, 0]]
+    frente = simbolo(size, life, delay, y, em=em, ramp=["#16181F", "#8A3A12", "#FF742B", "#FFB060"])
+    return [fundo, frente]
+
+
 def especiais():
     """efeitos únicos por personagem (substituem o ataque genérico e cobrem as habilidades)"""
     R = {}
@@ -103,18 +130,22 @@ def especiais():
     # ---------- COMANDANTE ----------
     add("kri_k_cmd_ataque", "Comandante · Sabre (ataque)", "k_cmd", merge(
         {"layers": [luz("#ff742b", 3.4, 3.6, 0.25, 0.95),
+                    *simbolo_marcado(1.1, 0.5, 0.0, 2.0, em="from"),
                     arco(-28, 4.0, LARANJA, 0.0, 0.45, 0.28), arco(24, 3.0, AMBAR, 0.07, 0.45, 0.22),
                     faisca(14, None, 0.03, 0.95), pontos(8, "#F3AD58", 0.04, 0.95)]},
         sangue(12, 0.05, 0.95, 1.1),
         {"shake": 0.3, "shake_delay": 0.03, "layers": []}))
     add("kri_cmd_bombardeio", "Comandante · Bombardeio (marca, projétil do céu, cratera)", "k_cmd", merge(
-        {"layers": mira(2.6, 0.5, 0.0, 0.1) + [
+        {"layers": mira(2.6, 0.5, 0.0, 0.1)[:1] + simbolo_marcado(1.9, 0.55, 0.0, 0.35) + [
             anel_chao(3.4, LARANJA, 0.0, 0.5, dentes=False, fecha=True),
+            *simbolo_marcado(1.5, 0.6, 0.0, 2.6, em="from"),
             {"modelo": PROJETIL, "escala": 0.7, "rot": [-90, 0, 0], "life": 0.46, "y": 5.5, "de": [2.2, -1.0], "queda": True, "delay": 0.12},
             {"p": "faisca", "mode": "vel", "amount": 10, "size": [0.1, 0.9], "speed": [10, 16], "dir": [0, -1, 0], "spread": 6,
              "life": 0.25, "ramp": ["#FF742B", "#F3AD58", "#FFF6DC"], "curve": [[0, 1.2], [1, 0]], "y": 3.5, "delay": 0.36}]},
         explosao(1.6, 0.58, 0.7, tremor=0.75),
         {"layers": [racha(3.2, 0.6, ["#16181F", "#303744", "#FF742B", "#F3AD58"]), pedregulhos(10, 0.6, 0.5),
+                    # o símbolo fica queimado na cratera
+                    {**simbolo(2.2, 1.8, 0.66, chao=True, ramp=["#0E0F14", "#16181F", "#3A1A0C", "#8A3A12"]), "angle": [0, 0]},
                     fumaca_suja(4, 0.78, 0.9, 1.5, 1.1)], "hit_t": 0.58}))
 
     # ---------- SNIPER ----------
