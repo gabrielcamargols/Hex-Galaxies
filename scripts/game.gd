@@ -12,7 +12,9 @@ const WORM_EVERY = 3
 const HOLE_ROUNDS = 2
 const HOLE_DMG = 4
 const FALL_DMG = 1
-const CMD_ROUND = 4          # round em que os comandantes entram
+const CMD_ROUND = 6          # round em que os comandantes entram
+const LAST_ROUND = 12        # a partida termina no fim deste round (desempate por vida)
+const DEPLOY_PER_ROUND = 1   # cada lado coloca no máximo 1 peça da reserva por round
 const CORE_ROUNDS = [2, 4, 6, 8]   # rounds em que o núcleo surge (fica 2 rounds)
 const NONE = -1
 const DRAW = 2
@@ -1701,6 +1703,8 @@ func begin_game() -> void:
 
 func start_round() -> void:
 	round_no += 1
+	for pl in P:
+		pl["deploys"] = 0
 	for u in units:
 		u.activated = false
 		u.charge = K(u).has("charge")
@@ -1995,7 +1999,7 @@ func end_round() -> void:
 	czones = czones.filter(func(z): return int(z["until"]) > round_no)
 	for pl in P:
 		pl["discount"] = false
-	if round_no >= 10:
+	if round_no >= LAST_ROUND:
 		do_final_score()
 		return
 	await start_round()
@@ -2249,7 +2253,7 @@ func _shove_flow(u, def: Dictionary) -> void:
 
 
 func do_final_score() -> void:
-	# desempate do fim do round 10: vence quem tiver mais vida somada nos personagens restantes
+	# desempate do fim do último round: vence quem tiver mais vida somada nos personagens restantes
 	# (comandantes e aliados, mais os escaravelhos de cada lado); barreiras não contam
 	var c = [commander(0).hp + scarabs_of(0), commander(1).hp + scarabs_of(1)]
 	var s = [0, 0]
@@ -2262,13 +2266,13 @@ func do_final_score() -> void:
 		winner = 0 if tot[0] > tot[1] else 1
 	else:
 		winner = DRAW
-	log_msg(-1, "Fim do round 10. Soma da vida dos personagens: %d × %d." % [tot[0], tot[1]])
+	log_msg(-1, "Fim do round %d. Soma da vida dos personagens: %d × %d." % [round_no, tot[0], tot[1]])
 	changed.emit()
 
 
 # ================= ativações =================
-# a área de entrada cresce com os rounds: raio 1 (rounds 1-3), 2 (4-6), 3 (7-9), 4 (10)
-const ZONE_GROW = 3
+# a área de entrada cresce a cada round: raio 1 no round 1, 2 no round 2... (cada mapa pode ter o seu ritmo)
+const ZONE_GROW = 1
 
 
 # a cada quantos rounds a área de entrada cresce (cada mapa pode ter o seu ritmo)
@@ -2390,6 +2394,8 @@ func entry_zone(p: int) -> Array:
 
 
 func deploy_hexes(p: int) -> Array:
+	if int(P[p].get("deploys", 0)) >= DEPLOY_PER_ROUND:
+		return []   # já colocou uma peça neste round
 	return entry_zone(p).filter(func(h): return is_free(h))
 
 
@@ -2459,6 +2465,7 @@ func deploy(u, h: Vector2i, via_obj: bool = false) -> void:
 func _deploy(u, h: Vector2i, via_obj: bool = false) -> void:
 	var p = u.owner
 	var pl = P[p]
+	pl["deploys"] = int(pl.get("deploys", 0)) + 1
 	u.st = "field"
 	u.q = h.x
 	u.r = h.y
