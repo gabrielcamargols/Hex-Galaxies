@@ -337,15 +337,12 @@ var ships_root: Node3D = null
 var ship_nodes: Array = []
 
 
-# a nave fica sempre de perfil para a câmera (eixo comprido na horizontal da tela), com o nariz
-# para o lado do tabuleiro; acompanha quando a câmera gira
+# a nave fica de frente para o jogador: o nariz aponta para a câmera (no plano do chão),
+# e acompanha quando a câmera gira
 func _orient_ship(ship: Node3D) -> void:
-	var out: Vector2 = ship.get_meta("out")
-	var right = Vector2(cos(cam_yaw), -sin(cam_yaw))      # direita da tela, no plano do chão
-	var d = out.dot(right)
-	var nose_dir = right * (-1.0 if d > 0.15 else (1.0 if d < -0.15 else 1.0))   # nariz para o centro (ou para a direita)
+	var toward = Vector2(sin(cam_yaw), cos(cam_yaw))      # direção da câmera no plano do chão
 	var nose = float(ship.get_meta("nose"))
-	var axis = nose_dir * (-nose)             # direção em que o X local deve apontar
+	var axis = -toward * (-nose)                          # direção em que o X local deve apontar
 	ship.rotation.y = atan2(-axis.y, axis.x)
 
 
