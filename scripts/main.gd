@@ -611,7 +611,7 @@ func _leave_battle() -> void:
 	board.visible = false
 	bubbles.clear()
 	_stop_battle_loops()
-	sfx.loop("musica_galaxia", -9.0, 0.8)
+	sfx.loop("musica_tema", -10.0, 0.8)
 	galaxy.activate()
 
 
@@ -1469,7 +1469,7 @@ func _impact(c: Dictionary) -> Dictionary:
 
 func _show_army() -> void:
 	stage = "army"
-	sfx.stop_loop("musica_galaxia", 1.5)
+	sfx.stop_loop("musica_tema", 1.5)
 	_fac_music(setup_cfg["fac"])
 	var akey = "MIX" if mix else setup_cfg["fac"]
 	if army_fac != akey:
@@ -2243,7 +2243,7 @@ func _army_back() -> void:
 	stage = "to_select"
 	sfx.play("clique", -8.0)
 	_fac_music("")
-	sfx.loop("musica_galaxia", -9.0, 2.0)
+	sfx.loop("musica_tema", -10.0, 2.0)
 	await _ui_fade(0.0, 0.35)
 	_show_select()
 
@@ -2319,7 +2319,7 @@ func _army_go() -> void:
 	await _ui_fade(0.0, 0.4)
 	sfx.play("vfx_portal", -6.0)
 	sfx.play("vfx_dash", -8.0)
-	sfx.stop_loop("musica_galaxia", 2.5)
+	sfx.stop_loop("musica_tema", 2.5)
 	_fac_music("")
 	galaxy.set_mode("dive")
 	await get_tree().create_timer(1.15).timeout
@@ -6062,7 +6062,7 @@ func _online_begin(sides: Array, sd: int, map_id: String, who: int) -> void:
 	sfx.play("confirmar", -6.0)
 	await _ui_fade(0.0, 0.4)
 	sfx.play("vfx_portal", -6.0)
-	sfx.stop_loop("musica_galaxia", 2.5)
+	sfx.stop_loop("musica_tema", 2.5)
 	_fac_music("")
 	galaxy.set_mode("dive", planet_id)
 	await get_tree().create_timer(1.15).timeout
