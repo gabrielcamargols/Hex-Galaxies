@@ -4316,7 +4316,10 @@ func _comic_pop(world: Variant, word: String, big: bool = false) -> void:
 	if world == null or board == null or board.cam == null or board.cam.is_position_behind(world):
 		return
 	# letreiros desenhados (ui/onomatopeias): "KRA-KOOM!" -> kra-koom.png; palavra sem arte não aparece
-	var path = "res://ui/onomatopeias/%s.png" % word.to_lower().replace("!", "").replace(" ", "_")
+	var nome = word.to_lower().replace("!", "").replace(" ", "_")
+	for par in [["ú", "u"], ["á", "a"], ["é", "e"], ["í", "i"], ["ó", "o"], ["ã", "a"], ["ç", "c"]]:
+		nome = nome.replace(par[0], par[1])
+	var path = "res://ui/onomatopeias/%s.png" % nome
 	if not ResourceLoader.exists(path):
 		return
 	var tex: Texture2D = load(path)
