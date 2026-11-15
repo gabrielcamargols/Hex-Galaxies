@@ -52,6 +52,7 @@ const C_DIM = Color("#cbbdff")      # texto secundário
 var font_title: Font = null
 var font_btn: Font = null
 var setup_cfg: Dictionary = {"map": "tarhut", "fac": "ABY", "cpu": "FAU"}
+var cpu_level: int = 1   # 0 Recruta, 1 Soldado, 2 Veterano, 3 Lenda (salvo nas preferências)
 var army_picks: Array = []     # 5 ids escolhidos pelo jogador
 var mix: bool = false          # modo Mix: tropas e comandante de qualquer facção
 var mix_cmd: String = ""
@@ -267,6 +268,8 @@ func _ready() -> void:
 			var kv = a.split("=")
 			if kv.size() == 2 and setup_cfg.has(kv[0]):
 				setup_cfg[kv[0]] = kv[1]
+			if kv.size() == 2 and kv[0] == "nivel":
+				cpu_level = int(kv[1])
 		Engine.time_scale = 25.0
 		print("AUTOTESTE: ", setup_cfg)
 		_start_match(null)
@@ -1477,6 +1480,18 @@ func _show_army() -> void:
 	ob.item_selected.connect(_army_cpu.bind(ob))
 	ob.custom_minimum_size = Vector2(170, 38)
 	ov.add_child(ob)
+	var lvb = OptionButton.new()
+	var lv_tips = ["Recruta: erra alvos, se expõe e quase não usa cartas e ativas.", "Soldado: a CPU padrão.",
+		"Veterano: foca abates, protege as peças e usa mais as ativas.", "Lenda: joga como o Veterano e ainda tem peças com +2 de Vida e compra 1 carta a mais por round."]
+	for i in range(Game.CPU_LEVELS.size()):
+		lvb.add_item("Nível: " + Game.CPU_LEVELS[i])
+	lvb.selected = cpu_level
+	lvb.tooltip_text = "\n".join(lv_tips)
+	lvb.item_selected.connect(func(i):
+		cpu_level = i
+		_save_prefs())
+	lvb.custom_minimum_size = Vector2(170, 34)
+	ov.add_child(lvb)
 	var b4 = _cbtn(ov, "⚡ JOGAR ONLINE", C_DEPLOY, _online_panel)
 	b4.custom_minimum_size = Vector2(170, 34)
 	b4.tooltip_text = "Jogar contra outra pessoa pela internet, com código de sala"
@@ -2121,6 +2136,7 @@ func _start_match(sides) -> void:
 	game = Game.new()
 	game.tree = get_tree()
 	game.cpu = [autotest, true]
+	game.cpu_level = 1 if tut else cpu_level
 	game.tut = tut
 	game.clock_on = false   # sem relógio de xadrez
 	if online:
@@ -2837,7 +2853,7 @@ func _refresh_party() -> void:
 		for c in box.get_children():
 			c.queue_free()
 		var col = Color("#4f9be0") if p == me else Color("#e0563f")
-		_label(box, ("VOCÊ · " if p == me else (_opp().to_upper() + " · ")) + ("Mix" if game.P[p].get("mix", false) else DB.factions[game.P[p]["fac"]]["short"]), 14, col.lightened(0.4))
+		_label(box, ("VOCÊ · " if p == me else (_opp().to_upper() + ("" if online else " " + Game.CPU_LEVELS[game.cpu_level].to_upper()) + " · ")) + ("Mix" if game.P[p].get("mix", false) else DB.factions[game.P[p]["fac"]]["short"]), 14, col.lightened(0.4))
 		if game.clock_on:
 			w["clock%d" % p] = _label(box, "", 18, col)
 		var res = []
@@ -6052,6 +6068,7 @@ func _load_prefs() -> void:
 		res_pref = str(cf.get_value("video", "res", res_pref))
 		fullscreen = bool(cf.get_value("video", "full", false))
 		render_q = float(cf.get_value("video", "q", 1.0))
+		cpu_level = clamp(int(cf.get_value("cpu", "nivel", 1)), 0, 3)
 
 
 func _save_prefs() -> void:
@@ -6065,6 +6082,7 @@ func _save_prefs() -> void:
 	cf.set_value("video", "full", fullscreen)
 	cf.set_value("video", "q", render_q)
 	cf.set_value("video", "rgb1", rgb_on)
+	cf.set_value("cpu", "nivel", cpu_level)
 	cf.save("user://prefs.cfg")
 
 

@@ -81,6 +81,9 @@ var winner: int = NONE
 var logs: Array = []
 var next_uid: int = 1
 var cpu: Array = [false, true]
+# nível da CPU: 0 Recruta, 1 Soldado, 2 Veterano, 3 Lenda (só a Lenda tem vantagem de regras)
+const CPU_LEVELS = ["Recruta", "Soldado", "Veterano", "Lenda"]
+var cpu_level: int = 1
 var map_id: String = "tarhut"
 var map_name: String = ""
 var dune: int = 0
@@ -181,6 +184,10 @@ func _mk(cid: String, p: int, st: String) -> Unit:
 	u.st = st
 	u.hp = int(c["int"])
 	u.maxhp = int(c["int"])
+	# Lenda: as peças da CPU entram com +2 de Vida
+	if cpu_level >= 3 and p < cpu.size() and cpu[p]:
+		u.hp += 2
+		u.maxhp += 2
 	u.is_cmd = c.get("cmd", false) == true
 	units.append(u)
 	return u
@@ -1918,7 +1925,7 @@ func start_round() -> void:
 	if winner != NONE:
 		return
 	for p in range(2):
-		draw_cards(p, 1)
+		draw_cards(p, 2 if (cpu_level >= 3 and cpu[p]) else 1)   # Lenda: a CPU compra 1 carta a mais
 		await hand_limit(p)
 	first = 0 if round_no % 2 == 1 else 1
 	cur = first

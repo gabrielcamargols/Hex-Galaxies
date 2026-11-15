@@ -3,6 +3,17 @@ extends RefCounted
 ## CPU: escolhe peça, movimento, ataque e cartas por pontuação simples.
 
 
+# nível da CPU (Game.cpu_level): 0 Recruta erra e se expõe, 1 Soldado é o padrão,
+# 2 Veterano e 3 Lenda focam abates, protegem as peças e usam mais as ativas
+static func lv(g) -> int:
+	return int(g.cpu_level)
+
+
+# Recruta: um pouco de acaso nas decisões
+static func noise(g, amp: float) -> float:
+	return randf_range(-amp, amp) if lv(g) == 0 else 0.0
+
+
 static func value(t) -> float:
 	if t.is_cmd:
 		return 30.0
@@ -44,7 +55,11 @@ static func attack_score(g, a, t, fpos = null) -> float:
 	if d <= 0:
 		return 0.1
 	var kill = d >= t.hp
-	return d * (3.0 if t.is_cmd else 1.0) + (value(t) if kill else 0.0) + (-3.0 if t.barrier else 0.0)
+	var s = d * (3.0 if t.is_cmd else 1.0) + (value(t) if kill else 0.0) + (-3.0 if t.barrier else 0.0)
+	if lv(g) >= 2:
+		# Veterano/Lenda: termina quem está ferido e prioriza derrubar
+		s += (value(t) * 0.5 if kill else 0.0) + float(d) / max(1.0, float(t.hp)) * 2.0
+	return s + noise(g, 3.0)
 
 
 static func best_attack_from(g, a, fpos = null) -> Variant:
@@ -119,8 +134,9 @@ static func pos_score(g, u, h: Vector2i) -> float:
 	if g.tt_of(g.terr(h)["k"]).get("forest", 0):
 		s += 0.3
 	var th = threat(g, u, h)
-	s -= th * (0.9 if u.is_cmd else (0.35 if ranged or u.hp <= 5 else 0.12))
-	return s
+	var cuidado = [0.35, 1.0, 1.4, 1.6][clamp(lv(g), 0, 3)]
+	s -= th * (0.9 if u.is_cmd else (0.35 if ranged or u.hp <= 5 else 0.12)) * cuidado
+	return s + noise(g, 2.5)
 
 
 static func unit_plan_score(g, u) -> float:
@@ -194,7 +210,7 @@ static func run(g, u) -> void:
 			if hand.has("reparo") and u.maxhp - u.hp >= 4 and g.tactic_playable(p, "reparo") and best_attack_from(g, u) == null:
 				await g.play_tactic(p, "reparo")
 				continue
-			var nt = new_tactic(g, u, hand, A)
+			var nt = new_tactic(g, u, hand, A) if not (lv(g) == 0 and randf() < 0.5) else ""
 			if nt != "":
 				await g.play_tactic(p, nt)
 				continue
@@ -215,7 +231,7 @@ static func run(g, u) -> void:
 				var bs = -1e9
 				for h in g.ult_opts(u):
 					bs = max(bs, g.ult_score(u, h))
-				if bs >= need[kind_u]:
+				if bs >= need[kind_u] * [1.6, 1.0, 0.8, 0.7][clamp(lv(g), 0, 3)] and not (lv(g) == 0 and randf() < 0.35):
 					await g.act_ult(u)
 					continue
 		if g.K(u).has("manip") and g.can_manip(u) and g.manip_modes(u).has("throw") and g.round_no >= 4:
@@ -224,7 +240,11 @@ static func run(g, u) -> void:
 		if g.can_attack_now(u):
 			var b = best_attack_from(g, u)
 			if b != null and b["s"] > 0.5:
-				await g.act_attack(u, b["t"])
+				var alvo = b["t"]
+				# Recruta: às vezes ataca o alvo errado
+				if lv(g) == 0 and randf() < 0.3:
+					alvo = g.attack_targets(u).pick_random()
+				await g.act_attack(u, alvo)
 				continue
 		if g.can_cart(u):
 			var hit_e = false
