@@ -52,7 +52,7 @@ const C_DIM = Color("#cbbdff")      # texto secundário
 var font_title: Font = null
 var font_btn: Font = null
 var setup_cfg: Dictionary = {"map": "tarhut", "fac": "ABY", "cpu": "FAU"}
-var cpu_level: int = 1   # 0 Recruta, 1 Soldado, 2 Veterano, 3 Lenda (salvo nas preferências)
+var cpu_level: int = 1   # 0 Recruta, 1 Soldado, 2 Veterano (salvo nas preferências)
 var army_picks: Array = []     # 5 ids escolhidos pelo jogador
 var mix: bool = false          # modo Mix: tropas e comandante de qualquer facção
 var mix_cmd: String = ""
@@ -269,7 +269,7 @@ func _ready() -> void:
 			if kv.size() == 2 and setup_cfg.has(kv[0]):
 				setup_cfg[kv[0]] = kv[1]
 			if kv.size() == 2 and kv[0] == "nivel":
-				cpu_level = int(kv[1])
+				cpu_level = clamp(int(kv[1]), 0, 2)
 		Engine.time_scale = 25.0
 		print("AUTOTESTE: ", setup_cfg)
 		_start_match(null)
@@ -1482,7 +1482,7 @@ func _show_army() -> void:
 	ov.add_child(ob)
 	var lvb = OptionButton.new()
 	var lv_tips = ["Recruta: erra alvos, se expõe e quase não usa cartas e ativas.", "Soldado: a CPU padrão.",
-		"Veterano: foca abates, protege as peças e usa mais as ativas.", "Lenda: joga como o Veterano e ainda tem peças com +2 de Vida e compra 1 carta a mais por round."]
+		"Veterano: foca abates, protege as peças e usa mais as ativas."]
 	for i in range(Game.CPU_LEVELS.size()):
 		lvb.add_item("Nível: " + Game.CPU_LEVELS[i])
 	lvb.selected = cpu_level
@@ -6068,7 +6068,7 @@ func _load_prefs() -> void:
 		res_pref = str(cf.get_value("video", "res", res_pref))
 		fullscreen = bool(cf.get_value("video", "full", false))
 		render_q = float(cf.get_value("video", "q", 1.0))
-		cpu_level = clamp(int(cf.get_value("cpu", "nivel", 1)), 0, 3)
+		cpu_level = clamp(int(cf.get_value("cpu", "nivel", 1)), 0, 2)
 
 
 func _save_prefs() -> void:

@@ -4,7 +4,7 @@ extends RefCounted
 
 
 # nível da CPU (Game.cpu_level): 0 Recruta erra e se expõe, 1 Soldado é o padrão,
-# 2 Veterano e 3 Lenda focam abates, protegem as peças e usam mais as ativas
+# 2 Veterano foca abates, protege as peças e usa mais as ativas
 static func lv(g) -> int:
 	return int(g.cpu_level)
 
@@ -57,7 +57,7 @@ static func attack_score(g, a, t, fpos = null) -> float:
 	var kill = d >= t.hp
 	var s = d * (3.0 if t.is_cmd else 1.0) + (value(t) if kill else 0.0) + (-3.0 if t.barrier else 0.0)
 	if lv(g) >= 2:
-		# Veterano/Lenda: termina quem está ferido e prioriza derrubar
+		# Veterano: termina quem está ferido e prioriza derrubar
 		s += (value(t) * 0.5 if kill else 0.0) + float(d) / max(1.0, float(t.hp)) * 2.0
 	return s + noise(g, 3.0)
 
@@ -134,7 +134,7 @@ static func pos_score(g, u, h: Vector2i) -> float:
 	if g.tt_of(g.terr(h)["k"]).get("forest", 0):
 		s += 0.3
 	var th = threat(g, u, h)
-	var cuidado = [0.35, 1.0, 1.4, 1.6][clamp(lv(g), 0, 3)]
+	var cuidado = [0.35, 1.0, 1.4][clamp(lv(g), 0, 2)]
 	s -= th * (0.9 if u.is_cmd else (0.35 if ranged or u.hp <= 5 else 0.12)) * cuidado
 	return s + noise(g, 2.5)
 
@@ -231,7 +231,7 @@ static func run(g, u) -> void:
 				var bs = -1e9
 				for h in g.ult_opts(u):
 					bs = max(bs, g.ult_score(u, h))
-				if bs >= need[kind_u] * [1.6, 1.0, 0.8, 0.7][clamp(lv(g), 0, 3)] and not (lv(g) == 0 and randf() < 0.35):
+				if bs >= need[kind_u] * [1.6, 1.0, 0.8][clamp(lv(g), 0, 2)] and not (lv(g) == 0 and randf() < 0.35):
 					await g.act_ult(u)
 					continue
 		if g.K(u).has("manip") and g.can_manip(u) and g.manip_modes(u).has("throw") and g.round_no >= 4:
