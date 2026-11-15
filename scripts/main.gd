@@ -2689,11 +2689,21 @@ func _cine_commanders() -> void:
 		return
 	var was = ui.visible
 	ui.visible = false
-	var cn = Node3D.new()
-	cn.set_script(load("res://scripts/cinematica.gd"))
-	add_child(cn)
-	await cn.run(self, cmds)
-	cn.queue_free()
+	# quem tem arte 2D ganha o quadrinho animado; os outros, a cena 3D
+	var c2 = load("res://scripts/cinematica2d.gd")
+	for c in cmds:
+		if c2.has_art(c["cid"]):
+			var q = CanvasLayer.new()
+			q.set_script(c2)
+			add_child(q)
+			await q.run(self, [c])
+			q.queue_free()
+		else:
+			var cn = Node3D.new()
+			cn.set_script(load("res://scripts/cinematica.gd"))
+			add_child(cn)
+			await cn.run(self, [c])
+			cn.queue_free()
 	ui.visible = was
 	refresh()
 
@@ -4614,6 +4624,14 @@ func _prewarm() -> void:
 		warm_keep.append(tr.texture)
 		tr.size = Vector2(8, 8)
 		holder.add_child(tr)
+	# arte das cutscenes 2D dos comandantes (round 6)
+	for dcut in DirAccess.get_directories_at("res://art/cutscenes"):
+		for n in _res_names("res://art/cutscenes/" + dcut, ".png") + _res_names("res://art/cutscenes/" + dcut, ".jpg"):
+			var tc = TextureRect.new()
+			tc.texture = load("res://art/cutscenes/%s/%s" % [dcut, n])
+			warm_keep.append(tc.texture)
+			tc.size = Vector2(8, 8)
+			holder.add_child(tc)
 	# letreiros de onomatopeia e o sumiço em retícula hexagonal
 	for n in _res_names("res://ui/onomatopeias", ".png"):
 		var to = TextureRect.new()
