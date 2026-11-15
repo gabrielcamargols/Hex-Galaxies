@@ -57,6 +57,9 @@ class Unit:
 	var dose_used: bool = false       # Médico Krieg: Última Dose já usada
 	var crystal: String = ""          # Valak: cristal (verde, azul, roxo) - barreira neutra de 1 de Vida
 	var exp: int = 0                  # barreira temporária: some ao fim deste round (0 = permanente)
+	var stolen: String = ""           # Cameo: cid de quem teve a ativa roubada (ela usa essa ativa)
+	var hacked: bool = false          # perdeu a ativa para a Cameo
+	var packed: bool = false          # Brazucão: já ganhou o +2 de Vida da Matilha
 	var soft: bool = false            # barreira de raízes: bloqueia movimento, mas não tiros e não dá abrigo
 	var sp_owner: int = -1            # cristal especial do Rei da Mina: time dele (-1 = cristal natural)
 	var block: bool = false           # bloco móvel nascido de um terreno rebaixado pelo Rei
@@ -133,6 +136,7 @@ var fires: Array = []     # Incendiário: [{h, owner, until}] casas em chamas
 var portals: Array = []   # Guarda dos Portais: [{a, b, uid, owner}] a = ENTRADA, b = SAÍDA
 var portal_pick_a: Variant = null   # entrada já escolhida (a IA usa para pontuar a saída)
 var tunnels: Array = []   # Rei da Mina: [{a, b, owner}] entradas de túnel ligadas
+var inks: Array = []      # Inkshadow: [{owner, hexes, till, src}] rastro da Cortina de Tinta
 var stars: Array = []     # Esterina: [{owner, c, hexes, till}] Estrela Hexa
 var shells: Array = []    # Rádio: [{h, owner, round, src}] artilharia que cai no início do próximo round
 
@@ -505,7 +509,8 @@ func nm(u) -> String:
 
 
 func mov_of(u) -> int:
-	var m = int(DB.cards[u.cid]["mov"]) + (1 if u.eq == "propulsor" else 0) + fx_sum(u, "mov")
+	var ib = item_boost(u)
+	var m = int(DB.cards[u.cid]["mov"]) + (1 + ib if u.eq == "propulsor" else 0) + fx_sum(u, "mov") + (ib if has_fx(u, "garras") else 0)
 	var ls = int(K(u).get("lastStand", 0))
 	if ls > 0 and field_count(u.owner) <= 3:
 		m = max(m, ls)
@@ -525,7 +530,43 @@ func mov_of(u) -> int:
 
 
 func alc_of(u) -> int:
-	return int(DB.cards[u.cid]["alc"]) + (1 if u.eq == "lente" else 0) + fx_sum(u, "alc")
+	var ib = item_boost(u)
+	var a = int(DB.cards[u.cid]["alc"]) + (1 + ib if u.eq == "lente" else 0) + fx_sum(u, "alc") + (ib if has_fx(u, "garras") else 0)
+	if not u.barrier:
+		if in_ink(u):
+			a += 2   # Cortina de Tinta
+		if K(u).has("domRange") and in_sniper_sight(u):
+			a += int(K(u)["domRange"])   # Gorun: Alcance Dominante
+	return a
+
+
+# Brazucão: itens de aliados a até 6 casas recebem +2
+func item_boost(u) -> int:
+	if u.barrier or u.st != "field":
+		return 0
+	for b in units:
+		if b.st == "field" and b.owner == u.owner and not b.barrier and K(b).has("itemBoost") and DB.dist(b.pos(), u.pos()) <= 6:
+			return int(K(b)["itemBoost"])
+	return 0
+
+
+# Gorun: na mira de um atirador inimigo (ALC 4+ da carta, com linha de visão)
+func in_sniper_sight(u) -> bool:
+	for e in units:
+		if e.st != "field" or e.owner == u.owner or e.barrier:
+			continue
+		var ea = int(DB.cards[e.cid]["alc"])
+		if ea >= 4 and DB.dist(e.pos(), u.pos()) <= ea and los(e.pos(), u.pos()):
+			return true
+	return false
+
+
+# Inkshadow: peça dentro do rastro de tinta do próprio dono
+func in_ink(u) -> bool:
+	for ik in inks:
+		if int(ik["owner"]) == u.owner and int(ik["till"]) >= round_no and ik["hexes"].has(u.pos()):
+			return true
+	return false
 
 
 func cmd_point(c) -> Vector2i:
@@ -745,7 +786,11 @@ func atk_of(a, t) -> int:
 	if k.has("furia"):
 		v += max(0, a.maxhp - a.hp) * int(k["furia"])
 	if t != null and has_fx(a, "adaga") and DB.dist(a.pos(), t.pos()) == 1:
-		v += 5
+		v += 5 + item_boost(a)
+	if not a.barrier and in_ink(a):
+		v += 4   # Cortina de Tinta
+		if t != null and marked_by(t, a.owner):
+			v += 6
 	if t != null and marked_by(t, a.owner) and DB.cards[a.cid]["f"] == "ABY":
 		v += mark_bonus(t)
 	v = max(0, v)
@@ -765,9 +810,9 @@ func reduction_of(t, peek: bool = false, d: int = 1) -> int:
 	var red = 0
 	var k = K(t)
 	if t.eq == "placas":
-		red += 1
+		red += 1 + item_boost(t)
 	if has_fx(t, "casco") and d > 1:
-		red += 4   # Kling: Casco Duro
+		red += 4 + item_boost(t)   # Kling: Casco Duro
 	red += fx_sum(t, "red")
 	if has_fx(t, "coat"):
 		red += fx_sum(t, "coat")
@@ -908,6 +953,8 @@ func _targets_from(a, fpos = null) -> Array:
 			continue
 		if d == 1 and in_star(t):
 			continue   # Estrela Hexa: protegido contra corpo a corpo
+		if d > 1 and in_ink(t):
+			continue   # Cortina de Tinta: quem atira de longe perde a visão
 		if d == 1 and abs(hp - stand_h(t.pos())) > 1 and not K(a).has("climbAll"):
 			continue
 		# aéreo: unidades terrestres de corpo a corpo não o alcançam
@@ -1266,10 +1313,32 @@ func _abyss_mark(a, t) -> void:
 
 
 func _mark_ko(t, src) -> void:
-	if t.st == "field" and t.hp > 0 and t.hp < 2 and src != null and marked_by(t, src.owner):
+	if src == null:
+		return
+	# Inkshadow (Silentus Mortis): com ele em campo, o marcado cai com 3 de Vida ou menos
+	var lim = 1
+	for ix in field():
+		if ix.owner == src.owner and K(ix).has("silentus"):
+			lim = max(lim, int(K(ix)["silentus"]))
+	if t.st == "field" and t.hp > 0 and t.hp <= lim and marked_by(t, src.owner):
 		log_msg(src.owner, "Marca Abyssal: %s é nocauteado na hora." % nm(t))
 		abfx("amark_ko", t.pos(), src.uid)
 		damage(t, t.hp, src)
+
+
+# ---- Matilha (Brazucão): com 2+ caninos aliados em campo, todos ganham +2 de Vida, uma vez ----
+func _pack_check() -> void:
+	for b in field().filter(func(x): return K(x).has("pack")):
+		var cans = field().filter(func(x): return x.owner == b.owner and K(x).has("canino"))
+		if cans.size() < int(K(b)["pack"]):
+			continue
+		for x in [b] + cans:
+			if not x.packed:
+				x.packed = true
+				x.maxhp += 2
+				x.hp += 2
+				abfx("buff", x.pos(), b.uid)
+				log_msg(b.owner, "Matilha: %s ganha +2 de Vida." % nm(x))
 
 
 # ---- Estrela Hexa (Esterina) ----
@@ -1831,6 +1900,8 @@ func start_round() -> void:
 	if winner != NONE:
 		return
 	_fire_tick()
+	inks = inks.filter(func(ik): return int(ik["till"]) >= round_no)
+	_pack_check()
 	_star_tick()
 	await _bleed_tick()
 	if winner != NONE:
@@ -2625,6 +2696,7 @@ func _deploy(u, h: Vector2i, via_obj: bool = false) -> void:
 				log_msg(p, "Reforço Acelerado.")
 	await entry_effect(u)
 	await arrive(u)
+	_pack_check()
 	await pace()
 
 
@@ -2818,12 +2890,21 @@ func _act_tunnel(u, h: Vector2i) -> bool:
 
 # ================= ativas dos comandantes (1 vez por partida) =================
 func ult_kind(u) -> String:
+	if u.stolen != "":
+		return str(DB.cards[u.stolen].get("k", {}).get("ult", ""))
 	return str(K(u).get("ult", ""))
+
+
+# carta de onde vem o nome da ativa (a Cameo usa a roubada)
+func ult_cid(u) -> String:
+	return u.stolen if u.stolen != "" else u.cid
 
 
 # ativa já gasta: "1 vez por partida" (comandantes) ou "1 vez por round" (ultRound)
 func ult_spent(u) -> bool:
-	if K(u).has("ultFree"):
+	if u.hacked:
+		return true
+	if K(u).has("ultFree") and u.stolen == "":
 		return false
 	if K(u).has("ultRound"):
 		return u.ult_round >= 0 and round_no < u.ult_round + ABIL_RECHARGE
@@ -2839,7 +2920,7 @@ func can_ult(u) -> bool:
 
 
 # habilidades que movem a própria peça não passam pelo portal (seria teletransporte)
-const ULT_NO_PORTAL = ["burrow", "cartcharge", "ferram", "stampede", "orbital", "portalis", "berserk", "minelay", "rodapunk", "hexstar"]
+const ULT_NO_PORTAL = ["burrow", "cartcharge", "ferram", "stampede", "orbital", "portalis", "berserk", "minelay", "rodapunk", "hexstar", "inkveil", "hack"]
 
 
 func ult_portal_ok(u) -> bool:
@@ -2849,6 +2930,39 @@ func ult_portal_ok(u) -> bool:
 
 func _dirs() -> Array:
 	return DB.nbrs(Vector2i(0, 0))
+
+
+func stampede_ends(u) -> Array:
+	var out2 = []
+	for d in _dirs():
+		var cur_h2 = u.pos()
+		for k in range(3):
+			var c = cur_h2 + d
+			if stampede_path(u, c).is_empty():
+				break
+			out2.append(c)
+			cur_h2 = c
+	return out2
+
+
+func _stampede_run(u, h: Vector2i) -> void:
+	var path = stampede_path(u, h)
+	for c in path:
+		var e = unit_at(c)
+		if e != null:
+			var nxt = c + (c - u.pos())
+			var side = DB.nbrs(c).filter(func(n): return n != nxt and n != u.pos() and is_free(n))
+			emitfx({"t": "strike", "from": u.uid, "to": e.uid, "ranged": false})
+			damage(e, 2, u)
+			if not side.is_empty() and e.hp > 0:
+				await move_unit(e, side[0])
+			settle()
+			if unit_at(c) != null:
+				break
+		abfx("stomp", c, u.uid)
+		await move_unit(u, c, true)
+		if u.st != "field":
+			break
 
 
 func stampede_path(u, end: Vector2i) -> Array:
@@ -3491,6 +3605,12 @@ func ult_opts(u) -> Array:
 			return DB.hexes.filter(func(h): return DB.dist(h, p) >= 1 and DB.dist(h, p) <= 2 and is_free(h) and not shells.any(func(sh): return sh["h"] == h))
 		"berserk":
 			return [p] if act["actions"] >= 2 and not has_fx(u, "berserk") else []
+		"inkveil":
+			return DB.hexes.filter(func(h): return DB.dist(h, p) >= 1 and DB.dist(h, p) <= 8 and is_free(h) and valid_ground(h))
+		"animal":
+			return _targets_from(u).map(func(t): return t.pos())
+		"hack":
+			return field().filter(func(x): return x != u and not x.barrier and DB.dist(x.pos(), p) <= 12 and ult_kind(x) != "" and ult_kind(x) != "hack" and not ult_spent(x)).map(func(x): return x.pos())
 		"rodapunk":
 			return [p] if enemies_of(u).any(func(x): return not x.barrier and DB.dist(x.pos(), p) <= 4) else []
 		"hexstar":
@@ -3532,16 +3652,7 @@ func ult_opts(u) -> Array:
 		"earth":
 			return DB.hexes.filter(func(h): return DB.dist(h, p) <= 4 and not blocks.has(h) and not DB.in_entry(0, h) and not DB.in_entry(1, h))
 		"stampede":
-			var out2 = []
-			for d in _dirs():
-				var cur_h2 = p
-				for k in range(3):
-					var c = cur_h2 + d
-					if stampede_path(u, c).is_empty():
-						break
-					out2.append(c)
-					cur_h2 = c
-			return out2
+			return stampede_ends(u)
 		"orbital":
 			return DB.hexes.filter(func(h): return DB.dist(h, p) >= 1 and DB.dist(h, p) <= 5 and is_free(h))
 		"mend":
@@ -3567,6 +3678,17 @@ func ult_score(u, h: Vector2i) -> float:
 			# só vale quando já está ferido e há inimigo ao alcance no próximo round
 			var perto = enemies_of(u).any(func(x): return DB.dist(x.pos(), u.pos()) <= mov_of(u) + 1)
 			return (4.0 if u.hp <= 3 else 0.0) + (1.0 if perto else -5.0)
+		"inkveil":
+			return 2.5 if enemies_of(u).any(func(x): return DB.dist(x.pos(), h) <= 3) else 0.5
+		"animal":
+			var sc_a = 3.0
+			if t != null and t.is_cmd:
+				sc_a += 2.0
+			return sc_a
+		"hack":
+			if t == null:
+				return 0.0
+			return (3.0 if t.owner != u.owner else 1.0) + (2.0 if t.is_cmd else 0.0)
 		"rodapunk":
 			return float(enemies_of(u).filter(func(x): return not x.barrier and DB.dist(x.pos(), u.pos()) <= 4).size()) * 1.5
 		"hexstar":
@@ -3789,7 +3911,7 @@ func _act_ult_run(u) -> bool:
 		return false
 	var p = u.owner
 	var kind = ult_kind(u)
-	var ab2 = DB.active_of(u.cid)
+	var ab2 = DB.active_of(ult_cid(u))
 	var uname = ab2.get("name", "Ativa")
 	var texts = {"mend": "escolha o Abyssal a restaurar (até 3 casas)", "plate": "escolha o aliado adjacente a reforçar", "detonate": "escolha a mina a detonar", "barricade": "escolha a casa adjacente da Barricada", "grenade": "escolha o alvo da granada (até 3, passa por cima de obstáculos)", "artillery": "escolha a casa que a artilharia vai atingir no início do próximo round (até 5)", "abyss": "escolha o inimigo a puxar (até 8 casas)", "bombard": "escolha a casa do bombardeio (até 6)", "prison": "escolha o inimigo a prender (até 4)", "earth": "escolha a 1ª casa a mudar de altura (até 4)", "stampede": "escolha até onde avançar em linha reta", "orbital": "escolha onde pousar (até 5)",
 		"burrow": "escolha onde emergir (até 2 casas)", "bwall": "escolha a casa adjacente da muralha", "rootweb": "escolha a casa adjacente das raízes",
@@ -3801,7 +3923,9 @@ func _act_ult_run(u) -> bool:
 		"portalis": "escolha a ENTRADA do portal (até 6 casas): por onde aliados e ataques entram",
 		"minelay": "escolha a casa da mina (até 8 casas)",
 		"hexstar": "escolha o centro da Estrela Hexa (até 4 casas)", "workshop": "escolha o aliado que recebe o item (até 6 casas)",
-		"shock": "escolha o inimigo a eletrocutar (até 3 casas)"}
+		"shock": "escolha o inimigo a eletrocutar (até 3 casas)",
+		"inkveil": "1ª corrida: escolha a casa (até 8)", "animal": "escolha o alvo do Projétil Animal (atravessa 3 casas depois dele)",
+		"hack": "escolha a peça que terá a ativa roubada (até 12 casas)"}
 	var h: Variant = null
 	if SELF_ULTS.has(kind):
 		h = u.pos()
@@ -4026,23 +4150,7 @@ func _act_ult_run(u) -> bool:
 					break
 				cur_h = nh
 		"stampede":
-			var path = stampede_path(u, h)
-			for c in path:
-				var e = unit_at(c)
-				if e != null:
-					var nxt = c + (c - u.pos())
-					var side = DB.nbrs(c).filter(func(n): return n != nxt and n != u.pos() and is_free(n))
-					emitfx({"t": "strike", "from": u.uid, "to": e.uid, "ranged": false})
-					damage(e, 2, u)
-					if not side.is_empty() and e.hp > 0:
-						await move_unit(e, side[0])
-					settle()
-					if unit_at(c) != null:
-						break
-				abfx("stomp", c, u.uid)
-				await move_unit(u, c, true)
-				if u.st != "field":
-					break
+			await _stampede_run(u, h)
 		"mend":
 			var tm9 = unit_at(h)
 			abfx("heal", h, u.uid)
@@ -4098,6 +4206,56 @@ func _act_ult_run(u) -> bool:
 					act["moved"] = true
 					abfx("dash", c0, u.uid)
 					await move_unit(u, fim, true)
+		"inkveil":
+			var ini = u.pos()
+			var trilha = line_hexes(ini, h, 1e-6)
+			abfx("ink", ini, u.uid)
+			await move_unit(u, h, true)
+			if u.st == "field" and winner == NONE:
+				var op2 = DB.hexes.filter(func(h2): return DB.dist(h2, ini) <= 8 and (h2 == u.pos() or (is_free(h2) and valid_ground(h2))))
+				var h2b = await pick_hex(p, "Cortina de Tinta: 2ª corrida (até 8 casas de onde começou).", op2, "move", true)
+				if h2b != null and h2b != u.pos():
+					for th in line_hexes(u.pos(), h2b, 1e-6):
+						if not trilha.has(th):
+							trilha.append(th)
+					abfx("ink", u.pos(), u.uid)
+					await move_unit(u, h2b, true)
+			trilha = trilha.filter(func(th): return DB.hexes.has(th))
+			inks = inks.filter(func(ik): return int(ik["src"]) != u.uid)
+			inks.append({"owner": p, "hexes": trilha, "till": round_no + 1, "src": u.uid})
+			log_msg(p, "Cortina de Tinta: rastro de %d casas por 2 rounds." % trilha.size())
+		"animal":
+			var t0 = unit_at(h)
+			if t0 != null:
+				var base = atk_of(u, t0)
+				var dd0 = max(1, DB.dist(u.pos(), h))
+				var far = h + (h - u.pos()) * int(ceil(3.0 / dd0))
+				var ln = line_hexes(u.pos(), far, 1e-6)
+				var i0 = ln.find(h)
+				var depois = ln.slice(i0 + 1, i0 + 4) if i0 >= 0 else []
+				abfx("animal", h, u.uid)
+				var acertos = 0
+				for hh in [h] + depois:
+					var x = unit_at(hh)
+					if x == null or x.owner == p or x.barrier:
+						continue
+					var dm2 = max(0, base - acertos)
+					emitfx({"t": "strike", "from": u.uid, "to": x.uid, "ranged": true})
+					damage(x, dm2, u, true)
+					log_msg(p, "Projétil Animal atinge %s (%d)." % [nm(x), dm2])
+					acertos += 1
+				settle()
+		"hack":
+			var vt = unit_at(h)
+			if vt != null:
+				u.stolen = vt.cid
+				u.ult_used = false
+				u.ult_round = -1
+				if vt.owner != p:
+					vt.hacked = true
+				abfx("hack", h, u.uid)
+				log_msg(p, "Sistema Invadido: %s rouba %s de %s%s." % [nm(u), DB.active_of(vt.cid).get("name", "a ativa"), nm(vt), "" if vt.owner == p else ", que fica sem ela"])
+				return true
 		"hexstar":
 			var hx = star_hexes(h)
 			stars = stars.filter(func(st): return int(st["src"]) != u.uid)
@@ -4444,7 +4602,15 @@ func resolve_attack(a, t) -> void:
 	if (red > 0 or react_red > 0) and not target.barrier:
 		emitfx({"t": "passive", "kind": "shield", "uid": target.uid})
 	damage(target, dealt, a, true)
+	if dealt > 0 and K(a).has("lifesteal") and a.st == "field":
+		heal(a, int(K(a)["lifesteal"]))
+		abfx("lifesteal", a.pos(), a.uid)
+		log_msg(p, "Assassino Curandeiro: %s restaura 1 de Vida." % nm(a))
 	_abyss_mark(a, target)
+	if marked_by(target, 1 - target.owner):
+		var mk = field().filter(func(x): return x.owner == 1 - target.owner)
+		if not mk.is_empty():
+			_mark_ko(target, mk[0])
 	if counter_by != null and counter_by.hp > 0 and a.st == "field" and DB.dist(counter_by.pos(), a.pos()) <= int(K(counter_by)["counter"]):
 		var cd2 = max(0, atk_of(counter_by, a) - reduction_of(a))
 		emitfx({"t": "strike", "from": counter_by.uid, "to": a.uid, "ranged": DB.dist(counter_by.pos(), a.pos()) > 1})
@@ -4684,6 +4850,18 @@ func resolve_attack(a, t) -> void:
 			await move_unit(a, h)
 		if winner != NONE or a.st != "field":
 			return
+	# Rhombo: ao derrubar, avança até 3 casas em linha empurrando e ferindo quem estiver no caminho
+	if target.st == "dead" and K(a).has("killCharge") and is_live(a) and not rooted(a):
+		var ends = stampede_ends(a)
+		if not ends.is_empty():
+			var hr = await pick_hex(p, "Impacto de Rhombo: avance até 3 casas em linha reta (ou toque fora para ficar).", ends, "move", true)
+			if hr != null:
+				A["momentum"] = true
+				log_msg(p, "Impacto de Rhombo: %s avança." % nm(a))
+				await _stampede_run(a, hr)
+				settle()
+				if winner != NONE or a.st != "field":
+					return
 	# impulso: derrubar uma tropa dá 1 casa grátis (1 vez por ativação)
 	if target.st == "dead" and not target.barrier and is_live(a) and not A.get("momentum", false) and not rooted(a) and not step_free(a.pos()).is_empty():
 		A["momentum"] = true

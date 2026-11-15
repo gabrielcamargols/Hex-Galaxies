@@ -1889,11 +1889,21 @@ var star_nodes: Dictionary = {}
 
 
 func sync_stars(list: Array) -> void:
+	sync_zones("star", list, Color(1.0, 0.74, 0.18, 0.55), Color(1.0, 0.95, 0.7, 0.85))
+
+
+# Cortina de Tinta (Inkshadow): rastro de tinta escura com borda roxa
+func sync_inks(list: Array) -> void:
+	sync_zones("ink", list, Color(0.08, 0.04, 0.16, 0.72), Color(0.66, 0.34, 0.95, 0.9))
+
+
+func sync_zones(kind: String, list0: Array, cor: Color, cor_borda: Color) -> void:
+	var list = list0.map(func(z): return {"k": kind + ":" + str(z["k"]), "hexes": z["hexes"]})
 	var vivos = {}
 	for st in list:
 		vivos[str(st["k"])] = st["hexes"]
 	for k in star_nodes.keys():
-		if not vivos.has(k):
+		if str(k).begins_with(kind + ":") and not vivos.has(k):
 			var n: Node3D = star_nodes[k]
 			star_nodes.erase(k)
 			var tw = n.create_tween()
@@ -1907,12 +1917,12 @@ func sync_stars(list: Array) -> void:
 		var mat = StandardMaterial3D.new()
 		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		mat.albedo_color = Color(1.0, 0.74, 0.18, 0.55)
+		mat.albedo_color = cor
 		mat.render_priority = 1
 		var borda = StandardMaterial3D.new()
 		borda.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 		borda.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		borda.albedo_color = Color(1.0, 0.95, 0.7, 0.85)
+		borda.albedo_color = cor_borda
 		borda.render_priority = 1
 		var i = 0
 		for h in vivos[k]:

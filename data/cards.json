@@ -117,7 +117,8 @@
     "text": "Após atacar um inimigo, avança automaticamente (até 3 casas) até o outro inimigo mais próximo e também o ataca. Uma vez por ativação."
    },
    "k": {
-    "hunt": 3
+    "hunt": 3,
+    "canino": true
    }
   },
   {
@@ -133,12 +134,10 @@
    "src": "pdf",
    "ab": {
     "name": "Impacto de Rhombo",
-    "text": "Ao entrar em campo, empurre 1 inimigo adjacente 1 casa para longe de Rhombo, se o destino estiver livre."
+    "text": "Ao derrotar um inimigo, pode avançar até 3 casas em linha reta: cada inimigo no caminho é empurrado para o lado e sofre 2 de dano."
    },
    "k": {
-    "entry": {
-     "t": "pushAdj"
-    }
+    "killCharge": true
    }
   },
   {
@@ -154,9 +153,17 @@
    "src": "pdf",
    "ab": {
     "name": "Alcance Dominante",
-    "text": "Pode atacar a até 4 casas. Precisa de linha de visão; esse alcance já consta em ALC."
+    "text": "Pode atacar a até 4 casas (precisa de linha de visão). Se estiver na mira de um atirador inimigo (alcance 4 ou mais, com linha de visão), ganha +2 ALC."
    },
-   "k": {}
+   "k": {
+    "domRange": 2,
+    "ult": "animal"
+   },
+   "ab2": {
+    "name": "Projétil Animal",
+    "text": "1 vez por partida, 1 ação: um tiro potente num inimigo no alcance que atravessa até 3 casas depois dele. Causa o ATQ de Gorun no alvo e 1 a menos em cada inimigo seguinte.",
+    "kind": "ativa"
+   }
   },
   {
    "id": "mantis",
@@ -171,10 +178,11 @@
    "src": "pdf",
    "ab": {
     "name": "Golpe de Emboscada",
-    "text": "Seu primeiro ataque na partida causa +2 dano."
+    "text": "Seu primeiro ataque na partida causa +2 dano. Assassino Curandeiro: cada golpe que causa dano restaura 1 de Vida de Mantis Kai."
    },
    "k": {
-    "firstAtk": 2
+    "firstAtk": 2,
+    "lifesteal": 1
    }
   },
   {
@@ -212,7 +220,8 @@
     "text": "Recebe +2 ATQ ao atacar um alvo com 5 de Vida restantes ou menos."
    },
    "k": {
-    "atkVsLow": 2
+    "atkVsLow": 2,
+    "canino": true
    }
   },
   {
@@ -228,12 +237,11 @@
    "src": "pdf",
    "ab": {
     "name": "Engenho Improvisado",
-    "text": "Ao entrar, marque 1 bônus: a próxima implantação normal de outro Fauriano neste round entra com as 2 ações, mas não pode atacar nesse turno."
+    "text": "Itens de aliados a até 6 casas de Brazucão recebem +2 (Propulsor, Lente, Placas e os itens do Kling). Matilha: com 2 ou mais caninos aliados em campo (Caninus White, Caninus Black, Vexa, Nokka), Brazucão se junta a eles e todos ganham +2 de Vida, uma vez."
    },
    "k": {
-    "entry": {
-     "t": "discount"
-    }
+    "itemBoost": 2,
+    "pack": 2
    }
   },
   {
@@ -295,7 +303,8 @@
      "t": "debuff",
      "r": 2,
      "n": 2
-    }
+    },
+    "canino": true
    }
   },
   {
@@ -314,7 +323,8 @@
     "text": "Se Caninus Black aliado estiver em campo, Caninus White recebe +2 ATQ."
    },
    "k": {
-    "atkTwin": 2
+    "atkTwin": 2,
+    "canino": true
    }
   },
   {
@@ -343,19 +353,21 @@
    "role": "Infiltrador",
    "hg": "HG-046",
    "atk": 3,
-   "int": 5,
+   "int": 3,
    "mov": 3,
    "alc": 1,
    "src": "cat",
    "ab": {
-    "name": "Sistema Invadido",
-    "text": "Ao entrar, 1 inimigo a até 2 casas perde sua habilidade até o fim do round."
+    "name": "Infiltrada",
+    "text": "Cameo rouba a ativa de qualquer peça (ver Sistema Invadido)."
    },
    "k": {
-    "entry": {
-     "t": "silence",
-     "r": 2
-    }
+    "ult": "hack"
+   },
+   "ab2": {
+    "name": "Sistema Invadido",
+    "text": "1 vez por partida, 1 ação: escolha uma peça a até 12 casas, inimiga ou aliada. Cameo rouba a ativa dela e pode usá-la 1 vez; se for inimiga, ela perde a ativa.",
+    "kind": "ativa"
    }
   },
   {
@@ -788,18 +800,21 @@
    "hg": "HG-034",
    "atk": 4,
    "int": 5,
-   "mov": 3,
+   "mov": 6,
    "alc": 1,
    "src": "pdf",
    "ab": {
-    "name": "Cortina de Tinta",
-    "text": "Ao entrar, não pode ser alvo de ataques até o início do próximo round. Nuvem de Tinta: ao causar dano, o alvo fica cego (-2 ATQ até o fim do round)."
+    "name": "Silentus Mortis",
+    "text": "Inimigos com 3 de Vida ou menos que estejam com a Marca Abyssal são nocauteados na hora."
    },
    "k": {
-    "entry": {
-     "t": "veil"
-    },
-    "after": "blind"
+    "silentus": 3,
+    "ult": "inkveil"
+   },
+   "ab2": {
+    "name": "Cortina de Tinta",
+    "text": "1 vez por partida, 1 ação: Inkshadow corre duas vezes, cada vez para uma casa livre a até 8 casas de onde começou, deixando um rastro de tinta por 2 rounds. Aliados no rastro ganham +2 ALC e +4 ATQ; inimigos com a Marca Abyssal atacados de dentro do rastro sofrem +6. Inimigos não conseguem atacar à distância quem está no rastro (perdem a visão).",
+    "kind": "ativa"
    }
   },
   {

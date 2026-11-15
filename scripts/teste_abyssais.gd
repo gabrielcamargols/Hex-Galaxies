@@ -206,3 +206,26 @@ func parte2() -> void:
 	g.winner = g.NONE
 	await g.end_round()
 	ok(vt.hp == 7 and not g.has_fx(vt, "shock"), "no fim do round sofre mais 1 e o choque passa")
+	limpa(g)
+	# ---- Inkshadow: Cortina de Tinta e Silentus Mortis
+	var ik = put(g, "inkshadow", 0, c0.x, c0.y)
+	ok(g.mov_of(ik) == 6, "Inkshadow MOV 6")
+	var p1 = livres(g, c0, 3)[0]
+	var p2 = DB.hexes.filter(func(h): return g.is_free(h) and DB.dist(h, c0) <= 8 and DB.dist(h, p1) >= 2 and h != c0)[0]
+	g.start_activation(ik)
+	fila = [p1, p2]
+	await g.act_ult(ik)
+	g.end_activation()
+	ok(ik.pos() == p2 and not g.inks.is_empty(), "duas corridas e rastro de tinta")
+	ok(g.in_ink(ik) and g.alc_of(ik) == 3 and g.atk_of(ik, null) == 8, "no rastro: +2 ALC e +4 ATQ (%d, %d)" % [g.alc_of(ik), g.atk_of(ik, null)])
+	var tir = DB.hexes.filter(func(h): return g.is_free(h) and DB.dist(h, ik.pos()) == 2 and g.los(h, ik.pos()))
+	var atir = put(g, "klang", 1, tir[0].x, tir[0].y)
+	ok(not g.attack_targets(atir).has(ik), "inimigo à distância não vê quem está na tinta")
+	atir.st = "dead"
+	var mk = put(g, "z_vang", 1, DB.nbrs(ik.pos()).filter(func(h): return g.is_free(h))[0].x, DB.nbrs(ik.pos()).filter(func(h): return g.is_free(h))[0].y)
+	mk.fx.append({"k": "amark", "by": 0, "until": "end"})
+	ok(g.atk_of(ik, mk) >= 8 + 6, "marcado atacado de dentro da tinta: +6")
+	mk.hp = 3
+	g._mark_ko(mk, ik)
+	g.settle()
+	ok(mk.st != "field", "Silentus Mortis: marcado com 3 de Vida cai")

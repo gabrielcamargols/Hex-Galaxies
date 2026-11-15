@@ -2577,6 +2577,7 @@ func refresh() -> void:
 		if mu.fx.any(func(f): return f["k"] == "amark"):
 			marks.append({"uid": mu.uid, "h": mu.pos()})
 	board.sync_ground_marks("amark", marks)
+	board.sync_inks(game.inks.map(func(ik): return {"k": "%d" % int(ik["src"]), "hexes": ik["hexes"]}))
 	board.sync_stars(game.stars.map(func(st): return {"k": "%d_%d_%d" % [int(st["src"]), st["c"].x, st["c"].y], "hexes": st["hexes"]}))
 	board.sync_bananas(game.bananas, me)
 	board.sync_core(game.core, game.core_next if game.core == null or game.core_next != game.core else null)
@@ -3145,7 +3146,7 @@ func _refresh_actbar() -> void:
 			var bab = _cbtn(box, DB.cards[u.cid]["ab"]["name"], C_ABIL, func(): _toggle_ab(), ab)
 			bab.disabled = left <= 0 or (moved and k.get("action", "") == "tunnel")
 			bab.tooltip_text = "Habilidade ativa: 1 ação. Casas com X."
-		var act_ab = DB.active_of(u.cid)
+		var act_ab = DB.active_of(game.ult_cid(u))
 		if k.has("ult") and not act_ab.is_empty():
 			var ok_ult = (game.can_ult(u) if live else (game.can_start(u) and not game.ult_spent(u) and not game.ult_opts(u).is_empty()))
 			var bu = _cbtn(box, "★ " + act_ab["name"], C_ABIL, _on_ult)
@@ -4863,6 +4864,18 @@ func _on_abfx(e: Dictionary) -> void:
 			vfx.flip("heal", g0, 2.2, 0.8)
 		"veil":
 			vfx.flip("ink", g0, 2.4, 0.7)
+		"ink":
+			vfx.flip("smoke", g0 + Vector3(0, 0.5, 0), 2.6, 0.8, Color("#3a2060"))
+			vfx.flip("dash", g0, 2.2, 0.4, Color("#a957ec"))
+		"animal":
+			vfx.flip("hit", g0 + Vector3(0, 0.9, 0), 3.0, 0.5, Color("#ffd12e"))
+			vfx.flip("ring", g0, 3.4, 0.45, Color("#ffd12e"), true)
+		"hack":
+			vfx.flip("bolt", g0, 2.6, 0.5, Color("#5affc8"))
+			vfx.flip("sparkle", g0 + Vector3(0, 1.0, 0), 2.2, 0.8, Color("#5affc8"))
+			_comic_pop(g0 + Vector3(0, 1.6, 0), "HACK!", false)
+		"lifesteal":
+			vfx.flip("sparkle", g0 + Vector3(0, 0.9, 0), 1.6, 0.6, Color("#7dff5a"))
 		"rodapunk":
 			# Oncus gira: anel de espinhos e chifres varrendo 4 casas
 			vfx.flip("ring", g0, 9.0, 0.6, Color("#ff5ae0"), true)
