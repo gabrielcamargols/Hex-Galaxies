@@ -1077,6 +1077,7 @@ func _on_play() -> void:
 func _show_select() -> void:
 	stage = "select"
 	_clear_ui()
+	galaxy.visible = true
 	galaxy.portrait = portrait
 	galaxy.set_mode("select")
 	ui.modulate.a = 0.0
@@ -1487,6 +1488,10 @@ func _show_army() -> void:
 		ui.add_child(rays)
 		w["rays"] = rays
 	var pd = galaxy.data(planet_id)
+	if portrait:
+		_show_army_portrait(pd)
+		return
+	galaxy.visible = true
 	# --- barra do alto: planeta, facções, adversário ---
 	var topbar = _hbox(ui, 14)
 	topbar.set_anchors_preset(Control.PRESET_TOP_WIDE)
@@ -1633,6 +1638,163 @@ func _show_army() -> void:
 	_army_refresh()
 
 
+# ---- tela do exército em pé: sem planeta, tudo empilhado e o BATALHAR fixo embaixo ----
+func _show_army_portrait(pd: Dictionary) -> void:
+	galaxy.visible = false
+	var vw = get_viewport().get_visible_rect().size
+	var bg = ColorRect.new()
+	bg.color = Color(0.03, 0.02, 0.09, 0.82)
+	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui.add_child(bg)
+	ui.move_child(bg, 0)
+	var col = VBoxContainer.new()
+	col.add_theme_constant_override("separation", 8)
+	col.set_anchors_preset(Control.PRESET_FULL_RECT)
+	col.offset_left = 12
+	col.offset_right = -12
+	col.offset_top = 10
+	col.offset_bottom = -10
+	ui.add_child(col)
+	# 1. planeta (só o nome) e voltar
+	var r1 = _hbox(col, 8)
+	var pv = _vbox(r1, 0)
+	pv.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_label(pv, pd.get("name", "").to_upper(), 26, C_GOLD)
+	_label(pv, pd.get("sub", "").to_upper(), 11, pd.get("atm", C_HUD).lightened(0.2))
+	var bk = _cbtn(r1, "◀ Planetas", C_HUD, _army_back)
+	bk.custom_minimum_size = Vector2(0, 40)
+	bk.add_theme_font_size_override("font_size", 13)
+	bk.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	# deixa espaço para o botão de tela cheia no canto
+	var fsp = Control.new()
+	fsp.custom_minimum_size = Vector2(40, 0)
+	r1.add_child(fsp)
+	# 2. facções (rola para o lado)
+	var tsc = ScrollContainer.new()
+	tsc.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	tsc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
+	tsc.custom_minimum_size = Vector2(0, 58)
+	col.add_child(tsc)
+	var tabs = _hbox(tsc, 6)
+	w["tabs"] = tabs
+	# 3. adversário, nível e online numa fileira
+	var r3 = _hbox(col, 6)
+	var ob = OptionButton.new()
+	ob.add_item("CPU: Aleatório")
+	ob.set_item_metadata(0, "RND")
+	for f in DB.factions.keys():
+		ob.add_item("CPU: " + DB.factions[f]["short"])
+		ob.set_item_metadata(ob.item_count - 1, f)
+	ob.add_item("CPU: Mix")
+	ob.set_item_metadata(ob.item_count - 1, "MIX")
+	for i in range(ob.item_count):
+		if ob.get_item_metadata(i) == setup_cfg["cpu"]:
+			ob.selected = i
+	ob.item_selected.connect(_army_cpu.bind(ob))
+	ob.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	ob.custom_minimum_size = Vector2(0, 42)
+	ob.add_theme_font_size_override("font_size", 13)
+	r3.add_child(ob)
+	var lvb = OptionButton.new()
+	for i in range(Game.CPU_LEVELS.size()):
+		lvb.add_item(Game.CPU_LEVELS[i])
+	lvb.selected = cpu_level
+	lvb.item_selected.connect(func(i):
+		cpu_level = i
+		_save_prefs())
+	lvb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lvb.custom_minimum_size = Vector2(0, 42)
+	lvb.add_theme_font_size_override("font_size", 13)
+	r3.add_child(lvb)
+	var onb = _cbtn(r3, "⚡ ONLINE", C_DEPLOY, _online_panel)
+	onb.custom_minimum_size = Vector2(0, 42)
+	onb.add_theme_font_size_override("font_size", 13)
+	# 4. comandante (compacto, toque para ver a ficha)
+	var cmdp = PanelContainer.new()
+	col.add_child(cmdp)
+	w["cmdp"] = cmdp
+	# 5. tropas: cabeçalho, filtro do Mix e a grade, que ocupa o meio e rola
+	var mh = _hbox(col, 8)
+	_label(mh, "TROPAS", 20, C_TXT)
+	var mt = _label(mh, "toque para pôr ou tirar", 12, C_DIM)
+	mt.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	mt.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var vd = _cbtn(mh, "ⓘ Detalhes", C_HUD, func(): _army_sheet(true))
+	vd.custom_minimum_size = Vector2(0, 34)
+	vd.add_theme_font_size_override("font_size", 12)
+	var mixbar = HFlowContainer.new()
+	mixbar.add_theme_constant_override("h_separation", 5)
+	mixbar.add_theme_constant_override("v_separation", 5)
+	col.add_child(mixbar)
+	w["mixbar"] = mixbar
+	var sc = ScrollContainer.new()
+	sc.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_fat_scroll(sc)
+	col.add_child(sc)
+	var grid = GridContainer.new()
+	grid.columns = 3
+	grid.add_theme_constant_override("h_separation", 6)
+	grid.add_theme_constant_override("v_separation", 6)
+	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sc.add_child(grid)
+	w["grid"] = grid
+	w["grid_sc"] = sc
+	# 6. embaixo, fixo: vagas, dica, sortear/limpar e o BATALHAR na largura toda
+	var bot = PanelContainer.new()
+	bot.add_theme_stylebox_override("panel", _flat(Color(0.03, 0.05, 0.11, 0.94), C_HUD.darkened(0.3), 2, 10, 8))
+	col.add_child(bot)
+	var bv = _vbox(bot, 6)
+	var slots = _hbox(bv, 5)
+	slots.alignment = BoxContainer.ALIGNMENT_CENTER
+	w["slots"] = slots
+	var r6 = _hbox(bv, 6)
+	var hint = _label(r6, "", 12, C_DIM)
+	hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hint.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	w["army_hint"] = hint
+	for spec in [["Sortear", _army_random], ["Limpar", _army_clear]]:
+		var bb = _cbtn(r6, spec[0], C_HUD, spec[1])
+		bb.custom_minimum_size = Vector2(0, 38)
+		bb.add_theme_font_size_override("font_size", 13)
+	var go = _cbtn(bv, "BATALHAR", C_GOLD, _army_go, true)
+	_primary(go)
+	go.custom_minimum_size = Vector2(0, 62)
+	go.add_theme_font_size_override("font_size", 24)
+	w["go"] = go
+	# ficha da tropa: folha por cima de tudo, fecha no X ou tocando fora
+	var sheet = Control.new()
+	sheet.set_anchors_preset(Control.PRESET_FULL_RECT)
+	sheet.visible = false
+	ui.add_child(sheet)
+	var dim = ColorRect.new()
+	dim.color = Color(0, 0, 0.03, 0.6)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.gui_input.connect(func(ev):
+		if (ev is InputEventMouseButton and ev.pressed) or (ev is InputEventScreenTouch and ev.pressed):
+			_army_sheet(false))
+	sheet.add_child(dim)
+	var sv = VBoxContainer.new()
+	sv.add_theme_constant_override("separation", 6)
+	sv.set_anchors_preset(Control.PRESET_FULL_RECT)
+	sv.offset_left = 14
+	sv.offset_right = -14
+	sv.offset_top = vw.y * 0.08
+	sv.offset_bottom = -14
+	sheet.add_child(sv)
+	var det = PanelContainer.new()
+	det.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	sv.add_child(det)
+	w["det"] = det
+	var cl = _cbtn(sv, "Fechar", C_HUD, func(): _army_sheet(false))
+	cl.custom_minimum_size = Vector2(0, 48)
+	w["det_sheet"] = sheet
+	if army_detail == "" or not DB.cards.has(army_detail) or (not mix and DB.cards[army_detail]["f"] != setup_cfg["fac"]):
+		army_detail = _cur_cmd()
+	_army_refresh()
+
+
 func _army_refresh() -> void:
 	if stage != "army" or not w.has("grid"):
 		return
@@ -1686,7 +1848,9 @@ func _army_refresh() -> void:
 		w["cmdp"].gui_input.disconnect(sg["callable"])
 	w["cmdp"].gui_input.connect(func(ev):
 		if ev is InputEventMouseButton and ev.pressed:
-			_army_show(cid2))
+			_army_show(cid2)
+			if portrait:
+				_army_sheet(true))
 	var cv = _vbox(w["cmdp"], 6)
 	cv.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var ch = _hbox(cv, 10)
@@ -1939,6 +2103,18 @@ func _army_show(id: String) -> void:
 	_army_detail_build()
 
 
+# em pé: a ficha da tropa abre por cima, como uma folha
+func _army_sheet(open: bool, id: String = "") -> void:
+	if not w.has("det_sheet") or not is_instance_valid(w["det_sheet"]):
+		return
+	if id != "":
+		army_detail = id
+		_army_detail_build()
+	w["det_sheet"].visible = open
+	if open:
+		sfx.play("clique", -10.0)
+
+
 func _army_detail_build() -> void:
 	if not w.has("det") or not is_instance_valid(w["det"]):
 		return
@@ -2002,6 +2178,8 @@ func _army_detail_build() -> void:
 	if c.get("cmd", false):
 		kd = ["PASSIVA", C_CARD]
 	var dw = int(clamp(get_viewport().get_visible_rect().size.x * 0.335 - 60.0, 220.0, 420.0))
+	if portrait:
+		dw = int(get_viewport().get_visible_rect().size.x - 110.0)
 	_ab_box(v, kd[0], kd[1], c["ab"]["name"], c["ab"]["text"], dw)
 	if c.has("ab2"):
 		var k2 = c["ab2"].get("kind", "ativa")
