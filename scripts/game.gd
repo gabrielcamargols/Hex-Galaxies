@@ -732,7 +732,13 @@ func atk_of(a, t) -> int:
 	if t != null and k.has("atkFocus") and t.hitters_round == round_no:
 		if t.hitters.any(func(id): return id != a.uid and by_uid(id) != null and DB.cards[by_uid(id).cid]["f"] == DB.cards[a.cid]["f"]):
 			v += int(k["atkFocus"])
-	return max(0, v)
+	# Moby: Fúria Ferida (+1 ATQ por Vida perdida) e Berserker Total (dano dobrado)
+	if k.has("furia"):
+		v += max(0, a.maxhp - a.hp) * int(k["furia"])
+	v = max(0, v)
+	if has_fx(a, "berserk"):
+		v *= 2
+	return v
 
 
 # não se moveu nesta ativação (Mira Travada do Sniper)
@@ -1059,6 +1065,7 @@ func arrive(u, own: bool = false) -> void:
 			if m.get("root", false) and u.st == "field":
 				u.fx.append({"k": "root", "end": round_no + 1})
 				log_msg(m["owner"], "%s ficou preso na mina." % nm(u))
+			_mine_chain(m)
 			break
 	if u.st == "field" and not u.barrier:
 		for f in fires:
@@ -1216,6 +1223,33 @@ func _dose_medic(t) -> Variant:
 		if m != t and m.st == "field" and m.owner == t.owner and not m.dose_used and K(m).has("lastDose") and DB.dist(m.pos(), t.pos()) <= int(K(m)["lastDose"]):
 			return m
 	return null
+
+
+# Sapturne: mina que é dela explode junto com qualquer mina/bomba ao lado (e vice-versa), em cadeia
+func _chain_mine(m) -> bool:
+	var su = by_uid(int(m["src"])) if int(m["src"]) > 0 else null
+	return su != null and K(su).has("mineChain")
+
+
+func _mine_chain(first) -> void:
+	var fila = [first]
+	while not fila.is_empty():
+		var x = fila.pop_front()
+		var viz = mines.filter(func(m): return DB.dist(m["h"], x["h"]) == 1 and (_chain_mine(m) or _chain_mine(x)))
+		for m in viz:
+			mines.erase(m)
+			var src = by_uid(int(m["src"])) if int(m["src"]) > 0 else null
+			emitfx({"t": "boom", "h": m["h"]})
+			abfx("chainmine", m["h"], int(m["src"]) if int(m["src"]) > 0 else 0)
+			log_msg(m["owner"], "Minas em cadeia: explode outra mina.")
+			for t in field().filter(func(z): return z.owner != m["owner"] and not z.barrier and DB.dist(z.pos(), m["h"]) <= 1):
+				if t.pos() == m["h"]:
+					damage(t, int(m["n"]), src)
+					if m.get("root", false) and t.st == "field":
+						t.fx.append({"k": "root", "end": round_no + 1})
+				else:
+					damage(t, 1, src)
+			fila.append(m)
 
 
 # mina nova; no máximo `cap` por peça de origem (a mais antiga some)
@@ -1977,6 +2011,14 @@ func end_round() -> void:
 	_venom_tick()
 	if winner != NONE:
 		return
+	# Moby: o Berserker Total cobra o preço
+	for bz in field().filter(func(x): return x.fx.any(func(f): return f["k"] == "berserk" and int(f["die"]) <= round_no)):
+		log_msg(bz.owner, "%s cai: a fúria total consumiu suas forças." % nm(bz))
+		abfx("berserk_fim", bz.pos(), bz.uid)
+		damage(bz, bz.hp, null)
+	settle()
+	if winner != NONE:
+		return
 	await resolve_queues()
 	if winner != NONE:
 		return
@@ -2697,6 +2739,8 @@ func ult_kind(u) -> String:
 
 # ativa já gasta: "1 vez por partida" (comandantes) ou "1 vez por round" (ultRound)
 func ult_spent(u) -> bool:
+	if K(u).has("ultFree"):
+		return false
 	if K(u).has("ultRound"):
 		return u.ult_round >= 0 and round_no < u.ult_round + ABIL_RECHARGE
 	return u.ult_used
@@ -2711,7 +2755,7 @@ func can_ult(u) -> bool:
 
 
 # habilidades que movem a própria peça não passam pelo portal (seria teletransporte)
-const ULT_NO_PORTAL = ["burrow", "cartcharge", "ferram", "stampede", "orbital", "portalis"]
+const ULT_NO_PORTAL = ["burrow", "cartcharge", "ferram", "stampede", "orbital", "portalis", "berserk", "minelay"]
 
 
 func ult_portal_ok(u) -> bool:
@@ -2748,7 +2792,7 @@ func stampede_path(u, end: Vector2i) -> Array:
 
 # ================= Valakianos: ajudantes =================
 # ativas sem alvo: não pedem escolha, valem para a própria peça
-const SELF_ULTS = ["quake", "guardfirm"]
+const SELF_ULTS = ["berserk", "quake", "guardfirm"]
 
 
 # casa onde alguém pode emergir, ser empurrado ou ser posto: livre, pisável, fora de buracos
@@ -3361,6 +3405,12 @@ func ult_opts(u) -> Array:
 			return [p]
 		"timedcharge":
 			return DB.hexes.filter(func(h): return DB.dist(h, p) >= 1 and DB.dist(h, p) <= 2 and is_free(h) and not shells.any(func(sh): return sh["h"] == h))
+		"berserk":
+			return [p] if act["actions"] >= 2 and not has_fx(u, "berserk") else []
+		"minelay":
+			if not field().any(func(x): return x.owner == u.owner and x.cid == "rhazur"):
+				return []
+			return DB.hexes.filter(func(h): return DB.dist(h, p) >= 1 and DB.dist(h, p) <= 8 and is_free(h) and valid_ground(h) and not mines.any(func(m): return m["h"] == h))
 		"lumen", "nursing":
 			return allies_of(u).filter(func(x): return DB.dist(x.pos(), p) <= 2 and x.hp < x.maxhp).map(func(x): return x.pos())
 		"route":
@@ -3421,6 +3471,22 @@ func ult_opts(u) -> Array:
 func ult_score(u, h: Vector2i) -> float:
 	var t = unit_at(h)
 	match ult_kind(u):
+		"berserk":
+			# só vale quando já está ferido e há inimigo ao alcance no próximo round
+			var perto = enemies_of(u).any(func(x): return DB.dist(x.pos(), u.pos()) <= mov_of(u) + 1)
+			return (4.0 if u.hp <= 3 else 0.0) + (1.0 if perto else -5.0)
+		"minelay":
+			# perto de inimigos, mas não colada neles (para pegarem no caminho)
+			var ms = 0.0
+			for e in enemies_of(u):
+				var de = DB.dist(e.pos(), h)
+				if de == 1:
+					ms += 1.2
+				elif de == 2:
+					ms += 0.6
+			if mines.any(func(m): return DB.dist(m["h"], h) == 1):
+				ms += 0.8
+			return ms
 		"portalis":
 			if portal_pick_a == null:
 				# entrada: perto dos aliados que vão usar
@@ -3632,7 +3698,8 @@ func _act_ult_run(u) -> bool:
 		"lumen": "escolha o aliado a curar (até 2 casas)", "nursing": "escolha o aliado a tratar (até 2 casas)", "route": "escolha o aliado que ganha a rota (até 2 casas)",
 		"bridge": "escolha a 1ª casa baixa a elevar (até 2 casas dele; até 3 casas ligadas)",
 		"valbarrier": "escolha onde a barreira começa (até 6 casas); depois, onde termina",
-		"portalis": "escolha a ENTRADA do portal (até 6 casas): por onde aliados e ataques entram"}
+		"portalis": "escolha a ENTRADA do portal (até 6 casas): por onde aliados e ataques entram",
+		"minelay": "escolha a casa da mina (até 8 casas)"}
 	var h: Variant = null
 	if SELF_ULTS.has(kind):
 		h = u.pos()
@@ -3886,12 +3953,26 @@ func _act_ult_run(u) -> bool:
 			abfx("barrier", h, u.uid)
 			log_msg(p, "Casco de Reparo: %s sofre 1 a menos de dano neste round." % nm(tp9))
 		"detonate":
+			var dm = mines.filter(func(m): return m["h"] == h and m["owner"] == p)
 			mines = mines.filter(func(m): return not (m["h"] == h and m["owner"] == p))
 			abfx("bombard", h, u.uid)
 			emitfx({"t": "boom", "h": h})
 			for e in enemies_of(u).filter(func(x): return DB.dist(x.pos(), h) <= 1):
 				damage(e, 3, u)
+			if not dm.is_empty():
+				_mine_chain(dm[0])
 			settle()
+		"berserk":
+			act["actions"] = 0
+			u.fx.append({"k": "berserk", "die": round_no + 1})
+			abfx("berserk", u.pos(), u.uid)
+			log_msg(p, "%s entra em fúria total: dano dobrado, e cai no fim do próximo round." % nm(u))
+		"minelay":
+			abfx("mine", h, u.uid)
+			_add_mine(p, h, 3, u.uid, int(K(u).get("mineCap", 2)))
+			if K(u).has("mineRoot"):
+				mines.back()["root"] = true
+			log_msg(p, "%s posiciona uma mina." % nm(u))
 		"barricade":
 			var nb = 3
 			abfx("barrier", h, u.uid)

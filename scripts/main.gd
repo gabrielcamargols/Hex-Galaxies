@@ -4850,6 +4850,18 @@ func _on_abfx(e: Dictionary) -> void:
 			vfx.flip("heal", g0, 2.2, 0.8)
 		"veil":
 			vfx.flip("ink", g0, 2.4, 0.7)
+		"berserk":
+			# Moby entra em fúria total: chamas vermelhas e onda de choque
+			vfx.flip("fire", g0 + Vector3(0, 0.6, 0), 2.8, 0.9, Color("#ff3a4a"))
+			vfx.flip("ring", g0, 3.6, 0.55, Color("#ff3a4a"), true)
+			vfx.flip("curse", g0 + Vector3(0, 1.2, 0), 2.4, 0.8, Color("#ff7aa0"))
+			_comic_pop(g0 + Vector3(0, 1.6, 0), "FÚRIA!", true)
+		"berserk_fim":
+			vfx.flip("smoke", g0 + Vector3(0, 0.6, 0), 2.6, 1.0, Color("#6a3a5a"))
+			vfx.flip("curse", g0 + Vector3(0, 1.0, 0), 2.2, 0.8, Color("#ff7aa0"))
+		"chainmine":
+			vfx.flip("boom", g0 + Vector3(0, 0.5, 0), 2.6, 0.6)
+			vfx.flip("ring", g0, 3.2, 0.5, Color("#a957ec"), true)
 		"mine":
 			vfx.flip("spikes", g0, 1.6, 0.5, Color("#c8a0ff"))
 		"barrier", "earth", "burrow":

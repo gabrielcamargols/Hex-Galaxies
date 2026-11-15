@@ -594,7 +594,7 @@
    "src": "pdf",
    "ab": {
     "name": "Maré de Minas",
-    "text": "Ao entrar, marque 1 casa livre adjacente. O primeiro inimigo que entrar nela sofre 3 de dano e fica preso até o fim do próximo round; retire a mina. Pode ter até 2 minas suas."
+    "text": "Ao entrar, marque 1 casa livre adjacente. O primeiro inimigo que entrar nela sofre 3 de dano e fica preso até o fim do próximo round; retire a mina. Pode ter até 2 minas suas. Minas em Cadeia: uma mina de Sapturne ao lado de outra mina ou bomba explode junto com ela (3 de dano ao inimigo na casa e 1 aos inimigos vizinhos), e a cadeia continua."
    },
    "k": {
     "entry": {
@@ -602,7 +602,15 @@
      "n": 3
     },
     "mineCap": 2,
-    "mineRoot": true
+    "mineRoot": true,
+    "ult": "minelay",
+    "ultFree": true,
+    "mineChain": true
+   },
+   "ab2": {
+    "name": "Campo Minado",
+    "text": "Enquanto Rhazur estiver em campo, 1 ação: posicione 1 mina numa casa livre a até 8 casas de Sapturne (continua o limite de 2 minas; a mais antiga some).",
+    "kind": "ativa"
    }
   },
   {
@@ -612,9 +620,9 @@
    "role": "Arpoadora",
    "hg": "HG-026",
    "atk": 4,
-   "int": 5,
-   "mov": 2,
-   "alc": 2,
+   "int": 6,
+   "mov": 3,
+   "alc": 5,
    "src": "pdf",
    "ab": {
     "name": "Arpão de Arrasto",
@@ -669,18 +677,23 @@
    "name": "Moby",
    "role": "Fera",
    "hg": "HG-030",
-   "atk": 5,
-   "int": 7,
-   "mov": 2,
+   "atk": 3,
+   "int": 8,
+   "mov": 4,
    "alc": 1,
    "src": "pdf",
    "ab": {
-    "name": "Investida Selvagem",
-    "text": "1 ação: mova até seu MOV e faça 1 ataque normal. Maré Viva: se o alvo estava a 3 ou mais casas de onde Moby começou, o ataque ganha +2 e o alvo é puxado 1 casa."
+    "name": "Fúria Ferida",
+    "text": "Moby ganha +1 ATQ para cada ponto de Vida que perdeu."
    },
    "k": {
-    "action": "moveAttack",
-    "viva": 2
+    "furia": 1,
+    "ult": "berserk"
+   },
+   "ab2": {
+    "name": "Berserker Total",
+    "text": "1 vez por partida, gasta 2 ações: Moby entra em fúria total e todo o dano dos seus ataques dobra. Kamikaze: no fim do próximo round, Moby cai.",
+    "kind": "ativa"
    }
   },
   {
