@@ -6025,6 +6025,10 @@ func _process(_delta: float) -> void:
 			p.visible = true
 			var sp = board.cam.unproject_position(wp)
 			p.position = sp - Vector2(p.size.x / 2.0, p.size.y)
+			# balão sempre inteiro na tela (no celular em pé as bordas cortavam o texto)
+			var vs = get_viewport().get_visible_rect().size
+			p.position.x = clamp(p.position.x, 8.0, max(8.0, vs.x - p.size.x - 8.0))
+			p.position.y = clamp(p.position.y, 8.0, max(8.0, vs.y - p.size.y - 8.0))
 		keep.append(b)
 	bubbles = keep
 
@@ -6837,7 +6841,14 @@ func _entrance_side(p: int, layer: Control) -> void:
 	var tgt = Vector3(ew.x, 0.6, ew.y)
 	var to_c = Vector2(-ew.x, -ew.y).normalized()
 	board.cam_speed = 2.2
-	board.cam_goal = {"yaw": atan2(to_c.x, to_c.y), "pitch": 0.45, "dist": 10.5, "target": tgt}
+	var cg = {"yaw": atan2(to_c.x, to_c.y), "pitch": 0.45, "dist": 10.5, "target": tgt}
+	if portrait:
+		# em pé a tela é estreita: câmera mais longe e mais alta para caberem as peças lado a lado
+		var vsz = get_viewport().get_visible_rect().size
+		cg["dist"] = 10.5 * clamp(vsz.y / vsz.x * 1.1, 1.0, 2.6)
+		cg["pitch"] = 0.62
+		cg["target"] = tgt + Vector3(to_c.x, 0, to_c.y) * 1.2
+	board.cam_goal = cg
 	sfx.play(FAC_ENTRY.get(fac, ""), -1.0, 1.0, 0.0)
 	# cartão da facção: retrato do comandante, nome e quem é
 	var card = PanelContainer.new()
@@ -6866,9 +6877,19 @@ func _entrance_side(p: int, layer: Control) -> void:
 	if font_title != null:
 		fn.add_theme_font_override("font", font_title)
 	fn.add_theme_constant_override("outline_size", 10)
-	_label(v, "Comandante: %s · chega no round %d" % [DB.cards[cid]["name"], Game.CMD_ROUND], 15, C_DIM)
+	var sub = _label(v, "Comandante: %s · chega no round %d" % [DB.cards[cid]["name"], Game.CMD_ROUND], 15, C_DIM)
+	if portrait:
+		sub.text = "Comandante: %s\nchega no round %d" % [DB.cards[cid]["name"], Game.CMD_ROUND]
+		sub.add_theme_font_size_override("font_size", 13)
+		var pic = h.get_child(0)
+		if pic is TextureRect:
+			pic.custom_minimum_size = Vector2(80, 80)
 	card.position = Vector2(-700, 70) if p == me else Vector2(get_viewport().get_visible_rect().size.x + 100, 70)
 	var goal_x = 40.0 if p == me else get_viewport().get_visible_rect().size.x - 40.0
+	if portrait:
+		goal_x = 24.0 if p == me else get_viewport().get_visible_rect().size.x - 30.0
+		fn.add_theme_font_size_override("font_size", 32)
+		card.position.y = 40
 	await get_tree().process_frame
 	if p == 1:
 		goal_x -= card.size.x
