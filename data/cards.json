@@ -535,7 +535,8 @@
    "k": {
     "mare": true,
     "ult": "abyss",
-    "fome": 3
+    "fome": 3,
+    "garras": true
    },
    "ab2": {
     "name": "Abraço do Abismo",
@@ -749,7 +750,8 @@
    },
    "k": {
     "after": "sonic",
-    "abyssMark": true
+    "abyssMark": true,
+    "garras": true
    }
   },
   {
@@ -769,7 +771,8 @@
    },
    "k": {
     "endHeal": 1,
-    "ult": "workshop"
+    "ult": "workshop",
+    "garras": true
    },
    "ab2": {
     "name": "Oficina Móvel",
