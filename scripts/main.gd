@@ -85,6 +85,8 @@ var intense: bool = false
 var ui_pref: String = "auto"       # tamanho da interface: auto, 100, 125, 150, 175
 var compact: bool = false          # tela pequena (celular): HUD enxuta e letras maiores
 var cpu_open: bool = false         # painel da CPU aberto no modo compacto
+var portrait: bool = false         # celular em pé: HUD empilhada (barra no alto, mão e botões embaixo)
+var me_open: bool = true           # em pé: painel do seu exército aberto
 var last_banter_ms: int = -100000
 var autotest: bool = false   # godot --headless -- --autotest fac=ABY cpu=FAU map=tarhut
 var last_sides: Variant = null
@@ -2247,8 +2249,12 @@ func _build_hud() -> void:
 	w["events"] = _label(tv, "", 14, Color("#ffcf9a"))
 	w["events"].horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	# botões do canto
+	w["topcol"] = topcol
 	var topr = _hbox(ui, 6)
 	_place(topr, Control.PRESET_TOP_RIGHT, 8)
+	w["topr"] = topr
+	if portrait:
+		_button(topr, "VOCÊ", _toggle_me)
 	if compact and not online:
 		_button(topr, "CPU", _toggle_cpu)
 	_button(topr, "Cartas", func(): _toggle_panel("cards"))
@@ -2260,6 +2266,7 @@ func _build_hud() -> void:
 	# câmera: linha compacta acima do painel de fim de turno
 	var camv = _hbox(ui, 4)
 	_place(camv, Control.PRESET_BOTTOM_RIGHT, 8)
+	w["camv"] = camv
 	camv.offset_top -= 116 if compact else 128
 	camv.offset_bottom -= 116 if compact else 128
 	for cb in [["<", func(): board.rotate_cam(-1), "Girar a câmera"], [">", func(): board.rotate_cam(1), "Girar a câmera"], ["+", func(): board.zoom_cam(0.7), "Aproximar (roda do mouse)"], ["-", func(): board.zoom_cam(1.4), "Afastar (roda do mouse)"], ["Tudo", func(): board.fit_camera(false), "Ver o tabuleiro inteiro"]]:
@@ -2272,6 +2279,7 @@ func _build_hud() -> void:
 	# colunas de peças
 	var left = _panel(ui)
 	_place(left, Control.PRESET_TOP_LEFT, 8)
+	w["party0_panel"] = left
 	w["party0_sc"] = _roster_scroll(left)
 	w["party0"] = _vbox(w["party0_sc"], 3)
 	# avisos de ação (no alto)
@@ -2314,6 +2322,7 @@ func _build_hud() -> void:
 	# embaixo: mão de cartas + botões de ação
 	var botcol = _vbox(ui, 6)
 	_place(botcol, Control.PRESET_CENTER_BOTTOM, 8)
+	w["botcol"] = botcol
 	botcol.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	# prévia/perguntas logo acima das cartas
 	w["prompt"].reparent(botcol)
@@ -2419,6 +2428,78 @@ func _build_hud() -> void:
 	_place(bn, Control.PRESET_CENTER, 0)
 	bn.modulate.a = 0.0
 	w["banner"] = bn
+	if portrait:
+		_portrait_hud()
+
+
+# ---- celular em pé: barra e botões no alto, exércitos em gavetas, mão e botões embaixo ----
+func _portrait_hud() -> void:
+	var vw = get_viewport().get_visible_rect().size
+	# alto: título e avisos ocupam a largura; os botões do canto descem para uma fileira abaixo
+	var topcol: VBoxContainer = w["topcol"]
+	topcol.custom_minimum_size = Vector2(vw.x - 16.0, 0)
+	w["title"].add_theme_font_size_override("font_size", 17)
+	# em telas estreitas o título e os avisos quebram linha em vez de alargar a barra
+	for k in ["title", "events", "note"]:
+		w[k].autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		w[k].custom_minimum_size = Vector2(vw.x - 48.0, 0)
+	w["events"].add_theme_font_size_override("font_size", 12)
+	# ficha da peça mais enxuta (não cobre o tabuleiro)
+	w["ucard_text"].custom_minimum_size.x = vw.x - 44.0
+	var topr: HBoxContainer = w["topr"]
+	topr.reparent(topcol)
+	topcol.move_child(topr, 1)
+	topr.alignment = BoxContainer.ALIGNMENT_CENTER
+	topr.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	for b in topr.get_children():
+		if b is Button:
+			b.custom_minimum_size = Vector2(0, 40)
+			b.add_theme_font_size_override("font_size", 14)
+	w["why"].custom_minimum_size = Vector2(vw.x - 60.0, 0)
+	# exércitos: gavetas que abrem abaixo da barra (a sua à esquerda, a da CPU à direita)
+	for k in ["party0_panel", "party1_panel"]:
+		var pnl: Control = w[k]
+		pnl.offset_top = 132
+	w["party0_panel"].visible = me_open
+	w["party1_panel"].visible = cpu_open
+	# embaixo: ficha da peça, prévia, mão (rola para o lado), botões e o passar round numa coluna só
+	var botcol: VBoxContainer = w["botcol"]
+	botcol.custom_minimum_size = Vector2(vw.x - 12.0, 0)
+	var hand: HBoxContainer = w["hand"]
+	var hs = ScrollContainer.new()
+	hs.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	hs.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
+	hs.custom_minimum_size = Vector2(vw.x - 16.0, 156)
+	hs.mouse_filter = Control.MOUSE_FILTER_PASS
+	var idx = hand.get_index()
+	botcol.add_child(hs)
+	botcol.move_child(hs, idx)
+	hand.reparent(hs)
+	hand.alignment = BoxContainer.ALIGNMENT_BEGIN
+	w["hand_sc"] = hs
+	var uc: Control = w["ucard"]
+	uc.reparent(botcol)
+	botcol.move_child(uc, 0)
+	uc.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	var eb: Control = w["end_panel"]
+	eb.reparent(botcol)
+	eb.size_flags_horizontal = Control.SIZE_FILL
+	w["end"].custom_minimum_size = Vector2(vw.x - 40.0, 54)
+	w["end"].add_theme_font_size_override("font_size", 20)
+	w["end_hint"].visible = false
+	# câmera: fica só no meio da direita
+	var camv: Control = w["camv"]
+	_place(camv, Control.PRESET_CENTER_RIGHT, 6)
+	# perguntas no centro: mais estreitas
+	w["ask_text"].custom_minimum_size.x = vw.x - 70.0
+
+
+func _toggle_me() -> void:
+	me_open = not me_open
+	if w.has("party0_panel"):
+		w["party0_panel"].visible = me_open
+	if portrait and me_open and cpu_open:
+		_toggle_cpu()
 
 
 func banner(big: String, small: String = "") -> void:
@@ -2971,6 +3052,15 @@ func _fit_rosters() -> void:
 	var uc: Control = w["ucard"]
 	var avail0 = vh - 32.0 - ((uc.size.y + 10.0) if uc.visible else 0.0)
 	var avail1 = vh - 64.0 - 24.0 - w["end_panel"].size.y - 56.0
+	if portrait:
+		# gavetas: do fim da barra do alto até antes da coluna de baixo
+		var top_h = w["topcol"].size.y + 14.0 if w.has("topcol") else 140.0
+		for k in ["party0_panel", "party1_panel"]:
+			if abs(w[k].offset_top - top_h) > 1.0:
+				w[k].offset_top = top_h
+		var bot_h = w["botcol"].size.y if w.has("botcol") else 300.0
+		avail0 = max(120.0, vh - top_h - bot_h - 30.0)
+		avail1 = avail0
 	for pair in [[w["party0_sc"], w["party0"], avail0], [w["party1_sc"], w["party1"], avail1]]:
 		var need = pair[1].get_combined_minimum_size()
 		var h = clamp(need.y, 60.0, max(60.0, pair[2]))
@@ -6098,15 +6188,29 @@ func _auto_scale() -> float:
 	return clamp(900.0 / want_h, 1.0, 1.75)
 
 
+func _is_portrait() -> bool:
+	var ws = get_window().size
+	return float(ws.y) > float(ws.x) * 1.1
+
+
 func _apply_ui_scale() -> void:
+	var was_p = portrait
+	portrait = _is_portrait()
+	# em pé a interface é desenhada para 900 de largura (deitado, 1600x900)
+	var base = Vector2i(900, 1600) if portrait else Vector2i(1600, 900)
+	if get_tree().root.content_scale_size != base:
+		get_tree().root.content_scale_size = base
 	var f = _auto_scale() if ui_pref == "auto" else float(ui_pref) / 100.0
 	if abs(get_tree().root.content_scale_factor - f) > 0.01:
 		get_tree().root.content_scale_factor = f
 	var was = compact
-	compact = get_viewport().get_visible_rect().size.y < 720.0
-	if was != compact and stage == "battle" and game != null:
+	var vs = get_viewport().get_visible_rect().size
+	compact = vs.y < 720.0 or portrait
+	if (was != compact or was_p != portrait) and stage == "battle" and game != null:
 		_build_hud()
 		refresh()
+		if was_p != portrait and board != null:
+			board.fit_camera(false)
 
 
 func _cycle_ui_scale(rebuild: bool = true) -> void:
@@ -6126,6 +6230,11 @@ func _toggle_cpu() -> void:
 	cpu_open = not cpu_open
 	if w.has("party1_panel"):
 		w["party1_panel"].visible = cpu_open or not compact
+	# em pé as duas gavetas não cabem juntas
+	if portrait and cpu_open and me_open:
+		me_open = false
+		if w.has("party0_panel"):
+			w["party0_panel"].visible = false
 
 
 # ================= mão inicial: cartas grandes no centro =================
