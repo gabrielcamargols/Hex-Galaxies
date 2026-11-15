@@ -368,8 +368,8 @@ func _build_ships() -> void:
 		var out = ec.normalized()
 		var len_w = PLAT * 1.0
 		ship.scale = Vector3.ONE * len_w
-		var c2 = out * (PLAT + len_w * 1.1)   # bem atrás da borda: não tapa a visão ampla do mapa (cosmético)
-		ship.position = Vector3(c2.x, PLAT * 0.6, c2.y)
+		var c2 = out * (PLAT + len_w * 2.3)   # bem atrás da borda: não tapa a visão do mapa (cosmético)
+		ship.position = Vector3(c2.x, PLAT * 0.9, c2.y)
 		ship.set_meta("out", out)
 		ship.set_meta("nose", float(FAC_SHIPS[fac]["nose"]))
 		_orient_ship(ship)
@@ -2740,6 +2740,14 @@ func fit_camera(snap: bool) -> void:
 		# gira 180°: no online cada um vê o próprio lado à direita
 		goal["yaw"] += PI
 		goal["target"] = -goal["target"]
+	# celular em pé: a câmera fica atrás do SEU campo (sua entrada embaixo da tela, o inimigo em cima)
+	if vp.y > vp.x * 1.1 and g != null:
+		var mine = world_xz(DB.entry_c[me])
+		if mine.length() > 0.1:
+			var d = mine.normalized()
+			goal["yaw"] = atan2(d.x, d.y)
+			goal["target"] = Vector3(d.x, 0, d.y) * PLAT * 0.12
+			goal["dist"] = PLAT * 3.1
 	if snap:
 		cam_yaw = goal["yaw"]
 		cam_pitch = goal["pitch"]

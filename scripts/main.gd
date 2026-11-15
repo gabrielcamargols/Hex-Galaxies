@@ -2570,15 +2570,18 @@ func _build_hud() -> void:
 	_place(topr, Control.PRESET_TOP_RIGHT, 8)
 	w["topr"] = topr
 	if portrait:
-		_button(topr, "VOCÊ", _toggle_me)
-	if compact and not online:
-		_button(topr, "CPU", _toggle_cpu)
-	_button(topr, "Cartas", func(): _toggle_panel("cards"))
-	if not compact:
-		_button(topr, "Registro", func(): _toggle_panel("log"))
-	_button(topr, "Regras", func(): _toggle_panel("rules"))
-	_button(topr, "Opções", _settings_panel)
-	_button(topr, "Menu", _show_menu)
+		w["btn_me"] = _button(topr, "MEU EXÉRCITO", _toggle_me)
+		w["btn_cpu"] = _button(topr, "RIVAL", _toggle_cpu)
+		_button(topr, "☰", _menu_popup)
+	else:
+		if compact and not online:
+			_button(topr, "CPU", _toggle_cpu)
+		_button(topr, "Cartas", func(): _toggle_panel("cards"))
+		if not compact:
+			_button(topr, "Registro", func(): _toggle_panel("log"))
+		_button(topr, "Regras", func(): _toggle_panel("rules"))
+		_button(topr, "Opções", _settings_panel)
+		_button(topr, "Menu", _show_menu)
 	# câmera: linha compacta acima do painel de fim de turno
 	var camv = _hbox(ui, 4)
 	_place(camv, Control.PRESET_BOTTOM_RIGHT, 8)
@@ -2762,6 +2765,15 @@ func _portrait_hud() -> void:
 	w["events"].add_theme_font_size_override("font_size", 12)
 	# ficha da peça mais enxuta (não cobre o tabuleiro)
 	w["ucard_text"].custom_minimum_size.x = vw.x - 44.0
+	w["ucard_text"].mouse_filter = Control.MOUSE_FILTER_IGNORE
+	w["ucard"].mouse_filter = Control.MOUSE_FILTER_STOP
+	w["ucard"].gui_input.connect(func(ev):
+		if (ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT) or (ev is InputEventScreenTouch and ev.pressed):
+			var uu = sel_unit()
+			if uu == null and inspect >= 0:
+				uu = game.by_uid(inspect)
+			if uu != null and not uu.barrier and uu.crystal == "":
+				_char_popup(uu.cid))
 	var topr: HBoxContainer = w["topr"]
 	topr.reparent(topcol)
 	topcol.move_child(topr, 1)
@@ -2776,8 +2788,13 @@ func _portrait_hud() -> void:
 	for k in ["party0_panel", "party1_panel"]:
 		var pnl: Control = w[k]
 		pnl.offset_top = 132
-	w["party0_panel"].visible = me_open
-	w["party1_panel"].visible = cpu_open
+	me_open = false
+	cpu_open = false
+	w["party0_panel"].visible = false
+	w["party1_panel"].visible = false
+	# sem legenda de cores nem o "por quê" de cada botão: o botão apagado já diz
+	w["legend"].visible = false
+	w["why"].visible = false
 	# embaixo: ficha da peça, prévia, mão (rola para o lado), botões e o passar round numa coluna só
 	var botcol: VBoxContainer = w["botcol"]
 	botcol.custom_minimum_size = Vector2(vw.x - 12.0, 0)
@@ -2808,6 +2825,30 @@ func _portrait_hud() -> void:
 	_place(camv, Control.PRESET_CENTER_RIGHT, 6)
 	# perguntas no centro: mais estreitas
 	w["ask_text"].custom_minimum_size.x = vw.x - 70.0
+
+
+# em pé: ☰ junta Cartas, Registro, Regras, Opções e Sair
+func _menu_popup() -> void:
+	if w.has("menu_pop") and is_instance_valid(w["menu_pop"]):
+		w["menu_pop"].queue_free()
+		w.erase("menu_pop")
+		return
+	var pn = _panel(ui)
+	pn.z_index = 40
+	var v = _vbox(pn, 6)
+	for it in [["Cartas do baralho", func(): _toggle_panel("cards")], ["Registro da partida", func(): _toggle_panel("log")],
+			["Regras", func(): _toggle_panel("rules")], ["Opções", _settings_panel], ["Sair para o menu", _show_menu]]:
+		var cb: Callable = it[1]
+		var b = _button(v, it[0], func():
+			if w.has("menu_pop") and is_instance_valid(w["menu_pop"]):
+				w["menu_pop"].queue_free()
+				w.erase("menu_pop")
+			cb.call())
+		b.custom_minimum_size = Vector2(240, 48)
+		b.add_theme_font_size_override("font_size", 16)
+	_place(pn, Control.PRESET_TOP_RIGHT, 10)
+	pn.offset_top = w["topcol"].size.y + 14.0
+	w["menu_pop"] = pn
 
 
 func _toggle_me() -> void:
@@ -3185,6 +3226,8 @@ func _refresh_top() -> void:
 	var who = "Você" if game.cur == me else _opp()
 	var status = "Fim de jogo" if game.winner != Game.NONE else ("Sua vez" if game.cur == me else ("Vez do " + _opp().to_lower() + (" (jogando...)" if busy or opp_thinking else "")))
 	title_base = "%s  ·  Round %d/%d  ·  %s" % [game.map_name, game.round_no, Game.LAST_ROUND, status]
+	if portrait:
+		title_base = "Round %d/%d  ·  %s" % [game.round_no, Game.LAST_ROUND, status]
 	_apply_title()
 	var tcol = C_GOLD if game.winner != Game.NONE else (C_YOU if game.cur == me else C_CPU)
 	w["title"].add_theme_color_override("font_color", tcol)
@@ -3529,8 +3572,40 @@ func _refresh_ucard() -> void:
 				txt += "\n[color=#9fe8ff]Corredor de avalanche: no próximo round quem estiver aqui leva 2 e é empurrado 1 casa.[/color]"
 			else:
 				txt += "\n[color=#ffb14a]A areia treme: um buraco de verme abre aqui no próximo round.[/color]"
+	if portrait and u != null and not u.barrier and u.crystal == "":
+		txt = _ucard_short(u)
 	w["ucard"].visible = txt != ""
 	w["ucard_text"].text = txt
+
+
+# em pé: só o que o mapa não mostra (atributos atuais, efeitos, item e o nome das habilidades)
+func _ucard_short(u) -> String:
+	var c = DB.cards[u.cid]
+	var col = "#7fc8ff" if u.owner == me else "#ff8a7a"
+	var t = "[color=%s][b]%s[/b][/color]  [color=#8fb8cc]%s[/color]\n" % [col, c["name"], "seu" if u.owner == me else "rival"]
+	t += "[color=#ff5a6a]♥ %d/%d[/color]   [color=#ffab40]ATQ %d[/color]   [color=#4cd964]MOV %d[/color]   [color=#4da3ff]ALC %d[/color]" % [max(0, u.hp), u.maxhp, game.atk_of(u, null), game.mov_of(u), game.alc_of(u)]
+	var est = []
+	if u.eq != "":
+		est.append("Item: " + DB.tactics[u.eq]["name"])
+	if game.imprisoned(u):
+		est.append("preso")
+	elif game.rooted(u):
+		est.append("enraizado")
+	if game.slowed(u):
+		est.append("lento")
+	for f in u.fx:
+		var nmx = {"bleed": "sangrando", "amark": "Marca Abyssal", "shock": "eletrocutado", "stun": "atordoado", "berserk": "fúria total", "mark": "marcado", "venom": "envenenado"}.get(f["k"], "")
+		if nmx != "" and not est.has(nmx):
+			est.append(nmx)
+	if u.st == "off":
+		est.append("entra no round %d" % Game.CMD_ROUND)
+	if not est.is_empty():
+		t += "\n[color=#9fdcff]%s[/color]" % "  ·  ".join(est)
+	var habs = [c["ab"]["name"]]
+	if c.has("ab2"):
+		habs.append("★ " + c["ab2"]["name"] + (" (usada)" if game.ult_spent(u) else ""))
+	t += "\n[color=#ffab40]%s[/color]  [color=#6f8aa0]· toque aqui para ler[/color]" % "  ·  ".join(habs)
+	return t
 
 
 func _refresh_actbar() -> void:
@@ -3627,11 +3702,18 @@ func _refresh_actbar() -> void:
 	var tac_ok = false
 	if mine:
 		tac_ok = _any_card_playable()
+	if portrait:
+		note = note.replace("  ·  2) escolha o que fazer", "").replace("Ações: ", "")
+		# a vez do rival já aparece no título: não repete
+		var aw0 = w["note"].get_parent().get_parent()
+		if aw0 is Control:
+			aw0.visible = mine
 	w["note"].text = note
 	if w.has("abp"):
 		w["abp"].visible = u != null
 	w["why"].text = "  ·  ".join(why)
-	w["legend"].visible = mine and (u != null or dsel >= 0)
+	w["legend"].visible = mine and (u != null or dsel >= 0) and not portrait
+	w["why"].visible = not portrait
 	var e = w["end"]
 	var acting = game.act != null and mine
 	e.text = "ENCERRAR ATIVAÇÃO" if acting else "PASSAR O ROUND ▶"
@@ -3795,7 +3877,7 @@ func _hide_ask() -> void:
 	if w.has("ask") and is_instance_valid(w["ask"]):
 		w["ask"].visible = false
 		w["ask"].set_meta("q", null)
-		w["note"].get_parent().get_parent().visible = true
+		w["note"].get_parent().get_parent().visible = not portrait or my_turn()
 		w["ask_dim"].visible = false
 
 
