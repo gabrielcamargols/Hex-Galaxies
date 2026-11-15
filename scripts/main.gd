@@ -1763,33 +1763,7 @@ func _show_army_portrait(pd: Dictionary) -> void:
 	go.custom_minimum_size = Vector2(0, 62)
 	go.add_theme_font_size_override("font_size", 24)
 	w["go"] = go
-	# ficha da tropa: folha por cima de tudo, fecha no X ou tocando fora
-	var sheet = Control.new()
-	sheet.set_anchors_preset(Control.PRESET_FULL_RECT)
-	sheet.visible = false
-	ui.add_child(sheet)
-	var dim = ColorRect.new()
-	dim.color = Color(0, 0, 0.03, 0.6)
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.gui_input.connect(func(ev):
-		if (ev is InputEventMouseButton and ev.pressed) or (ev is InputEventScreenTouch and ev.pressed):
-			_army_sheet(false))
-	sheet.add_child(dim)
-	var sv = VBoxContainer.new()
-	sv.add_theme_constant_override("separation", 6)
-	sv.set_anchors_preset(Control.PRESET_FULL_RECT)
-	sv.offset_left = 14
-	sv.offset_right = -14
-	sv.offset_top = vw.y * 0.08
-	sv.offset_bottom = -14
-	sheet.add_child(sv)
-	var det = PanelContainer.new()
-	det.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	sv.add_child(det)
-	w["det"] = det
-	var cl = _cbtn(sv, "Fechar", C_HUD, func(): _army_sheet(false))
-	cl.custom_minimum_size = Vector2(0, 48)
-	w["det_sheet"] = sheet
+	# a ficha da tropa abre na janela do meio (_char_popup)
 	if army_detail == "" or not DB.cards.has(army_detail) or (not mix and DB.cards[army_detail]["f"] != setup_cfg["fac"]):
 		army_detail = _cur_cmd()
 	_army_refresh()
@@ -1847,10 +1821,10 @@ func _army_refresh() -> void:
 	for sg in w["cmdp"].gui_input.get_connections():
 		w["cmdp"].gui_input.disconnect(sg["callable"])
 	w["cmdp"].gui_input.connect(func(ev):
-		if ev is InputEventMouseButton and ev.pressed:
+		if (ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT) or (ev is InputEventScreenTouch and ev.pressed):
 			_army_show(cid2)
 			if portrait:
-				_army_sheet(true))
+				_char_popup(cid2))
 	var cv = _vbox(w["cmdp"], 6)
 	cv.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var ch = _hbox(cv, 10)
@@ -1961,6 +1935,8 @@ func _army_refresh_rest() -> void:
 	w["army_hint"].text = hint
 	w["army_hint"].add_theme_color_override("font_color", C_DIM if ready_ok else Color("#ffb070"))
 	_army_detail_build()
+	if w.has("pop") and is_instance_valid(w["pop"]):
+		_detail_fill(w["pop_det"], w["pop_id"], true, int(w["pop_det"].size.x - 70.0))
 
 
 func _ab_box(parent: Control, kind: String, col: Color, nm: String, text: String, width: int) -> void:
@@ -2021,8 +1997,29 @@ func _army_card(c: Dictionary) -> Control:
 	b.add_theme_stylebox_override("hover", _tex_box("res://ui/card.png", 20, tint.lightened(0.25) if not chosen else C_GOLD.lightened(0.3), 9, 7))
 	b.add_theme_stylebox_override("pressed", _tex_box("res://ui/card.png", 20, C_GOLD, 9, 7))
 	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
-	b.pressed.connect(_army_toggle.bind(id))
+	b.pressed.connect(func():
+		if not _lp_eat(b):
+			_army_toggle(id))
 	b.mouse_entered.connect(_army_show.bind(id))
+	_long_press(b, _char_popup.bind(id))
+	# ⓘ no canto: um toque abre a ficha
+	var ib = Button.new()
+	ib.text = "i"
+	ib.tooltip_text = "Ver status e habilidades"
+	ib.custom_minimum_size = Vector2(30, 30)
+	ib.add_theme_font_size_override("font_size", 15)
+	_style_btn(ib, C_HUD)
+	ib.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	ib.position = Vector2(-36, -36)
+	ib.anchor_left = 1.0
+	ib.anchor_top = 1.0
+	ib.offset_left = -38
+	ib.offset_top = -40
+	ib.offset_right = -6
+	ib.offset_bottom = -8
+	ib.z_index = 2
+	ib.pressed.connect(_char_popup.bind(id))
+	b.add_child(ib)
 	if army_picks.size() >= 5 and not chosen:
 		b.modulate = Color(0.55, 0.57, 0.64, 1.0)
 	var v = VBoxContainer.new()
@@ -2072,6 +2069,8 @@ func _army_slot(id: String) -> Control:
 		return p
 	var on = army_start.has(id)
 	p.add_theme_stylebox_override("panel", _flat(Color(0.05, 0.08, 0.16, 0.92), C_GOLD if on else _fac_col(DB.cards[id]["f"]), 2, 8, 5))
+	p.mouse_filter = Control.MOUSE_FILTER_PASS
+	_long_press(p, _char_popup.bind(id))
 	var v = _vbox(p, 2)
 	var tex = DB.portraits.get(id, null)
 	v.add_child(_tex_rect(tex, Vector2(0, 36 if compact else 50)))
@@ -2103,27 +2102,126 @@ func _army_show(id: String) -> void:
 	_army_detail_build()
 
 
-# em pé: a ficha da tropa abre por cima, como uma folha
+# em pé: a ficha da tropa abre na janela do meio
 func _army_sheet(open: bool, id: String = "") -> void:
-	if not w.has("det_sheet") or not is_instance_valid(w["det_sheet"]):
+	if not open:
+		_char_popup_close()
 		return
-	if id != "":
-		army_detail = id
-		_army_detail_build()
-	w["det_sheet"].visible = open
-	if open:
+	_char_popup(id if id != "" else army_detail)
+
+
+# janela no meio da tela com status e habilidades (toque longo, botão direito ou ⓘ)
+func _char_popup(id: String) -> void:
+	if not DB.cards.has(id):
+		return
+	_char_popup_close()
+	var vw = get_viewport().get_visible_rect().size
+	var root = Control.new()
+	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.z_index = 60
+	ui.add_child(root)
+	var dim = ColorRect.new()
+	dim.color = Color(0, 0, 0.03, 0.62)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.gui_input.connect(func(ev):
+		if (ev is InputEventMouseButton and ev.pressed) or (ev is InputEventScreenTouch and ev.pressed):
+			_char_popup_close())
+	root.add_child(dim)
+	var pw = min(vw.x - 28.0, 560.0)
+	var ph = min(vw.y * 0.8, 820.0)
+	var col = VBoxContainer.new()
+	col.add_theme_constant_override("separation", 6)
+	col.position = Vector2((vw.x - pw) * 0.5, (vw.y - ph) * 0.5)
+	col.size = Vector2(pw, ph)
+	root.add_child(col)
+	var det = PanelContainer.new()
+	det.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	col.add_child(det)
+	var cl = _cbtn(col, "Fechar", C_HUD, _char_popup_close)
+	cl.custom_minimum_size = Vector2(0, 48)
+	w["pop"] = root
+	w["pop_det"] = det
+	w["pop_id"] = id
+	_detail_fill(det, id, stage == "army", int(pw - 70.0))
+	# a janela encolhe até o tamanho do conteúdo (sem sobrar fundo vazio)
+	await get_tree().process_frame
+	if not is_instance_valid(col):
+		return
+	var conteudo = det.get_child(det.get_child_count() - 1).get_child(0).get_combined_minimum_size().y + 30.0
+	var hh = min(ph, conteudo + 54.0)
+	col.size.y = hh
+	col.position.y = (vw.y - hh) * 0.5
+	# entra com um pulo
+	col.pivot_offset = col.size * 0.5
+	col.scale = Vector2.ONE * 0.85
+	col.modulate.a = 0.0
+	var tw = col.create_tween().set_parallel(true)
+	tw.tween_property(col, "scale", Vector2.ONE, 0.16).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(col, "modulate:a", 1.0, 0.1)
+	if sfx != null:
 		sfx.play("clique", -10.0)
+	if OS.has_feature("android") or OS.has_feature("web_android"):
+		Input.vibrate_handheld(30)
+
+
+func _char_popup_close() -> void:
+	if w.has("pop") and is_instance_valid(w["pop"]):
+		w["pop"].queue_free()
+	w.erase("pop")
+	w.erase("pop_id")
+
+
+# segurar o dedo (ou o botão) por meio segundo chama cb; o toque normal continua funcionando
+func _long_press(c: Control, cb: Callable) -> void:
+	c.gui_input.connect(func(ev):
+		var down = false
+		var up = false
+		if ev is InputEventScreenTouch:
+			down = ev.pressed
+			up = not ev.pressed
+		elif ev is InputEventMouseButton and ev.button_index == MOUSE_BUTTON_LEFT:
+			down = ev.pressed
+			up = not ev.pressed
+		elif ev is InputEventMouseButton and ev.button_index == MOUSE_BUTTON_RIGHT and ev.pressed:
+			cb.call()   # no PC: botão direito abre direto
+			return
+		if down:
+			var tok = Time.get_ticks_msec()
+			c.set_meta("lp_tok", tok)
+			c.set_meta("lp_pos", ev.position)
+			c.set_meta("lp_done", false)
+			get_tree().create_timer(0.45).timeout.connect(func():
+				if is_instance_valid(c) and c.get_meta("lp_tok", -1) == tok:
+					c.set_meta("lp_tok", -1)
+					c.set_meta("lp_done", true)
+					cb.call())
+		elif up:
+			c.set_meta("lp_tok", -1)
+		elif (ev is InputEventMouseMotion or ev is InputEventScreenDrag) and c.get_meta("lp_tok", -1) != -1:
+			if ev.position.distance_to(c.get_meta("lp_pos", ev.position)) > 14.0:
+				c.set_meta("lp_tok", -1))
+
+
+# depois de um toque longo, o "soltar" não deve contar como clique
+func _lp_eat(c: Control) -> bool:
+	if c.get_meta("lp_done", false):
+		c.set_meta("lp_done", false)
+		return true
+	return false
 
 
 func _army_detail_build() -> void:
 	if not w.has("det") or not is_instance_valid(w["det"]):
 		return
-	var id = army_detail
+	_detail_fill(w["det"], army_detail, stage == "army")
+
+
+# ficha completa de um personagem (arte, atributos, habilidades); com acoes = botões de pôr/tirar do exército
+func _detail_fill(det: PanelContainer, id: String, acoes: bool, dw_override: int = 0) -> void:
 	if not DB.cards.has(id):
 		return
 	var c = DB.cards[id]
 	var fc = _fac_col(c["f"])
-	var det: PanelContainer = w["det"]
 	for ch in det.get_children():
 		ch.queue_free()
 	det.add_theme_stylebox_override("panel", _flat(Color(0.03, 0.05, 0.11, 0.9), fc, 2, 12, 12))
@@ -2180,6 +2278,8 @@ func _army_detail_build() -> void:
 	var dw = int(clamp(get_viewport().get_visible_rect().size.x * 0.335 - 60.0, 220.0, 420.0))
 	if portrait:
 		dw = int(get_viewport().get_visible_rect().size.x - 110.0)
+	if dw_override > 0:
+		dw = dw_override
 	_ab_box(v, kd[0], kd[1], c["ab"]["name"], c["ab"]["text"], dw)
 	if c.has("ab2"):
 		var k2 = c["ab2"].get("kind", "ativa")
@@ -2197,7 +2297,7 @@ func _army_detail_build() -> void:
 		flow.add_child(tp)
 		var tl = _label(tp, t[0], 12, t[1].lightened(0.3))
 		tl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	if not c.get("cmd", false):
+	if acoes and not c.get("cmd", false):
 		var chosen = army_picks.has(id)
 		var h2 = _hbox(v, 8)
 		var ab = _cbtn(h2, "REMOVER" if chosen else "+ ADICIONAR", C_ATK if chosen else C_MOVE, _army_toggle.bind(id), not chosen)
@@ -3293,7 +3393,10 @@ func _unit_btn(u, text: String) -> Button:
 		b.icon = DB.portraits[u.cid]
 		b.expand_icon = true
 	var uid = u.uid
-	b.pressed.connect(func(): _on_roster(uid))
+	b.pressed.connect(func():
+		if not _lp_eat(b):
+			_on_roster(uid))
+	_long_press(b, _char_popup.bind(u.cid))
 	if u.uid == sel or u.uid == dsel or u.uid == inspect:
 		b.modulate = Color(1.25, 1.15, 0.7)
 	return b
