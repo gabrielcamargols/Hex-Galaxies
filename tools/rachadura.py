@@ -54,20 +54,30 @@ def hexmask(scale=0.98):
     return m
 
 
-def make(seed):
+# paletas: areia (Tarhut) e gelo (Gor'Aida)
+PAL = {
+    "areia": {"glow": (255, 214, 120, 150), "mag": (255, 40, 150, 255), "cya": (120, 60, 255, 255), "ink": INK, "deep": DEEP,
+              "dots": (255, 120, 40, 255), "chip": (255, 210, 90, 255)},
+    "gelo": {"glow": (210, 245, 255, 170), "mag": (244, 56, 169, 255), "cya": (64, 200, 255, 255), "ink": (14, 16, 48, 255), "deep": (28, 52, 130, 255),
+             "dots": (110, 210, 255, 255), "chip": (230, 248, 255, 255)},
+}
+
+
+def make(seed, pal="areia", fino=1.0):
+    P = PAL[pal]
     rng = random.Random(seed)
     k = rng.randint(4, 6)
     base = rng.uniform(0, math.tau)
     polys = []
     for i in range(k):
         a = base + math.tau * i / k + rng.uniform(-0.3, 0.3)
-        p, tip = bolt(rng, a, rng.uniform(150, 215), rng.uniform(13, 20))
+        p, tip = bolt(rng, a, rng.uniform(150, 215), rng.uniform(13, 20) * fino)
         polys.append(p)
         # galho
         if rng.random() < 0.7:
             mid = p[len(p) // 4]
             a2 = a + rng.choice([-1, 1]) * rng.uniform(0.6, 1.0)
-            q, _ = bolt(rng, a2, rng.uniform(50, 90), rng.uniform(5, 8))
+            q, _ = bolt(rng, a2, rng.uniform(50, 90), rng.uniform(5, 8) * fino)
             dx, dy = mid[0] - (C + math.cos(a2) * 18), mid[1] - (C + math.sin(a2) * 18)
             polys.append([(x + dx, y + dy) for x, y in q])
 
@@ -86,17 +96,17 @@ def make(seed):
 
     img = Image.new("RGBA", (S, S))
     # 1) brilho das bordas (placas levantadas), 2) deslocamentos de cor, 3) contorno, 4) fenda
-    glow, gm = layer((255, 214, 120, 150), grow=29)
+    glow, gm = layer(P["glow"], grow=29)
     img.alpha_composite(glow)
-    mag, _ = layer((255, 40, 150, 255), 7, 6, grow=9)
+    mag, _ = layer(P["mag"], 7, 6, grow=9)
     img.alpha_composite(mag)
-    cya, _ = layer((120, 60, 255, 255), -6, -4, grow=9)
+    cya, _ = layer(P["cya"], -6, -4, grow=9)
     img.alpha_composite(cya)
-    ink, _ = layer(INK, grow=9)
+    ink, _ = layer(P["ink"], grow=9)
     img.alpha_composite(ink)
-    deep, dm = layer(DEEP)
+    deep, dm = layer(P["deep"])
     img.alpha_composite(deep)
-    img.alpha_composite(halftone(dm, (255, 120, 40, 255), step=9, rmax=2.6))
+    img.alpha_composite(halftone(dm, P["dots"], step=9, rmax=2.6))
     # lascas soltas (triângulos tipo estilhaço)
     d = ImageDraw.Draw(img)
     for _ in range(rng.randint(7, 11)):
@@ -105,8 +115,8 @@ def make(seed):
         x, y = C + math.cos(a) * r, C + math.sin(a) * r
         s = rng.uniform(7, 15)
         tri = [(x + math.cos(a + t) * s * (1.6 if j == 0 else 1), y + math.sin(a + t) * s * (1.6 if j == 0 else 1)) for j, t in enumerate((0, 2.3, 4.0))]
-        d.polygon([(px + 4, py + 4) for px, py in tri], fill=(255, 40, 150, 255))
-        d.polygon(tri, fill=(255, 210, 90, 255), outline=INK, width=4)
+        d.polygon([(px + 4, py + 4) for px, py in tri], fill=P["mag"])
+        d.polygon(tri, fill=P["chip"], outline=P["ink"], width=4)
     # recorta no hexágono
     hm = hexmask()
     a = img.getchannel("A")
@@ -119,4 +129,5 @@ if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     for i in range(3):
         make(11 + i * 7).save(os.path.join(OUT, "rachadura_%d.png" % i))
+        make(41 + i * 5, "gelo", 1.0).save(os.path.join(OUT, "rachadura_gelo_%d.png" % i))
     print("ok")

@@ -1027,8 +1027,8 @@ func _terr_mat(path: String) -> Material:
 
 func _crack_mat(i: int) -> Material:
 	if crack_mats.is_empty():
-		for k in range(3):
-			var path = "res://ui/terreno/rachadura_%d.png" % k
+		for k in range(6):
+			var path = ("res://ui/terreno/rachadura_%d.png" % k) if k < 3 else ("res://ui/terreno/rachadura_gelo_%d.png" % (k - 3))
 			if not ResourceLoader.exists(path):
 				crack_mats.append(null)
 				continue
@@ -1040,6 +1040,21 @@ func _crack_mat(i: int) -> Material:
 			m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 			crack_mats.append(m)
 	return crack_mats[i]
+
+
+func _crack_decal(root: Node3D, h: Vector2i, idx: int, size: float, y: float = 0.02) -> void:
+	var cm = _crack_mat(idx)
+	if cm == null:
+		return
+	var qd = MeshInstance3D.new()
+	var pm = PlaneMesh.new()
+	pm.size = Vector2(size, size)
+	qd.mesh = pm
+	qd.material_override = cm
+	qd.position = Vector3(0, y, 0)
+	qd.rotation = Vector3(0, int(_rnd(h, 22) * 6) * PI / 3.0, 0)
+	qd.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	root.add_child(qd)
 
 
 func _rnd(h: Vector2i, i: int) -> float:
@@ -3856,17 +3871,11 @@ func _wild_props(root: Node3D, h: Vector2i, k: String) -> bool:
 			for i in range(3):
 				_mesh(root, _box(Vector3(0.55, 0.012, 0.05)), Color("#ffffff"), Vector3((_rnd(h, i) - 0.5) * 0.8, 0.015, (_rnd(h, i + 6) - 0.5) * 0.8), Vector3(0, 0.6 + _rnd(h, 9) * 0.3, 0))
 		"gelo_fragil":
-			var p0 = Vector3((_rnd(h, 1) - 0.5) * 0.3, 0.016, (_rnd(h, 2) - 0.5) * 0.3)
-			for i in range(4):
-				var a3 = TAU / 4.0 * i + _rnd(h, i + 3) * 1.2
-				var ln = 0.35 + _rnd(h, i + 7) * 0.3
-				_mesh(root, _box(Vector3(ln, 0.012, 0.035)), Color("#2a5a8a"), p0 + Vector3(cos(a3) * ln * 0.5, 0, sin(a3) * ln * 0.5), Vector3(0, -a3, 0))
+			# rachadura de HQ no gelo (tools/rachadura.py, paleta gelo): contorno de tinta, cores deslocadas e retícula
+			_crack_decal(root, h, 3 + int(_rnd(h, 21) * 3) % 3, 2.0)
 		"fenda":
 			# chão do buraco: rachaduras azul-claras, retícula e cacos de gelo nascendo do fundo (sem nada preto chapado)
-			for i in range(6):
-				var a4 = TAU / 6.0 * i + _rnd(h, i) * 0.8
-				var ln = 0.4 + _rnd(h, i + 10) * 0.35
-				_mesh(root, _box(Vector3(ln, 0.012, 0.05)), Color("#6cc4ff"), Vector3(cos(a4) * ln * 0.5, 0.012, sin(a4) * ln * 0.5), Vector3(0, -a4, 0))
+			_crack_decal(root, h, 3 + int(_rnd(h, 24) * 3) % 3, 1.8, 0.013)
 			for i in range(14):
 				var a5 = _rnd(h, i + 30) * TAU
 				var r5 = sqrt(_rnd(h, i + 50)) * 0.78
