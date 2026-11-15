@@ -4289,56 +4289,48 @@ func _star_pts(r_out: float, r_in: float, n: int, seed_v: int) -> PackedVector2A
 func _comic_pop(world: Variant, word: String, big: bool = false) -> void:
 	if world == null or board == null or board.cam == null or board.cam.is_position_behind(world):
 		return
+	# letreiros desenhados (ui/onomatopeias): "KRA-KOOM!" -> kra-koom.png; palavra sem arte não aparece
+	var path = "res://ui/onomatopeias/%s.png" % word.to_lower().replace("!", "").replace(" ", "_")
+	if not ResourceLoader.exists(path):
+		return
+	var tex: Texture2D = load(path)
 	var sp: Vector2 = board.cam.unproject_position(world)
-	var root = Node2D.new()
-	root.position = sp + Vector2(randf_range(-30, 30), -40 + randf_range(-20, 10))
-	root.rotation = randf_range(-0.22, 0.22)
-	ui.add_child(root)
-	var sc = (1.5 if big else 1.0) * clamp(get_viewport().get_visible_rect().size.y / 900.0, 0.7, 1.4)
-	var pts = _star_pts(70.0, 38.0, 11, randi())
-	var col: Color = POP_COLS.pick_random()
-	var sh = Polygon2D.new()
-	sh.polygon = pts
-	sh.color = Color(0.05, 0.0, 0.1)
-	sh.position = Vector2(7, 7)
-	root.add_child(sh)
-	var outl = Polygon2D.new()
-	outl.polygon = pts
-	outl.color = Color(0.05, 0.0, 0.1)
-	outl.scale = Vector2(1.08, 1.08)
-	root.add_child(outl)
-	var fill = Polygon2D.new()
-	fill.polygon = pts
-	fill.color = col
-	root.add_child(fill)
-	var inner = Polygon2D.new()
-	inner.polygon = _star_pts(40.0, 24.0, 9, randi())
-	inner.color = col.lightened(0.55)
-	root.add_child(inner)
-	var lb = Label.new()
-	lb.text = word
-	if font_title != null:
-		lb.add_theme_font_override("font", font_title)
-	lb.add_theme_font_size_override("font_size", 38)
-	lb.add_theme_color_override("font_color", Color.WHITE)
-	lb.add_theme_color_override("font_outline_color", Color(0.05, 0.0, 0.1))
-	lb.add_theme_constant_override("outline_size", 12)
-	lb.add_theme_color_override("font_shadow_color", Color(0.05, 0.0, 0.1))
-	lb.add_theme_constant_override("shadow_offset_x", 4)
-	lb.add_theme_constant_override("shadow_offset_y", 4)
-	lb.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lb.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	lb.size = Vector2(220, 60)
-	lb.position = Vector2(-110, -32)
-	root.add_child(lb)
-	root.scale = Vector2(0.15, 0.15) * sc
-	var tw = root.create_tween()
-	tw.tween_property(root, "scale", Vector2(1.18, 1.18) * sc, 0.12).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tw.tween_property(root, "scale", Vector2(1.0, 1.0) * sc, 0.1)
-	tw.tween_interval(0.45)
-	tw.parallel().tween_property(root, "position:y", root.position.y - 18.0, 0.45)
-	tw.tween_property(root, "modulate:a", 0.0, 0.22)
-	tw.tween_callback(root.queue_free)
+	var sc = clamp(get_viewport().get_visible_rect().size.y / 900.0, 0.7, 1.4)
+	var w = (330.0 if big else 230.0) * sc
+	var base = w / float(tex.get_width())
+	var spr = Sprite2D.new()
+	spr.texture = tex
+	spr.position = sp + Vector2(randf_range(-30, 30), -50 + randf_range(-20, 10))
+	spr.rotation = randf_range(-0.16, 0.12)
+	spr.material = _hexfade_mat()
+	ui.add_child(spr)
+	# aparece de repente (sem fade): já cheio e grande, bate no tamanho e treme
+	spr.scale = Vector2.ONE * base * 1.35
+	var tw = spr.create_tween()
+	tw.tween_property(spr, "scale", Vector2.ONE * base, 0.08).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	var p0 = spr.position
+	for k in range(3):
+		var amp = (7.0 if big else 4.0) * (1.0 - k * 0.3)
+		tw.tween_property(spr, "position", p0 + Vector2(randf_range(-amp, amp), randf_range(-amp, amp)), 0.03)
+	tw.tween_property(spr, "position", p0, 0.03)
+	tw.tween_interval(0.5 if big else 0.38)
+	# some em retícula hexagonal, subindo um pouco
+	tw.tween_method(func(v): spr.material.set_shader_parameter("progress", v), 0.0, 1.0, 0.45)
+	tw.parallel().tween_property(spr, "position:y", p0.y - 14.0, 0.45)
+	tw.parallel().tween_property(spr, "scale", Vector2.ONE * base * 1.06, 0.45)
+	tw.tween_callback(spr.queue_free)
+
+
+var _hexfade_shader: Shader = null
+
+
+func _hexfade_mat() -> ShaderMaterial:
+	if _hexfade_shader == null:
+		_hexfade_shader = load("res://shaders/hex_fade.gdshader")
+	var m = ShaderMaterial.new()
+	m.shader = _hexfade_shader
+	m.set_shader_parameter("progress", 0.0)
+	return m
 
 
 var splash_until: int = 0          # um letreiro grande por vez
@@ -4448,7 +4440,7 @@ func _hq_splash(kind: String, world: Variant) -> void:
 	wd.rotation = randf_range(-0.12, -0.03) if randf() < 0.5 else randf_range(0.03, 0.1)
 	stage.add_child(wd)
 	var tw = wd.create_tween().set_ignore_time_scale(true)
-	tw.tween_property(wd, "modulate:a", 1.0, 0.05)
+	tw.tween_property(wd, "modulate:a", 1.0, 0.01)
 	tw.parallel().tween_property(wd, "scale", Vector2.ONE * wsc * 0.92, 0.11).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tw.tween_property(wd, "scale", Vector2.ONE * wsc, 0.12).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	for i in range(4):
@@ -4456,8 +4448,9 @@ func _hq_splash(kind: String, world: Variant) -> void:
 		tw.tween_property(wd, "position", Vector2(randf_range(-amp, amp), randf_range(-amp, amp)), 0.035)
 	tw.tween_property(wd, "position", Vector2.ZERO, 0.04)
 	tw.tween_interval(0.62 if not big else 0.85)
-	tw.tween_property(wd, "scale", Vector2.ONE * wsc * 1.15, 0.2)
-	tw.parallel().tween_property(wd, "modulate:a", 0.0, 0.2)
+	wd.material = _hexfade_mat()
+	tw.tween_method(func(v): wd.material.set_shader_parameter("progress", v), 0.0, 1.0, 0.32)
+	tw.parallel().tween_property(wd, "scale", Vector2.ONE * wsc * 1.08, 0.32)
 	tw.tween_callback(root.queue_free)
 	if big:
 		board.shake = max(board.shake, 0.6)
@@ -4621,6 +4614,15 @@ func _prewarm() -> void:
 		warm_keep.append(tr.texture)
 		tr.size = Vector2(8, 8)
 		holder.add_child(tr)
+	# letreiros de onomatopeia e o sumiço em retícula hexagonal
+	for n in _res_names("res://ui/onomatopeias", ".png"):
+		var to = TextureRect.new()
+		to.texture = load("res://ui/onomatopeias/" + n)
+		warm_keep.append(to.texture)
+		to.size = Vector2(8, 8)
+		to.material = _hexfade_mat()
+		to.material.set_shader_parameter("progress", 0.5)
+		holder.add_child(to)
 	var cine: Script = load("res://scripts/cinematica.gd")
 	warm_keep.append(cine)
 	var quads: Array = []
