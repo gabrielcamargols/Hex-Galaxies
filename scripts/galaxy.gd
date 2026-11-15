@@ -48,6 +48,13 @@ var belt: Node3D
 var atm_shader: Shader
 var env: Environment = null     # ambiente do mundo (do tabuleiro); a galáxia troca o céu
 var sky_space: Sky = null
+# celular em pé: a câmera gira em volta da estrela e para de frente para um planeta por vez
+var portrait: bool = false
+var orb_yaw: float = 0.0
+var orb_id: String = ""          # planeta que está na frente
+var drag_on: bool = false
+var drag_moved: float = 0.0
+var drag_last: Vector2 = Vector2.ZERO
 
 
 func _ready() -> void:
@@ -277,6 +284,41 @@ func planet_pos(id: String) -> Vector3:
 	return Vector3(cos(a) * p["r"], sin(a * 1.0 + 0.7) * p["r"] * 0.04, sin(a) * p["r"])
 
 
+func planet_angle(id: String) -> float:
+	var p = nodes[id]["data"]
+	return p["a0"] + orbit_t * p["speed"]
+
+
+# planetas jogáveis na ordem em que aparecem girando a órbita
+func pick_order() -> Array:
+	var ids = pickable()
+	ids.sort_custom(func(a, b): return fposmod(planet_angle(a), TAU) < fposmod(planet_angle(b), TAU))
+	return ids
+
+
+func nearest_to_yaw(yaw: float) -> String:
+	var best = ""
+	var bd = 1e9
+	for id in pickable():
+		var d = abs(angle_difference(yaw, planet_angle(id)))
+		if d < bd:
+			bd = d
+			best = id
+	return best
+
+
+# ◀ ▶: leva a órbita até o planeta anterior/seguinte
+func cycle(dir: int) -> void:
+	var order = pick_order()
+	if order.is_empty():
+		return
+	var i = order.find(orb_id)
+	if i < 0:
+		i = 0
+	orb_id = order[posmod(i + dir, order.size())]
+	planet_hover.emit(orb_id)
+
+
 func planet_size(id: String) -> float:
 	return nodes[id]["data"]["size"]
 
@@ -354,6 +396,10 @@ func _cam_goal() -> Array:
 			var yaw = clock * 0.025 + 0.6
 			return [Vector3(sin(yaw) * 96.0, 34.0, cos(yaw) * 96.0), Vector3(0, -15, 0), 0.0]
 		"select":
+			if portrait:
+				# em pé: de fora da órbita, olhando para a estrela; o planeta da frente fica grande embaixo
+				var dir = Vector3(cos(orb_yaw), 0, sin(orb_yaw))
+				return [dir * 118.0 + Vector3(0, 46, 0), dir * 14.0, 0.0]
 			# bem longe: sistema inteiro e as órbitas à vista
 			return [Vector3(0, 98, 78), Vector3(0, 0, 2), 0.0]
 		"focus", "dive":
@@ -363,12 +409,16 @@ func _cam_goal() -> Array:
 			var to_star = (-pp).normalized()
 			var side = to_star.rotated(Vector3.UP, 0.75)
 			var pos = pp + (side + Vector3(0, 0.3, 0)).normalized() * r * 5.6
+			if portrait:
+				# em pé a ficha fica embaixo: o planeta sobe na tela em vez de ir para a esquerda
+				return [pp + (side + Vector3(0, 0.3, 0)).normalized() * r * 9.5, pp, 0.0]
 			return [pos, pp, r * 1.75]
 	return [cam_pos, cam_look, 0.0]
 
 
 func _apply_cam() -> void:
 	cam.h_offset = h_off
+	cam.v_offset = (-planet_size(focus_id) * 1.5 if (portrait and focus_id != "" and (mode == "focus")) else 0.0)
 	if cam_pos.distance_to(cam_look) > 0.01:
 		cam.look_at_from_position(cam_pos, cam_look, Vector3.UP)
 
@@ -403,6 +453,12 @@ func _process(delta: float) -> void:
 		n["big"] = lerp(float(n.get("big", 1.0)), big_goal, min(1.0, delta * 3.0))
 		var sc = n["big"] * (1.0 + n["hl"] * 0.08)
 		n["body"].scale = Vector3.ONE * sc
+	# em pé: a órbita gira até o planeta escolhido e acompanha ele andando
+	if portrait and mode == "select" and not drag_on:
+		if orb_id == "":
+			orb_id = nearest_to_yaw(orb_yaw)
+			planet_hover.emit(orb_id)
+		orb_yaw = lerp_angle(orb_yaw, planet_angle(orb_id), min(1.0, delta * 3.2))
 	# câmera
 	if mode == "dive":
 		dive_t = min(1.0, dive_t + delta / 1.7)
@@ -456,6 +512,9 @@ func _set_hover(id: String) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible or mode != "select":
 		return
+	if portrait:
+		_portrait_input(event)
+		return
 	if event is InputEventMouseMotion:
 		_set_hover(_pick((event as InputEventMouseMotion).position))
 	elif event is InputEventMouseButton and event.pressed and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT:
@@ -463,3 +522,56 @@ func _unhandled_input(event: InputEvent) -> void:
 		if id != "":
 			_set_hover(id)
 			planet_click.emit(id)
+
+
+# em pé: arrastar para os lados gira a órbita; soltar para no planeta mais perto; toque sem arrastar escolhe
+func _portrait_input(event: InputEvent) -> void:
+	var pos = Vector2.ZERO
+	var down = false
+	var up = false
+	var moving = false
+	if event is InputEventScreenTouch:
+		pos = event.position
+		down = event.pressed
+		up = not event.pressed
+	elif event is InputEventScreenDrag:
+		pos = event.position
+		moving = true
+	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		pos = event.position
+		down = event.pressed
+		up = not event.pressed
+	elif event is InputEventMouseMotion and drag_on:
+		pos = event.position
+		moving = true
+	else:
+		return
+	if down:
+		drag_on = true
+		drag_moved = 0.0
+		drag_last = pos
+	elif moving and drag_on:
+		var dx = pos.x - drag_last.x
+		drag_last = pos
+		drag_moved += abs(dx)
+		var vw = get_viewport().get_visible_rect().size.x
+		orb_yaw -= dx / max(200.0, vw) * 2.4
+		var near = nearest_to_yaw(orb_yaw)
+		if near != orb_id:
+			orb_id = near
+			planet_hover.emit(orb_id)
+	elif up and drag_on:
+		drag_on = false
+		if drag_moved < 14.0:
+			var id = _pick(pos)
+			if id == "":
+				id = orb_id if pos.y > get_viewport().get_visible_rect().size.y * 0.35 else ""
+			if id != "":
+				if id == orb_id:
+					planet_click.emit(id)
+				else:
+					orb_id = id
+					planet_hover.emit(id)
+		else:
+			orb_id = nearest_to_yaw(orb_yaw)
+			planet_hover.emit(orb_id)

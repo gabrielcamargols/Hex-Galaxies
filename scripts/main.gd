@@ -1077,6 +1077,7 @@ func _on_play() -> void:
 func _show_select() -> void:
 	stage = "select"
 	_clear_ui()
+	galaxy.portrait = portrait
 	galaxy.set_mode("select")
 	ui.modulate.a = 0.0
 	_vignette()
@@ -1120,6 +1121,28 @@ func _show_select() -> void:
 		ui.add_child(tag)
 		tag.position = Vector2(-1000, -1000)
 		w["tags"][id] = tag
+	# em pé: arraste para girar a órbita, ◀ ▶ trocam de planeta e o botão escolhe o da frente
+	if portrait:
+		galaxy.orb_id = ""
+		var pb = _vbox(ui, 8)
+		_place(pb, Control.PRESET_CENTER_BOTTOM, 26)
+		pb.offset_bottom -= 70
+		pb.offset_top -= 70
+		var hint = _label(pb, "Arraste para os lados para girar a órbita", 15, C_DIM)
+		hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		var row = _hbox(pb, 10)
+		row.alignment = BoxContainer.ALIGNMENT_CENTER
+		var bl = _cbtn(row, "◀", C_HUD, func(): galaxy.cycle(-1))
+		bl.custom_minimum_size = Vector2(64, 64)
+		bl.add_theme_font_size_override("font_size", 26)
+		var go = _cbtn(row, "ESCOLHER", C_GOLD, func(): _planet_info(galaxy.orb_id) if galaxy.orb_id != "" else null)
+		_primary(go)
+		go.custom_minimum_size = Vector2(190, 64)
+		go.add_theme_font_size_override("font_size", 22)
+		w["sel_go"] = go
+		var br = _cbtn(row, "▶", C_HUD, func(): galaxy.cycle(1))
+		br.custom_minimum_size = Vector2(64, 64)
+		br.add_theme_font_size_override("font_size", 26)
 	await get_tree().create_timer(0.55).timeout
 	if stage == "select":
 		_ui_fade(1.0, 0.6)
@@ -1195,9 +1218,22 @@ func _planet_info(id: String) -> void:
 		_primary(bb)
 		bb.custom_minimum_size = Vector2(0, 56)
 		bb.add_theme_font_size_override("font_size", 22)
-	panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER_RIGHT, Control.PRESET_MODE_MINSIZE, 40)
-	panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	panel.grow_vertical = Control.GROW_DIRECTION_BOTH
+	if portrait:
+		var vwp = get_viewport().get_visible_rect().size
+		nm.add_theme_font_size_override("font_size", 40)
+		dl.custom_minimum_size = Vector2(vwp.x - 150.0, 0)
+		for lb in v.find_children("*", "Label", true, false):
+			if lb.autowrap_mode != TextServer.AUTOWRAP_OFF:
+				lb.custom_minimum_size.x = vwp.x - 160.0
+		pb.content_margin_left = 22
+		pb.content_margin_right = 22
+		panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM, Control.PRESET_MODE_MINSIZE, 90)
+		panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+		panel.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	else:
+		panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER_RIGHT, Control.PRESET_MODE_MINSIZE, 40)
+		panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+		panel.grow_vertical = Control.GROW_DIRECTION_BOTH
 	var back = _cbtn(ui, "◀  Planetas", C_HUD, _back_to_select)
 	_place(back, Control.PRESET_BOTTOM_LEFT, 22)
 	await _ui_fade(1.0, 0.4)
@@ -1229,6 +1265,8 @@ func _on_planet_hover(id: String) -> void:
 			tg.modulate = Color(1, 1, 1, 1) if (id == "" or id == k) else Color(1, 1, 1, 0.55)
 	if id != "":
 		sfx.play("clique", -14.0, 1.4)
+	if portrait and w.has("sel_go") and is_instance_valid(w["sel_go"]) and id != "":
+		w["sel_go"].text = galaxy.data(id)["name"].to_upper()
 
 
 func _update_tags() -> void:
@@ -6206,6 +6244,10 @@ func _apply_ui_scale() -> void:
 	var was = compact
 	var vs = get_viewport().get_visible_rect().size
 	compact = vs.y < 720.0 or portrait
+	if galaxy != null:
+		galaxy.portrait = portrait
+	if was_p != portrait and stage == "select":
+		_show_select()
 	if (was != compact or was_p != portrait) and stage == "battle" and game != null:
 		_build_hud()
 		refresh()
