@@ -2571,6 +2571,13 @@ func refresh() -> void:
 		if game.has_fx(bu, "bleed"):
 			bleeds.append({"uid": bu.uid, "h": bu.pos()})
 	board.sync_bleeds(bleeds)
+	# Marca Abyssal do Klang: símbolo Abyssal roxo sob o inimigo marcado
+	var marks = []
+	for mu in game.field():
+		if mu.fx.any(func(f): return f["k"] == "amark"):
+			marks.append({"uid": mu.uid, "h": mu.pos()})
+	board.sync_ground_marks("amark", marks)
+	board.sync_stars(game.stars.map(func(st): return {"k": "%d_%d_%d" % [int(st["src"]), st["c"].x, st["c"].y], "hexes": st["hexes"]}))
 	board.sync_bananas(game.bananas, me)
 	board.sync_core(game.core, game.core_next if game.core == null or game.core_next != game.core else null)
 	if game.core != null:
@@ -2866,6 +2873,12 @@ func _refresh_party() -> void:
 				b2.add_theme_font_size_override("font_size", 12)
 				b2.disabled = not game.can_scarab(p, "ult") or busy or not my_turn()
 				b2.tooltip_text = "Gasta 2 escaravelhos: uma peça que já usou a ativa pode usá-la mais uma vez."
+				if not game.scarab_opts(p, "stun").is_empty():
+					var b3 = _cbtn(sv, "LIBERTAR ATORDOADO ·1", Color("#2fb85a"), func(): _on_scarab("stun"))
+					b3.custom_minimum_size = Vector2(_roster_w() - 16, 36)
+					b3.add_theme_font_size_override("font_size", 12)
+					b3.disabled = not game.can_scarab(p, "stun") or busy or not my_turn()
+					b3.tooltip_text = "Gasta 1 escaravelho: uma peça sua atordoada pelo Tiro Sônico volta a agir."
 				var tl = _label(sv, "Sobrando no fim: +1 de Vida\nno comandante por escaravelho", 10, Color("#a8d8b4"))
 				tl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 				tl.custom_minimum_size = Vector2(_roster_w() - 12, 0)
@@ -4850,6 +4863,30 @@ func _on_abfx(e: Dictionary) -> void:
 			vfx.flip("heal", g0, 2.2, 0.8)
 		"veil":
 			vfx.flip("ink", g0, 2.4, 0.7)
+		"rodapunk":
+			# Oncus gira: anel de espinhos e chifres varrendo 4 casas
+			vfx.flip("ring", g0, 9.0, 0.6, Color("#ff5ae0"), true)
+			vfx.flip("ring", g0, 6.0, 0.5, Color("#ffd23a"), true, 0.1)
+			vfx.flip("spikes", g0, 3.0, 0.6, Color("#ff7ae0"))
+			vfx.flip("slash", g0 + Vector3(0, 0.9, 0), 3.4, 0.5, Color("#ff9af0"))
+			_comic_pop(g0 + Vector3(0, 1.8, 0), "RODA PUNK!", true)
+		"hexstar":
+			vfx.flip("sparkle", g0 + Vector3(0, 0.8, 0), 3.6, 1.0, Color("#ffe27a"))
+			vfx.flip("ring", g0, 7.0, 0.7, Color("#ffe27a"), true)
+		"star_heal":
+			vfx.flip("sparkle", g0 + Vector3(0, 0.8, 0), 1.8, 0.7, Color("#ffe27a"))
+		"workshop":
+			vfx.flip("aura", g0, 2.4, 0.7, Color("#7ae8ff"))
+			vfx.flip("sparkle", g0 + Vector3(0, 1.0, 0), 2.0, 0.7, Color("#ffffff"))
+		"shock":
+			vfx.flip("bolt", g0, 2.6, 0.45, Color("#9ad8ff"))
+			vfx.flip("ring", g0, 2.8, 0.4, Color("#9ad8ff"), true)
+		"stun":
+			vfx.flip("ring", g0, 2.6, 0.5, Color("#fff07a"), true)
+			vfx.flip("sparkle", g0 + Vector3(0, 1.6, 0), 1.6, 0.8, Color("#fff07a"))
+		"amark_ko":
+			board.bleed_pop(e["h"], "amark")
+			vfx.flip("curse", g0 + Vector3(0, 1.0, 0), 2.8, 0.8, Color("#c86bff"))
 		"berserk":
 			# Moby entra em fúria total: chamas vermelhas e onda de choque
 			vfx.flip("fire", g0 + Vector3(0, 0.6, 0), 2.8, 0.9, Color("#ff3a4a"))

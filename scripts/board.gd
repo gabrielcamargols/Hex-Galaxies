@@ -144,6 +144,7 @@ func build(game: Game) -> void:
 	banana_nodes.clear()
 	trap_nodes.clear()
 	bleed_nodes.clear()
+	star_nodes.clear()
 	core_node = null
 	core_next_node = null
 	core_at = null
@@ -1792,44 +1793,55 @@ func sync_traps(list: Array) -> void:
 		trap_nodes[k] = n
 
 
-# ---- Sangramento (Comandante Krieg): símbolo vermelho girando devagar no chão sob o alvo ----
-var bleed_nodes: Dictionary = {}
-var _bleed_mats: Array = []
+# ---- símbolos no chão sob uma peça, girando devagar ----
+# bleed: Sangramento do Comandante Krieg (vermelho); amark: Marca Abyssal do Klang (roxo, gira ao contrário)
+const GROUND_MARKS = {
+	"bleed": {"tex": "res://vfx/tex/krieg_simbolo_chao", "cor": "#ff2434", "giro": 9.0, "tam": 2.15},
+	"amark": {"tex": "res://vfx/tex/simbolo_aby_chao", "cor": "#c86bff", "giro": -12.0, "tam": 1.9},
+}
+var bleed_nodes: Dictionary = {}   # "tipo:uid" -> Node3D
+var _gm_mats: Dictionary = {}
 
 
-func _bleed_mat(i: int) -> StandardMaterial3D:
-	if _bleed_mats.is_empty():
-		for spec in [["res://vfx/tex/krieg_simbolo_chao_sombra.png", Color(0.06, 0.0, 0.02, 0.92)], ["res://vfx/tex/krieg_simbolo_chao.png", Color("#ff2434")]]:
-			var m = StandardMaterial3D.new()
-			m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-			m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-			m.cull_mode = BaseMaterial3D.CULL_DISABLED
-			m.albedo_color = spec[1]
-			m.albedo_texture = load(spec[0]) if ResourceLoader.exists(spec[0]) else null
-			m.no_depth_test = false
-			m.render_priority = 2
-			_bleed_mats.append(m)
-	return _bleed_mats[i]
+func _gm_mat(kind: String, i: int) -> StandardMaterial3D:
+	var key = "%s%d" % [kind, i]
+	if not _gm_mats.has(key):
+		var cfg = GROUND_MARKS[kind]
+		var m = StandardMaterial3D.new()
+		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		m.cull_mode = BaseMaterial3D.CULL_DISABLED
+		m.albedo_color = Color(0.06, 0.0, 0.04, 0.92) if i == 0 else Color(cfg["cor"])
+		var path = cfg["tex"] + ("_sombra.png" if i == 0 else ".png")
+		m.albedo_texture = load(path) if ResourceLoader.exists(path) else null
+		m.render_priority = 2
+		_gm_mats[key] = m
+	return _gm_mats[key]
 
 
 func sync_bleeds(list: Array) -> void:
+	sync_ground_marks("bleed", list)
+
+
+func sync_ground_marks(kind: String, list: Array) -> void:
+	var cfg = GROUND_MARKS[kind]
 	var vivos = {}
 	for t in list:
-		vivos[int(t["uid"])] = t["h"]
-	for uid in bleed_nodes.keys():
-		if not vivos.has(uid):
-			var n: Node3D = bleed_nodes[uid]
-			bleed_nodes.erase(uid)
+		vivos["%s:%d" % [kind, int(t["uid"])]] = t["h"]
+	for key in bleed_nodes.keys():
+		if str(key).begins_with(kind + ":") and not vivos.has(key):
+			var n: Node3D = bleed_nodes[key]
+			bleed_nodes.erase(key)
 			var tw = n.create_tween()
 			tw.tween_property(n, "scale", Vector3.ONE * 0.01, 0.25)
 			tw.tween_callback(n.queue_free)
-	for uid in vivos.keys():
-		var h: Vector2i = vivos[uid]
+	for key in vivos.keys():
+		var h: Vector2i = vivos[key]
 		if not tiles.has(h):
 			continue
-		var at = Vector3(world_xz(h).x, top_y(h) + 0.07, world_xz(h).y)
-		if bleed_nodes.has(uid):
-			var n0: Node3D = bleed_nodes[uid]
+		var at = Vector3(world_xz(h).x, top_y(h) + (0.07 if kind == "bleed" else 0.09), world_xz(h).y)
+		if bleed_nodes.has(key):
+			var n0: Node3D = bleed_nodes[key]
 			if n0.position.distance_to(at) > 0.01:
 				n0.create_tween().tween_property(n0, "position", at, 0.3)
 			continue
@@ -1841,25 +1853,28 @@ func sync_bleeds(list: Array) -> void:
 		for i in range(2):
 			var q = MeshInstance3D.new()
 			var qm = QuadMesh.new()
-			qm.size = Vector2.ONE * (2.15 if i == 0 else 1.95)
+			qm.size = Vector2.ONE * float(cfg["tam"]) * (1.0 if i == 0 else 0.9)
 			qm.orientation = PlaneMesh.FACE_Y
 			q.mesh = qm
-			q.material_override = _bleed_mat(i)
+			q.material_override = _gm_mat(kind, i)
 			q.position.y = 0.005 * i
 			q.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 			spin.add_child(q)
 		n.set_meta("spin", spin)
+		var g = float(cfg["giro"])
 		var sp = spin.create_tween().set_loops()
-		sp.tween_property(spin, "rotation:y", TAU, 9.0).from(0.0)
+		sp.tween_property(spin, "rotation:y", TAU * sign(g), abs(g)).from(0.0)
 		n.scale = Vector3.ONE * 0.01
 		n.create_tween().tween_property(n, "scale", Vector3.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-		bleed_nodes[uid] = n
+		bleed_nodes[key] = n
 
 
-# quando o Sangramento tica: o símbolo dá um pulo leve e cresce um pouco
-func bleed_pop(h: Vector2i) -> void:
-	for uid in bleed_nodes:
-		var n: Node3D = bleed_nodes[uid]
+# quando o efeito acontece: o símbolo dá um pulo leve e cresce um pouco
+func bleed_pop(h: Vector2i, kind: String = "bleed") -> void:
+	for key in bleed_nodes:
+		if not str(key).begins_with(kind + ":"):
+			continue
+		var n: Node3D = bleed_nodes[key]
 		if Vector2(n.position.x, n.position.z).distance_to(world_xz(h)) < 0.3:
 			var spin: Node3D = n.get_meta("spin")
 			var tw = spin.create_tween().set_parallel(true)
@@ -1867,6 +1882,58 @@ func bleed_pop(h: Vector2i) -> void:
 			tw.tween_property(spin, "scale", Vector3.ONE * 1.3, 0.16).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 			tw.chain().tween_property(spin, "position:y", 0.0, 0.32).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
 			tw.tween_property(spin, "scale", Vector3.ONE, 0.32).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+
+# ---- Estrela Hexa (Esterina): casas da estrela brilhando em dourado ----
+var star_nodes: Dictionary = {}
+
+
+func sync_stars(list: Array) -> void:
+	var vivos = {}
+	for st in list:
+		vivos[str(st["k"])] = st["hexes"]
+	for k in star_nodes.keys():
+		if not vivos.has(k):
+			var n: Node3D = star_nodes[k]
+			star_nodes.erase(k)
+			var tw = n.create_tween()
+			tw.tween_property(n, "scale", Vector3(1, 0.01, 1), 0.3)
+			tw.tween_callback(n.queue_free)
+	for k in vivos.keys():
+		if star_nodes.has(k):
+			continue
+		var root = Node3D.new()
+		scenery_root.add_child(root)
+		var mat = StandardMaterial3D.new()
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mat.albedo_color = Color(1.0, 0.74, 0.18, 0.55)
+		mat.render_priority = 1
+		var borda = StandardMaterial3D.new()
+		borda.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		borda.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		borda.albedo_color = Color(1.0, 0.95, 0.7, 0.85)
+		borda.render_priority = 1
+		var i = 0
+		for h in vivos[k]:
+			if not tiles.has(h):
+				continue
+			var at = Vector3(world_xz(h).x, top_y(h) + 0.05, world_xz(h).y)
+			var hexm = _mesh(root, _disc(0.86, 6), Color.WHITE, at)
+			hexm.rotation.y = PI / 6.0
+			hexm.material_override = mat
+			var anel = _mesh(root, _disc(0.94, 6), Color.WHITE, at - Vector3(0, 0.005, 0))
+			anel.rotation.y = PI / 6.0
+			anel.material_override = borda
+			anel.scale = Vector3.ONE
+			var tw = hexm.create_tween().set_loops()
+			tw.tween_interval(0.08 * i)
+			tw.tween_property(hexm, "scale", Vector3(1.08, 1, 1.08), 0.9).set_trans(Tween.TRANS_SINE)
+			tw.tween_property(hexm, "scale", Vector3.ONE, 0.9).set_trans(Tween.TRANS_SINE)
+			i += 1
+		root.scale = Vector3(1, 0.01, 1)
+		root.create_tween().tween_property(root, "scale", Vector3.ONE, 0.4).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		star_nodes[k] = root
 
 
 func _make_heart() -> ImageTexture:

@@ -668,7 +668,13 @@
     "text": "Após atacar, cause 1 dano a todas as outras peças adjacentes a Oncus: inimigos e aliados Abyssais com mais de 5 de Vida. Nunca fere comandantes aliados."
    },
    "k": {
-    "after": "burstSafe"
+    "after": "burstSafe",
+    "ult": "rodapunk"
+   },
+   "ab2": {
+    "name": "Roda Punk",
+    "text": "1 vez por partida, 1 ação: Oncus gira e acerta todos os inimigos a até 4 casas com 3 golpes: soco com espinhos (1) e dois de chifre (2 e 2). Depois, se ainda não se moveu, escolhe onde parar dentro da área do giro. Táticas e ferramentas de movimento continuam valendo.",
+    "kind": "ativa"
    }
   },
   {
@@ -718,13 +724,12 @@
      "n": 3,
      "self": true
     },
-    "ult": "mend"
+    "ult": "hexstar"
    },
    "ab2": {
-    "name": "Luz da Fenda",
-    "text": "1 vez por partida, 1 ação: um Abyssal a até 3 casas (inclusive ela) restaura até 6 de Vida.",
-    "kind": "ativa",
-    "per": "partida"
+    "name": "Estrela Hexa",
+    "text": "1 vez por partida, 1 ação: escolha o centro de uma estrela hexagonal a até 4 casas (o centro, as 6 casas ao redor e as 6 pontas). Por 3 rounds, aliados dentro dela restauram 2 de Vida no início de cada round e não podem ser atacados corpo a corpo.",
+    "kind": "ativa"
    }
   },
   {
@@ -739,12 +744,12 @@
    "alc": 4,
    "src": "pdf",
    "ab": {
-    "name": "Eco Profundo",
-    "text": "Pode atacar a até 4 casas (precisa de linha de visão). Se o alvo já foi atacado por outro Abyssal neste round, causa +1 de dano e o empurra 1 casa."
+    "name": "Tiro Sônico",
+    "text": "Ao acertar um inimigo no alcance máximo (4 casas), empurra o alvo 1 casa para trás. Se algo bloquear o empurrão (elevação, terreno, peça ou borda), o alvo fica atordoado até o fim do próximo round: não ataca nem se move (em Tarhut, 1 Escaravelho liberta um aliado atordoado). Marca Abyssal: um inimigo atacado por um Abyssal neste round fica marcado; ataques Abyssais contra ele causam +1 para cada 2 de Vida que ele já perdeu, e com menos de 2 de Vida ele é nocauteado na hora."
    },
    "k": {
-    "after": "echo",
-    "atkFocus": 1
+    "after": "sonic",
+    "abyssMark": true
    }
   },
   {
@@ -759,19 +764,17 @@
    "alc": 1,
    "src": "pdf",
    "ab": {
-    "name": "Oficina Móvel",
+    "name": "Reparo de Campo",
     "text": "No fim do round, restaure 1 de Vida de outro aliado adjacente, sem superar a Vida inicial."
    },
    "k": {
     "endHeal": 1,
-    "ult": "plate",
-    "ultRound": true
+    "ult": "workshop"
    },
    "ab2": {
-    "name": "Casco de Reparo",
-    "text": "1 vez por round, 1 ação: um aliado adjacente sofre 1 a menos de dano de ataques até o fim do round.",
-    "kind": "ativa",
-    "per": "round"
+    "name": "Oficina Móvel",
+    "text": "1 vez por partida, 1 ação: dá um item aleatório a um aliado a até 6 casas, pelo resto da partida. Casco Duro: -4 de dano de ataques à distância. Adaga Abyssal: +5 de dano em ataques corpo a corpo. Elixir do Abismo: pode usar a ativa de novo. Garras Reforçadas (só quem tem garras): +2 MOV e +2 ALC.",
+    "kind": "ativa"
    }
   },
   {
@@ -853,7 +856,7 @@
    "src": "novo",
    "ab": {
     "name": "Toque Elétrico",
-    "text": "Quem a atacar corpo a corpo sofre 2 de dano depois do ataque. Olhar Petrificante: ao entrar, 1 inimigo a até 3 casas não pode se mover até o fim do próximo round."
+    "text": "Passiva o jogo todo: quem a atacar corpo a corpo sofre 2 de dano depois do ataque. Olhar Petrificante: ao entrar, 1 inimigo a até 3 casas não pode se mover até o fim do próximo round."
    },
    "k": {
     "thorns": 2,
@@ -861,7 +864,14 @@
      "t": "root",
      "r": 3,
      "n": 1
-    }
+    },
+    "ult": "shock",
+    "ultRound": true
+   },
+   "ab2": {
+    "name": "Queimadura Insuportável",
+    "text": "1 vez por round, 1 ação: um inimigo a até 3 casas sofre 1 de dano (2 se tiver a Marca Abyssal) e fica eletrocutado até o fim do round: não pode atacar e, no fim do round, sofre mais 1.",
+    "kind": "ativa"
    }
   },
   {
@@ -881,7 +891,8 @@
    },
    "k": {
     "selfRed": 1,
-    "slowAura": true
+    "slowAura": true,
+    "garras": true
    }
   },
   {

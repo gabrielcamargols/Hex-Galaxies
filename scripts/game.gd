@@ -133,6 +133,7 @@ var fires: Array = []     # Incendiário: [{h, owner, until}] casas em chamas
 var portals: Array = []   # Guarda dos Portais: [{a, b, uid, owner}] a = ENTRADA, b = SAÍDA
 var portal_pick_a: Variant = null   # entrada já escolhida (a IA usa para pontuar a saída)
 var tunnels: Array = []   # Rei da Mina: [{a, b, owner}] entradas de túnel ligadas
+var stars: Array = []     # Esterina: [{owner, c, hexes, till}] Estrela Hexa
 var shells: Array = []    # Rádio: [{h, owner, round, src}] artilharia que cai no início do próximo round
 
 
@@ -399,9 +400,17 @@ func imprisoned(u) -> bool:
 
 func rooted(u) -> bool:
 	for f in u.fx:
-		if f["k"] == "root" and int(f["end"]) >= round_no:
+		if (f["k"] == "root" or f["k"] == "stun") and int(f["end"]) >= round_no:
 			return true
 	return false
+
+
+# Klang: atordoado não ataca nem se move; Medusa: eletrocutado não ataca
+func stunned(u) -> bool:
+	for f in u.fx:
+		if f["k"] == "stun" and int(f["end"]) >= round_no:
+			return true
+	return has_fx(u, "shock")
 
 
 # ---- controle Lithari: Lento, Enraizado e Zona de Cristal ----
@@ -735,6 +744,10 @@ func atk_of(a, t) -> int:
 	# Moby: Fúria Ferida (+1 ATQ por Vida perdida) e Berserker Total (dano dobrado)
 	if k.has("furia"):
 		v += max(0, a.maxhp - a.hp) * int(k["furia"])
+	if t != null and has_fx(a, "adaga") and DB.dist(a.pos(), t.pos()) == 1:
+		v += 5
+	if t != null and marked_by(t, a.owner) and DB.cards[a.cid]["f"] == "ABY":
+		v += mark_bonus(t)
 	v = max(0, v)
 	if has_fx(a, "berserk"):
 		v *= 2
@@ -753,6 +766,8 @@ func reduction_of(t, peek: bool = false, d: int = 1) -> int:
 	var k = K(t)
 	if t.eq == "placas":
 		red += 1
+	if has_fx(t, "casco") and d > 1:
+		red += 4   # Kling: Casco Duro
 	red += fx_sum(t, "red")
 	if has_fx(t, "coat"):
 		red += fx_sum(t, "coat")
@@ -891,6 +906,8 @@ func _targets_from(a, fpos = null) -> Array:
 		var d = DB.dist(ap, t.pos())
 		if d < 1 or d > range_of(a, ap, t) or has_fx(t, "veil") or imprisoned(t):
 			continue
+		if d == 1 and in_star(t):
+			continue   # Estrela Hexa: protegido contra corpo a corpo
 		if d == 1 and abs(hp - stand_h(t.pos())) > 1 and not K(a).has("climbAll"):
 			continue
 		# aéreo: unidades terrestres de corpo a corpo não o alcançam
@@ -1223,6 +1240,63 @@ func _dose_medic(t) -> Variant:
 		if m != t and m.st == "field" and m.owner == t.owner and not m.dose_used and K(m).has("lastDose") and DB.dist(m.pos(), t.pos()) <= int(K(m)["lastDose"]):
 			return m
 	return null
+
+
+# ---- Marca Abyssal (Klang) ----
+func marked_by(t, p: int) -> bool:
+	for f in t.fx:
+		if f["k"] == "amark" and int(f["by"]) == p:
+			return true
+	return false
+
+
+func mark_bonus(t) -> int:
+	return max(0, t.maxhp - t.hp) / 2
+
+
+func _abyss_mark(a, t) -> void:
+	if t == null or t.barrier or t.st != "field" or a.barrier or DB.cards[a.cid]["f"] != "ABY":
+		return
+	if not field().any(func(x): return x.owner == a.owner and K(x).has("abyssMark")):
+		return
+	if not marked_by(t, a.owner):
+		t.fx.append({"k": "amark", "by": a.owner, "until": "end"})
+		log_msg(a.owner, "Marca Abyssal: %s está marcado neste round." % nm(t))
+	_mark_ko(t, a)
+
+
+func _mark_ko(t, src) -> void:
+	if t.st == "field" and t.hp > 0 and t.hp < 2 and src != null and marked_by(t, src.owner):
+		log_msg(src.owner, "Marca Abyssal: %s é nocauteado na hora." % nm(t))
+		abfx("amark_ko", t.pos(), src.uid)
+		damage(t, t.hp, src)
+
+
+# ---- Estrela Hexa (Esterina) ----
+func star_hexes(c: Vector2i) -> Array:
+	var out = [c]
+	for d in DB.DIRS:
+		for k in [1, 2]:
+			var h = c + d * k
+			if DB.hexes.has(h):
+				out.append(h)
+	return out
+
+
+func in_star(t) -> bool:
+	for st in stars:
+		if int(st["owner"]) == t.owner and int(st["till"]) >= round_no and st["hexes"].has(t.pos()):
+			return true
+	return false
+
+
+func _star_tick() -> void:
+	stars = stars.filter(func(st): return int(st["till"]) >= round_no)
+	for st in stars:
+		for t in field().filter(func(x): return x.owner == int(st["owner"]) and not x.barrier and st["hexes"].has(x.pos()) and x.hp < x.maxhp):
+			abfx("star_heal", t.pos(), int(st["src"]))
+			heal(t, 2)
+			log_msg(int(st["owner"]), "Estrela Hexa: %s restaura 2 de Vida." % nm(t))
 
 
 # Sapturne: mina que é dela explode junto com qualquer mina/bomba ao lado (e vice-versa), em cadeia
@@ -1757,6 +1831,7 @@ func start_round() -> void:
 	if winner != NONE:
 		return
 	_fire_tick()
+	_star_tick()
 	await _bleed_tick()
 	if winner != NONE:
 		return
@@ -2008,6 +2083,15 @@ func end_round() -> void:
 	await _toxin_tick()
 	if winner != NONE:
 		return
+	# Medusa: quem está eletrocutado sofre mais 1 no fim do round
+	for sx in field().filter(func(x): return has_fx(x, "shock")):
+		var by_s = by_uid(int(sx.fx.filter(func(f): return f["k"] == "shock")[0].get("src", -1)))
+		abfx("shock", sx.pos(), by_s.uid if by_s != null else 0)
+		log_msg(by_s.owner if by_s != null else -1, "Queimadura Insuportável: %s sofre mais 1." % nm(sx))
+		damage(sx, 1, by_s)
+	settle()
+	if winner != NONE:
+		return
 	_venom_tick()
 	if winner != NONE:
 		return
@@ -2041,7 +2125,7 @@ func end_round() -> void:
 			emitfx({"t": "die", "uid": bx.uid, "h": bx.pos()})
 			log_msg(-1, "%s se desfaz." % ("A barreira de raízes" if bx.soft else "A barreira"))
 	for u in units:
-		u.fx = u.fx.filter(func(f): return f.get("until", "") != "end" and int(f.get("till", 999)) > round_no and not ((f["k"] == "root" or f["k"] == "prison") and int(f["end"]) <= round_no))
+		u.fx = u.fx.filter(func(f): return f.get("until", "") != "end" and int(f.get("till", 999)) > round_no and not ((f["k"] == "root" or f["k"] == "prison" or f["k"] == "stun") and int(f["end"]) <= round_no))
 	czones = czones.filter(func(z): return int(z["until"]) > round_no)
 	for pl in P:
 		pl["discount"] = false
@@ -2574,11 +2658,11 @@ func is_live(u) -> bool:
 
 
 func can_attack_now(u) -> bool:
-	return is_live(u) and act["actions"] > 0 and not act["attacked"] and not act["cant_attack"] and not imprisoned(u)
+	return is_live(u) and act["actions"] > 0 and not act["attacked"] and not act["cant_attack"] and not imprisoned(u) and not stunned(u)
 
 
 func can_attack_any(u) -> bool:
-	return is_live(u) and not act["attacked"] and not act["cant_attack"] and not imprisoned(u)
+	return is_live(u) and not act["attacked"] and not act["cant_attack"] and not imprisoned(u) and not stunned(u)
 
 
 # ================= ações =================
@@ -2755,7 +2839,7 @@ func can_ult(u) -> bool:
 
 
 # habilidades que movem a própria peça não passam pelo portal (seria teletransporte)
-const ULT_NO_PORTAL = ["burrow", "cartcharge", "ferram", "stampede", "orbital", "portalis", "berserk", "minelay"]
+const ULT_NO_PORTAL = ["burrow", "cartcharge", "ferram", "stampede", "orbital", "portalis", "berserk", "minelay", "rodapunk", "hexstar"]
 
 
 func ult_portal_ok(u) -> bool:
@@ -2792,7 +2876,7 @@ func stampede_path(u, end: Vector2i) -> Array:
 
 # ================= Valakianos: ajudantes =================
 # ativas sem alvo: não pedem escolha, valem para a própria peça
-const SELF_ULTS = ["berserk", "quake", "guardfirm"]
+const SELF_ULTS = ["berserk", "rodapunk", "quake", "guardfirm"]
 
 
 # casa onde alguém pode emergir, ser empurrado ou ser posto: livre, pisável, fora de buracos
@@ -3407,6 +3491,14 @@ func ult_opts(u) -> Array:
 			return DB.hexes.filter(func(h): return DB.dist(h, p) >= 1 and DB.dist(h, p) <= 2 and is_free(h) and not shells.any(func(sh): return sh["h"] == h))
 		"berserk":
 			return [p] if act["actions"] >= 2 and not has_fx(u, "berserk") else []
+		"rodapunk":
+			return [p] if enemies_of(u).any(func(x): return not x.barrier and DB.dist(x.pos(), p) <= 4) else []
+		"hexstar":
+			return DB.hexes.filter(func(h): return DB.dist(h, p) <= 4)
+		"workshop":
+			return allies_of(u).filter(func(x): return not x.barrier and DB.dist(x.pos(), p) <= 6 and x != u).map(func(x): return x.pos())
+		"shock":
+			return enemies_of(u).filter(func(x): return not x.barrier and DB.dist(x.pos(), p) <= 3 and not has_fx(x, "veil")).map(func(x): return x.pos())
 		"minelay":
 			if not field().any(func(x): return x.owner == u.owner and x.cid == "rhazur"):
 				return []
@@ -3475,6 +3567,14 @@ func ult_score(u, h: Vector2i) -> float:
 			# só vale quando já está ferido e há inimigo ao alcance no próximo round
 			var perto = enemies_of(u).any(func(x): return DB.dist(x.pos(), u.pos()) <= mov_of(u) + 1)
 			return (4.0 if u.hp <= 3 else 0.0) + (1.0 if perto else -5.0)
+		"rodapunk":
+			return float(enemies_of(u).filter(func(x): return not x.barrier and DB.dist(x.pos(), u.pos()) <= 4).size()) * 1.5
+		"hexstar":
+			return float(allies_of(u, true).filter(func(x): return not x.barrier and star_hexes(h).has(x.pos())).size()) + (1.0 if allies_of(u, true).any(func(x): return star_hexes(h).has(x.pos()) and x.hp < x.maxhp) else 0.0)
+		"workshop":
+			return 2.0 + (1.0 if t != null and t.is_cmd else 0.0)
+		"shock":
+			return 2.0 + (1.0 if t != null and marked_by(t, u.owner) else 0.0)
 		"minelay":
 			# perto de inimigos, mas não colada neles (para pegarem no caminho)
 			var ms = 0.0
@@ -3699,7 +3799,9 @@ func _act_ult_run(u) -> bool:
 		"bridge": "escolha a 1ª casa baixa a elevar (até 2 casas dele; até 3 casas ligadas)",
 		"valbarrier": "escolha onde a barreira começa (até 6 casas); depois, onde termina",
 		"portalis": "escolha a ENTRADA do portal (até 6 casas): por onde aliados e ataques entram",
-		"minelay": "escolha a casa da mina (até 8 casas)"}
+		"minelay": "escolha a casa da mina (até 8 casas)",
+		"hexstar": "escolha o centro da Estrela Hexa (até 4 casas)", "workshop": "escolha o aliado que recebe o item (até 6 casas)",
+		"shock": "escolha o inimigo a eletrocutar (até 3 casas)"}
 	var h: Variant = null
 	if SELF_ULTS.has(kind):
 		h = u.pos()
@@ -3967,6 +4069,76 @@ func _act_ult_run(u) -> bool:
 			u.fx.append({"k": "berserk", "die": round_no + 1})
 			abfx("berserk", u.pos(), u.uid)
 			log_msg(p, "%s entra em fúria total: dano dobrado, e cai no fim do próximo round." % nm(u))
+		"rodapunk":
+			var c0 = u.pos()
+			act["attacked"] = true
+			abfx("rodapunk", c0, u.uid)
+			var alvos = enemies_of(u).filter(func(x): return not x.barrier and DB.dist(x.pos(), c0) <= 4)
+			log_msg(p, "Roda Punk: %s acerta %d inimigo(s)." % [nm(u), alvos.size()])
+			for golpe in [1, 2, 2]:
+				for x in alvos:
+					if x.st != "field":
+						continue
+					var bonus = mark_bonus(x) if (golpe == 1 and marked_by(x, p)) else 0
+					emitfx({"t": "strike", "from": u.uid, "to": x.uid, "ranged": DB.dist(x.pos(), c0) > 1})
+					damage(x, golpe + bonus, u, true)
+				settle()
+				await pace()
+				if winner != NONE:
+					return true
+			for x in alvos:
+				_abyss_mark(u, x)
+			settle()
+			if winner != NONE or u.st != "field":
+				return true
+			if not act["moved"] and not rooted(u):
+				var area = DB.hexes.filter(func(h2): return DB.dist(h2, c0) <= 4 and (h2 == c0 or (is_free(h2) and valid_ground(h2))))
+				var fim = await pick_hex(p, "Roda Punk: escolha onde Oncus para (dentro da área do giro).", area, "move", true)
+				if fim != null and fim != c0:
+					act["moved"] = true
+					abfx("dash", c0, u.uid)
+					await move_unit(u, fim, true)
+		"hexstar":
+			var hx = star_hexes(h)
+			stars = stars.filter(func(st): return int(st["src"]) != u.uid)
+			stars.append({"owner": p, "c": h, "hexes": hx, "till": round_no + 2, "src": u.uid})
+			abfx("hexstar", h, u.uid)
+			log_msg(p, "Estrela Hexa: aliados dentro dela restauram 2 por round e ficam protegidos de corpo a corpo por 3 rounds.")
+		"workshop":
+			var al = unit_at(h)
+			if al != null:
+				var pool = ["casco", "adaga"]
+				if ult_kind(al) != "" and ult_spent(al):
+					pool.append("elixir")
+				if K(al).has("garras"):
+					pool.append("garras")
+				var it = _pick(pool)
+				var nomes = {"casco": "Casco Duro", "adaga": "Adaga Abyssal", "elixir": "Elixir do Abismo", "garras": "Garras Reforçadas"}
+				match it:
+					"casco", "adaga":
+						al.fx.append({"k": it})
+					"elixir":
+						al.ult_used = false
+						al.ult_round = -1
+					"garras":
+						al.fx.append({"k": "mov", "v": 2})
+						al.fx.append({"k": "alc", "v": 2})
+						al.fx.append({"k": "garras"})
+				abfx("workshop", h, u.uid)
+				emitfx({"t": "passive", "kind": "power", "uid": al.uid})
+				log_msg(p, "Oficina Móvel: %s recebe %s." % [nm(al), nomes[it]])
+		"shock":
+			var sv = unit_at(h)
+			if sv != null:
+				abfx("shock", h, u.uid)
+				var sdmg = 2 if marked_by(sv, p) else 1
+				damage(sv, sdmg, u)
+				sv.fx = sv.fx.filter(func(f): return f["k"] != "shock")
+				sv.fx.append({"k": "shock", "until": "end", "src": u.uid})
+				log_msg(p, "Queimadura Insuportável: %s sofre %d e fica eletrocutado até o fim do round." % [nm(sv), sdmg])
+				settle()
+				_mark_ko(sv, u)
+				settle()
 		"minelay":
 			abfx("mine", h, u.uid)
 			_add_mine(p, h, 3, u.uid, int(K(u).get("mineCap", 2)))
@@ -4100,11 +4272,13 @@ func scarab_opts(p: int, mode: String) -> Array:
 		return field().filter(func(x): return x.owner == p and not x.barrier and x.hp < x.maxhp).map(func(x): return x.pos())
 	if mode == "ult":
 		return field().filter(func(x): return x.owner == p and not x.barrier and ult_kind(x) != "" and ult_spent(x)).map(func(x): return x.pos())
+	if mode == "stun":
+		return field().filter(func(x): return x.owner == p and not x.barrier and x.fx.any(func(f): return f["k"] == "stun")).map(func(x): return x.pos())
 	return []
 
 
 func can_scarab(p: int, mode: String) -> bool:
-	if winner != NONE or cur != p or scarabs_of(p) < (1 if mode == "heal" else 2):
+	if winner != NONE or cur != p or scarabs_of(p) < (2 if mode == "ult" else 1):
 		return false
 	return not scarab_opts(p, mode).is_empty()
 
@@ -4117,13 +4291,20 @@ func _act_scarab(p: int, mode: String) -> bool:
 	if not can_scarab(p, mode):
 		return false
 	var txt = "Escaravelho: escolha a peça que restaura %d de Vida." % SCARAB_HEAL if mode == "heal" else "2 Escaravelhos: escolha a peça que poderá usar a ativa mais uma vez."
+	if mode == "stun":
+		txt = "Escaravelho: escolha a peça atordoada a libertar."
 	var h = await pick_hex(p, txt, scarab_opts(p, mode), "ally", true)
 	if h == null:
 		return false
 	var t = unit_at(h)
 	if t == null:
 		return false
-	if mode == "heal":
+	if mode == "stun":
+		P[p]["scarabs"] = scarabs_of(p) - 1
+		t.fx = t.fx.filter(func(f): return f["k"] != "stun")
+		abfx("buff", h, t.uid)
+		log_msg(p, "Escaravelho: %s se liberta do atordoamento." % nm(t))
+	elif mode == "heal":
 		P[p]["scarabs"] = scarabs_of(p) - 1
 		abfx("heal", h, t.uid)
 		heal(t, SCARAB_HEAL)
@@ -4263,6 +4444,7 @@ func resolve_attack(a, t) -> void:
 	if (red > 0 or react_red > 0) and not target.barrier:
 		emitfx({"t": "passive", "kind": "shield", "uid": target.uid})
 	damage(target, dealt, a, true)
+	_abyss_mark(a, target)
 	if counter_by != null and counter_by.hp > 0 and a.st == "field" and DB.dist(counter_by.pos(), a.pos()) <= int(K(counter_by)["counter"]):
 		var cd2 = max(0, atk_of(counter_by, a) - reduction_of(a))
 		emitfx({"t": "strike", "from": counter_by.uid, "to": a.uid, "ranged": DB.dist(counter_by.pos(), a.pos()) > 1})
@@ -4387,6 +4569,19 @@ func resolve_attack(a, t) -> void:
 		if not ss6.is_empty():
 			log_msg(p, "Descarga Condutiva atinge %d inimigo(s)." % min(2, ss6.size()))
 		settle()
+		if winner != NONE:
+			return
+	if after == "sonic" and dealt > 0 and target.st == "field" and not target.barrier and DB.dist(a.pos(), target.pos()) >= alc_of(a):
+		var sd = push_dest(target, a.pos())
+		abfx("sonic", target.pos(), a.uid)
+		if sd != null:
+			log_msg(p, "Tiro Sônico: %s é empurrado." % nm(target))
+			await move_unit(target, sd)
+		else:
+			target.fx = target.fx.filter(func(f): return f["k"] != "stun")
+			target.fx.append({"k": "stun", "end": round_no + 1})
+			abfx("stun", target.pos(), a.uid)
+			log_msg(p, "Tiro Sônico: %s bate no obstáculo e fica atordoado até o fim do próximo round." % nm(target))
 		if winner != NONE:
 			return
 	if after == "echo" and dealt > 0 and target.st == "field" and not target.barrier and target.hitters.any(func(id): return id != a.uid and by_uid(id) != null and DB.cards[by_uid(id).cid]["f"] == "ABY"):

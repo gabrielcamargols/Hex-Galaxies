@@ -40,7 +40,7 @@ func run() -> void:
 	print("== Abyssais ==")
 	var g = novo()
 	for u in g.units:
-		u.st = "dead"
+		u.st = "reserve" if u.is_cmd else "dead"   # comandante fora do campo, mas vivo (senão a partida acaba)
 	var c0 = DB.hexes.filter(func(h): return g.is_free(h) and not livres(g, h, 1).is_empty() and not livres(g, h, 3).is_empty())[0]
 	# Rayak
 	var ry = put(g, "rayak", 0, c0.x, c0.y)
@@ -101,4 +101,108 @@ func run() -> void:
 	ok(g.mines.is_empty(), "a mina vizinha explodiu em cadeia")
 	ok(en2.hp == 8, "inimigo ao lado da mina em cadeia sofre 1 (%d)" % en2.hp)
 	ok(en1.hp == 8, "inimigo vizinho da 2ª mina também sofre 1 (%d)" % en1.hp)
+	await parte2()
 	print("TESTE FIM falhas=%d" % falhas)
+
+
+func limpa(g: Game) -> void:
+	for u in g.units:
+		u.st = "reserve" if u.is_cmd else "dead"   # comandante fora do campo, mas vivo (senão a partida acaba)
+	g.mines = []
+	g.stars = []
+	g.winner = g.NONE
+
+
+func parte2() -> void:
+	var g = novo()
+	limpa(g)
+	var c0 = DB.hexes.filter(func(h): return g.is_free(h) and not livres(g, h, 1).is_empty() and not livres(g, h, 4).is_empty() and not livres(g, h, 3).is_empty())[0]
+	# ---- Oncus: Roda Punk
+	var on = put(g, "oncus", 0, c0.x, c0.y)
+	var e1 = put(g, "z_vang", 1, livres(g, c0, 1)[0].x, livres(g, c0, 1)[0].y)
+	var e4 = put(g, "z_vang", 1, livres(g, c0, 4)[0].x, livres(g, c0, 4)[0].y)
+	var lejos = DB.hexes.filter(func(h): return g.is_free(h) and DB.dist(h, c0) >= 6)
+	var e9 = put(g, "z_vang", 1, lejos[0].x, lejos[0].y)
+	e1.hp = 9; e4.hp = 9; e9.hp = 9
+	g.start_activation(on)
+	var dest = DB.hexes.filter(func(h): return g.is_free(h) and DB.dist(h, c0) == 2)[0]
+	fila = [dest]
+	ok(g.can_ult(on), "Roda Punk disponível com inimigo a até 4")
+	await g.act_ult(on)
+	ok(e1.hp == 4 and e4.hp == 4, "Roda Punk: 1+2+2 = 5 em cada inimigo a até 4 (%d, %d)" % [e1.hp, e4.hp])
+	ok(e9.hp == 9, "fora da área não é atingido")
+	ok(on.pos() == dest, "Oncus escolhe onde parar dentro da área")
+	g.end_activation()
+	limpa(g)
+	# ---- Esterina: Estrela Hexa
+	var es = put(g, "sterina", 0, c0.x, c0.y)
+	var al = put(g, "moby", 0, livres(g, c0, 1)[0].x, livres(g, c0, 1)[0].y)
+	al.hp = 3
+	g.start_activation(es)
+	fila = [c0]
+	await g.act_ult(es)
+	g.end_activation()
+	ok(g.in_star(al) and g.in_star(es), "aliados dentro da estrela")
+	var viz = DB.nbrs(al.pos()).filter(func(h): return g.is_free(h))
+	var inim = put(g, "z_vang", 1, viz[0].x, viz[0].y)
+	ok(not g.attack_targets(inim).has(al), "protegido de ataque corpo a corpo dentro da estrela")
+	g._star_tick()
+	ok(al.hp == 5, "Estrela cura 2 por round (%d)" % al.hp)
+	limpa(g)
+	# ---- Klang: Tiro Sônico, empurra / atordoa e Marca Abyssal
+	var kl = put(g, "klang", 0, c0.x, c0.y)
+	ok(g.alc_of(kl) == 4, "Klang alcance 4")
+	var h4 = livres(g, c0, 4)
+	var alvo = put(g, "z_vang", 1, h4[0].x, h4[0].y)
+	alvo.hp = 9
+	var antes = alvo.pos()
+	g.start_activation(kl)
+	await g.act_attack(kl, alvo)
+	g.end_activation()
+	var empurrou = alvo.pos() != antes and DB.dist(alvo.pos(), kl.pos()) == 5
+	var atordoou = alvo.fx.any(func(f): return f["k"] == "stun")
+	ok(empurrou or atordoou, "alcance máximo: empurra 1 casa ou atordoa se bloqueado")
+	ok(g.marked_by(alvo, 0), "alvo fica com a Marca Abyssal")
+	# atordoado: força o bloqueio
+	alvo.fx.append({"k": "stun", "end": g.round_no + 1})
+	ok(g.rooted(alvo) and g.stunned(alvo), "atordoado não move nem ataca")
+	g.cur = 1
+	g.P[1]["scarabs"] = 1
+	fila = [alvo.pos()]
+	await g.act_scarab(1, "stun")
+	ok(not g.stunned(alvo) and g.scarabs_of(1) == 0, "1 Escaravelho liberta do atordoamento")
+	# marca: +1 a cada 2 de Vida perdida; com menos de 2 cai na hora
+	alvo.hp = alvo.maxhp - 4   # perdeu 4 -> +2
+	ok(g.atk_of(kl, alvo) == g.atk_of(kl, null) + 2, "marca: +2 com 4 de Vida perdida")
+	alvo.hp = 1
+	g._mark_ko(alvo, kl)
+	g.settle()
+	ok(alvo.st != "field", "marcado com menos de 2 de Vida é nocauteado")
+	limpa(g)
+	# ---- Kling: Oficina Móvel
+	var kg = put(g, "kling", 0, c0.x, c0.y)
+	var rec = put(g, "a_garra", 0, livres(g, c0, 3)[0].x, livres(g, c0, 3)[0].y)
+	g.start_activation(kg)
+	fila = [rec.pos()]
+	await g.act_ult(kg)
+	g.end_activation()
+	ok(["casco", "adaga", "garras"].any(func(k): return g.has_fx(rec, k)), "item entregue a aliado a até 6")
+	rec.fx = [{"k": "casco"}]
+	ok(g.reduction_of(rec, true, 3) >= 4 and g.reduction_of(rec, true, 1) < 4, "Casco Duro: -4 só à distância")
+	rec.fx = [{"k": "adaga"}]
+	var en_m = put(g, "z_vang", 1, DB.nbrs(rec.pos()).filter(func(h): return g.is_free(h))[0].x, DB.nbrs(rec.pos()).filter(func(h): return g.is_free(h))[0].y)
+	ok(g.atk_of(rec, en_m) == g.atk_of(rec, null) + 5, "Adaga Abyssal: +5 corpo a corpo")
+	limpa(g)
+	# ---- Medusa: Queimadura Insuportável
+	var md = put(g, "a_medusa", 0, c0.x, c0.y)
+	var vt = put(g, "z_vang", 1, livres(g, c0, 3)[0].x, livres(g, c0, 3)[0].y)
+	vt.hp = 9
+	g.start_activation(md)
+	fila = [vt.pos()]
+	await g.act_ult(md)
+	g.end_activation()
+	ok(vt.hp == 8 and g.has_fx(vt, "shock"), "1 de dano sem marca e eletrocutado")
+	ok(not g.can_attack_any(vt), "eletrocutado não ataca")
+	g.winner = g.NONE
+	await g.end_round()
+	ok(vt.hp == 7 and not g.has_fx(vt, "shock"), "no fim do round sofre mais 1 e o choque passa")

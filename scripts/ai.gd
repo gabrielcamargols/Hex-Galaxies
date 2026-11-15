@@ -143,6 +143,9 @@ static func use_scarabs(g, p: int) -> void:
 	if g.scarabs_of(p) <= 0 or g.winner != Game.NONE:
 		return
 	var hurt = g.field().filter(func(x): return x.owner == p and not x.barrier and (x.maxhp - x.hp >= 6 or (x.is_cmd and x.maxhp - x.hp >= 4) or (x.hp <= 3 and x.maxhp - x.hp >= 3)))
+	if g.can_scarab(p, "stun"):
+		await g.act_scarab(p, "stun")
+		return
 	if not hurt.is_empty() and g.can_scarab(p, "heal"):
 		await g.act_scarab(p, "heal")
 		return
@@ -206,7 +209,7 @@ static func run(g, u) -> void:
 		if g.can_ult(u):
 			var need = {"abyss": 7.0, "bombard": 4.0, "prison": 7.0, "stampede": 3.0, "orbital": 5.0, "earth": 3.0, "detonate": 4.0, "grenade": 3.0, "artillery": 3.0, "barricade": 2.0, "mend": 3.0, "plate": 1.2,
 				"burrow": 2.0, "bwall": 2.0, "rootweb": 1.8, "cartcharge": 3.0, "ferram": 3.0, "coat": 1.5, "rupture": 2.0, "quake": 3.0,
-				"timedcharge": 3.0, "guardfirm": 1.5, "lumen": 2.0, "nursing": 2.0, "route": 1.0, "valbarrier": 1.5, "portalis": 2.0, "berserk": 4.0, "minelay": 1.5}
+				"timedcharge": 3.0, "guardfirm": 1.5, "lumen": 2.0, "nursing": 2.0, "route": 1.0, "valbarrier": 1.5, "portalis": 2.0, "berserk": 4.0, "minelay": 1.5, "rodapunk": 3.0, "hexstar": 2.5, "workshop": 2.0, "shock": 2.0}
 			var kind_u = g.ult_kind(u)
 			if need.has(kind_u):
 				var bs = -1e9
