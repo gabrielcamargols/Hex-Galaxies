@@ -2731,8 +2731,14 @@ func _build_hud() -> void:
 	w["ask_text"] = _rich(akv, int(min(600.0, vw.x * 0.62)))
 	w["ask_text"].add_theme_font_size_override("normal_font_size", 18 if compact else 19)
 	w["ask_text"].add_theme_font_size_override("bold_font_size", 20 if compact else 21)
-	w["ask_btns"] = _hbox(akv, 10)
-	w["ask_btns"].alignment = BoxContainer.ALIGNMENT_CENTER
+	# opções em grade: 1-2 curtas lado a lado; muitas ou longas viram lista vertical (janela retangular no centro)
+	var agr = GridContainer.new()
+	agr.add_theme_constant_override("h_separation", 10)
+	agr.add_theme_constant_override("v_separation", 8)
+	agr.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	akv.add_child(agr)
+	w["ask_btns"] = agr
+	w["ask_w"] = min(600.0, vw.x * 0.62) if not portrait else vw.x * 0.84
 	w["ask"] = ask
 	# faixa de anúncios
 	var bn = Label.new()
@@ -3746,7 +3752,7 @@ func _refresh_prompt() -> void:
 	var text = ""
 	var is_mull = asking != null and asking["q"].get("kind", "") == "mulligan"
 	var big = asking != null and not is_mull
-	var box: HBoxContainer = w["ask_btns"] if big else w["prompt_btns"]
+	var box: Container = w["ask_btns"] if big else w["prompt_btns"]
 	if is_mull:
 		_show_mull(asking["q"]["show"])
 	else:
@@ -3834,14 +3840,29 @@ func _show_ask(text: String, q: Dictionary) -> void:
 	w["ask_dim"].visible = not on_board
 	w["ask_head"].text = "ESCOLHA NO TABULEIRO" if on_board else "SUA DECISÃO"
 	w["ask_text"].text = "[center]" + text + "[/center]"
-	var nb = 0
+	var aw: float = w["ask_w"]
+	w["ask_text"].custom_minimum_size.x = aw
+	var bts: Array = []
+	var longo = 0
 	for b in w["ask_btns"].get_children():
 		if b is Button and not b.is_queued_for_deletion():
-			if nb == 0 and q["t"] != "hex":
-				_primary(b)
-			nb += 1
+			bts.append(b)
+			longo = max(longo, b.text.length())
+	var lado = bts.size() <= 2 and longo <= 16
+	w["ask_btns"].columns = max(1, bts.size()) if lado else 1
+	var nb = 0
+	for b in bts:
+		if nb == 0 and q["t"] != "hex":
+			_primary(b)
+		nb += 1
+		b.add_theme_font_size_override("font_size", 18)
+		if lado:
 			b.custom_minimum_size = Vector2(max(130.0, b.custom_minimum_size.x), 50)
-			b.add_theme_font_size_override("font_size", 18)
+		else:
+			# lista: todas da mesma largura, texto quebra em linhas se precisar
+			b.custom_minimum_size = Vector2(aw, 52)
+			b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			b.size_flags_horizontal = Control.SIZE_FILL
 	var first = not ask.visible or ask.get_meta("q", null) != q
 	ask.set_meta("q", q)
 	ask.visible = true
@@ -3850,8 +3871,8 @@ func _show_ask(text: String, q: Dictionary) -> void:
 	ask.offset_right = ask.size.x / 2.0
 	ask.offset_top = -ask.size.y / 2.0
 	ask.offset_bottom = ask.size.y / 2.0
+	_recenter_ask.call_deferred()
 	if first:
-		_recenter_ask.call_deferred()
 		ask.pivot_offset = ask.size / 2.0
 		ask.scale = Vector2(0.85, 0.85)
 		ask.modulate.a = 0.0
@@ -3865,6 +3886,14 @@ func _recenter_ask() -> void:
 	if not w.has("ask") or not is_instance_valid(w["ask"]):
 		return
 	var ask: PanelContainer = w["ask"]
+	# o texto rico calcula a altura depois do primeiro desenho: espera e encolhe a janela ao conteúdo
+	await get_tree().process_frame
+	if not is_instance_valid(ask):
+		return
+	var rt: RichTextLabel = w["ask_text"]
+	rt.fit_content = false
+	rt.custom_minimum_size.y = rt.get_content_height()
+	ask.size = Vector2.ZERO
 	ask.reset_size()
 	ask.offset_left = -ask.size.x / 2.0
 	ask.offset_right = ask.size.x / 2.0
