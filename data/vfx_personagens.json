@@ -529,5 +529,115 @@
    "kri_gran_granada",
    "kri_gran_saraivada"
   ]
+ },
+ "z_vang": {
+  "nucleo": "#27DDF4",
+  "motivo": "z_vang",
+  "ataque": "zuk_z_vang_ataque",
+  "habilidades": []
+ },
+ "z_tank": {
+  "nucleo": "#5778FF",
+  "motivo": "z_tank",
+  "ataque": "zuk_z_tank_ataque",
+  "habilidades": []
+ },
+ "z_brawler": {
+  "nucleo": "#9C7FFD",
+  "motivo": "z_brawler",
+  "ataque": "zuk_z_brawler_ataque",
+  "habilidades": []
+ },
+ "z_piloto": {
+  "nucleo": "#27DDF4",
+  "motivo": "z_piloto",
+  "ataque": "zuk_z_piloto_ataque",
+  "habilidades": []
+ },
+ "z_naves": {
+  "nucleo": "#5778FF",
+  "motivo": "z_naves",
+  "ataque": "zuk_z_naves_ataque",
+  "habilidades": []
+ },
+ "z_diplo": {
+  "nucleo": "#9C7FFD",
+  "motivo": "z_diplo",
+  "ataque": "zuk_z_diplo_ataque",
+  "habilidades": []
+ },
+ "z_duel": {
+  "nucleo": "#27DDF4",
+  "motivo": "z_duel",
+  "ataque": "zuk_z_duel_ataque",
+  "habilidades": []
+ },
+ "z_bio": {
+  "nucleo": "#27DDF4",
+  "motivo": "z_bio",
+  "ataque": "zuk_z_bio_ataque",
+  "habilidades": []
+ },
+ "z_hacker": {
+  "nucleo": "#9C7FFD",
+  "motivo": "z_hacker",
+  "ataque": "zuk_z_hacker_ataque",
+  "habilidades": []
+ },
+ "z_real": {
+  "nucleo": "#F2C14E",
+  "motivo": "z_real",
+  "ataque": "zuk_z_real_ataque",
+  "habilidades": []
+ },
+ "z_cao": {
+  "nucleo": "#27DDF4",
+  "motivo": "z_cao",
+  "ataque": "zuk_z_cao_ataque",
+  "habilidades": [
+   "zuk_cao_faro"
+  ]
+ },
+ "z_dragao": {
+  "nucleo": "#27DDF4",
+  "motivo": "z_dragao",
+  "ataque": "zuk_z_dragao_ataque",
+  "habilidades": [
+   "zuk_dragao_orbital",
+   "zuk_dragao_rajada"
+  ]
+ },
+ "z_meca": {
+  "nucleo": "#5778FF",
+  "motivo": "z_meca",
+  "ataque": "zuk_z_meca_ataque",
+  "habilidades": []
+ },
+ "z_fenix": {
+  "nucleo": "#9C7FFD",
+  "motivo": "z_fenix",
+  "ataque": "zuk_z_fenix_ataque",
+  "habilidades": []
+ },
+ "z_portais": {
+  "nucleo": "#27DDF4",
+  "motivo": "z_portais",
+  "ataque": "zuk_z_portais_ataque",
+  "habilidades": [
+   "zuk_portais_entrada",
+   "zuk_portais_saida"
+  ]
+ },
+ "z_drone": {
+  "nucleo": "#5778FF",
+  "motivo": "z_drone",
+  "ataque": "zuk_z_drone_ataque",
+  "habilidades": []
+ },
+ "z_escudo": {
+  "nucleo": "#27DDF4",
+  "motivo": "z_escudo",
+  "ataque": "zuk_z_escudo_ataque",
+  "habilidades": []
  }
 }

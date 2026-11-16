@@ -222,7 +222,7 @@ func _ready() -> void:
 			# --oficina | --oficina=auto | --oficina=ter | --oficina=ter,auto
 			var op = a.substr(10).split(",") if a.length() > 10 else PackedStringArray()
 			var of_fac = "aby"
-			for fx in ["ter", "fau", "kri"]:
+			for fx in ["ter", "fau", "kri", "zuk"]:
 				if fx in op:
 					of_fac = fx
 			_open_oficina("auto" in op, of_fac)
@@ -5296,6 +5296,10 @@ const TER_ABFX = {
 	# Krieg
 	"k_cmd": {"bombard": "kri_cmd_bombardeio", "bleed": "kri_cmd_sangramento"},
 	"k_granadeiro": {"blast": "kri_gran_granada", "explode": "kri_gran_saraivada"},
+	# Zukunft
+	"z_dragao": {"orbital": "zuk_dragao_orbital", "splash": "zuk_dragao_rajada"},
+	"z_portais": {"burrow": "zuk_portais_entrada"},
+	"z_cao": {"dash": "zuk_cao_faro"},
 }
 
 
@@ -5308,7 +5312,7 @@ func _ter_load() -> void:
 	var d = JSON.parse_string(f.get_as_text())
 	if typeof(d) == TYPE_DICTIONARY:
 		for k in d:
-			if typeof(d[k]) == TYPE_DICTIONARY and (str(d[k].get("ataque", "")).begins_with("ter_") or str(d[k].get("ataque", "")).begins_with("fau_") or str(d[k].get("ataque", "")).begins_with("kri_")):
+			if typeof(d[k]) == TYPE_DICTIONARY and (str(d[k].get("ataque", "")).begins_with("ter_") or str(d[k].get("ataque", "")).begins_with("fau_") or str(d[k].get("ataque", "")).begins_with("kri_") or str(d[k].get("ataque", "")).begins_with("zuk_")):
 				ter_fx[k] = d[k]
 
 
@@ -5335,6 +5339,9 @@ func _ter_abfx(e: Dictionary) -> bool:
 	if u == null or u.barrier or not TER_ABFX.has(u.cid):
 		return false
 	var id = str(TER_ABFX[u.cid].get(e["k"], ""))
+	# Portalis: a segunda casa é a SAÍDA (violeta)
+	if id == "zuk_portais_entrada" and game.portal_of(u) != null and game.portal_of(u)["b"] == e["h"]:
+		id = "zuk_portais_saida"
 	if id == "" or not vfx.has_fx(id):
 		return false
 	var at = _hex_pos(e["h"], 0.0)

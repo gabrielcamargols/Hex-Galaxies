@@ -9,7 +9,7 @@ const FUNDOS = {
 	"Neutro": [Color("#8c909e"), Color("#6c7080"), Color("#2a2c36")],
 	"Claro": [Color("#e9e4d8"), Color("#cfc8b6"), Color("#7d8794")],
 }
-const LADOS = [["rhazur", "k_tank"], ["rayak", "k_tank"], ["strahl", "k_tank"], ["bayak", "k_tank"], ["sapturne", "k_tank"], ["balu", "k_tank"], ["oncus", "k_tank"], ["moby", "k_tank"], ["sterina", "k_front"], ["klang", "k_tank"], ["kling", "k_tank"], ["inkshadow", "k_tank"], ["banker", "k_tank"], ["a_lumina", "k_tank"], ["a_medusa", "k_tank"], ["a_garra", "k_tank"], ["a_vespertina", "k_tank"], ["rei_mina", "k_tank"], ["perfurador", "k_tank"], ["t_basalto", "k_tank"], ["t_carrinho", "k_tank"], ["t_britadeira", "k_tank"], ["t_fundidor", "k_tank"], ["t_fendas", "k_tank"], ["sismico", "k_tank"], ["t_dinamite", "k_tank"], ["t_sentinela", "k_tank"], ["t_lanterna", "k_tank"], ["t_raiz", "k_tank"], ["t_cartografo", "k_tank"], ["t_sniper", "k_tank"], ["t_enfermeira", "k_tank"], ["t_feram", "k_tank"], ["t_pontes", "k_tank"], ["karo", "k_tank"], ["karu", "k_tank"], ["vexa", "k_tank"], ["rhombo", "k_tank"], ["gorun", "k_tank"], ["mantis", "k_tank"], ["zaboo", "k_tank"], ["caninus_black", "k_tank"], ["brazucao", "k_tank"], ["tork", "k_tank"], ["astrax", "k_tank"], ["nokka", "k_tank"], ["caninus_white", "k_tank"], ["rappy", "k_tank"], ["cameo", "k_tank"], ["pipa", "k_tank"], ["tupi", "k_tank"], ["luna", "k_tank"], ["skarp", "k_tank"], ["brakka", "k_tank"], ["muggo", "k_tank"], ["boro", "k_tank"], ["drako", "k_tank"], ["k_cmd", "k_cmd"], ["k_front", "k_front"], ["k_tank", "k_tank"], ["k_sniper", "k_sniper"], ["k_brawler", "k_brawler"], ["k_demol", "k_demol"], ["k_medico", "k_medico"], ["k_eng", "k_eng"], ["k_incend", "k_incend"], ["k_assalt", "k_assalt"], ["k_estandarte", "k_estandarte"], ["k_morteiro", "k_morteiro"], ["k_escudeiro", "k_escudeiro"], ["k_batedor", "k_batedor"], ["k_radio", "k_radio"], ["k_sapador", "k_sapador"], ["k_granadeiro", "k_granadeiro"]]
+const LADOS = [["rhazur", "k_tank"], ["rayak", "k_tank"], ["strahl", "k_tank"], ["bayak", "k_tank"], ["sapturne", "k_tank"], ["balu", "k_tank"], ["oncus", "k_tank"], ["moby", "k_tank"], ["sterina", "k_front"], ["klang", "k_tank"], ["kling", "k_tank"], ["inkshadow", "k_tank"], ["banker", "k_tank"], ["a_lumina", "k_tank"], ["a_medusa", "k_tank"], ["a_garra", "k_tank"], ["a_vespertina", "k_tank"], ["rei_mina", "k_tank"], ["perfurador", "k_tank"], ["t_basalto", "k_tank"], ["t_carrinho", "k_tank"], ["t_britadeira", "k_tank"], ["t_fundidor", "k_tank"], ["t_fendas", "k_tank"], ["sismico", "k_tank"], ["t_dinamite", "k_tank"], ["t_sentinela", "k_tank"], ["t_lanterna", "k_tank"], ["t_raiz", "k_tank"], ["t_cartografo", "k_tank"], ["t_sniper", "k_tank"], ["t_enfermeira", "k_tank"], ["t_feram", "k_tank"], ["t_pontes", "k_tank"], ["karo", "k_tank"], ["karu", "k_tank"], ["vexa", "k_tank"], ["rhombo", "k_tank"], ["gorun", "k_tank"], ["mantis", "k_tank"], ["zaboo", "k_tank"], ["caninus_black", "k_tank"], ["brazucao", "k_tank"], ["tork", "k_tank"], ["astrax", "k_tank"], ["nokka", "k_tank"], ["caninus_white", "k_tank"], ["rappy", "k_tank"], ["cameo", "k_tank"], ["pipa", "k_tank"], ["tupi", "k_tank"], ["luna", "k_tank"], ["skarp", "k_tank"], ["brakka", "k_tank"], ["muggo", "k_tank"], ["boro", "k_tank"], ["drako", "k_tank"], ["k_cmd", "k_cmd"], ["k_front", "k_front"], ["k_tank", "k_tank"], ["k_sniper", "k_sniper"], ["k_brawler", "k_brawler"], ["k_demol", "k_demol"], ["k_medico", "k_medico"], ["k_eng", "k_eng"], ["k_incend", "k_incend"], ["k_assalt", "k_assalt"], ["k_estandarte", "k_estandarte"], ["k_morteiro", "k_morteiro"], ["k_escudeiro", "k_escudeiro"], ["k_batedor", "k_batedor"], ["k_radio", "k_radio"], ["k_sapador", "k_sapador"], ["k_granadeiro", "k_granadeiro"], ["z_vang", "k_tank"], ["z_tank", "k_tank"], ["z_brawler", "k_tank"], ["z_piloto", "k_tank"], ["z_naves", "k_tank"], ["z_diplo", "k_tank"], ["z_duel", "k_tank"], ["z_bio", "k_tank"], ["z_hacker", "k_tank"], ["z_real", "k_tank"], ["z_cao", "k_tank"], ["z_dragao", "k_tank"], ["z_meca", "k_tank"], ["z_fenix", "k_tank"], ["z_portais", "k_tank"], ["z_drone", "k_tank"], ["z_escudo", "k_tank"]]
 const EXTRAS = ["k_front", "k_sniper"]     # inimigos vizinhos do alvo (descargas, áreas)
 
 var vfx: Node3D
@@ -334,7 +334,7 @@ func _build_ui() -> void:
 	ui.add_child(info)
 
 
-const FACS = ["aby", "ter", "fau", "kri"]
+const FACS = ["aby", "ter", "fau", "kri", "zuk"]
 
 
 # troca a facção mostrada: lista de ataques e primeiro personagem dessa facção
@@ -388,7 +388,7 @@ func legenda(txt: String, sub: String = "") -> void:
 func auto(n: int = 2, pausa: float = 2.2, fundos: Array = [0, 1]) -> void:
 	var ids = []
 	for id in vfx.receitas.keys():
-		if str(id).begins_with(fac + "_") and not str(id).contains("_z_"):
+		if str(id).begins_with(fac + "_") and not (fac == "aby" and str(id).contains("_z_")):
 			ids.append(id)
 	ids.sort()
 	if fac == "ter":

@@ -51968,5 +51968,8976 @@
     "delay": 0.04
    }
   ]
+ },
+ "zuk_z_vang_ataque": {
+  "nome": "ZUKUNFT · Vanguarda · Lâmina de Fase",
+  "personagem": "z_vang",
+  "layers": [
+   {
+    "p": "lamina",
+    "blend": "mix",
+    "amount": 1,
+    "size": 2.8,
+    "life": 0.24,
+    "life_rand": 0,
+    "aim": true,
+    "aim_off": -35,
+    "toward": 0.3,
+    "y": 0.95,
+    "curve": [
+     [
+      0,
+      0.5
+     ],
+     [
+      0.25,
+      1.05
+     ],
+     [
+      1,
+      1.15
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.3,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.0
+   },
+   {
+    "p": "lamina",
+    "blend": "mix",
+    "amount": 1,
+    "size": 2.4,
+    "life": 0.24,
+    "life_rand": 0,
+    "aim": true,
+    "aim_off": 145,
+    "toward": 0.3,
+    "y": 0.95,
+    "curve": [
+     [
+      0,
+      0.5
+     ],
+     [
+      0.25,
+      1.05
+     ],
+     [
+      1,
+      1.15
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.3,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#5778FF",
+     "#9DB0FF",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.07
+   },
+   {
+    "p": "pixel",
+    "blend": "mix",
+    "amount": 16,
+    "size": [
+     0.12,
+     0.34
+    ],
+    "speed": [
+     1,
+     4
+    ],
+    "spread": 60,
+    "grav": 4.0,
+    "damp": [
+     4,
+     7
+    ],
+    "life": 0.55,
+    "life_rand": 0.4,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      0.9
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.0,
+    "dir": [
+     0,
+     1,
+     0
+    ],
+    "em": "from"
+   },
+   {
+    "p": "glitch",
+    "blend": "mix",
+    "amount": 2,
+    "size": [
+     1.68,
+     0.84
+    ],
+    "life": 0.2,
+    "life_rand": 0.4,
+    "angle": [
+     0,
+     0
+    ],
+    "radius": 0.35,
+    "speed": [
+     0,
+     0.6
+    ],
+    "curve": [
+     [
+      0,
+      1.0
+     ],
+     [
+      0.5,
+      1.15
+     ],
+     [
+      1,
+      0.8
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.3,
+      0.4
+     ],
+     [
+      0.5,
+      1
+     ],
+     [
+      0.8,
+      0.6
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.1,
+    "delay": 0.0,
+    "explosive": 0.6,
+    "em": "from"
+   },
+   {
+    "luz": "#27DDF4",
+    "energia": 2.6,
+    "alcance": 3.0,
+    "dur": 0.22,
+    "y": 0.95,
+    "delay": 0.06
+   },
+   {
+    "p": "estrela4",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.7,
+    "life": 0.22,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.18,
+      1.2
+     ],
+     [
+      1,
+      0.25
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.95,
+    "delay": 0.06,
+    "nucleo": true
+   },
+   {
+    "p": "hex_oco",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.3,
+    "life": 0.32,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      0.2,
+      1.1
+     ],
+     [
+      1,
+      1.35
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.6,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.95,
+    "delay": 0.06
+   },
+   {
+    "p": "faisca",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 10,
+    "size": [
+     0.08,
+     0.6
+    ],
+    "speed": [
+     7,
+     14
+    ],
+    "spread": 180,
+    "grav": -6,
+    "damp": [
+     5,
+     9
+    ],
+    "life": 0.26,
+    "curve": [
+     [
+      0,
+      1.3
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "boost": 1.2,
+    "y": 0.95,
+    "delay": 0.06
+   },
+   {
+    "p": "pixel",
+    "blend": "mix",
+    "amount": 12,
+    "size": [
+     0.12,
+     0.3
+    ],
+    "speed": [
+     3,
+     8
+    ],
+    "spread": 180,
+    "grav": 3.0,
+    "damp": [
+     4,
+     7
+    ],
+    "life": 0.5,
+    "life_rand": 0.4,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      0.9
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.95,
+    "delay": 0.08
+   }
+  ],
+  "shake": 0.22,
+  "shake_delay": 0.06
+ },
+ "zuk_z_tank_ataque": {
+  "nome": "ZUKUNFT · Tank · Choque Inercial",
+  "personagem": "z_tank",
+  "layers": [
+   {
+    "p": "hex_grade",
+    "blend": "mix",
+    "amount": 1,
+    "size": 2.2,
+    "life": 0.32,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.6
+     ],
+     [
+      0.2,
+      1.0
+     ],
+     [
+      1,
+      1.08
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.2,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#5778FF",
+     "#9DB0FF",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.12,
+      1
+     ],
+     [
+      0.7,
+      0.9
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.0
+   },
+   {
+    "p": "hex_oco",
+    "blend": "mix",
+    "amount": 1,
+    "size": 2.2,
+    "life": 0.3,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      0.2,
+      1.1
+     ],
+     [
+      1,
+      1.35
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.6,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#5778FF",
+     "#9DB0FF",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.0
+   },
+   {
+    "p": "hex_oco",
+    "mode": "chao",
+    "amount": 1,
+    "size": 3.4,
+    "life": 0.5,
+    "life_rand": 0,
+    "y": 0.0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      1,
+      1.6
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.3,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#5778FF",
+     "#9DB0FF",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.03
+   },
+   {
+    "luz": "#5778ff",
+    "energia": 3.2,
+    "alcance": 3.6,
+    "dur": 0.28,
+    "y": 1.0,
+    "delay": 0.0
+   },
+   {
+    "luz": "#5778FF",
+    "energia": 2.9899999999999998,
+    "alcance": 3.0,
+    "dur": 0.22,
+    "y": 0.95,
+    "delay": 0.03
+   },
+   {
+    "p": "estrela4",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.9549999999999998,
+    "life": 0.22,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.18,
+      1.2
+     ],
+     [
+      1,
+      0.25
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#5778FF",
+     "#9DB0FF",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.95,
+    "delay": 0.03,
+    "nucleo": true
+   },
+   {
+    "p": "hex_oco",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.4949999999999999,
+    "life": 0.32,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      0.2,
+      1.1
+     ],
+     [
+      1,
+      1.35
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.6,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#5778FF",
+     "#9DB0FF",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.95,
+    "delay": 0.03
+   },
+   {
+    "p": "faisca",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 11,
+    "size": [
+     0.08,
+     0.6
+    ],
+    "speed": [
+     7,
+     14
+    ],
+    "spread": 180,
+    "grav": -6,
+    "damp": [
+     5,
+     9
+    ],
+    "life": 0.26,
+    "curve": [
+     [
+      0,
+      1.3
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#222A63",
+     "#5778FF",
+     "#9DB0FF",
+     "#D9FCFF"
+    ],
+    "boost": 1.2,
+    "y": 0.95,
+    "delay": 0.03
+   },
+   {
+    "p": "pixel",
+    "blend": "mix",
+    "amount": 10,
+    "size": [
+     0.14,
+     0.3
+    ],
+    "speed": [
+     4,
+     8
+    ],
+    "spread": 50,
+    "grav": -6.0,
+    "damp": [
+     4,
+     7
+    ],
+    "life": 0.45,
+    "life_rand": 0.4,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      0.9
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#5778FF",
+     "#9DB0FF",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.4,
+    "delay": 0.05,
+    "dir": "away",
+    "lift": 0.3
+   }
+  ],
+  "shake": 0.38,
+  "shake_delay": 0.03
+ },
+ "zuk_z_brawler_ataque": {
+  "nome": "ZUKUNFT · Brawler Holográfico · Combo de Sósias",
+  "personagem": "z_brawler",
+  "layers": [
+   {
+    "p": "punho",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.3,
+    "life": 0.2,
+    "life_rand": 0,
+    "toward": 0.7,
+    "y": 1.2,
+    "curve": [
+     [
+      0,
+      1.5
+     ],
+     [
+      0.2,
+      0.95
+     ],
+     [
+      1,
+      1.0
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 3.0,
+    "ramp": [
+     "#122038",
+     "#2E1F63",
+     "#9C7FFD",
+     "#CDBEFF",
+     "#E8E2FF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.0,
+    "aim": true,
+    "aim_off": -12
+   },
+   {
+    "p": "punho",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.3,
+    "life": 0.2,
+    "life_rand": 0,
+    "toward": 0.6,
+    "y": 0.75,
+    "curve": [
+     [
+      0,
+      1.5
+     ],
+     [
+      0.2,
+      0.95
+     ],
+     [
+      1,
+      1.0
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 3.0,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.1,
+    "aim": true,
+    "aim_off": 14
+   },
+   {
+    "p": "punho",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.7,
+    "life": 0.24,
+    "life_rand": 0,
+    "toward": 0.45,
+    "y": 1.0,
+    "curve": [
+     [
+      0,
+      1.5
+     ],
+     [
+      0.2,
+      0.95
+     ],
+     [
+      1,
+      1.0
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 3.0,
+    "ramp": [
+     "#122038",
+     "#2E1F63",
+     "#9C7FFD",
+     "#CDBEFF",
+     "#E8E2FF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.2,
+    "aim": true,
+    "aim_off": 0.0
+   },
+   {
+    "p": "glitch",
+    "blend": "mix",
+    "amount": 2,
+    "size": [
+     1.54,
+     0.77
+    ],
+    "life": 0.18,
+    "life_rand": 0.4,
+    "angle": [
+     0,
+     0
+    ],
+    "radius": 0.35,
+    "speed": [
+     0,
+     0.6
+    ],
+    "curve": [
+     [
+      0,
+      1.0
+     ],
+     [
+      0.5,
+      1.15
+     ],
+     [
+      1,
+      0.8
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#2E1F63",
+     "#9C7FFD",
+     "#CDBEFF",
+     "#E8E2FF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.3,
+      0.4
+     ],
+     [
+      0.5,
+      1
+     ],
+     [
+      0.8,
+      0.6
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.0,
+    "explosive": 0.6,
+    "em": "from"
+   },
+   {
+    "p": "glitch",
+    "blend": "mix",
+    "amount": 2,
+    "size": [
+     1.54,
+     0.77
+    ],
+    "life": 0.18,
+    "life_rand": 0.4,
+    "angle": [
+     0,
+     0
+    ],
+    "radius": 0.35,
+    "speed": [
+     0,
+     0.6
+    ],
+    "curve": [
+     [
+      0,
+      1.0
+     ],
+     [
+      0.5,
+      1.15
+     ],
+     [
+      1,
+      0.8
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.3,
+      0.4
+     ],
+     [
+      0.5,
+      1
+     ],
+     [
+      0.8,
+      0.6
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.12,
+    "explosive": 0.6,
+    "em": "from"
+   },
+   {
+    "p": "estrela4",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.1,
+    "life": 0.16,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.18,
+      1.2
+     ],
+     [
+      1,
+      0.25
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#2E1F63",
+     "#9C7FFD",
+     "#CDBEFF",
+     "#E8E2FF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.2,
+    "delay": 0.02,
+    "nucleo": true
+   },
+   {
+    "p": "estrela4",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.1,
+    "life": 0.16,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.18,
+      1.2
+     ],
+     [
+      1,
+      0.25
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.75,
+    "delay": 0.12,
+    "nucleo": true
+   },
+   {
+    "luz": "#9C7FFD",
+    "energia": 2.8600000000000003,
+    "alcance": 3.0,
+    "dur": 0.22,
+    "y": 1.0,
+    "delay": 0.22
+   },
+   {
+    "p": "estrela4",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.87,
+    "life": 0.22,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.18,
+      1.2
+     ],
+     [
+      1,
+      0.25
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#2E1F63",
+     "#9C7FFD",
+     "#CDBEFF",
+     "#E8E2FF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.22,
+    "nucleo": true
+   },
+   {
+    "p": "hex_oco",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.4300000000000002,
+    "life": 0.32,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      0.2,
+      1.1
+     ],
+     [
+      1,
+      1.35
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.6,
+    "ramp": [
+     "#122038",
+     "#2E1F63",
+     "#9C7FFD",
+     "#CDBEFF",
+     "#E8E2FF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.22
+   },
+   {
+    "p": "faisca",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 11,
+    "size": [
+     0.08,
+     0.6
+    ],
+    "speed": [
+     7,
+     14
+    ],
+    "spread": 180,
+    "grav": -6,
+    "damp": [
+     5,
+     9
+    ],
+    "life": 0.26,
+    "curve": [
+     [
+      0,
+      1.3
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#2E1F63",
+     "#9C7FFD",
+     "#CDBEFF",
+     "#E8E2FF"
+    ],
+    "boost": 1.2,
+    "y": 1.0,
+    "delay": 0.22
+   },
+   {
+    "p": "pixel",
+    "blend": "mix",
+    "amount": 13,
+    "size": [
+     0.12,
+     0.3
+    ],
+    "speed": [
+     3,
+     8
+    ],
+    "spread": 180,
+    "grav": 3.0,
+    "damp": [
+     4,
+     7
+    ],
+    "life": 0.5,
+    "life_rand": 0.4,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      0.9
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#2E1F63",
+     "#9C7FFD",
+     "#CDBEFF",
+     "#E8E2FF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.24
+   }
+  ],
+  "shake": 0.3,
+  "shake_delay": 0.22
+ },
+ "zuk_z_piloto_ataque": {
+  "nome": "ZUKUNFT · Atirador de Precisão · Disparo de Trilho",
+  "personagem": "z_piloto",
+  "layers": [
+   {
+    "p": "mira_hex",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.9,
+    "life": 0.36,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "spin": [
+     120,
+     120
+    ],
+    "curve": [
+     [
+      0,
+      1.6
+     ],
+     [
+      0.6,
+      0.85
+     ],
+     [
+      1,
+      0.8
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.2,
+      1
+     ],
+     [
+      0.85,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0
+   },
+   {
+    "em": "from",
+    "luz": "#27ddf4",
+    "energia": 2.6,
+    "alcance": 2.6,
+    "dur": 0.2,
+    "y": 1.0,
+    "delay": 0.3
+   },
+   {
+    "p": "estrela4",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.2,
+    "life": 0.14,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.18,
+      1.2
+     ],
+     [
+      1,
+      0.25
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.3,
+    "nucleo": true,
+    "em": "from"
+   },
+   {
+    "raio": 1,
+    "tex": "feixe",
+    "de": "from",
+    "para": "at",
+    "y": 1.0,
+    "dur": 0.26,
+    "flick": 0.04,
+    "cresce": 0.05,
+    "width": 0.34,
+    "tile": 3.0,
+    "blend_top": "mix",
+    "ramp": [
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "ramp_sombra": [
+     "#0E1428",
+     "#122038"
+    ],
+    "sombra": 1.7,
+    "boost": 1.0,
+    "halftone": 0.0,
+    "delay": 0.3
+   },
+   {
+    "luz": "#27DDF4",
+    "energia": 3.12,
+    "alcance": 3.0,
+    "dur": 0.22,
+    "y": 1.0,
+    "delay": 0.34
+   },
+   {
+    "p": "estrela4",
+    "blend": "mix",
+    "amount": 1,
+    "size": 2.04,
+    "life": 0.22,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.18,
+      1.2
+     ],
+     [
+      1,
+      0.25
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.34,
+    "nucleo": true
+   },
+   {
+    "p": "hex_oco",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.56,
+    "life": 0.32,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      0.2,
+      1.1
+     ],
+     [
+      1,
+      1.35
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.6,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.34
+   },
+   {
+    "p": "faisca",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 12,
+    "size": [
+     0.08,
+     0.6
+    ],
+    "speed": [
+     7,
+     14
+    ],
+    "spread": 180,
+    "grav": -6,
+    "damp": [
+     5,
+     9
+    ],
+    "life": 0.26,
+    "curve": [
+     [
+      0,
+      1.3
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "boost": 1.2,
+    "y": 1.0,
+    "delay": 0.34
+   },
+   {
+    "p": "pixel",
+    "blend": "mix",
+    "amount": 14,
+    "size": [
+     0.12,
+     0.3
+    ],
+    "speed": [
+     3,
+     8
+    ],
+    "spread": 180,
+    "grav": 3.0,
+    "damp": [
+     4,
+     7
+    ],
+    "life": 0.5,
+    "life_rand": 0.4,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      0.9
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.36000000000000004
+   },
+   {
+    "p": "faisca",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 10,
+    "size": [
+     0.08,
+     0.6
+    ],
+    "speed": [
+     10,
+     18
+    ],
+    "spread": 45,
+    "grav": -6,
+    "damp": [
+     5,
+     9
+    ],
+    "life": 0.26,
+    "curve": [
+     [
+      0,
+      1.3
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "boost": 1.2,
+    "y": 1.0,
+    "delay": 0.34,
+    "dir": "away",
+    "lift": 0.2
+   }
+  ],
+  "shake": 0.32,
+  "shake_delay": 0.34
+ },
+ "zuk_z_naves_ataque": {
+  "nome": "ZUKUNFT · Piloto de Naves · Rasante",
+  "personagem": "z_naves",
+  "layers": [
+   {
+    "p": "feixe",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 3,
+    "size": [
+     0.3,
+     3.2
+    ],
+    "speed": [
+     26,
+     30
+    ],
+    "dir": [
+     0,
+     -1,
+     0
+    ],
+    "spread": 6,
+    "explosive": 0.75,
+    "life": 0.13,
+    "life_rand": 0,
+    "ramp": [
+     "#222A63",
+     "#5778FF",
+     "#9DB0FF",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 4.2,
+    "radius": 0.5,
+    "curve": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      0.8
+     ]
+    ]
+   },
+   {
+    "p": "hex_oco",
+    "mode": "chao",
+    "amount": 3,
+    "size": 1.0,
+    "life": 0.4,
+    "life_rand": 0.2,
+    "y": 0.0,
+    "angle": [
+     0,
+     0
+    ],
+    "radius": 0.7,
+    "explosive": 0.7,
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      1,
+      1.3
+     ]
+    ],
+    "erode": 1.0,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#5778FF",
+     "#9DB0FF",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.1
+   },
+   {
+    "luz": "#5778FF",
+    "energia": 2.6,
+    "alcance": 3.0,
+    "dur": 0.22,
+    "y": 0.8,
+    "delay": 0.12
+   },
+   {
+    "p": "estrela4",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.7,
+    "life": 0.22,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.18,
+      1.2
+     ],
+     [
+      1,
+      0.25
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#5778FF",
+     "#9DB0FF",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.8,
+    "delay": 0.12,
+    "nucleo": true
+   },
+   {
+    "p": "hex_oco",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.3,
+    "life": 0.32,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      0.2,
+      1.1
+     ],
+     [
+      1,
+      1.35
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.6,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#5778FF",
+     "#9DB0FF",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.8,
+    "delay": 0.12
+   },
+   {
+    "p": "faisca",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 10,
+    "size": [
+     0.08,
+     0.6
+    ],
+    "speed": [
+     7,
+     14
+    ],
+    "spread": 180,
+    "grav": -6,
+    "damp": [
+     5,
+     9
+    ],
+    "life": 0.26,
+    "curve": [
+     [
+      0,
+      1.3
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#222A63",
+     "#5778FF",
+     "#9DB0FF",
+     "#D9FCFF"
+    ],
+    "boost": 1.2,
+    "y": 0.8,
+    "delay": 0.12
+   },
+   {
+    "p": "pixel",
+    "blend": "mix",
+    "amount": 12,
+    "size": [
+     0.12,
+     0.3
+    ],
+    "speed": [
+     3,
+     8
+    ],
+    "spread": 180,
+    "grav": 3.0,
+    "damp": [
+     4,
+     7
+    ],
+    "life": 0.5,
+    "life_rand": 0.4,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      0.9
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#5778FF",
+     "#9DB0FF",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.8,
+    "delay": 0.13999999999999999
+   },
+   {
+    "p": "estrela4",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.0,
+    "life": 0.14,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.18,
+      1.2
+     ],
+     [
+      1,
+      0.25
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.2,
+    "delay": 0.18,
+    "nucleo": true
+   },
+   {
+    "p": "estrela4",
+    "blend": "mix",
+    "amount": 1,
+    "size": 0.9,
+    "life": 0.14,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.18,
+      1.2
+     ],
+     [
+      1,
+      0.25
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#5778FF",
+     "#9DB0FF",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.6,
+    "delay": 0.24,
+    "nucleo": true
+   }
+  ],
+  "shake": 0.28,
+  "shake_delay": 0.12
+ },
+ "zuk_z_diplo_ataque": {
+  "nome": "ZUKUNFT · Diplomata · Argumento Irrefutável",
+  "personagem": "z_diplo",
+  "layers": [
+   {
+    "p": "arco_som",
+    "blend": "mix",
+    "amount": 3,
+    "size": [
+     2.4,
+     0.9
+    ],
+    "life": 0.32,
+    "life_rand": 0,
+    "explosive": 0.5,
+    "aim": true,
+    "toward": 1.2,
+    "y": 1.2,
+    "curve": [
+     [
+      0,
+      0.4
+     ],
+     [
+      1,
+      1.2
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.4,
+    "ramp": [
+     "#122038",
+     "#2E1F63",
+     "#9C7FFD",
+     "#CDBEFF",
+     "#E8E2FF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ]
+   },
+   {
+    "p": "glitch",
+    "blend": "mix",
+    "amount": 4,
+    "size": [
+     2.0999999999999996,
+     1.0499999999999998
+    ],
+    "life": 0.3,
+    "life_rand": 0.4,
+    "angle": [
+     0,
+     0
+    ],
+    "radius": 0.35,
+    "speed": [
+     0,
+     0.6
+    ],
+    "curve": [
+     [
+      0,
+      1.0
+     ],
+     [
+      0.5,
+      1.15
+     ],
+     [
+      1,
+      0.8
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#2E1F63",
+     "#9C7FFD",
+     "#CDBEFF",
+     "#E8E2FF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.3,
+      0.4
+     ],
+     [
+      0.5,
+      1
+     ],
+     [
+      0.8,
+      0.6
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.1,
+    "delay": 0.12,
+    "explosive": 0.6
+   },
+   {
+    "p": "hex_oco",
+    "mode": "chao",
+    "amount": 1,
+    "size": 2.2,
+    "life": 0.5,
+    "life_rand": 0,
+    "y": 0.0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      1.8
+     ],
+     [
+      1,
+      0.45
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.3,
+    "ramp": [
+     "#122038",
+     "#2E1F63",
+     "#9C7FFD",
+     "#CDBEFF",
+     "#E8E2FF"
+    ],
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.3,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.1
+   },
+   {
+    "luz": "#9C7FFD",
+    "energia": 2.3400000000000003,
+    "alcance": 3.0,
+    "dur": 0.22,
+    "y": 1.0,
+    "delay": 0.14
+   },
+   {
+    "p": "estrela4",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.53,
+    "life": 0.22,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.18,
+      1.2
+     ],
+     [
+      1,
+      0.25
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#2E1F63",
+     "#9C7FFD",
+     "#CDBEFF",
+     "#E8E2FF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.14,
+    "nucleo": true
+   },
+   {
+    "p": "hex_oco",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.1700000000000002,
+    "life": 0.32,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      0.2,
+      1.1
+     ],
+     [
+      1,
+      1.35
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.6,
+    "ramp": [
+     "#122038",
+     "#2E1F63",
+     "#9C7FFD",
+     "#CDBEFF",
+     "#E8E2FF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.14
+   },
+   {
+    "p": "faisca",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 9,
+    "size": [
+     0.08,
+     0.6
+    ],
+    "speed": [
+     7,
+     14
+    ],
+    "spread": 180,
+    "grav": -6,
+    "damp": [
+     5,
+     9
+    ],
+    "life": 0.26,
+    "curve": [
+     [
+      0,
+      1.3
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#2E1F63",
+     "#9C7FFD",
+     "#CDBEFF",
+     "#E8E2FF"
+    ],
+    "boost": 1.2,
+    "y": 1.0,
+    "delay": 0.14
+   },
+   {
+    "p": "pixel",
+    "blend": "mix",
+    "amount": 10,
+    "size": [
+     0.12,
+     0.3
+    ],
+    "speed": [
+     3,
+     8
+    ],
+    "spread": 180,
+    "grav": 3.0,
+    "damp": [
+     4,
+     7
+    ],
+    "life": 0.5,
+    "life_rand": 0.4,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      0.9
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#2E1F63",
+     "#9C7FFD",
+     "#CDBEFF",
+     "#E8E2FF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.16
+   }
+  ],
+  "shake": 0.18,
+  "shake_delay": 0.14
+ },
+ "zuk_z_duel_ataque": {
+  "nome": "ZUKUNFT · Duelista · Estocada",
+  "personagem": "z_duel",
+  "layers": [
+   {
+    "p": "feixe",
+    "blend": "mix",
+    "amount": 1,
+    "size": [
+     3.4,
+     0.5
+    ],
+    "life": 0.12,
+    "life_rand": 0,
+    "aim": true,
+    "toward": 0.4,
+    "y": 1.0,
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      0.4,
+      1.1
+     ],
+     [
+      1,
+      1.2
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ]
+   },
+   {
+    "p": "estrela4",
+    "blend": "mix",
+    "amount": 1,
+    "size": 2.2,
+    "life": 0.2,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.18,
+      1.2
+     ],
+     [
+      1,
+      0.25
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.03,
+    "nucleo": true
+   },
+   {
+    "p": "lamina",
+    "blend": "mix",
+    "amount": 1,
+    "size": 2.2,
+    "life": 0.2,
+    "life_rand": 0,
+    "aim": true,
+    "aim_off": 40,
+    "toward": 0.0,
+    "y": 0.95,
+    "curve": [
+     [
+      0,
+      0.5
+     ],
+     [
+      0.25,
+      1.05
+     ],
+     [
+      1,
+      1.15
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.3,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.14
+   },
+   {
+    "p": "lamina",
+    "blend": "mix",
+    "amount": 1,
+    "size": 2.2,
+    "life": 0.2,
+    "life_rand": 0,
+    "aim": true,
+    "aim_off": 220,
+    "toward": 0.0,
+    "y": 0.95,
+    "curve": [
+     [
+      0,
+      0.5
+     ],
+     [
+      0.25,
+      1.05
+     ],
+     [
+      1,
+      1.15
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.3,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#5778FF",
+     "#9DB0FF",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.18
+   },
+   {
+    "p": "faisca",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 14,
+    "size": [
+     0.08,
+     0.6
+    ],
+    "speed": [
+     12,
+     20
+    ],
+    "spread": 45,
+    "grav": -6,
+    "damp": [
+     5,
+     9
+    ],
+    "life": 0.2,
+    "curve": [
+     [
+      0,
+      1.3
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "boost": 1.2,
+    "y": 1.0,
+    "delay": 0.02,
+    "dir": "away",
+    "lift": 0.2
+   },
+   {
+    "luz": "#27DDF4",
+    "energia": 2.3400000000000003,
+    "alcance": 3.0,
+    "dur": 0.22,
+    "y": 1.0,
+    "delay": 0.16
+   },
+   {
+    "p": "estrela4",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.53,
+    "life": 0.22,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.18,
+      1.2
+     ],
+     [
+      1,
+      0.25
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.16,
+    "nucleo": true
+   },
+   {
+    "p": "hex_oco",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.1700000000000002,
+    "life": 0.32,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      0.2,
+      1.1
+     ],
+     [
+      1,
+      1.35
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.6,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.16
+   },
+   {
+    "p": "faisca",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 9,
+    "size": [
+     0.08,
+     0.6
+    ],
+    "speed": [
+     7,
+     14
+    ],
+    "spread": 180,
+    "grav": -6,
+    "damp": [
+     5,
+     9
+    ],
+    "life": 0.26,
+    "curve": [
+     [
+      0,
+      1.3
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "boost": 1.2,
+    "y": 1.0,
+    "delay": 0.16
+   },
+   {
+    "p": "pixel",
+    "blend": "mix",
+    "amount": 8,
+    "size": [
+     0.08,
+     0.2
+    ],
+    "speed": [
+     2,
+     5
+    ],
+    "spread": 180,
+    "grav": 3.0,
+    "damp": [
+     4,
+     7
+    ],
+    "life": 0.4,
+    "life_rand": 0.4,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      0.9
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.2
+   }
+  ],
+  "shake": 0.26,
+  "shake_delay": 0.16
+ },
+ "zuk_z_bio_ataque": {
+  "nome": "ZUKUNFT · Bioengenheiro · Enxame de Nanitos",
+  "personagem": "z_bio",
+  "layers": [
+   {
+    "p": "pixel",
+    "blend": "mix",
+    "amount": 30,
+    "size": [
+     0.16,
+     0.3
+    ],
+    "ring": 1.3,
+    "ring_h": 1.4,
+    "speed": [
+     0,
+     0.5
+    ],
+    "tangential": [
+     10,
+     14
+    ],
+    "radial": [
+     -6,
+     -4
+    ],
+    "life": 0.42,
+    "life_rand": 0.2,
+    "explosive": 0.8,
+    "angle": [
+     0,
+     0
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.15,
+      1
+     ],
+     [
+      0.8,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "curve": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      0.4
+     ]
+    ],
+    "y": 0.4
+   },
+   {
+    "p": "ponto",
+    "blend": "mix",
+    "amount": 16,
+    "size": 0.2,
+    "ring": 1.1,
+    "ring_h": 1.2,
+    "tangential": [
+     -12,
+     -9
+    ],
+    "radial": [
+     -5,
+     -3
+    ],
+    "life": 0.4,
+    "explosive": 0.8,
+    "ramp": [
+     "#9C7FFD",
+     "#CDBEFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.5
+   },
+   {
+    "p": "hex_oco",
+    "mode": "chao",
+    "amount": 1,
+    "size": 2.4,
+    "life": 0.45,
+    "life_rand": 0,
+    "y": 0.0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      1.8
+     ],
+     [
+      1,
+      0.45
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.3,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.3,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.0
+   },
+   {
+    "luz": "#27DDF4",
+    "energia": 2.21,
+    "alcance": 3.0,
+    "dur": 0.22,
+    "y": 1.0,
+    "delay": 0.32
+   },
+   {
+    "p": "estrela4",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.4449999999999998,
+    "life": 0.22,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.18,
+      1.2
+     ],
+     [
+      1,
+      0.25
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.32,
+    "nucleo": true
+   },
+   {
+    "p": "hex_oco",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.105,
+    "life": 0.32,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      0.2,
+      1.1
+     ],
+     [
+      1,
+      1.35
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.6,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.32
+   },
+   {
+    "p": "faisca",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 8,
+    "size": [
+     0.08,
+     0.6
+    ],
+    "speed": [
+     7,
+     14
+    ],
+    "spread": 180,
+    "grav": -6,
+    "damp": [
+     5,
+     9
+    ],
+    "life": 0.26,
+    "curve": [
+     [
+      0,
+      1.3
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "boost": 1.2,
+    "y": 1.0,
+    "delay": 0.32
+   },
+   {
+    "p": "pixel",
+    "blend": "mix",
+    "amount": 10,
+    "size": [
+     0.12,
+     0.3
+    ],
+    "speed": [
+     3,
+     8
+    ],
+    "spread": 180,
+    "grav": 3.0,
+    "damp": [
+     4,
+     7
+    ],
+    "life": 0.5,
+    "life_rand": 0.4,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      0.9
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.34
+   }
+  ],
+  "shake": 0.2,
+  "shake_delay": 0.32
+ },
+ "zuk_z_hacker_ataque": {
+  "nome": "ZUKUNFT · Hacker · Pacote Malicioso",
+  "personagem": "z_hacker",
+  "hit": "zuk_hacker_hit",
+  "proj": {
+   "speed": 16,
+   "arc": 0.5,
+   "y": 1.1,
+   "parts": [
+    {
+     "p": "pixel",
+     "blend": "mix",
+     "mode": "bill",
+     "trail": true,
+     "amount": 14,
+     "size": [
+      0.08,
+      0.2
+     ],
+     "speed": [
+      0.2,
+      1.0
+     ],
+     "angle": [
+      0,
+      0
+     ],
+     "life": 0.3,
+     "ramp": [
+      "#122038",
+      "#2E1F63",
+      "#9C7FFD",
+      "#CDBEFF",
+      "#E8E2FF"
+     ],
+     "alpha": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       0
+      ]
+     ],
+     "curve": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       0
+      ]
+     ]
+    },
+    {
+     "p": "pixel",
+     "blend": "mix",
+     "one_shot": false,
+     "amount": 3,
+     "size": 0.35,
+     "life": 0.12,
+     "angle": [
+      0,
+      0
+     ],
+     "ramp": [
+      "#9C7FFD",
+      "#CDBEFF",
+      "#E8E2FF"
+     ],
+     "alpha": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       0.6
+      ]
+     ],
+     "curve": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       0.8
+      ]
+     ]
+    }
+   ],
+   "orbe": {
+    "size": 0.22,
+    "ramp": [
+     "#122038",
+     "#2E1F63",
+     "#9C7FFD",
+     "#CDBEFF"
+    ],
+    "boost": 1.2
+   }
+  }
+ },
+ "zuk_hacker_hit": {
+  "nome": "ZUKUNFT · Hacker · Travamento",
+  "personagem": "z_hacker",
+  "layers": [
+   {
+    "p": "glitch",
+    "blend": "mix",
+    "amount": 5,
+    "size": [
+     2.52,
+     1.26
+    ],
+    "life": 0.32,
+    "life_rand": 0.4,
+    "angle": [
+     0,
+     0
+    ],
+    "radius": 0.35,
+    "speed": [
+     0,
+     0.6
+    ],
+    "curve": [
+     [
+      0,
+      1.0
+     ],
+     [
+      0.5,
+      1.15
+     ],
+     [
+      1,
+      0.8
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#2E1F63",
+     "#9C7FFD",
+     "#CDBEFF",
+     "#E8E2FF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.3,
+      0.4
+     ],
+     [
+      0.5,
+      1
+     ],
+     [
+      0.8,
+      0.6
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.0,
+    "explosive": 0.6
+   },
+   {
+    "p": "glitch",
+    "blend": "mix",
+    "amount": 3,
+    "size": [
+     1.68,
+     0.84
+    ],
+    "life": 0.26,
+    "life_rand": 0.4,
+    "angle": [
+     0,
+     0
+    ],
+    "radius": 0.35,
+    "speed": [
+     0,
+     0.6
+    ],
+    "curve": [
+     [
+      0,
+      1.0
+     ],
+     [
+      0.5,
+      1.15
+     ],
+     [
+      1,
+      0.8
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.3,
+      0.4
+     ],
+     [
+      0.5,
+      1
+     ],
+     [
+      0.8,
+      0.6
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.2,
+    "delay": 0.08,
+    "explosive": 0.6
+   },
+   {
+    "p": "pixel",
+    "blend": "mix",
+    "amount": 20,
+    "size": [
+     0.1,
+     0.3
+    ],
+    "speed": [
+     2,
+     6
+    ],
+    "spread": 180,
+    "grav": 3.0,
+    "damp": [
+     4,
+     7
+    ],
+    "life": 0.55,
+    "life_rand": 0.4,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      0.9
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#2E1F63",
+     "#9C7FFD",
+     "#CDBEFF",
+     "#E8E2FF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.0
+   },
+   {
+    "luz": "#9C7FFD",
+    "energia": 2.3400000000000003,
+    "alcance": 3.0,
+    "dur": 0.22,
+    "y": 1.0,
+    "delay": 0.0
+   },
+   {
+    "p": "estrela4",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.53,
+    "life": 0.22,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.18,
+      1.2
+     ],
+     [
+      1,
+      0.25
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#2E1F63",
+     "#9C7FFD",
+     "#CDBEFF",
+     "#E8E2FF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.0,
+    "nucleo": true
+   },
+   {
+    "p": "hex_oco",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.1700000000000002,
+    "life": 0.32,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      0.2,
+      1.1
+     ],
+     [
+      1,
+      1.35
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.6,
+    "ramp": [
+     "#122038",
+     "#2E1F63",
+     "#9C7FFD",
+     "#CDBEFF",
+     "#E8E2FF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.0
+   },
+   {
+    "p": "faisca",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 9,
+    "size": [
+     0.08,
+     0.6
+    ],
+    "speed": [
+     7,
+     14
+    ],
+    "spread": 180,
+    "grav": -6,
+    "damp": [
+     5,
+     9
+    ],
+    "life": 0.26,
+    "curve": [
+     [
+      0,
+      1.3
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#2E1F63",
+     "#9C7FFD",
+     "#CDBEFF",
+     "#E8E2FF"
+    ],
+    "boost": 1.2,
+    "y": 1.0,
+    "delay": 0.0
+   }
+  ],
+  "shake": 0.2,
+  "shake_delay": 0.0
+ },
+ "zuk_z_real_ataque": {
+  "nome": "ZUKUNFT · Guardião Real · Juízo da Coroa",
+  "personagem": "z_real",
+  "layers": [
+   {
+    "p": "coroa",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.3,
+    "life": 0.4,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      0.16,
+      1.2
+     ],
+     [
+      0.35,
+      1.0
+     ],
+     [
+      1,
+      1.05
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#3A2A63",
+     "#F2C14E",
+     "#FFE39A",
+     "#FFF4D6"
+    ],
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.12,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 2.3
+   },
+   {
+    "p": "lamina",
+    "blend": "mix",
+    "amount": 1,
+    "size": 3.0,
+    "life": 0.22,
+    "life_rand": 0,
+    "aim": true,
+    "aim_off": -90,
+    "toward": 0.1,
+    "y": 1.2,
+    "curve": [
+     [
+      0,
+      0.5
+     ],
+     [
+      0.25,
+      1.05
+     ],
+     [
+      1,
+      1.15
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.3,
+    "ramp": [
+     "#122038",
+     "#3A2A63",
+     "#F2C14E",
+     "#FFE39A",
+     "#FFF4D6"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.12
+   },
+   {
+    "p": "hex_oco",
+    "mode": "chao",
+    "amount": 1,
+    "size": 3.0,
+    "life": 0.5,
+    "life_rand": 0,
+    "y": 0.0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      1,
+      1.6
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.3,
+    "ramp": [
+     "#122038",
+     "#3A2A63",
+     "#F2C14E",
+     "#FFE39A",
+     "#FFF4D6"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.14
+   },
+   {
+    "luz": "#27DDF4",
+    "energia": 2.8600000000000003,
+    "alcance": 3.0,
+    "dur": 0.22,
+    "y": 0.95,
+    "delay": 0.14
+   },
+   {
+    "p": "estrela4",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.87,
+    "life": 0.22,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.18,
+      1.2
+     ],
+     [
+      1,
+      0.25
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.95,
+    "delay": 0.14,
+    "nucleo": true
+   },
+   {
+    "p": "hex_oco",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.4300000000000002,
+    "life": 0.32,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      0.2,
+      1.1
+     ],
+     [
+      1,
+      1.35
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.6,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.95,
+    "delay": 0.14
+   },
+   {
+    "p": "faisca",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 11,
+    "size": [
+     0.08,
+     0.6
+    ],
+    "speed": [
+     7,
+     14
+    ],
+    "spread": 180,
+    "grav": -6,
+    "damp": [
+     5,
+     9
+    ],
+    "life": 0.26,
+    "curve": [
+     [
+      0,
+      1.3
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "boost": 1.2,
+    "y": 0.95,
+    "delay": 0.14
+   },
+   {
+    "p": "pixel",
+    "blend": "mix",
+    "amount": 13,
+    "size": [
+     0.12,
+     0.3
+    ],
+    "speed": [
+     3,
+     8
+    ],
+    "spread": 180,
+    "grav": 3.0,
+    "damp": [
+     4,
+     7
+    ],
+    "life": 0.5,
+    "life_rand": 0.4,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      0.9
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.95,
+    "delay": 0.16
+   },
+   {
+    "p": "pixel",
+    "blend": "mix",
+    "amount": 8,
+    "size": [
+     0.12,
+     0.3
+    ],
+    "speed": [
+     3,
+     7
+    ],
+    "spread": 180,
+    "grav": 3.0,
+    "damp": [
+     4,
+     7
+    ],
+    "life": 0.5,
+    "life_rand": 0.4,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      0.9
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#3A2A63",
+     "#F2C14E",
+     "#FFE39A",
+     "#FFF4D6"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.95,
+    "delay": 0.16
+   }
+  ],
+  "shake": 0.34,
+  "shake_delay": 0.14
+ },
+ "zuk_z_cao_ataque": {
+  "nome": "ZUKUNFT · Cão Zukunft · Mordida Cibernética",
+  "personagem": "z_cao",
+  "layers": [
+   {
+    "p": "mandibula",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.6,
+    "life": 0.22,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      1.3
+     ],
+     [
+      0.5,
+      0.9
+     ],
+     [
+      1,
+      0.85
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.35
+   },
+   {
+    "p": "mandibula",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.6,
+    "life": 0.22,
+    "life_rand": 0,
+    "angle": [
+     180,
+     180
+    ],
+    "curve": [
+     [
+      0,
+      1.3
+     ],
+     [
+      0.5,
+      0.9
+     ],
+     [
+      1,
+      0.85
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.6
+   },
+   {
+    "p": "rasgo",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.8,
+    "life": 0.2,
+    "life_rand": 0,
+    "aim": true,
+    "aim_off": -50,
+    "toward": 0.1,
+    "y": 0.95,
+    "curve": [
+     [
+      0,
+      0.5
+     ],
+     [
+      0.25,
+      1.05
+     ],
+     [
+      1,
+      1.15
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.3,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#5778FF",
+     "#9DB0FF",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.1
+   },
+   {
+    "luz": "#27DDF4",
+    "energia": 2.6,
+    "alcance": 3.0,
+    "dur": 0.22,
+    "y": 0.95,
+    "delay": 0.1
+   },
+   {
+    "p": "estrela4",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.7,
+    "life": 0.22,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.18,
+      1.2
+     ],
+     [
+      1,
+      0.25
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.95,
+    "delay": 0.1,
+    "nucleo": true
+   },
+   {
+    "p": "hex_oco",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.3,
+    "life": 0.32,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      0.2,
+      1.1
+     ],
+     [
+      1,
+      1.35
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.6,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.95,
+    "delay": 0.1
+   },
+   {
+    "p": "faisca",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 10,
+    "size": [
+     0.08,
+     0.6
+    ],
+    "speed": [
+     7,
+     14
+    ],
+    "spread": 180,
+    "grav": -6,
+    "damp": [
+     5,
+     9
+    ],
+    "life": 0.26,
+    "curve": [
+     [
+      0,
+      1.3
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "boost": 1.2,
+    "y": 0.95,
+    "delay": 0.1
+   },
+   {
+    "p": "pixel",
+    "blend": "mix",
+    "amount": 12,
+    "size": [
+     0.12,
+     0.3
+    ],
+    "speed": [
+     3,
+     8
+    ],
+    "spread": 180,
+    "grav": 3.0,
+    "damp": [
+     4,
+     7
+    ],
+    "life": 0.5,
+    "life_rand": 0.4,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      0.9
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.95,
+    "delay": 0.12000000000000001
+   }
+  ],
+  "shake": 0.26,
+  "shake_delay": 0.1
+ },
+ "zuk_z_dragao_ataque": {
+  "nome": "ZUKUNFT · Dragão · Sopro de Plasma",
+  "personagem": "z_dragao",
+  "layers": [
+   {
+    "p": "jato",
+    "blend": "mix",
+    "amount": 1,
+    "size": [
+     3.6,
+     1.4
+    ],
+    "life": 0.3,
+    "life_rand": 0,
+    "aim": true,
+    "toward": 1.1,
+    "y": 1.2,
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      0.3,
+      1.05
+     ],
+     [
+      1,
+      1.2
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.3,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ]
+   },
+   {
+    "p": "estrela4",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.4,
+    "life": 0.18,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.18,
+      1.2
+     ],
+     [
+      1,
+      0.25
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.3,
+    "delay": 0.0,
+    "nucleo": true,
+    "em": "from"
+   },
+   {
+    "em": "from",
+    "luz": "#27ddf4",
+    "energia": 3.2,
+    "alcance": 3.4,
+    "dur": 0.3,
+    "y": 1.3,
+    "delay": 0.0
+   },
+   {
+    "luz": "#27DDF4",
+    "energia": 3.3800000000000003,
+    "alcance": 3.0,
+    "dur": 0.22,
+    "y": 1.0,
+    "delay": 0.16
+   },
+   {
+    "p": "estrela4",
+    "blend": "mix",
+    "amount": 1,
+    "size": 2.21,
+    "life": 0.22,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.18,
+      1.2
+     ],
+     [
+      1,
+      0.25
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.16,
+    "nucleo": true
+   },
+   {
+    "p": "hex_oco",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.6900000000000002,
+    "life": 0.32,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      0.2,
+      1.1
+     ],
+     [
+      1,
+      1.35
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.6,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.16
+   },
+   {
+    "p": "faisca",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 13,
+    "size": [
+     0.08,
+     0.6
+    ],
+    "speed": [
+     7,
+     14
+    ],
+    "spread": 180,
+    "grav": -6,
+    "damp": [
+     5,
+     9
+    ],
+    "life": 0.26,
+    "curve": [
+     [
+      0,
+      1.3
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "boost": 1.2,
+    "y": 1.0,
+    "delay": 0.16
+   },
+   {
+    "p": "pixel",
+    "blend": "mix",
+    "amount": 15,
+    "size": [
+     0.12,
+     0.3
+    ],
+    "speed": [
+     3,
+     8
+    ],
+    "spread": 180,
+    "grav": 3.0,
+    "damp": [
+     4,
+     7
+    ],
+    "life": 0.5,
+    "life_rand": 0.4,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      0.9
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.18
+   },
+   {
+    "p": "hex_oco",
+    "mode": "chao",
+    "amount": 1,
+    "size": 3.2,
+    "life": 0.5,
+    "life_rand": 0,
+    "y": 0.0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      1,
+      1.6
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.3,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.18
+   },
+   {
+    "p": "pixel",
+    "blend": "mix",
+    "amount": 14,
+    "size": [
+     0.12,
+     0.3
+    ],
+    "speed": [
+     4,
+     9
+    ],
+    "spread": 180,
+    "grav": 3.0,
+    "damp": [
+     4,
+     7
+    ],
+    "life": 0.5,
+    "life_rand": 0.4,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      0.9
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#5778FF",
+     "#9DB0FF",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.9,
+    "delay": 0.2
+   }
+  ],
+  "shake": 0.4,
+  "shake_delay": 0.16
+ },
+ "zuk_dragao_rajada": {
+  "nome": "ZUKUNFT · Dragão · Rajada Tecnológica (vizinhos)",
+  "personagem": "z_dragao",
+  "alvo": "self",
+  "layers": [
+   {
+    "p": "hex_oco",
+    "mode": "chao",
+    "amount": 1,
+    "size": 5.0,
+    "life": 0.45,
+    "life_rand": 0,
+    "y": 0.0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      1,
+      1.6
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.3,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.0
+   },
+   {
+    "p": "hex_oco",
+    "mode": "chao",
+    "amount": 1,
+    "size": 4.0,
+    "life": 0.45,
+    "life_rand": 0,
+    "y": 0.0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      1,
+      1.6
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.3,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#5778FF",
+     "#9DB0FF",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.08
+   },
+   {
+    "p": "faisca",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 18,
+    "size": [
+     0.1,
+     0.7
+    ],
+    "speed": [
+     9,
+     14
+    ],
+    "spread": 180,
+    "flat": 0.9,
+    "damp": [
+     4,
+     6
+    ],
+    "life": 0.3,
+    "ramp": [
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.6
+   },
+   {
+    "p": "pixel",
+    "blend": "mix",
+    "amount": 14,
+    "size": [
+     0.1,
+     0.24
+    ],
+    "speed": [
+     5,
+     9
+    ],
+    "spread": 180,
+    "grav": 3.0,
+    "damp": [
+     4,
+     7
+    ],
+    "life": 0.4,
+    "life_rand": 0.4,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      0.9
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.6,
+    "delay": 0.04
+   }
+  ],
+  "shake": 0.2
+ },
+ "zuk_dragao_orbital": {
+  "nome": "ZUKUNFT · Dragão · Salto Orbital",
+  "personagem": "z_dragao",
+  "layers": [
+   {
+    "em": "from",
+    "luz": "#27ddf4",
+    "energia": 4.0,
+    "alcance": 4.0,
+    "dur": 0.4,
+    "y": 1.0,
+    "delay": 0.0
+   },
+   {
+    "em": "from",
+    "p": "feixe",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 1,
+    "size": [
+     0.9,
+     6.0
+    ],
+    "speed": [
+     30,
+     30
+    ],
+    "dir": [
+     0,
+     1,
+     0
+    ],
+    "spread": 0,
+    "life": 0.3,
+    "life_rand": 0,
+    "ramp": [
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.5
+   },
+   {
+    "p": "pixel",
+    "blend": "mix",
+    "amount": 24,
+    "size": [
+     0.12,
+     0.32
+    ],
+    "speed": [
+     3,
+     8
+    ],
+    "spread": 35,
+    "grav": 6.0,
+    "damp": [
+     4,
+     7
+    ],
+    "life": 0.6,
+    "life_rand": 0.4,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      0.9
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.6,
+    "delay": 0.0,
+    "dir": [
+     0,
+     1,
+     0
+    ],
+    "em": "from"
+   },
+   {
+    "p": "hex_oco",
+    "mode": "chao",
+    "amount": 1,
+    "size": 3.0,
+    "life": 0.45,
+    "life_rand": 0,
+    "y": 0.0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      1,
+      1.6
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.3,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.0,
+    "em": "from"
+   },
+   {
+    "p": "hex_oco",
+    "mode": "chao",
+    "amount": 1,
+    "size": 3.6,
+    "life": 0.5,
+    "life_rand": 0,
+    "y": 0.0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      1.8
+     ],
+     [
+      1,
+      0.45
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.3,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.3,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.1
+   },
+   {
+    "p": "mira_hex",
+    "mode": "chao",
+    "amount": 1,
+    "size": 2.6,
+    "life": 0.55,
+    "life_rand": 0,
+    "y": 0.0,
+    "angle": [
+     0,
+     0
+    ],
+    "spin": [
+     200,
+     200
+    ],
+    "curve": [
+     [
+      0,
+      1.4
+     ],
+     [
+      1,
+      0.9
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.2,
+      1
+     ],
+     [
+      0.85,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.05
+   },
+   {
+    "p": "feixe",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 1,
+    "size": [
+     1.4,
+     7.0
+    ],
+    "speed": [
+     40,
+     40
+    ],
+    "dir": [
+     0,
+     -1,
+     0
+    ],
+    "spread": 0,
+    "life": 0.18,
+    "life_rand": 0,
+    "ramp": [
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 7.0,
+    "delay": 0.42
+   },
+   {
+    "luz": "#27DDF4",
+    "energia": 4.42,
+    "alcance": 3.0,
+    "dur": 0.22,
+    "y": 0.8,
+    "delay": 0.55
+   },
+   {
+    "p": "estrela4",
+    "blend": "mix",
+    "amount": 1,
+    "size": 2.8899999999999997,
+    "life": 0.22,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.18,
+      1.2
+     ],
+     [
+      1,
+      0.25
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.8,
+    "delay": 0.55,
+    "nucleo": true
+   },
+   {
+    "p": "hex_oco",
+    "blend": "mix",
+    "amount": 1,
+    "size": 2.21,
+    "life": 0.32,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      0.2,
+      1.1
+     ],
+     [
+      1,
+      1.35
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.6,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.8,
+    "delay": 0.55
+   },
+   {
+    "p": "faisca",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 17,
+    "size": [
+     0.08,
+     0.6
+    ],
+    "speed": [
+     7,
+     14
+    ],
+    "spread": 180,
+    "grav": -6,
+    "damp": [
+     5,
+     9
+    ],
+    "life": 0.26,
+    "curve": [
+     [
+      0,
+      1.3
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "boost": 1.2,
+    "y": 0.8,
+    "delay": 0.55
+   },
+   {
+    "p": "pixel",
+    "blend": "mix",
+    "amount": 20,
+    "size": [
+     0.12,
+     0.3
+    ],
+    "speed": [
+     3,
+     8
+    ],
+    "spread": 180,
+    "grav": 3.0,
+    "damp": [
+     4,
+     7
+    ],
+    "life": 0.5,
+    "life_rand": 0.4,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      0.9
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.8,
+    "delay": 0.5700000000000001
+   },
+   {
+    "p": "hex_oco",
+    "mode": "chao",
+    "amount": 1,
+    "size": 5.2,
+    "life": 0.55,
+    "life_rand": 0,
+    "y": 0.0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      1,
+      1.6
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.3,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.55
+   },
+   {
+    "p": "hex_oco",
+    "mode": "chao",
+    "amount": 1,
+    "size": 4.0,
+    "life": 0.5,
+    "life_rand": 0,
+    "y": 0.0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      1,
+      1.6
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.3,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#5778FF",
+     "#9DB0FF",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.62
+   },
+   {
+    "p": "hex_grade",
+    "amount": 1,
+    "size": 3.6,
+    "life": 0.7,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.6
+     ],
+     [
+      0.2,
+      1.0
+     ],
+     [
+      1,
+      1.08
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.2,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.12,
+      1
+     ],
+     [
+      0.7,
+      0.9
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.0,
+    "delay": 0.55,
+    "mode": "chao"
+   },
+   {
+    "p": "faisca",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 22,
+    "size": [
+     0.1,
+     0.8
+    ],
+    "speed": [
+     10,
+     16
+    ],
+    "spread": 180,
+    "flat": 0.85,
+    "damp": [
+     4,
+     6
+    ],
+    "life": 0.32,
+    "ramp": [
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.5,
+    "delay": 0.55
+   },
+   {
+    "p": "pixel",
+    "blend": "mix",
+    "amount": 26,
+    "size": [
+     0.12,
+     0.34
+    ],
+    "speed": [
+     5,
+     11
+    ],
+    "spread": 180,
+    "grav": 3.0,
+    "damp": [
+     4,
+     7
+    ],
+    "life": 0.6,
+    "life_rand": 0.4,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      0.9
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.7,
+    "delay": 0.56
+   }
+  ],
+  "shake": 0.7,
+  "shake_delay": 0.55
+ },
+ "zuk_z_meca_ataque": {
+  "nome": "ZUKUNFT · Guardião Meca · Pistão Hidráulico",
+  "personagem": "z_meca",
+  "layers": [
+   {
+    "p": "punho",
+    "blend": "mix",
+    "amount": 1,
+    "size": 2.3,
+    "life": 0.26,
+    "life_rand": 0,
+    "toward": 0.5,
+    "y": 1.0,
+    "curve": [
+     [
+      0,
+      1.5
+     ],
+     [
+      0.2,
+      0.95
+     ],
+     [
+      1,
+      1.0
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 3.0,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#5778FF",
+     "#9DB0FF",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.0,
+    "aim": true,
+    "aim_off": 0.0
+   },
+   {
+    "p": "engrenagem",
+    "blend": "mix",
+    "mode": "bill",
+    "amount": 4,
+    "size": [
+     0.35,
+     0.6
+    ],
+    "speed": [
+     4,
+     8
+    ],
+    "spread": 70,
+    "dir": [
+     0,
+     1,
+     0
+    ],
+    "grav": -14,
+    "spin": [
+     -400,
+     400
+    ],
+    "life": 0.55,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#5778FF",
+     "#9DB0FF",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.06
+   },
+   {
+    "luz": "#5778FF",
+    "energia": 3.3800000000000003,
+    "alcance": 3.0,
+    "dur": 0.22,
+    "y": 0.95,
+    "delay": 0.05
+   },
+   {
+    "p": "estrela4",
+    "blend": "mix",
+    "amount": 1,
+    "size": 2.21,
+    "life": 0.22,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.18,
+      1.2
+     ],
+     [
+      1,
+      0.25
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#5778FF",
+     "#9DB0FF",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.95,
+    "delay": 0.05,
+    "nucleo": true
+   },
+   {
+    "p": "hex_oco",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.6900000000000002,
+    "life": 0.32,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      0.2,
+      1.1
+     ],
+     [
+      1,
+      1.35
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.6,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#5778FF",
+     "#9DB0FF",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.95,
+    "delay": 0.05
+   },
+   {
+    "p": "faisca",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 13,
+    "size": [
+     0.08,
+     0.6
+    ],
+    "speed": [
+     7,
+     14
+    ],
+    "spread": 180,
+    "grav": -6,
+    "damp": [
+     5,
+     9
+    ],
+    "life": 0.26,
+    "curve": [
+     [
+      0,
+      1.3
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#222A63",
+     "#5778FF",
+     "#9DB0FF",
+     "#D9FCFF"
+    ],
+    "boost": 1.2,
+    "y": 0.95,
+    "delay": 0.05
+   },
+   {
+    "p": "pixel",
+    "blend": "mix",
+    "amount": 15,
+    "size": [
+     0.12,
+     0.3
+    ],
+    "speed": [
+     3,
+     8
+    ],
+    "spread": 180,
+    "grav": 3.0,
+    "damp": [
+     4,
+     7
+    ],
+    "life": 0.5,
+    "life_rand": 0.4,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      0.9
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#5778FF",
+     "#9DB0FF",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.95,
+    "delay": 0.07
+   },
+   {
+    "p": "hex_oco",
+    "mode": "chao",
+    "amount": 1,
+    "size": 3.4,
+    "life": 0.5,
+    "life_rand": 0,
+    "y": 0.0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      1,
+      1.6
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.3,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#5778FF",
+     "#9DB0FF",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.07
+   },
+   {
+    "p": "hex_grade",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.8,
+    "life": 0.3,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.6
+     ],
+     [
+      0.2,
+      1.0
+     ],
+     [
+      1,
+      1.08
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.2,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.12,
+      1
+     ],
+     [
+      0.7,
+      0.9
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.05
+   }
+  ],
+  "shake": 0.45,
+  "shake_delay": 0.05
+ },
+ "zuk_z_fenix_ataque": {
+  "nome": "ZUKUNFT · Guardião Fênix · Chama Fria",
+  "personagem": "z_fenix",
+  "hit": "zuk_fenix_hit",
+  "proj": {
+   "speed": 17,
+   "arc": 0.7,
+   "y": 1.1,
+   "parts": [
+    {
+     "p": "pena",
+     "blend": "mix",
+     "one_shot": false,
+     "amount": 3,
+     "size": 0.7,
+     "life": 0.12,
+     "angle": [
+      0,
+      0
+     ],
+     "ramp": [
+      "#9C7FFD",
+      "#27DDF4",
+      "#D9FCFF"
+     ],
+     "alpha": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       0.6
+      ]
+     ],
+     "curve": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       0.8
+      ]
+     ]
+    },
+    {
+     "p": "pena",
+     "blend": "mix",
+     "trail": true,
+     "amount": 10,
+     "size": 0.45,
+     "speed": [
+      0.2,
+      0.8
+     ],
+     "angle": [
+      -20,
+      20
+     ],
+     "life": 0.3,
+     "ramp": [
+      "#122038",
+      "#5A1F63",
+      "#9C7FFD",
+      "#27DDF4",
+      "#D9FCFF"
+     ],
+     "alpha": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       0
+      ]
+     ],
+     "curve": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       0.3
+      ]
+     ]
+    },
+    {
+     "p": "brilho",
+     "blend": "mix",
+     "trail": true,
+     "amount": 12,
+     "size": 0.25,
+     "speed": [
+      0.3,
+      1.2
+     ],
+     "life": 0.28,
+     "ramp": [
+      "#5A1F63",
+      "#9C7FFD",
+      "#27DDF4",
+      "#D9FCFF"
+     ],
+     "alpha": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       0
+      ]
+     ],
+     "curve": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       0
+      ]
+     ]
+    }
+   ]
+  }
+ },
+ "zuk_fenix_hit": {
+  "nome": "ZUKUNFT · Guardião Fênix · Explosão de Penas",
+  "personagem": "z_fenix",
+  "layers": [
+   {
+    "p": "pena",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 9,
+    "size": [
+     0.35,
+     0.8
+    ],
+    "speed": [
+     4,
+     8
+    ],
+    "spread": 180,
+    "grav": 3,
+    "damp": [
+     3,
+     5
+    ],
+    "life": 0.5,
+    "erode": 1.0,
+    "erode_pow": 1.5,
+    "ramp": [
+     "#122038",
+     "#5A1F63",
+     "#9C7FFD",
+     "#27DDF4",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0
+   },
+   {
+    "p": "estouro",
+    "blend": "mix",
+    "amount": 1,
+    "size": 2.0,
+    "life": 0.3,
+    "life_rand": 0,
+    "angle": [
+     0,
+     360
+    ],
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      0.2,
+      1.0
+     ],
+     [
+      1,
+      1.1
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.4,
+    "ramp": [
+     "#122038",
+     "#5A1F63",
+     "#9C7FFD",
+     "#27DDF4",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0
+   },
+   {
+    "luz": "#9C7FFD",
+    "energia": 2.6,
+    "alcance": 3.0,
+    "dur": 0.22,
+    "y": 1.0,
+    "delay": 0.0
+   },
+   {
+    "p": "estrela4",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.7,
+    "life": 0.22,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.18,
+      1.2
+     ],
+     [
+      1,
+      0.25
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#2E1F63",
+     "#9C7FFD",
+     "#CDBEFF",
+     "#E8E2FF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.0,
+    "nucleo": true
+   },
+   {
+    "p": "hex_oco",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.3,
+    "life": 0.32,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      0.2,
+      1.1
+     ],
+     [
+      1,
+      1.35
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.6,
+    "ramp": [
+     "#122038",
+     "#2E1F63",
+     "#9C7FFD",
+     "#CDBEFF",
+     "#E8E2FF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.0
+   },
+   {
+    "p": "faisca",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 10,
+    "size": [
+     0.08,
+     0.6
+    ],
+    "speed": [
+     7,
+     14
+    ],
+    "spread": 180,
+    "grav": -6,
+    "damp": [
+     5,
+     9
+    ],
+    "life": 0.26,
+    "curve": [
+     [
+      0,
+      1.3
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#2E1F63",
+     "#9C7FFD",
+     "#CDBEFF",
+     "#E8E2FF"
+    ],
+    "boost": 1.2,
+    "y": 1.0,
+    "delay": 0.0
+   }
+  ],
+  "shake": 0.26,
+  "shake_delay": 0.0
+ },
+ "zuk_z_portais_ataque": {
+  "nome": "ZUKUNFT · Guarda dos Portais · Disparo Dimensional",
+  "personagem": "z_portais",
+  "layers": [
+   {
+    "p": "hex_oco",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.4,
+    "life": 0.24,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      0.2,
+      1.1
+     ],
+     [
+      1,
+      1.35
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.6,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.1,
+    "delay": 0.0,
+    "em": "from"
+   },
+   {
+    "p": "hex_oco",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.9,
+    "life": 0.5,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "spin": [
+     180,
+     180
+    ],
+    "toward": -1.0,
+    "y": 1.3,
+    "curve": [
+     [
+      0,
+      0.1
+     ],
+     [
+      0.25,
+      1.0
+     ],
+     [
+      0.8,
+      1.0
+     ],
+     [
+      1,
+      0.2
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#2E1F63",
+     "#9C7FFD",
+     "#CDBEFF",
+     "#E8E2FF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.8,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.05
+   },
+   {
+    "p": "brilho",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.4,
+    "life": 0.45,
+    "life_rand": 0,
+    "toward": -1.0,
+    "y": 1.3,
+    "curve": [
+     [
+      0,
+      0.1
+     ],
+     [
+      0.25,
+      1.0
+     ],
+     [
+      1,
+      0.3
+     ]
+    ],
+    "ramp": [
+     "#2E1F63",
+     "#9C7FFD",
+     "#CDBEFF",
+     "#E8E2FF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.05
+   },
+   {
+    "p": "feixe",
+    "blend": "mix",
+    "amount": 1,
+    "size": [
+     2.2,
+     0.55
+    ],
+    "life": 0.14,
+    "life_rand": 0,
+    "aim": true,
+    "aim_off": 180,
+    "toward": -0.5,
+    "y": 1.15,
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      0.4,
+      1.1
+     ],
+     [
+      1,
+      1.2
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.2
+   },
+   {
+    "luz": "#27DDF4",
+    "energia": 2.8600000000000003,
+    "alcance": 3.0,
+    "dur": 0.22,
+    "y": 1.0,
+    "delay": 0.24
+   },
+   {
+    "p": "estrela4",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.87,
+    "life": 0.22,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.18,
+      1.2
+     ],
+     [
+      1,
+      0.25
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.24,
+    "nucleo": true
+   },
+   {
+    "p": "hex_oco",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.4300000000000002,
+    "life": 0.32,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      0.2,
+      1.1
+     ],
+     [
+      1,
+      1.35
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.6,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.24
+   },
+   {
+    "p": "faisca",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 11,
+    "size": [
+     0.08,
+     0.6
+    ],
+    "speed": [
+     7,
+     14
+    ],
+    "spread": 180,
+    "grav": -6,
+    "damp": [
+     5,
+     9
+    ],
+    "life": 0.26,
+    "curve": [
+     [
+      0,
+      1.3
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "boost": 1.2,
+    "y": 1.0,
+    "delay": 0.24
+   },
+   {
+    "p": "pixel",
+    "blend": "mix",
+    "amount": 13,
+    "size": [
+     0.12,
+     0.3
+    ],
+    "speed": [
+     3,
+     8
+    ],
+    "spread": 180,
+    "grav": 3.0,
+    "damp": [
+     4,
+     7
+    ],
+    "life": 0.5,
+    "life_rand": 0.4,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      0.9
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.26
+   }
+  ],
+  "shake": 0.28,
+  "shake_delay": 0.24
+ },
+ "zuk_portais_entrada": {
+  "nome": "ZUKUNFT · Guarda dos Portais · Portalis (Entrada)",
+  "personagem": "z_portais",
+  "alvo": "self",
+  "layers": [
+   {
+    "luz": "#27DDF4",
+    "energia": 3.6,
+    "alcance": 3.6,
+    "dur": 0.5,
+    "y": 0.8,
+    "delay": 0.0
+   },
+   {
+    "p": "hex_oco",
+    "mode": "chao",
+    "amount": 1,
+    "size": 3.0,
+    "life": 0.6,
+    "life_rand": 0,
+    "y": 0.0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      1.8
+     ],
+     [
+      1,
+      0.45
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.3,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.3,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.0
+   },
+   {
+    "p": "hex_oco",
+    "mode": "chao",
+    "amount": 1,
+    "size": 1.9,
+    "life": 0.9,
+    "life_rand": 0,
+    "y": 0.02,
+    "angle": [
+     0,
+     0
+    ],
+    "spin": [
+     160,
+     160
+    ],
+    "curve": [
+     [
+      0,
+      0.1
+     ],
+     [
+      0.3,
+      1.0
+     ],
+     [
+      1,
+      1.0
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.75,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.15
+   },
+   {
+    "p": "hex_grade",
+    "amount": 1,
+    "size": 2.0,
+    "life": 0.8,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.6
+     ],
+     [
+      0.2,
+      1.0
+     ],
+     [
+      1,
+      1.08
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.2,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.12,
+      1
+     ],
+     [
+      0.7,
+      0.9
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.0,
+    "delay": 0.18,
+    "mode": "chao"
+   },
+   {
+    "p": "brilho",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 14,
+    "size": [
+     0.15,
+     0.35
+    ],
+    "speed": [
+     2,
+     4
+    ],
+    "dir": [
+     0,
+     1,
+     0
+    ],
+    "spread": 10,
+    "radius": 0.7,
+    "explosive": 0.3,
+    "life": 0.6,
+    "ramp": [
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.1,
+    "delay": 0.15
+   },
+   {
+    "p": "pixel",
+    "blend": "mix",
+    "amount": 14,
+    "size": [
+     0.1,
+     0.24
+    ],
+    "speed": [
+     1,
+     3
+    ],
+    "spread": 30,
+    "grav": 2.0,
+    "damp": [
+     4,
+     7
+    ],
+    "life": 0.7,
+    "life_rand": 0.4,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      0.9
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.3,
+    "delay": 0.2,
+    "dir": [
+     0,
+     1,
+     0
+    ]
+   }
+  ],
+  "shake": 0.15
+ },
+ "zuk_portais_saida": {
+  "nome": "ZUKUNFT · Guarda dos Portais · Portalis (Saída)",
+  "personagem": "z_portais",
+  "alvo": "self",
+  "layers": [
+   {
+    "luz": "#9C7FFD",
+    "energia": 3.6,
+    "alcance": 3.6,
+    "dur": 0.5,
+    "y": 0.8,
+    "delay": 0.0
+   },
+   {
+    "p": "hex_oco",
+    "mode": "chao",
+    "amount": 1,
+    "size": 3.0,
+    "life": 0.6,
+    "life_rand": 0,
+    "y": 0.0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      1.8
+     ],
+     [
+      1,
+      0.45
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.3,
+    "ramp": [
+     "#122038",
+     "#2E1F63",
+     "#9C7FFD",
+     "#CDBEFF",
+     "#E8E2FF"
+    ],
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.3,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.0
+   },
+   {
+    "p": "hex_oco",
+    "mode": "chao",
+    "amount": 1,
+    "size": 1.9,
+    "life": 0.9,
+    "life_rand": 0,
+    "y": 0.02,
+    "angle": [
+     0,
+     0
+    ],
+    "spin": [
+     -160,
+     -160
+    ],
+    "curve": [
+     [
+      0,
+      0.1
+     ],
+     [
+      0.3,
+      1.0
+     ],
+     [
+      1,
+      1.0
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#2E1F63",
+     "#9C7FFD",
+     "#CDBEFF",
+     "#E8E2FF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.75,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.15
+   },
+   {
+    "p": "hex_grade",
+    "amount": 1,
+    "size": 2.0,
+    "life": 0.8,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.6
+     ],
+     [
+      0.2,
+      1.0
+     ],
+     [
+      1,
+      1.08
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.2,
+    "ramp": [
+     "#122038",
+     "#2E1F63",
+     "#9C7FFD",
+     "#CDBEFF",
+     "#E8E2FF"
+    ],
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.12,
+      1
+     ],
+     [
+      0.7,
+      0.9
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.0,
+    "delay": 0.18,
+    "mode": "chao"
+   },
+   {
+    "p": "brilho",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 14,
+    "size": [
+     0.15,
+     0.35
+    ],
+    "speed": [
+     2,
+     4
+    ],
+    "dir": [
+     0,
+     -1,
+     0
+    ],
+    "spread": 10,
+    "radius": 0.7,
+    "explosive": 0.3,
+    "life": 0.6,
+    "ramp": [
+     "#2E1F63",
+     "#9C7FFD",
+     "#CDBEFF",
+     "#E8E2FF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 2.4,
+    "delay": 0.15
+   },
+   {
+    "p": "pixel",
+    "blend": "mix",
+    "amount": 14,
+    "size": [
+     0.1,
+     0.24
+    ],
+    "speed": [
+     1,
+     3
+    ],
+    "spread": 30,
+    "grav": 2.0,
+    "damp": [
+     4,
+     7
+    ],
+    "life": 0.7,
+    "life_rand": 0.4,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      0.9
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#2E1F63",
+     "#9C7FFD",
+     "#CDBEFF",
+     "#E8E2FF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.3,
+    "delay": 0.2,
+    "dir": [
+     0,
+     1,
+     0
+    ]
+   }
+  ],
+  "shake": 0.15
+ },
+ "zuk_z_drone_ataque": {
+  "nome": "ZUKUNFT · Drone-Sentinela · Rajada Tripla",
+  "personagem": "z_drone",
+  "hit": "zuk_drone_hit",
+  "proj": {
+   "speed": 34,
+   "arc": 0.0,
+   "y": 1.4,
+   "parts": [
+    {
+     "p": "faisca",
+     "blend": "mix",
+     "mode": "vel",
+     "trail": true,
+     "amount": 5,
+     "size": [
+      0.04,
+      0.24
+     ],
+     "speed": [
+      0.3,
+      1.2
+     ],
+     "life": 0.12,
+     "ramp": [
+      "#222A63",
+      "#5778FF",
+      "#9DB0FF",
+      "#D9FCFF"
+     ],
+     "alpha": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       0
+      ]
+     ],
+     "curve": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       0
+      ]
+     ]
+    }
+   ],
+   "arpao": {
+    "tex": "feixe",
+    "len": 1.3,
+    "width": 0.3,
+    "tile": 1.3,
+    "blend_top": "mix",
+    "ramp": [
+     "#222A63",
+     "#5778FF",
+     "#9DB0FF",
+     "#D9FCFF"
+    ],
+    "boost": 1.0,
+    "halftone": 0.0,
+    "sombra": 1.4,
+    "ramp_sombra": [
+     "#0E1428",
+     "#122038"
+    ],
+    "nucleo": false
+   },
+   "rajada": {
+    "n": 3,
+    "gap": 0.09,
+    "spread": 0.35,
+    "dy": 0.0,
+    "vy": 0.1
+   }
+  }
+ },
+ "zuk_drone_hit": {
+  "nome": "ZUKUNFT · Drone-Sentinela · Acerto",
+  "personagem": "z_drone",
+  "layers": [
+   {
+    "luz": "#5778FF",
+    "energia": 2.08,
+    "alcance": 3.0,
+    "dur": 0.22,
+    "y": 1.0,
+    "delay": 0.0
+   },
+   {
+    "p": "estrela4",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.36,
+    "life": 0.22,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.18,
+      1.2
+     ],
+     [
+      1,
+      0.25
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#5778FF",
+     "#9DB0FF",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.0,
+    "nucleo": true
+   },
+   {
+    "p": "hex_oco",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.04,
+    "life": 0.32,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      0.2,
+      1.1
+     ],
+     [
+      1,
+      1.35
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.6,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#5778FF",
+     "#9DB0FF",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.0
+   },
+   {
+    "p": "faisca",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 8,
+    "size": [
+     0.08,
+     0.6
+    ],
+    "speed": [
+     7,
+     14
+    ],
+    "spread": 180,
+    "grav": -6,
+    "damp": [
+     5,
+     9
+    ],
+    "life": 0.26,
+    "curve": [
+     [
+      0,
+      1.3
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#222A63",
+     "#5778FF",
+     "#9DB0FF",
+     "#D9FCFF"
+    ],
+    "boost": 1.2,
+    "y": 1.0,
+    "delay": 0.0
+   },
+   {
+    "p": "pixel",
+    "blend": "mix",
+    "amount": 9,
+    "size": [
+     0.12,
+     0.3
+    ],
+    "speed": [
+     3,
+     8
+    ],
+    "spread": 180,
+    "grav": 3.0,
+    "damp": [
+     4,
+     7
+    ],
+    "life": 0.5,
+    "life_rand": 0.4,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      0.9
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#5778FF",
+     "#9DB0FF",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.02
+   },
+   {
+    "p": "estrela4",
+    "blend": "mix",
+    "amount": 1,
+    "size": 0.9,
+    "life": 0.12,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.18,
+      1.2
+     ],
+     [
+      1,
+      0.25
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.15,
+    "delay": 0.08,
+    "nucleo": true
+   },
+   {
+    "p": "estrela4",
+    "blend": "mix",
+    "amount": 1,
+    "size": 0.9,
+    "life": 0.12,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.18,
+      1.2
+     ],
+     [
+      1,
+      0.25
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#5778FF",
+     "#9DB0FF",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.8,
+    "delay": 0.16,
+    "nucleo": true
+   }
+  ],
+  "shake": 0.16,
+  "shake_delay": 0.0
+ },
+ "zuk_z_escudo_ataque": {
+  "nome": "ZUKUNFT · Engenheira de Escudos · Placa Arremessada",
+  "personagem": "z_escudo",
+  "hit": "zuk_escudo_hit",
+  "proj": {
+   "speed": 15,
+   "arc": 0.9,
+   "y": 1.1,
+   "parts": [
+    {
+     "p": "hex_oco",
+     "blend": "mix",
+     "one_shot": false,
+     "amount": 2,
+     "size": 0.75,
+     "life": 0.1,
+     "angle": [
+      0,
+      0
+     ],
+     "spin": [
+      720,
+      720
+     ],
+     "ramp": [
+      "#122038",
+      "#222A63",
+      "#27DDF4",
+      "#9BF2FB",
+      "#D9FCFF"
+     ],
+     "alpha": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       0.8
+      ]
+     ]
+    },
+    {
+     "p": "hex_grade",
+     "blend": "mix",
+     "one_shot": false,
+     "amount": 2,
+     "size": 0.7,
+     "life": 0.1,
+     "angle": [
+      0,
+      0
+     ],
+     "ramp": [
+      "#122038",
+      "#222A63",
+      "#27DDF4",
+      "#9BF2FB",
+      "#D9FCFF"
+     ],
+     "alpha": [
+      [
+       0,
+       0.8
+      ],
+      [
+       1,
+       0.6
+      ]
+     ]
+    },
+    {
+     "p": "pixel",
+     "blend": "mix",
+     "mode": "bill",
+     "trail": true,
+     "amount": 8,
+     "size": [
+      0.08,
+      0.2
+     ],
+     "speed": [
+      0.2,
+      1.0
+     ],
+     "angle": [
+      0,
+      0
+     ],
+     "life": 0.3,
+     "ramp": [
+      "#122038",
+      "#222A63",
+      "#27DDF4",
+      "#9BF2FB",
+      "#D9FCFF"
+     ],
+     "alpha": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       0
+      ]
+     ],
+     "curve": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       0
+      ]
+     ]
+    }
+   ]
+  }
+ },
+ "zuk_escudo_hit": {
+  "nome": "ZUKUNFT · Engenheira de Escudos · Quebra da Placa",
+  "personagem": "z_escudo",
+  "layers": [
+   {
+    "p": "hexa",
+    "blend": "mix",
+    "mode": "bill",
+    "amount": 7,
+    "size": [
+     0.25,
+     0.45
+    ],
+    "speed": [
+     5,
+     9
+    ],
+    "spread": 180,
+    "grav": -12,
+    "damp": [
+     2,
+     4
+    ],
+    "spin": [
+     -500,
+     500
+    ],
+    "life": 0.5,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0
+   },
+   {
+    "p": "hex_grade",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.9,
+    "life": 0.26,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.6
+     ],
+     [
+      0.2,
+      1.0
+     ],
+     [
+      1,
+      1.08
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.2,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      0
+     ],
+     [
+      0.12,
+      1
+     ],
+     [
+      0.7,
+      0.9
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.0
+   },
+   {
+    "luz": "#27DDF4",
+    "energia": 2.3400000000000003,
+    "alcance": 3.0,
+    "dur": 0.22,
+    "y": 1.0,
+    "delay": 0.0
+   },
+   {
+    "p": "estrela4",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.53,
+    "life": 0.22,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.2
+     ],
+     [
+      0.18,
+      1.2
+     ],
+     [
+      1,
+      0.25
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.0,
+    "nucleo": true
+   },
+   {
+    "p": "hex_oco",
+    "blend": "mix",
+    "amount": 1,
+    "size": 1.1700000000000002,
+    "life": 0.32,
+    "life_rand": 0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      0.2,
+      1.1
+     ],
+     [
+      1,
+      1.35
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.6,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 1.0,
+    "delay": 0.0
+   },
+   {
+    "p": "faisca",
+    "blend": "mix",
+    "mode": "vel",
+    "amount": 9,
+    "size": [
+     0.08,
+     0.6
+    ],
+    "speed": [
+     7,
+     14
+    ],
+    "spread": 180,
+    "grav": -6,
+    "damp": [
+     5,
+     9
+    ],
+    "life": 0.26,
+    "curve": [
+     [
+      0,
+      1.3
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "boost": 1.2,
+    "y": 1.0,
+    "delay": 0.0
+   }
+  ],
+  "shake": 0.22,
+  "shake_delay": 0.0
+ },
+ "zuk_cao_faro": {
+  "nome": "ZUKUNFT · Cão Zukunft · Farejador (arrancada)",
+  "personagem": "z_cao",
+  "alvo": "self",
+  "layers": [
+   {
+    "p": "hex_oco",
+    "mode": "chao",
+    "amount": 1,
+    "size": 2.2,
+    "life": 0.4,
+    "life_rand": 0,
+    "y": 0.0,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      0.3
+     ],
+     [
+      1,
+      1.6
+     ]
+    ],
+    "erode": 1.0,
+    "erode_pow": 1.3,
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "delay": 0.0
+   },
+   {
+    "p": "pixel",
+    "blend": "mix",
+    "amount": 16,
+    "size": [
+     0.1,
+     0.26
+    ],
+    "speed": [
+     2,
+     6
+    ],
+    "spread": 70,
+    "grav": 2.0,
+    "damp": [
+     4,
+     7
+    ],
+    "life": 0.5,
+    "life_rand": 0.4,
+    "angle": [
+     0,
+     0
+    ],
+    "curve": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      0.9
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.5,
+    "delay": 0.0,
+    "dir": [
+     0,
+     1,
+     0
+    ]
+   },
+   {
+    "p": "glitch",
+    "blend": "mix",
+    "amount": 3,
+    "size": [
+     1.68,
+     0.84
+    ],
+    "life": 0.2,
+    "life_rand": 0.4,
+    "angle": [
+     0,
+     0
+    ],
+    "radius": 0.35,
+    "speed": [
+     0,
+     0.6
+    ],
+    "curve": [
+     [
+      0,
+      1.0
+     ],
+     [
+      0.5,
+      1.15
+     ],
+     [
+      1,
+      0.8
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.3,
+      0.4
+     ],
+     [
+      0.5,
+      1
+     ],
+     [
+      0.8,
+      0.6
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.9,
+    "delay": 0.0,
+    "explosive": 0.6
+   },
+   {
+    "p": "mira_hex",
+    "mode": "chao",
+    "amount": 1,
+    "size": 1.7,
+    "life": 0.5,
+    "life_rand": 0,
+    "y": 0.0,
+    "angle": [
+     0,
+     0
+    ],
+    "spin": [
+     240,
+     240
+    ],
+    "curve": [
+     [
+      0,
+      0.4
+     ],
+     [
+      1,
+      1.2
+     ]
+    ],
+    "ramp": [
+     "#122038",
+     "#222A63",
+     "#27DDF4",
+     "#9BF2FB",
+     "#D9FCFF"
+    ],
+    "alpha": [
+     [
+      0,
+      1
+     ],
+     [
+      0.7,
+      1
+     ],
+     [
+      1,
+      0
+     ]
+    ]
+   }
+  ],
+  "shake": 0.08
  }
 }
