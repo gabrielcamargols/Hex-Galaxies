@@ -1,4 +1,4 @@
-"""Símbolos das facções no impacto dos ataques básicos (Abyssais, Zukunft, Faurianos, Valakianos).
+"""Símbolos das facções no impacto dos ataques básicos (Abyssais, Zukunft, Faurianos, Valakianos, Wächter, Lithari).
 O símbolo é a peça principal do impacto: aparece grande sobre o alvo com uma silhueta escura por trás
 (destaca em qualquer chão), dá um pulo e marca o chão; o impacto próprio de cada personagem toca por cima.
 Gera simbolo_<FAC> em data/vfx_receitas.json. python3 tools/vfx_simbolos.py"""
@@ -10,7 +10,8 @@ from forja_guia import aplica, audita_receita
 ROOT = os.path.join(os.path.dirname(__file__), "..")
 RECEITAS = os.path.join(ROOT, "data", "vfx_receitas.json")
 PALETAS = os.path.join(ROOT, "data", "vfx_paletas.json")
-FACS = {"ABY": ("aby", "Abyssais"), "ZUK": ("zuk", "Zukunft"), "FAU": ("fau", "Faurianos"), "TER": ("ter", "Valakianos")}
+FACS = {"ABY": ("aby", "Abyssais"), "ZUK": ("zuk", "Zukunft"), "FAU": ("fau", "Faurianos"), "TER": ("ter", "Valakianos"),
+        "WAC": ("wac", "Wächter"), "LIT": ("lit", "Lithari")}
 
 
 def receita(fac, pal):

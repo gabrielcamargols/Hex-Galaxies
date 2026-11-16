@@ -5526,8 +5526,8 @@ func _fx_phoenix(p: Vector3) -> void:
 
 # símbolo da facção de quem bateu, no alvo, no instante do impacto
 # (Krieg, Zukunft e Faurianos têm o seu dentro dos próprios efeitos de cada personagem)
-const SIMBOLO_FACS = ["ABY", "TER"]
-const SIMBOLO_SEM_BALAO = ["ABY", "TER", "ZUK", "FAU"]
+const SIMBOLO_FACS = ["ABY", "TER", "WAC", "LIT"]
+const SIMBOLO_SEM_BALAO = ["ABY", "TER", "ZUK", "FAU", "WAC", "LIT"]
 
 
 func _simbolo_hit(from_uid: int, at: Vector3) -> void:
