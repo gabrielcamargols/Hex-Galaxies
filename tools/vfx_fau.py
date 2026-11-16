@@ -339,6 +339,7 @@ def main():
     for k in [k for k in rec if k.startswith("fau_")]:
         del rec[k]
     esp = especiais()
+    Z.com_simbolo(esp, "FAU")
     for rid, d in esp.items():
         rec[rid] = aplica(d)
         falhas = audita_receita(rec[rid])

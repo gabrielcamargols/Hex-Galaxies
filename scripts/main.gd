@@ -5524,8 +5524,10 @@ func _fx_phoenix(p: Vector3) -> void:
 	vfx.flip("fire", p, 2.4, 0.9)
 
 
-# símbolo da facção de quem bateu, no alvo, no instante do impacto (Krieg têm o seu nos próprios efeitos)
-const SIMBOLO_FACS = ["ABY", "ZUK", "FAU", "TER"]
+# símbolo da facção de quem bateu, no alvo, no instante do impacto
+# (Krieg, Zukunft e Faurianos têm o seu dentro dos próprios efeitos de cada personagem)
+const SIMBOLO_FACS = ["ABY", "TER"]
+const SIMBOLO_SEM_BALAO = ["ABY", "TER", "ZUK", "FAU"]
 
 
 func _simbolo_hit(from_uid: int, at: Vector3) -> void:
@@ -5562,7 +5564,7 @@ func _on_fx(e: Dictionary) -> void:
 				return
 			var k = _fx_scale()
 			# onde o símbolo da facção aparece, ele é a marca do golpe (sem o balão de onomatopeia por cima)
-			if not SIMBOLO_FACS.has(_unit_fac(e["from"])):
+			if not SIMBOLO_SEM_BALAO.has(_unit_fac(e["from"])):
 				_comic_pop(tgt, (["ZAP!", "PEW!", "FZZT!", "VUSH!"] if e["ranged"] else ["POW!", "BAM!", "WHAM!", "SOC!", "TUM!"]).pick_random())
 			_voice(e["from"], "atk", -2.0)
 			var ter_id = _ter_attack_id(e["from"], e["ranged"])

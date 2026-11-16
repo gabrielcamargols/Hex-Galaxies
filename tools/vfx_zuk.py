@@ -380,6 +380,22 @@ def especiais():
     return R
 
 
+def com_simbolo(esp, fac):
+    """o símbolo oficial da facção entra DENTRO de cada efeito, no instante do acerto (como nos Krieg):
+    nos ataques com projétil vai no efeito de chegada; nos demais, no tempo do impacto (hit_t ou o tremor)"""
+    chegadas = {d["hit"] for d in esp.values() if "hit" in d}
+    for rid, d in esp.items():
+        # quem só dispara outro efeito (projétil com chegada, ou camada "sub") deixa o símbolo para a chegada
+        if "hit" in d or str(d.get("personagem", "")) == "" or any("sub" in L for L in d["layers"]):
+            continue
+        t = d.get("hit_t", d.get("shake_delay", 0.0))
+        if rid in chegadas:
+            t = d.get("shake_delay", 0.0)
+        if d.get("alvo") == "self":
+            t = max(t, 0.12)
+        d["layers"].append({"sub": "simbolo_" + fac, "delay": round(float(t), 3)})
+
+
 # habilidade (abfx do motor) -> receita: main.gd (TER_ABFX) usa estes mesmos ids
 HABS = {"z_dragao": ["zuk_dragao_orbital", "zuk_dragao_rajada"], "z_portais": ["zuk_portais_entrada", "zuk_portais_saida"],
         "z_cao": ["zuk_cao_faro"]}
@@ -395,6 +411,7 @@ def main():
     for k in [k for k in rec if k.startswith("zuk_")]:
         del rec[k]
     esp = especiais()
+    com_simbolo(esp, "ZUK")
     for rid, d in esp.items():
         rec[rid] = aplica(d)
         falhas = audita_receita(rec[rid])
