@@ -290,13 +290,13 @@
   "habilidades": []
  },
  "karu": {
-  "nucleo": "#9BE348",
+  "nucleo": "#FF8236",
   "motivo": "Karu Primepatas",
   "ataque": "fau_karu_ataque",
   "habilidades": []
  },
  "vexa": {
-  "nucleo": "#55D7EB",
+  "nucleo": "#FF8236",
   "motivo": "Vexa",
   "ataque": "fau_vexa_ataque",
   "habilidades": []
@@ -308,10 +308,12 @@
   "habilidades": []
  },
  "gorun": {
-  "nucleo": "#FFD12E",
+  "nucleo": "#FF8236",
   "motivo": "Gorun",
   "ataque": "fau_gorun_ataque",
-  "habilidades": []
+  "habilidades": [
+   "fau_gorun_animal"
+  ]
  },
  "mantis": {
   "nucleo": "#9BE348",
@@ -326,19 +328,19 @@
   "habilidades": []
  },
  "caninus_black": {
-  "nucleo": "#FF8236",
+  "nucleo": "#E0483A",
   "motivo": "Caninus Black",
   "ataque": "fau_caninus_black_ataque",
   "habilidades": []
  },
  "brazucao": {
-  "nucleo": "#FFD12E",
+  "nucleo": "#FF8236",
   "motivo": "Brazucão",
   "ataque": "fau_brazucao_ataque",
   "habilidades": []
  },
  "tork": {
-  "nucleo": "#9BE348",
+  "nucleo": "#FF8236",
   "motivo": "Tork",
   "ataque": "fau_tork_ataque",
   "habilidades": []
@@ -350,28 +352,30 @@
   "habilidades": []
  },
  "nokka": {
-  "nucleo": "#FF8236",
+  "nucleo": "#9BE348",
   "motivo": "Nokka",
   "ataque": "fau_nokka_ataque",
   "habilidades": []
  },
  "caninus_white": {
-  "nucleo": "#FFD12E",
+  "nucleo": "#55D7EB",
   "motivo": "Caninus White",
   "ataque": "fau_caninus_white_ataque",
   "habilidades": []
  },
  "rappy": {
-  "nucleo": "#9BE348",
+  "nucleo": "#FF8236",
   "motivo": "Rappy",
   "ataque": "fau_rappy_ataque",
   "habilidades": []
  },
  "cameo": {
-  "nucleo": "#55D7EB",
+  "nucleo": "#9BE348",
   "motivo": "Cameo",
   "ataque": "fau_cameo_ataque",
-  "habilidades": []
+  "habilidades": [
+   "fau_cameo_hack"
+  ]
  },
  "pipa": {
   "nucleo": "#FF8236",
@@ -380,19 +384,19 @@
   "habilidades": []
  },
  "tupi": {
-  "nucleo": "#FFD12E",
+  "nucleo": "#9BE348",
   "motivo": "Tupi",
   "ataque": "fau_tupi_ataque",
   "habilidades": []
  },
  "luna": {
-  "nucleo": "#9BE348",
+  "nucleo": "#E0483A",
   "motivo": "Luna Nari",
   "ataque": "fau_luna_ataque",
   "habilidades": []
  },
  "skarp": {
-  "nucleo": "#55D7EB",
+  "nucleo": "#FFD12E",
   "motivo": "Skarp",
   "ataque": "fau_skarp_ataque",
   "habilidades": []
@@ -404,19 +408,19 @@
   "habilidades": []
  },
  "muggo": {
-  "nucleo": "#FFD12E",
+  "nucleo": "#9BE348",
   "motivo": "Muggo",
   "ataque": "fau_muggo_ataque",
   "habilidades": []
  },
  "boro": {
-  "nucleo": "#9BE348",
+  "nucleo": "#FF8236",
   "motivo": "Boro",
   "ataque": "fau_boro_ataque",
   "habilidades": []
  },
  "drako": {
-  "nucleo": "#55D7EB",
+  "nucleo": "#9BE348",
   "motivo": "Drako",
   "ataque": "fau_drako_ataque",
   "habilidades": []

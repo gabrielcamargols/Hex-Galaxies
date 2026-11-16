@@ -5296,6 +5296,9 @@ const TER_ABFX = {
 	# Krieg
 	"k_cmd": {"bombard": "kri_cmd_bombardeio", "bleed": "kri_cmd_sangramento"},
 	"k_granadeiro": {"blast": "kri_gran_granada", "explode": "kri_gran_saraivada"},
+	# Faurianos (ativas)
+	"gorun": {"animal": "fau_gorun_animal"},
+	"cameo": {"hack": "fau_cameo_hack"},
 	# Zukunft
 	"z_dragao": {"orbital": "zuk_dragao_orbital", "splash": "zuk_dragao_rajada"},
 	"z_portais": {"burrow": "zuk_portais_entrada"},
@@ -5357,6 +5360,8 @@ func _on_abfx(e: Dictionary) -> void:
 	if e["k"] == "bleed":
 		board.bleed_pop(e["h"])
 	if _ter_abfx(e):
+		if e["k"] == "hack":
+			_comic_pop(_hex_pos(e["h"], 0.0) + Vector3(0, 1.6, 0), "HACK!", false)
 		return
 	var g0 = _hex_pos(e["h"], 0.0)
 	var fc = _unit_color(e["uid"]).lightened(0.35)

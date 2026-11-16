@@ -147,6 +147,8 @@ def merge(*fx):
         for k in ("shake", "shake_delay"):
             if k in f:
                 out[k] = max(out.get(k, 0), f[k]) if k == "shake" else f[k]
+        if "hit_t" in f:
+            out["hit_t"] = max(out.get("hit_t", 0.0), f["hit_t"])
     return out
 
 
