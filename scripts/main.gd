@@ -5547,7 +5547,24 @@ func _storm_end() -> void:
 	sfx.stop_loop("tempestade_loop", 3.0)
 
 
+var at_first_strike: int = -1    # autoteste: round do primeiro ataque entre peças (auditoria dos mapas)
+var at_strikes: int = 0
+
+
 func _on_fx(e: Dictionary) -> void:
+	if autotest and e.get("t", "") == "strike" and game != null:
+		var ua = game.by_uid(e["from"])
+		var ub = game.by_uid(e["to"])
+		if ua == null or ub == null or ub.barrier or ua.owner == ub.owner:
+			_on_fx_real(e)
+			return
+		at_strikes += 1
+		if at_first_strike < 0:
+			at_first_strike = game.round_no
+	_on_fx_real(e)
+
+
+func _on_fx_real(e: Dictionary) -> void:
 	var now = Time.get_ticks_msec()
 	var d = impact_delay if now < impact_until else 0.0
 	match e["t"]:
@@ -6344,6 +6361,8 @@ func _net_closed(reason: String) -> void:
 func _game_over() -> void:
 	if autotest:
 		print("AUTOTESTE FIM: vencedor=%d round=%d eventos=%d" % [game.winner, game.round_no, game.logs.size()])
+		var caps = game.logs.filter(func(l): return "capturou a Hex Energy" in l["text"]).size()
+		print("AUDITORIA mapa=%s primeiro_combate=%d ataques=%d capturas_hex=%d rounds=%d" % [game.map_id, at_first_strike, at_strikes, caps, game.round_no])
 		for l in game.logs:
 			if "usou" in l["text"]:
 				print("  [r%d p%d] %s" % [l["round"], l["p"], l["text"]])
