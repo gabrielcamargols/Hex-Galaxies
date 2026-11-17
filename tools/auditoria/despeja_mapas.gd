@@ -37,7 +37,7 @@ func _ready():
 		var out = {"map": mid, "entry": [[DB.entry_c[0].x, DB.entry_c[0].y], [DB.entry_c[1].x, DB.entry_c[1].y]],
 			"cores": DB.maps[mid].get("cores", []), "hex_scale": DB.maps[mid].get("hex_scale", 1.0), "hexes": hx, "edges": edges, "los": los,
 			"deploy0": g.deploy_hexes(0).map(func(h): return [h.x, h.y]), "deploy1": g.deploy_hexes(1).map(func(h): return [h.x, h.y])}
-		var f = FileAccess.open("/tmp/claude-0/-home-claude/99897205-7338-5caa-9161-60bd3fc082e8/scratchpad/aud/mapa_%s.json" % mid, FileAccess.WRITE)
+		var f = FileAccess.open("user://auditoria_mapa_%s.json" % mid, FileAccess.WRITE)
 		f.store_string(JSON.stringify(out))
 		f.close()
 		print("mapa ", mid, " casas ", hx.size(), " arestas ", edges.size(), " tiros ", los.size())
