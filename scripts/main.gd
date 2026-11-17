@@ -26,7 +26,7 @@ const TDESC = {
 }
 const RULES = "[b]Objetivo:[/b] derrotar o Comandante inimigo (ele entra no round 6). No fim do round 12 vence quem tiver mais Vida no Comandante; empate: soma da Vida dos aliados.\n\n[b]Turno:[/b] os lados se alternam ativando 1 peça por vez. Cada peça ativada tem [b]2 ações[/b], e cada tipo só pode ser usado [b]1 vez por turno[/b]: mover 1 vez, atacar 1 vez, usar habilidade ativa (ex.: mover + atacar). [b]Táticas não gastam ação:[/b] cada peça ativada pode jogar 1 carta de graça. Arraste a carta e solte no personagem (ou na casa) destacado para escolher quem recebe o efeito. Habilidades passivas não gastam ação. Colocar uma reserva em campo gasta 1 ação. [b]A área de entrada cresce:[/b] a cada round (no round 1 vai até 1 casa da sua base, no 2 até 2 casas, e assim por diante), sempre na sua metade do mapa. Em cada round, cada lado pode colocar [b]só 1 peça[/b] da reserva em campo.\n\n[b]Chuva (Abnara):[/b] no round 6 começa a chover e a chuva dura 2 rounds (6 e 7), depois passa. Enquanto chove: todos os ataques causam 3 a menos de dano e o céu escurece. Raios caem em casas aleatórias; se acertarem a mata ela pega fogo, o incêndio se espalha pelas árvores vizinhas e quem estiver numa casa em chamas ou ao lado perde 1 de Vida a cada round. A mata queimada vira clareira. Depois que a chuva passa, o incêndio que já começou continua até se apagar.
 
-[b]Altura:[/b] atacar de cima +1 de dano, de baixo -1. Tiros (alcance 2+) de cima ganham +1 de alcance. Corpo a corpo só com até 1 nível de diferença.\n\n[b]Núcleo:[/b] nos rounds 2, 4, 6 e 8 surge um núcleo de energia que fica 2 rounds. Leve uma peça até ele para capturar: 2 cartas, +2 ATQ ou +4 Vida com defesa. O local do próximo aparece antes, marcado no mapa.\n\n[b]Controle Lithari:[/b] [b]Lento[/b] = -1 de Movimento até o fim do round (mínimo 1). [b]Enraizado[/b] = não anda até o fim do próximo round; depois de se soltar, a peça fica imune a novo enraizamento por 1 round. [b]Zona de Cristal[/b] = casas marcadas (\"CRISTAL\") por 2 rounds: inimigo que entra nelas fica Lento. Lithari não são afetados pelas zonas deles.\n\n[b]Impulso:[/b] derrubar uma tropa dá 1 casa de movimento grátis (1 vez por ativação).\n\n[b]Linha de tiro:[/b] uma casa no caminho bloqueia se o topo dela for mais alto que o atacante e o alvo.\n\n[b]Abrigo:[/b] -2 de dano se uma rocha/ruína/ossada vizinha ao alvo estiver do lado do atacante.\n\n[b]Tarhut (o mapa mais difícil):[/b] as dunas, com até 5 níveis de altura, mudam inteiras a cada 3 rounds (aviso 1 round antes, nos rounds 4, 7 e 10). Elas bloqueiam tiros e dão vantagem de altura; quem estiver no alto quando a duna baixar despenca: 1 de dano, +1 se cair 3 níveis e +1 se cair 5. A cada 3 rounds o [color=#ff6a4a]Verme Gigante[/color] sai da areia (o \"!\" avisa 1 round antes): quem estiver no buraco sofre 4 de dano e quem estiver ao lado, 1. Fuja das casas marcadas! O deserto é enorme.\n\n[b]Valak (caverna de cristais):[/b] um labirinto de cristais que muda a cada partida. Cristais bloqueiam passagem e tiros; um ataque quebra um cristal e o efeito atinge TODOS ao lado: [color=#7dff4a]verde[/color] cura 2, [color=#5ae8ff]azul[/color] dá +1 de Movimento no próximo movimento do round, [color=#ff5ae0]roxo[/color] causa 2 de dano. No centro vive a [color=#ff4ad0]Garra[/color]: andar (+1), atacar ou usar habilidade (+2) a até 3 casas do buraco, ou passar um carrinho por ali (+3), aumenta a VIBRAÇÃO. Em 5, a garra ataca: quem está a 1 casa do buraco é arrastado e morre; a 2 ou 3 casas sofre 2 de dano e é puxado 1 casa. Carrinhos: uma peça ao lado gasta 1 ação para empurrar; ele anda até 3 casas no trilho e o primeiro atingido sofre 3 e é empurrado. [color=#ffb14a]Tempestade de areia:[/color] no round em que o vento muda (3, 6, 9) e no round em que as dunas mudam (4, 7, 10), todos os ataques causam 2 a menos de dano.\n\n[b]Escaravelhos Verdes (Tarhut):[/b] basta passar por cima de um (ou parar nele) para guardá-lo, sem gastar ação. [b]1 escaravelho[/b] restaura 6 de Vida de uma peça; [b]2 escaravelhos[/b] deixam uma peça usar a ativa mais uma vez; os que sobrarem no fim somam +1 de Vida ao seu comandante na contagem do último round. Para gastá-los (curar ou reativar), use os botões do escaravelho no painel de exército.\n\n[b]Online:[/b] na tela do exército, toque em \"⚡ Online\". Um jogador cria a sala e passa o código de 6 letras; o outro digita o código e entra. O mapa é o planeta de quem criou a sala. No app instalado (PC/Android), a sala usa o IP da rede local no lugar do código.\n\n[b]Controles:[/b] clique numa peça sua e depois numa casa verde (mover) ou num inimigo vermelho (atacar), ou arraste a peça e solte. Confirme a prévia. Botão direito gira a câmera, arrastar o fundo move o mapa, a roda aproxima. Q/E giram. Enter confirma, Esc cancela.\n\n[b]Toque (tablet/celular):[/b] toque numa peça e numa casa para agir. 1 dedo arrasta o mapa; pinça com 2 dedos aproxima/afasta; girar os 2 dedos gira a câmera; arrastar os 2 dedos para cima/baixo inclina a visão. \"Tudo\" recentraliza."
+[b]Altura:[/b] atacar de cima +1 de dano, de baixo -1. Tiros (alcance 2+) de cima ganham +1 de alcance. Corpo a corpo só com até 1 nível de diferença.\n\n[b][color=#c77dff]Hex Energy[/color]:[/b] nos rounds 2, 4, 6 e 8 surge um hexágono roxo de energia que fica 2 rounds. Leve uma peça até ele para capturar: 2 cartas, +2 ATQ ou +4 Vida com defesa. O local da próxima aparece antes, com um contorno roxo no mapa.\n\n[b]Controle Lithari:[/b] [b]Lento[/b] = -1 de Movimento até o fim do round (mínimo 1). [b]Enraizado[/b] = não anda até o fim do próximo round; depois de se soltar, a peça fica imune a novo enraizamento por 1 round. [b]Zona de Cristal[/b] = casas marcadas (\"CRISTAL\") por 2 rounds: inimigo que entra nelas fica Lento. Lithari não são afetados pelas zonas deles.\n\n[b]Impulso:[/b] derrubar uma tropa dá 1 casa de movimento grátis (1 vez por ativação).\n\n[b]Linha de tiro:[/b] uma casa no caminho bloqueia se o topo dela for mais alto que o atacante e o alvo.\n\n[b]Abrigo:[/b] -2 de dano se uma rocha/ruína/ossada vizinha ao alvo estiver do lado do atacante.\n\n[b]Tarhut (o mapa mais difícil):[/b] as dunas, com até 5 níveis de altura, mudam inteiras a cada 3 rounds (aviso 1 round antes, nos rounds 4, 7 e 10). Elas bloqueiam tiros e dão vantagem de altura; quem estiver no alto quando a duna baixar despenca: 1 de dano, +1 se cair 3 níveis e +1 se cair 5. A cada 3 rounds o [color=#ff6a4a]Verme Gigante[/color] sai da areia (o \"!\" avisa 1 round antes): quem estiver no buraco sofre 4 de dano e quem estiver ao lado, 1. Fuja das casas marcadas! O deserto é enorme.\n\n[b]Valak (caverna de cristais):[/b] um labirinto de cristais que muda a cada partida. Cristais bloqueiam passagem e tiros; um ataque quebra um cristal e o efeito atinge TODOS ao lado: [color=#7dff4a]verde[/color] cura 2, [color=#5ae8ff]azul[/color] dá +1 de Movimento no próximo movimento do round, [color=#ff5ae0]roxo[/color] causa 2 de dano. No centro vive a [color=#ff4ad0]Garra[/color]: andar (+1), atacar ou usar habilidade (+2) a até 3 casas do buraco, ou passar um carrinho por ali (+3), aumenta a VIBRAÇÃO. Em 5, a garra ataca: quem está a 1 casa do buraco é arrastado e morre; a 2 ou 3 casas sofre 2 de dano e é puxado 1 casa. Carrinhos: uma peça ao lado gasta 1 ação para empurrar; ele anda até 3 casas no trilho e o primeiro atingido sofre 3 e é empurrado. [color=#ffb14a]Tempestade de areia:[/color] no round em que o vento muda (3, 6, 9) e no round em que as dunas mudam (4, 7, 10), todos os ataques causam 2 a menos de dano.\n\n[b]Escaravelhos Verdes (Tarhut):[/b] basta passar por cima de um (ou parar nele) para guardá-lo, sem gastar ação. [b]1 escaravelho[/b] restaura 6 de Vida de uma peça; [b]2 escaravelhos[/b] deixam uma peça usar a ativa mais uma vez; os que sobrarem no fim somam +1 de Vida ao seu comandante na contagem do último round. Para gastá-los (curar ou reativar), use os botões do escaravelho no painel de exército.\n\n[b]Online:[/b] na tela do exército, toque em \"⚡ Online\". Um jogador cria a sala e passa o código de 6 letras; o outro digita o código e entra. O mapa é o planeta de quem criou a sala. No app instalado (PC/Android), a sala usa o IP da rede local no lugar do código.\n\n[b]Controles:[/b] clique numa peça sua e depois numa casa verde (mover) ou num inimigo vermelho (atacar), ou arraste a peça e solte. Confirme a prévia. Botão direito gira a câmera, arrastar o fundo move o mapa, a roda aproxima. Q/E giram. Enter confirma, Esc cancela.\n\n[b]Toque (tablet/celular):[/b] toque numa peça e numa casa para agir. 1 dedo arrasta o mapa; pinça com 2 dedos aproxima/afasta; girar os 2 dedos gira a câmera; arrastar os 2 dedos para cima/baixo inclina a visão. \"Tudo\" recentraliza."
 
 var board
 var game: Game = null
@@ -3042,10 +3042,10 @@ func refresh() -> void:
 	board.sync_bananas(game.bananas, me)
 	board.sync_core(game.core, game.core_next if game.core == null or game.core_next != game.core else null)
 	if game.core != null:
-		st["labels"][game.core] = "NÚCLEO"
+		st["labels"][game.core] = "HEX ENERGY"
 		st["label_colors"][game.core] = Color("#7ff0ff")
 	if game.core_next != null and game.core_next != game.core:
-		st["labels"][game.core_next] = "próximo núcleo · round %d" % game.core_next_round
+		st["labels"][game.core_next] = "próxima Hex Energy · round %d" % game.core_next_round
 		st["label_colors"][game.core_next] = Color("#9fd8e8")
 	_check_tension()
 	# Valak: área de perigo da garra (mais forte quando a vibração está alta)
@@ -3267,9 +3267,9 @@ func _refresh_top() -> void:
 			if wr <= 10:
 				ev.append("Vermes no round %d" % wr)
 	if game.core != null:
-		ev.insert(0, "NÚCLEO ATIVO até o round %d" % game.core_until)
+		ev.insert(0, "HEX ENERGY ativa até o round %d" % game.core_until)
 	elif game.core_next != null:
-		ev.insert(0, "Núcleo surge no round %d" % game.core_next_round)
+		ev.insert(0, "Hex Energy surge no round %d" % game.core_next_round)
 	w["events"].text = "   ·   ".join(ev)
 	w["events"].visible = not ev.is_empty()
 
@@ -5676,14 +5676,15 @@ func _on_fx(e: Dictionary) -> void:
 			var cp2 = _hex_pos(e["h"], 0.1)
 			match e["what"]:
 				"spawn":
-					vfx.flip("portal", cp2, 3.2, 1.0, Color("#7ff0ff"))
-					vfx.flip("ring", cp2, 4.5, 0.9, Color("#7ff0ff"), true)
-					sfx.play("vfx_portal", -4.0)
-					_later(1.6, banner.bind("NÚCLEO DE ENERGIA", "capture com qualquer peça: cartas ou bônus"))
+					vfx.flip("portal", cp2, 3.2, 1.0, Color("#b44cff"))
+					vfx.flip("ring", cp2, 4.5, 0.9, Color("#c77dff"), true)
+					vfx.flip("ring", cp2, 7.0, 1.2, Color("#b44cff"), true)
+					sfx.play("hex_energy_surge", -2.0, 1.0, 0.0)
+					_later(1.6, banner.bind("HEX ENERGY", "capture com qualquer peça: cartas ou bônus"))
 				"take":
-					vfx.flip("sparkle", cp2 + Vector3(0, 0.8, 0), 3.0, 0.8, Color("#7ff0ff"))
-					vfx.flip("ring", cp2, 3.6, 0.7, Color("#ffffff"), true)
-					sfx.play("vfx_crystal", -3.0)
+					vfx.flip("sparkle", cp2 + Vector3(0, 0.8, 0), 3.0, 0.8, Color("#c77dff"))
+					vfx.flip("ring", cp2, 3.6, 0.7, Color("#e6b8ff"), true)
+					sfx.play("hex_energy_take", -2.0, 1.0, 0.0)
 				"fade":
 					vfx.flip("smoke", cp2, 2.2, 0.8)
 		"danger":

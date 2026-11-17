@@ -29,7 +29,7 @@ const STEPS = [
 	{"t": "Termine a ativação", "x": "Quem acabou de entrar ainda tem 1 ação: pode andar ou atacar.\n\nQuando não quiser fazer mais nada, toque em \"Encerrar ativação\"."},
 	{"t": "O terreno importa", "x": "• Atacar de cima: +1 de dano (de baixo: -1).\n• Rochas, galpões e caixas bloqueiam a linha de tiro e dão abrigo (-2 de dano).\n• Floresta e lama custam mais movimento.\n• A área de entrada cresce a cada 3 rounds.\n\nToque numa casa ou peça para ver o que ela faz.", "next": true},
 	{"t": "Passe o round", "x": "Quando não quiser ativar mais peças, toque em \"Passar o round\". O round acaba quando os dois passam, e as peças ficam prontas de novo.", "pass": true},
-	{"t": "Pronto para a guerra!", "x": "No round 6 os comandantes entram em campo e cada um tem uma habilidade especial que pode virar a partida. A partir do round 2, dispute o NÚCLEO DE ENERGIA: o próximo local aparece marcado antes.\n\nDica: abra \"Regras\" a qualquer momento. Na tela do exército há o modo Mix e o Jogar Online.", "end": true},
+	{"t": "Pronto para a guerra!", "x": "No round 6 os comandantes entram em campo e cada um tem uma habilidade especial que pode virar a partida. A partir do round 2, dispute a HEX ENERGY, o hexágono roxo pulsante: o próximo local aparece marcado antes.\n\nDica: abra \"Regras\" a qualquer momento. Na tela do exército há o modo Mix e o Jogar Online.", "end": true},
 ]
 
 

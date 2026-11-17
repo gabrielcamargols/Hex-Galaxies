@@ -2065,7 +2065,7 @@ func _core_spot() -> Variant:
 
 func _core_events() -> void:
 	if core != null and round_no > core_until:
-		log_msg(-1, "O núcleo se apagou sem ser capturado.")
+		log_msg(-1, "A Hex Energy se apagou sem ser capturada.")
 		emitfx({"t": "core", "what": "fade", "h": core})
 		core = null
 	if round_no == 1:
@@ -2074,7 +2074,7 @@ func _core_events() -> void:
 	if CORE_ROUNDS.has(round_no) and core_next != null:
 		core = core_next
 		core_until = round_no + 1
-		log_msg(-1, "Um NÚCLEO DE ENERGIA surgiu! Leve uma peça até ele para capturar (fica 2 rounds).")
+		log_msg(-1, "A HEX ENERGY surgiu! Leve uma peça até o hexágono roxo para capturar (fica 2 rounds).")
 		emitfx({"t": "core", "what": "spawn", "h": core})
 		var nx = CORE_ROUNDS.find(round_no) + 1
 		core_next = null
@@ -2090,20 +2090,20 @@ func _capture_core(u) -> void:
 	var h = core
 	core = null
 	emitfx({"t": "core", "what": "take", "h": h, "uid": u.uid})
-	log_msg(u.owner, "%s capturou o núcleo!" % nm(u))
+	log_msg(u.owner, "%s capturou a Hex Energy!" % nm(u))
 	var opts = ["Comprar 2 cartas de tática", "+2 ATQ até o fim do próximo round", "+4 de Vida e -1 dano recebido no próximo round"]
-	var pick = await ask(u.owner, {"t": "choice", "text": "Núcleo capturado por %s! Escolha a recompensa:" % nm(u), "opts": opts, "kind": "core", "uid": u.uid})
+	var pick = await ask(u.owner, {"t": "choice", "text": "Hex Energy capturada por %s! Escolha a recompensa:" % nm(u), "opts": opts, "kind": "core", "uid": u.uid})
 	match int(pick) if pick != null else 0:
 		1:
 			u.fx.append({"k": "atk", "v": 2, "till": round_no + 1})
-			log_msg(u.owner, "Núcleo: %s ganhou +2 ATQ." % nm(u))
+			log_msg(u.owner, "Hex Energy: %s ganhou +2 ATQ." % nm(u))
 		2:
 			heal(u, 4)
 			u.fx.append({"k": "red", "v": 1, "till": round_no + 1})
-			log_msg(u.owner, "Núcleo: %s recuperou 4 de Vida e está blindado." % nm(u))
+			log_msg(u.owner, "Hex Energy: %s recuperou 4 de Vida e está blindado." % nm(u))
 		_:
 			draw_cards(u.owner, 2)
-			log_msg(u.owner, "Núcleo: comprou 2 cartas.")
+			log_msg(u.owner, "Hex Energy: comprou 2 cartas.")
 			await hand_limit(u.owner)
 	emitfx({"t": "passive", "kind": "power", "uid": u.uid})
 

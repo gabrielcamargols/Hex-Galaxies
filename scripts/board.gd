@@ -1642,7 +1642,122 @@ var core_at: Variant = null
 var core_next_at: Variant = null
 
 
-# núcleo de energia: orbe brilhante girando; o próximo aparece como um anel fantasma
+# HEX ENERGY: hexágono roxo neon que flutua, gira e pulsa, com coluna de luz e zumbido;
+# o próximo local aparece como um contorno roxo fantasma que pulsa devagar
+const HEX_ROXO = Color("#9d2cff")
+const HEX_ROXO_CLARO = Color("#d48cff")
+const HEX_ROXO_ESCURO = Color("#4a0e8f")
+
+
+func _hex_ring(r_out: float, r_in: float) -> ArrayMesh:
+	var st = SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_normal(Vector3.UP)
+	for k in range(6):
+		var a1 = TAU / 6 * k
+		var a2 = TAU / 6 * (k + 1)
+		var o1 = Vector3(cos(a1), 0, sin(a1))
+		var o2 = Vector3(cos(a2), 0, sin(a2))
+		st.add_vertex(o1 * r_in)
+		st.add_vertex(o1 * r_out)
+		st.add_vertex(o2 * r_out)
+		st.add_vertex(o1 * r_in)
+		st.add_vertex(o2 * r_out)
+		st.add_vertex(o2 * r_in)
+	return st.commit()
+
+
+func _neon(c: Color, alpha: float = 1.0, energia: float = 2.5) -> StandardMaterial3D:
+	var m = StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.albedo_color = Color(c, alpha)
+	m.emission_enabled = true
+	m.emission = c
+	m.emission_energy_multiplier = energia
+	m.cull_mode = BaseMaterial3D.CULL_DISABLED
+	if alpha < 0.99:
+		m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA     # mistura normal: o roxo fica roxo em qualquer chão
+	return m
+
+
+func _hex_energy_node(h: Vector2i) -> Node3D:
+	var n = Node3D.new()
+	n.position = Vector3(world_xz(h).x, top_y(h), world_xz(h).y)
+	n.scale = Vector3.ONE * HX
+	scenery_root.add_child(n)
+	# casa inteira acesa: aro neon na borda e miolo translúcido
+	var aro = MeshInstance3D.new()
+	aro.mesh = _hex_ring(TILE * 0.98, TILE * 0.8)
+	aro.material_override = _neon(HEX_ROXO, 1.0, 1.4)
+	aro.position.y = 0.12
+	aro.name = "aro"
+	n.add_child(aro)
+	var miolo = MeshInstance3D.new()
+	miolo.mesh = _disc(TILE * 0.8, 6)
+	miolo.material_override = _neon(HEX_ROXO_ESCURO, 0.5, 0.8)
+	miolo.position.y = 0.11
+	miolo.name = "miolo"
+	n.add_child(miolo)
+	# onda que sai do centro a cada pulso
+	var onda = MeshInstance3D.new()
+	onda.mesh = _hex_ring(TILE * 0.5, TILE * 0.42)
+	onda.material_override = _neon(HEX_ROXO_CLARO, 0.8, 1.2)
+	onda.position.y = 0.13
+	onda.name = "onda"
+	n.add_child(onda)
+	# o hexágono flutuante: cristal de 6 faces em pé (visto de cima é um hexágono) + casca translúcida
+	var cris = Node3D.new()
+	cris.name = "cristal"
+	cris.position.y = 1.3
+	n.add_child(cris)
+	var corpo = MeshInstance3D.new()
+	corpo.mesh = _cyl(0.42, 0.42, 0.5, 6)
+	corpo.material_override = _neon(Color("#b44cff"), 1.0, 1.6)
+	cris.add_child(corpo)
+	for sy in [1.0, -1.0]:
+		var ponta = MeshInstance3D.new()
+		ponta.mesh = _cyl(0.0, 0.42, 0.42, 6)
+		ponta.material_override = _neon(HEX_ROXO_CLARO, 1.0, 1.4)
+		ponta.position.y = 0.46 * sy
+		if sy < 0:
+			ponta.rotation.x = PI
+		cris.add_child(ponta)
+	var casca = MeshInstance3D.new()
+	casca.mesh = _cyl(0.6, 0.6, 0.7, 6)
+	casca.material_override = _neon(HEX_ROXO, 0.35, 1.0)
+	casca.name = "casca"
+	cris.add_child(casca)
+	# coluna de luz: dá para achar a Hex Energy de qualquer canto do mapa
+	var feixe = MeshInstance3D.new()
+	feixe.mesh = _cyl(0.4, 0.6, 7.0, 6)
+	feixe.material_override = _neon(HEX_ROXO, 0.2, 1.0)
+	feixe.position.y = 3.5
+	feixe.name = "feixe"
+	n.add_child(feixe)
+	var lt = OmniLight3D.new()
+	lt.light_color = HEX_ROXO
+	lt.light_energy = 2.0
+	lt.omni_range = 3.4
+	lt.position = Vector3(0, 0.9, 0)
+	lt.name = "luz"
+	n.add_child(lt)
+	# zumbido no lugar (some com a distância)
+	var som = AudioStreamPlayer3D.new()
+	if ResourceLoader.exists("res://sounds/hex_energy_loop.wav"):
+		var st: AudioStreamWAV = load("res://sounds/hex_energy_loop.wav")
+		st.loop_mode = AudioStreamWAV.LOOP_FORWARD
+		st.loop_begin = 0
+		st.loop_end = int(st.get_length() * st.mix_rate)
+		som.stream = st
+		som.bus = "Efeitos"
+		som.volume_db = -6.0
+		som.unit_size = 6.0
+		som.max_distance = 40.0
+		som.autoplay = true
+		n.add_child(som)
+	return n
+
+
 func sync_core(c: Variant, nxt: Variant) -> void:
 	if c != core_at:
 		if core_node != null:
@@ -1650,33 +1765,7 @@ func sync_core(c: Variant, nxt: Variant) -> void:
 			core_node = null
 		core_at = c
 		if c != null and tiles.has(c):
-			core_node = Node3D.new()
-			core_node.position = Vector3(world_xz(c).x, top_y(c), world_xz(c).y)
-			scenery_root.add_child(core_node)
-			var orb = MeshInstance3D.new()
-			var sm = SphereMesh.new()
-			sm.radius = 0.24
-			sm.height = 0.48
-			orb.mesh = sm
-			var om = StandardMaterial3D.new()
-			om.albedo_color = Color("#bff8ff")
-			om.emission_enabled = true
-			om.emission = Color("#3fd8ff")
-			om.emission_energy_multiplier = 2.2
-			orb.material_override = om
-			orb.position = Vector3(0, 0.75, 0)
-			orb.name = "orb"
-			core_node.add_child(orb)
-			for i in range(3):
-				var ring = _mesh(core_node, _cyl(0.5 - i * 0.12, 0.5 - i * 0.12, 0.05, 6), Color("#7ff0ff"), Vector3(0, 0.08 + i * 0.05, 0))
-				ring.material_override = _mat(Color("#7ff0ff", 0.55 - i * 0.12), true)
-				ring.material_override.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-			var lt = OmniLight3D.new()
-			lt.light_color = Color("#7ff0ff")
-			lt.light_energy = 1.6
-			lt.omni_range = 3.0
-			lt.position = Vector3(0, 0.8, 0)
-			core_node.add_child(lt)
+			core_node = _hex_energy_node(c)
 	if nxt != core_next_at:
 		if core_next_node != null:
 			core_next_node.queue_free()
@@ -1684,11 +1773,39 @@ func sync_core(c: Variant, nxt: Variant) -> void:
 		core_next_at = nxt
 		if nxt != null and tiles.has(nxt):
 			core_next_node = Node3D.new()
-			core_next_node.position = Vector3(world_xz(nxt).x, top_y(nxt) + 0.04, world_xz(nxt).y)
+			core_next_node.position = Vector3(world_xz(nxt).x, top_y(nxt) + 0.11, world_xz(nxt).y)
+			core_next_node.scale = Vector3.ONE * HX
 			scenery_root.add_child(core_next_node)
-			var gr = _mesh(core_next_node, _disc(0.62, 6), Color("#7ff0ff"), Vector3.ZERO)
-			gr.material_override = _mat(Color("#7ff0ff", 0.22), true)
-			gr.material_override.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+			var gr = MeshInstance3D.new()
+			gr.mesh = _hex_ring(TILE * 0.95, TILE * 0.82)
+			gr.material_override = _neon(HEX_ROXO, 0.6, 1.0)
+			gr.name = "aro"
+			core_next_node.add_child(gr)
+			var gm = MeshInstance3D.new()
+			gm.mesh = _disc(TILE * 0.82, 6)
+			gm.material_override = _neon(HEX_ROXO_ESCURO, 0.25, 0.6)
+			core_next_node.add_child(gm)
+
+
+func _pulse_hex_energy() -> void:
+	var t = Time.get_ticks_msec() / 1000.0
+	var p = pow(0.5 + 0.5 * cos(TAU * t / 0.8), 3.0)      # mesmo ritmo do zumbido (0,8 s)
+	if core_node != null and is_instance_valid(core_node):
+		var cris = core_node.get_node("cristal")
+		cris.position.y = 1.3 + sin(t * 2.2) * 0.1
+		cris.rotation.y = t * 1.3
+		cris.scale = Vector3.ONE * (1.0 + 0.1 * p)
+		core_node.get_node("aro").material_override.emission_energy_multiplier = 1.0 + 1.6 * p
+		core_node.get_node("miolo").material_override.albedo_color.a = 0.35 + 0.3 * p
+		core_node.get_node("feixe").material_override.albedo_color.a = 0.12 + 0.14 * p
+		core_node.get_node("luz").light_energy = 1.4 + 2.0 * p
+		var fase = fmod(t, 0.8) / 0.8
+		var onda = core_node.get_node("onda")
+		onda.scale = Vector3.ONE * (0.6 + 1.5 * fase)
+		onda.material_override.albedo_color.a = 0.8 * (1.0 - fase)
+	if core_next_node != null and is_instance_valid(core_next_node):
+		var q = 0.5 + 0.5 * sin(t * 2.4)
+		core_next_node.get_node("aro").material_override.albedo_color.a = 0.25 + 0.4 * q
 
 
 func sync_bananas(b: Dictionary, viewer: int) -> void:
@@ -2318,11 +2435,7 @@ func _process(delta: float) -> void:
 	for sh in ship_nodes:
 		if is_instance_valid(sh):
 			_orient_ship(sh)
-	if core_node != null and is_instance_valid(core_node):
-		var orb = core_node.get_node_or_null("orb")
-		if orb != null:
-			orb.position.y = 0.75 + sin(Time.get_ticks_msec() / 300.0) * 0.08
-			orb.rotation.y += delta * 2.0
+	_pulse_hex_energy()
 	if g != null:
 		_update_claw(delta)
 	if not swirl_nodes.is_empty():
