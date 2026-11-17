@@ -147,13 +147,22 @@ def analisa(m):
 
 def figura(m, A, out):
     H = A["H"]
+    # gira o esquema para a base azul ficar à esquerda e a vermelha à direita, como na câmera do jogo
+    global xy
+    xy0 = xy
+    (ax0, ay0), (bx0, by0) = xy0(A["s"]), xy0(A["t"])
+    th = -math.atan2(by0 - ay0, bx0 - ax0)
+    def xy(h, _f=xy0, _c=math.cos(th), _s=math.sin(th)):
+        x, y = _f(h)
+        return x * _c - y * _s, x * _s + y * _c
+    ori = th
     fig, ax = plt.subplots(figsize=(9, 9), dpi=110)
     xs, ys = [], []
     for h, x in H.items():
         px, py = xy(h)
         xs.append(px)
         ys.append(py)
-        poly = RegularPolygon((px, py), 6, radius=1.0, orientation=0, facecolor=cor(x), edgecolor="#00000030", lw=0.4)
+        poly = RegularPolygon((px, py), 6, radius=1.0, orientation=ori, facecolor=cor(x), edgecolor="#00000030", lw=0.4)
         ax.add_patch(poly)
         if x["pass"] and x["h"] > 0:
             ax.text(px, py, str(x["h"]), ha="center", va="center", fontsize=5, color="#00000080")
@@ -174,10 +183,10 @@ def figura(m, A, out):
         ax.plot([p[0] for p in pts], [p[1] for p in pts], color=cores_r[i % 4], lw=3.2, alpha=0.9, zorder=5)
     for h, f in A["gargalos"]:
         px, py = xy(h)
-        ax.add_patch(RegularPolygon((px, py), 6, radius=0.9, orientation=0, facecolor="none", edgecolor="#ff1f1f", lw=2.6, zorder=6))
+        ax.add_patch(RegularPolygon((px, py), 6, radius=0.9, orientation=ori, facecolor="none", edgecolor="#ff1f1f", lw=2.6, zorder=6))
     for c, c0, c1, e in A["fair"]:
         px, py = xy(c)
-        ax.add_patch(RegularPolygon((px, py), 6, radius=0.7, orientation=0, facecolor="#9d2cff", edgecolor="white", lw=1.5, zorder=6))
+        ax.add_patch(RegularPolygon((px, py), 6, radius=0.7, orientation=ori, facecolor="#9d2cff", edgecolor="white", lw=1.5, zorder=6))
     for i, e in enumerate((A["s"], A["t"])):
         px, py = xy(e)
         ax.plot(px, py, marker="*", color=["#2b7bff", "#ff4a3a"][i], ms=22, mec="white", mew=1.5, zorder=8)
@@ -194,11 +203,12 @@ def figura(m, A, out):
     ax.set_title(NOMES[m], fontsize=16, fontweight="bold")
     fig.savefig(out, bbox_inches="tight", facecolor="#1b1d2b")
     plt.close(fig)
+    xy = xy0
 
 
 def partidas():
     R = collections.defaultdict(list)
-    for f in glob.glob(os.path.join(D, "*.log")):
+    for f in glob.glob(os.path.join(D, "logs", "*.log")) + glob.glob(os.path.join(D, "*.log")):
         for l in open(f, errors="ignore"):
             mm = re.search(r"AUDITORIA mapa=(\w+) primeiro_combate=(-?\d+) ataques=(\d+) capturas_hex=(\d+) rounds=(\d+)", l)
             if mm:
