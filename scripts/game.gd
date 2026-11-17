@@ -1533,7 +1533,8 @@ func _gen_crystals() -> void:
 		cand[h] = true
 	var colors = ["verde", "azul", "roxo"]
 	var best: Array = []
-	for attempt in range(60):
+	var reserva: Array = []      # o primeiro labirinto só conectado, caso nenhum passe na regra completa
+	for attempt in range(400):
 		var pick = {}
 		var segs = int(cfg.get("segs", 7))
 		var keys = cand.keys()
@@ -1554,6 +1555,10 @@ func _gen_crystals() -> void:
 		if _maze_ok(pick):
 			best = pick.keys()
 			break
+		if reserva.is_empty() and _maze_ok(pick, false):
+			reserva = pick.keys()
+	if best.is_empty():
+		best = reserva
 	if best.is_empty():
 		return
 	best.sort_custom(func(a, b): return a.x < b.x or (a.x == b.x and a.y < b.y))
@@ -1583,7 +1588,7 @@ func _gen_crystals() -> void:
 
 
 # todas as casas livres continuam ligadas entre si e às duas entradas
-func _maze_ok(pick: Dictionary) -> bool:
+func _maze_ok(pick: Dictionary, regra: bool = true) -> bool:
 	var open = {}
 	for h in DB.hexes:
 		if hole.has(h) or blocks.has(h) or pick.has(h) or cart_at(h):
@@ -1599,7 +1604,45 @@ func _maze_ok(pick: Dictionary) -> bool:
 			if open.has(n) and not seen.has(n):
 				seen[n] = true
 				q.append(n)
-	return seen.size() == open.size()
+	if seen.size() != open.size():
+		return false
+	if not regra:
+		return true
+	# auditoria dos mapas: base a base entre 14 e 17 passos, e uma segunda rota de verdade (sem as casas do meio
+	# da primeira) no máximo 3 passos mais longa; evita labirintos que encostam os exércitos ou os separam demais
+	var p1 = _maze_path(open, {})
+	if p1.is_empty() or p1.size() - 1 < 14 or p1.size() - 1 > 17:
+		return false
+	var ban = {}
+	for h in p1:
+		if DB.dist(h, DB.entry_c[0]) > 3 and DB.dist(h, DB.entry_c[1]) > 3:
+			ban[h] = true
+	var p2 = _maze_path(open, ban)
+	return not p2.is_empty() and p2.size() - p1.size() <= 3
+
+
+# caminho mais curto (em passos) de uma base à outra, sem passar pelas casas proibidas
+func _maze_path(open: Dictionary, ban: Dictionary) -> Array:
+	var a = DB.entry_c[0]
+	var b = DB.entry_c[1]
+	var prev = {a: a}
+	var q = [a]
+	var i = 0
+	while i < q.size():
+		var h = q[i]
+		i += 1
+		if h == b:
+			break
+		for n in DB.nbrs(h):
+			if open.has(n) and not ban.has(n) and not prev.has(n):
+				prev[n] = h
+				q.append(n)
+	if not prev.has(b):
+		return []
+	var path = [b]
+	while path[-1] != a:
+		path.append(prev[path[-1]])
+	return path
 
 
 # cristal quebrado: efeito em todos os personagens ao lado (aliados e inimigos)

@@ -30,7 +30,7 @@ const PAL = {
 	"pedra": ["#8e8aa8", "#726e8c", "#3c3a54"],
 	# Gor'Aida (gelo instável)
 	"neve": ["#eef4ff", "#cddcf2", "#7c94c4"], "neve_base": ["#fff0cc", "#ead6aa", "#9a8a6a"], "gelo": ["#8ed8f4", "#62b0e2", "#306aa0"],
-	"gelo_f": ["#cdeeff", "#a6d4f0", "#5a8ab0"], "fenda": ["#102a66", "#1b4aa0", "#2f6fc0"], "gelo_alto": ["#c4e2f6", "#9cc6e6", "#4e7ea6"],
+	"gelo_f": ["#4f9fd0", "#3a80b8", "#1c4a7a"], "fenda": ["#102a66", "#1b4aa0", "#2f6fc0"], "gelo_alto": ["#c4e2f6", "#9cc6e6", "#4e7ea6"],
 	"aval": ["#f8e8f4", "#e6cce0", "#9a7a98"],
 }
 const ELEV = {"tarhut": "#b8664e", "posto": "#e0c060", "abnara": "#b6d88a", "goraida": "#ffffff"}  # tom que as casas altas puxam
@@ -1027,8 +1027,8 @@ func _terr_mat(path: String) -> Material:
 
 func _crack_mat(i: int) -> Material:
 	if crack_mats.is_empty():
-		for k in range(6):
-			var path = ("res://ui/terreno/rachadura_%d.png" % k) if k < 3 else ("res://ui/terreno/rachadura_gelo_%d.png" % (k - 3))
+		for k in range(9):
+			var path = ("res://ui/terreno/rachadura_%d.png" % k) if k < 3 else ("res://ui/terreno/rachadura_gelo_%d.png" % (k - 3)) if k < 6 else ("res://ui/terreno/rachadura_gelo_linha_%d.png" % (k - 6))
 			if not ResourceLoader.exists(path):
 				crack_mats.append(null)
 				continue
@@ -1282,7 +1282,7 @@ func _build_beetle(root: Node3D) -> void:
 		var inst = ps.instantiate()
 		holder.add_child(inst)
 		inst.rotation_degrees = Vector3(-90, 0, 0)
-		inst.scale = Vector3.ONE * 0.95
+		inst.scale = Vector3.ONE * 1.35     # auditoria: maior, para não se perder no laranja
 		for mi in inst.find_children("*", "MeshInstance3D", true, false):
 			var mat = mi.get_active_material(0)
 			if mat is StandardMaterial3D:
@@ -1305,7 +1305,7 @@ func _build_beetle(root: Node3D) -> void:
 		halo_tex.height = 128
 	var halo = MeshInstance3D.new()
 	var q = QuadMesh.new()
-	q.size = Vector2(1.25, 1.25)
+	q.size = Vector2(1.9, 1.9)
 	halo.mesh = q
 	var hm = StandardMaterial3D.new()
 	hm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -1318,6 +1318,11 @@ func _build_beetle(root: Node3D) -> void:
 	halo.material_override = hm
 	halo.position = Vector3(0, 0.1, 0)
 	holder.add_child(halo)
+	var anel = MeshInstance3D.new()
+	anel.mesh = _hex_ring(0.62, 0.5)
+	anel.material_override = _neon(Color("#5dff7a"), 0.85, 1.4)
+	anel.position = Vector3(0, -0.3, 0)
+	holder.add_child(anel)
 	# pulsa o brilho e balança o besouro
 	var tw = halo.create_tween().set_loops()
 	tw.tween_property(halo, "scale", Vector3(1.12, 1.12, 1.12), 0.9).set_trans(Tween.TRANS_SINE)
@@ -1699,6 +1704,13 @@ func _hex_energy_node(h: Vector2i) -> Node3D:
 	miolo.name = "miolo"
 	n.add_child(miolo)
 	# onda que sai do centro a cada pulso
+	if DB.maps[g.map_id].get("cave", false):
+		# Valak é roxo: uma borda clara por fora para a Hex Energy não sumir no chão
+		var borda_v = MeshInstance3D.new()
+		borda_v.mesh = _hex_ring(TILE * 1.08, TILE * 0.98)
+		borda_v.material_override = _neon(Color("#fff4ff"), 1.0, 1.6)
+		borda_v.position.y = 0.125
+		n.add_child(borda_v)
 	var onda = MeshInstance3D.new()
 	onda.mesh = _hex_ring(TILE * 0.5, TILE * 0.42)
 	onda.material_override = _neon(HEX_ROXO_CLARO, 0.8, 1.2)
@@ -3158,8 +3170,11 @@ func _setup_cave_env() -> void:
 	ground.material_override = _mat(Color("#2a1650"))
 
 
-func _crystal_cluster(parent: Node3D, kind: String, seed_v: int) -> void:
+func _crystal_cluster(parent: Node3D, kind: String, seed_v: int, enfeite: bool = false) -> void:
 	var cc = CRYSTAL_COL.get(kind, ["#ffffff", "#999999"])
+	if enfeite:
+		# fora do tabuleiro: cor apagada e sem brilho, para não parecer um cristal que se pode quebrar
+		cc = [Color(cc[0]).darkened(0.55).lerp(Color("#2a2050"), 0.45).to_html(false), Color(cc[1]).darkened(0.6).lerp(Color("#20183e"), 0.45).to_html(false)]
 	var rng = RandomNumberGenerator.new()
 	rng.seed = seed_v * 31 + 7
 	var base = _mesh(parent, _cyl(0.48, 0.55, 0.22, 6), Color("#3a2468"), Vector3(0, 0.1, 0))
@@ -3179,19 +3194,27 @@ func _crystal_cluster(parent: Node3D, kind: String, seed_v: int) -> void:
 		var col = Color(cc[0]) if i % 2 == 0 else Color(cc[1])
 		var shaft = MeshInstance3D.new()
 		shaft.mesh = _cyl(rad, rad * 1.05, hgt, 6)
-		shaft.material_override = _glow_mat(col, 0.55)
+		shaft.material_override = _mat(col) if enfeite else _glow_mat(col, 0.85)
 		shaft.material_overlay = _ink()
 		shaft.position = Vector3(0, hgt * 0.5, 0)
 		holder.add_child(shaft)
 		var tip = MeshInstance3D.new()
 		tip.mesh = _cyl(0.0, rad, rad * 1.6, 6)
-		tip.material_override = _glow_mat(col.lightened(0.35), 0.7)
+		tip.material_override = _mat(col.lightened(0.15)) if enfeite else _glow_mat(col.lightened(0.35), 1.0)
 		tip.material_overlay = _ink()
 		tip.position = Vector3(0, hgt + rad * 0.8, 0)
 		holder.add_child(tip)
+	if enfeite:
+		return
+	# no tabuleiro: anel aceso na base, da cor do efeito (verde cura, azul movimento, roxo dano)
+	var aro = MeshInstance3D.new()
+	aro.mesh = _hex_ring(0.62, 0.5)
+	aro.material_override = _neon(Color(cc[0]), 0.9, 1.3)
+	aro.position = Vector3(0, 0.23, 0)
+	parent.add_child(aro)
 	var lt = OmniLight3D.new()
 	lt.light_color = Color(cc[0])
-	lt.light_energy = 0.6
+	lt.light_energy = 0.9
 	lt.omni_range = 2.6
 	lt.position = Vector3(0, 0.9, 0)
 	parent.add_child(lt)
@@ -3268,7 +3291,7 @@ func _build_cave() -> void:
 			holder.position = Vector3(cos(a3) * d3, BASE_Y + rng.randf_range(0.0, 1.2), sin(a3) * d3)
 			holder.scale = Vector3.ONE * rng.randf_range(0.9, 1.7)
 			scenery_root.add_child(holder)
-			_crystal_cluster(holder, kinds[i % 3], 900 + i + (0 if grp == mid else 50))
+			_crystal_cluster(holder, kinds[i % 3], 900 + i + (0 if grp == mid else 50), true)
 	_build_pit()
 
 
@@ -3849,17 +3872,22 @@ func _kpick(list: Array, h: Vector2i, salt: int) -> String:
 func _wild_props(root: Node3D, h: Vector2i, k: String) -> bool:
 	match k:
 		"mata":
-			# árvores baixas na borda da casa: quem está no meio continua visível
-			var rr0 = 0.62 * HX
+			# mata densa = CAPIM ALTO: dá para entrar (não é árvore, que parece parede), mas tapa a visão.
+			# tufos de lâminas finas, mais claros que as árvores de enfeite, na borda da casa (quem está no meio aparece)
+			var rr0 = 0.6 * HX
 			var a0 = _rnd(h, 2) * TAU
-			for i in range(3):
-				var aa = a0 + TAU / 3.0 * i
-				var tp = Vector3(cos(aa) * rr0, 0, sin(aa) * rr0)
-				var lista = K_PALMA if _rnd(h, i + 60) < 0.3 else K_SELVA
-				if not _kenney(root, _kpick(lista, h, i + 61), tp, 0.95 + _rnd(h, i + 9) * 0.3, _rnd(h, i + 62) * TAU, "jungle"):
-					_jungle_tree(root, tp, 0.62 + _rnd(h, i + 9) * 0.18, h, i + int(_rnd(h, 3) * 3))
-			for i in range(2):
-				_kenney(root, _kpick(K_MOITA, h, i + 70), Vector3((_rnd(h, i + 20) - 0.5) * 1.1, 0, (_rnd(h, i + 21) - 0.5) * 1.0), 0.22 + _rnd(h, i + 22) * 0.1, _rnd(h, i + 23) * TAU, "jungle")
+			var cores_c = [Color("#7ed957"), Color("#5cc04a"), Color("#a8ec6e")]
+			for i in range(7):
+				var aa = a0 + TAU / 7.0 * i + (_rnd(h, i + 40) - 0.5) * 0.4
+				var tufo = Vector3(cos(aa) * rr0, 0, sin(aa) * rr0)
+				for j in range(4):
+					var alt = 0.75 + _rnd(h, i * 7 + j) * 0.55
+					var inc = (_rnd(h, i * 5 + j + 100) - 0.5) * 0.5
+					var ang_l = _rnd(h, i * 3 + j + 200) * TAU
+					var off_l = Vector3(cos(ang_l), 0, sin(ang_l)) * 0.09
+					var lam = _mesh(root, _cyl(0.0, 0.075, alt, 4), cores_c[(i + j) % 3], tufo + off_l + Vector3(0, alt * 0.5, 0), Vector3(inc, ang_l, -inc))
+					lam.material_override = _mat(cores_c[(i + j) % 3])
+			_kenney(root, _kpick(K_MOITA, h, 70), Vector3((_rnd(h, 20) - 0.5) * 0.6, 0, (_rnd(h, 21) - 0.5) * 0.6), 0.18, _rnd(h, 23) * TAU, "jungle")
 		"raiz":
 			var holder = Node3D.new()
 			holder.rotation = Vector3(0, _rnd(h, 2) * TAU, 0)
@@ -3984,8 +4012,14 @@ func _wild_props(root: Node3D, h: Vector2i, k: String) -> bool:
 			for i in range(3):
 				_mesh(root, _box(Vector3(0.55, 0.012, 0.05)), Color("#ffffff"), Vector3((_rnd(h, i) - 0.5) * 0.8, 0.015, (_rnd(h, i + 6) - 0.5) * 0.8), Vector3(0, 0.6 + _rnd(h, 9) * 0.3, 0))
 		"gelo_fragil":
-			# rachadura de HQ no gelo (tools/rachadura.py, paleta gelo): contorno de tinta, cores deslocadas e retícula
-			_crack_decal(root, h, 3 + int(_rnd(h, 21) * 3) % 3, 2.0)
+			# gelo frágil: tom mais escuro, bolhas de ar presas e UMA rachadura fina atravessando (sem forma de X,
+			# que parecia um "proibido"; tools/rachadura.py linha=True)
+			_crack_decal(root, h, 6 + int(_rnd(h, 21) * 3) % 3, 1.5)
+			for i in range(5):
+				var a7 = _rnd(h, i + 80) * TAU
+				var r7 = sqrt(_rnd(h, i + 90)) * 0.62
+				var rb = 0.035 + _rnd(h, i + 95) * 0.045
+				_mesh(root, _cyl(rb, rb, 0.008, 10), Color("#d8f4ff"), Vector3(cos(a7) * r7, 0.016, sin(a7) * r7))
 		"fenda":
 			# chão do buraco: rachaduras azul-claras, retícula e cacos de gelo nascendo do fundo (sem nada preto chapado)
 			_crack_decal(root, h, 3 + int(_rnd(h, 24) * 3) % 3, 1.8, 0.013)

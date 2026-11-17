@@ -6363,8 +6363,9 @@ func _game_over() -> void:
 		print("AUTOTESTE FIM: vencedor=%d round=%d eventos=%d" % [game.winner, game.round_no, game.logs.size()])
 		var caps = game.logs.filter(func(l): return "capturou a Hex Energy" in l["text"]).size()
 		print("AUDITORIA mapa=%s primeiro_combate=%d ataques=%d capturas_hex=%d rounds=%d" % [game.map_id, at_first_strike, at_strikes, caps, game.round_no])
+		var tudo = OS.get_environment("AUTOTESTE_LOG") != ""
 		for l in game.logs:
-			if "usou" in l["text"]:
+			if tudo or "usou" in l["text"]:
 				print("  [r%d p%d] %s" % [l["round"], l["p"], l["text"]])
 		get_tree().quit()
 		return

@@ -63,18 +63,19 @@ PAL = {
 }
 
 
-def make(seed, pal="areia", fino=1.0):
+def make(seed, pal="areia", fino=1.0, linha=False):
+    """linha=True: uma rachadura só que atravessa a casa (dois braços opostos e um galho), sem forma de estrela/X"""
     P = PAL[pal]
     rng = random.Random(seed)
-    k = rng.randint(4, 6)
+    k = 2 if linha else rng.randint(4, 6)
     base = rng.uniform(0, math.tau)
     polys = []
     for i in range(k):
         a = base + math.tau * i / k + rng.uniform(-0.3, 0.3)
-        p, tip = bolt(rng, a, rng.uniform(150, 215), rng.uniform(13, 20) * fino)
+        p, tip = bolt(rng, a, rng.uniform(170, 215) if linha else rng.uniform(150, 215), rng.uniform(13, 20) * fino)
         polys.append(p)
         # galho
-        if rng.random() < 0.7:
+        if rng.random() < (0.5 if linha and i == 0 else 0.0 if linha else 0.7):
             mid = p[len(p) // 4]
             a2 = a + rng.choice([-1, 1]) * rng.uniform(0.6, 1.0)
             q, _ = bolt(rng, a2, rng.uniform(50, 90), rng.uniform(5, 8) * fino)
@@ -86,7 +87,8 @@ def make(seed, pal="areia", fino=1.0):
         d = ImageDraw.Draw(im)
         for p in polys:
             d.polygon([(x + dx, y + dy) for x, y in p], fill=255)
-        d.ellipse((C - 30 + dx, C - 30 + dy, C + 30 + dx, C + 30 + dy), fill=255)
+        rc = 8 if linha else 30
+        d.ellipse((C - rc + dx, C - rc + dy, C + rc + dx, C + rc + dy), fill=255)
         if grow:
             im = im.filter(ImageFilter.MaxFilter(grow))
         col = Image.new("RGBA", (S, S), fill)
@@ -109,7 +111,7 @@ def make(seed, pal="areia", fino=1.0):
     img.alpha_composite(halftone(dm, P["dots"], step=9, rmax=2.6))
     # lascas soltas (triângulos tipo estilhaço)
     d = ImageDraw.Draw(img)
-    for _ in range(rng.randint(7, 11)):
+    for _ in range(rng.randint(2, 3) if linha else rng.randint(7, 11)):
         a = rng.uniform(0, math.tau)
         r = rng.uniform(70, 200)
         x, y = C + math.cos(a) * r, C + math.sin(a) * r
@@ -130,4 +132,5 @@ if __name__ == "__main__":
     for i in range(3):
         make(11 + i * 7).save(os.path.join(OUT, "rachadura_%d.png" % i))
         make(41 + i * 5, "gelo", 1.0).save(os.path.join(OUT, "rachadura_gelo_%d.png" % i))
+        make(61 + i * 3, "gelo", 0.55, linha=True).save(os.path.join(OUT, "rachadura_gelo_linha_%d.png" % i))
     print("ok")
