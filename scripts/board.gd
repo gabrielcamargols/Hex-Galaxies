@@ -42,6 +42,8 @@ var RIM = 12.0         # raio da borda arredondada (onde o deserto se curva)
 var UNDER = 34.0       # altura da base rochosa por baixo do planetoide
 const ZOOM_MIN = 4.0
 const ZOOM_MAX = 140.0
+# personagens que já têm modelo 3D com esqueleto (Tripo): entram no lugar da arte 2D
+const FIG3D = {"k_cmd": "res://models/personagens/k_cmd.glb"}
 const BIG = ["moby", "balu", "banker", "l_behemot", "l_leviathan", "z_dragao", "w_mamute", "t_feram", "k_tank", "z_tank", "l_tank", "l_colosso", "sismico", "rhombo", "tork", "w_tric", "z_meca", "t_fendas", "t_raiz", "t_basalto", "t_carrinho", "t_sentinela", "t_britadeira", "a_garra", "k_escudeiro", "w_urso", "w_gorila", "w_javali"]
 
 var me: int = 0   # jogador deste aparelho (cores: você azul, oponente laranja)
@@ -2250,6 +2252,10 @@ func _make_unit(u) -> void:
 	elif u.barrier:
 		_mesh(node, _cyl(0.4, 0.5, 0.7, 6), Color("#6d6250"), Vector3(0, 0.35, 0))
 		body_h = 0.8
+	elif FIG3D.has(u.cid) and ResourceLoader.exists(FIG3D[u.cid]):
+		sprite = _figure3d(u.cid, body_h)
+		node.add_child(sprite)
+		_mask_layer(sprite)
 	elif DB.art.has(u.cid):
 		sprite = _figure(u.cid, body_h)
 		node.add_child(sprite)
@@ -2402,6 +2408,206 @@ func _figure_look(fig: MeshInstance3D, flip: bool, mod: Color) -> void:
 	var ol = fig.get_node_or_null("contorno")
 	if ol != null:
 		ol.material_override.set_shader_parameter("flip", 1.0 if flip else 0.0)
+
+
+# ---------- personagem 3D (modelo com esqueleto Mixamo) ----------
+# sombreado de quadrinho (hq_personagem: 2 tons, retícula hexagonal, visor aceso) + contorno de tinta;
+# poses feitas no código (respirar, andar, atacar, levar dano), sem arquivos de animação
+var _fig3d_glow_tex: GradientTexture2D = null
+
+
+func _figure3d(cid: String, body_h: float) -> Node3D:
+	var root = Node3D.new()
+	root.name = "fig3d"
+	root.set_meta("fig3d", true)
+	var giro = Node3D.new()
+	giro.name = "giro"
+	root.add_child(giro)
+	var inst: Node3D = load(FIG3D[cid]).instantiate()
+	giro.add_child(inst)
+	inst.rotation.y = -PI / 2.0          # o Tripo entrega o boneco olhando para +X; aqui ele olha para +Z
+	var mats: Array = []
+	var outl: Array = []
+	var hgt = 1.0
+	var sk: Skeleton3D = null
+	for mi in inst.find_children("*", "MeshInstance3D", true, false):
+		hgt = max(0.01, mi.mesh.get_aabb().size.y)
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+		for si in range(mi.mesh.get_surface_count()):
+			var src = mi.mesh.surface_get_material(si)
+			var m = ShaderMaterial.new()
+			m.shader = load("res://shaders/hq_personagem.gdshader")
+			if src is BaseMaterial3D and src.albedo_texture != null:
+				m.set_shader_parameter("tex", src.albedo_texture)
+			var o = ShaderMaterial.new()
+			o.shader = load("res://shaders/hq_contorno3d.gdshader")
+			m.next_pass = o
+			mi.set_surface_override_material(si, m)
+			mats.append(m)
+			outl.append(o)
+	for n in inst.find_children("*", "Skeleton3D", true, false):
+		sk = n
+		break
+	inst.scale = Vector3.ONE * (body_h * 0.9 / hgt)
+	root.set_meta("mats", mats)
+	root.set_meta("outl", outl)
+	root.set_meta("sel", false)
+	if sk != null:
+		var bones = {}
+		for nm in ["Hips", "Spine", "Spine1", "Spine2", "Neck", "Head", "LeftArm", "RightArm", "LeftForeArm", "RightForeArm",
+				"LeftUpLeg", "RightUpLeg", "LeftLeg", "RightLeg"]:
+			var b = sk.find_bone("mixamorig_" + nm)
+			if b < 0:
+				b = sk.find_bone("mixamorig:" + nm)
+			if b >= 0:
+				bones[nm] = b
+		if bones.has("Head") and bones.has("LeftUpLeg") and bones.has("RightUpLeg"):
+			var fw = Vector3(1, 0, 0)
+			var lf = sk.find_bone("mixamorig_LeftFoot")
+			var lt = sk.find_bone("mixamorig_LeftToeBase")
+			if lf >= 0 and lt >= 0:
+				var dv = sk.get_bone_global_rest(lt).origin - sk.get_bone_global_rest(lf).origin
+				dv.y = 0.0
+				if dv.length() > 0.001:
+					fw = dv.normalized()
+			var up = Vector3.UP
+			var left = up.cross(fw).normalized()
+			root.set_meta("skel", sk)
+			root.set_meta("bones", bones)
+			root.set_meta("ax", [fw, left, up])
+			# visor aceso: brilho aditivo preso à cabeça (o shader acende a textura; isto dá o halo)
+			if _fig3d_glow_tex == null:
+				_fig3d_glow_tex = GradientTexture2D.new()
+				var gr = Gradient.new()
+				gr.set_color(0, Color(1, 1, 1, 1))
+				gr.set_color(1, Color(1, 1, 1, 0))
+				gr.add_point(0.35, Color(1, 1, 1, 0.45))
+				_fig3d_glow_tex.gradient = gr
+				_fig3d_glow_tex.fill = GradientTexture2D.FILL_RADIAL
+				_fig3d_glow_tex.fill_from = Vector2(0.5, 0.5)
+				_fig3d_glow_tex.fill_to = Vector2(1.0, 0.5)
+				_fig3d_glow_tex.width = 64
+				_fig3d_glow_tex.height = 64
+			var hb = bones["Head"]
+			var att = BoneAttachment3D.new()
+			att.bone_idx = hb
+			sk.add_child(att)
+			var hg = sk.get_bone_global_rest(hb)
+			var vp = hg.origin + fw * 0.05 + up * 0.036
+			var halo = Sprite3D.new()
+			halo.name = "visor"
+			halo.texture = _fig3d_glow_tex
+			halo.pixel_size = 0.0011
+			halo.scale = Vector3(2.0, 0.85, 1.0)
+			halo.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+			halo.modulate = Color(1.0, 0.16, 0.1, 0.85)
+			halo.shaded = false
+			halo.transparent = true
+			halo.alpha_cut = SpriteBase3D.ALPHA_CUT_DISABLED
+			halo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			halo.position = hg.affine_inverse() * vp
+			att.add_child(halo)
+			var am = StandardMaterial3D.new()
+			am.albedo_texture = _fig3d_glow_tex
+			am.albedo_color = halo.modulate
+			am.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+			am.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+			am.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+			am.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+			am.billboard_keep_scale = true
+			am.no_depth_test = false
+			halo.material_override = am
+			root.set_meta("halo", am)
+			var lamp = OmniLight3D.new()
+			lamp.light_color = Color(1.0, 0.18, 0.1)
+			lamp.light_energy = 0.9
+			lamp.omni_range = 0.55
+			lamp.shadow_enabled = false
+			lamp.position = halo.position
+			att.add_child(lamp)
+			root.set_meta("lamp", lamp)
+	return root
+
+
+# gira a parte "local" do osso em torno de um eixo do esqueleto (frente / esquerda / cima)
+func _fig3d_q(sk: Skeleton3D, b: int, axis: Vector3, ang: float) -> Quaternion:
+	var gb = sk.get_bone_global_rest(b).basis.orthonormalized()
+	return Quaternion((gb.inverse() * axis).normalized(), ang)
+
+
+func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, walking: bool, lunge: float, hurt: float) -> void:
+	for m in fig.get_meta("mats"):
+		m.set_shader_parameter("mod_col", mod)
+	for o in fig.get_meta("outl"):
+		o.set_shader_parameter("mod_col", Color(1, 1, 1) if mod.r > 0.9 else mod)
+	var pulse = 0.82 + 0.18 * sin(t * 3.2)
+	if fig.has_meta("halo"):
+		var hc: Color = Color(1.0, 0.16, 0.1, 0.7 * pulse)
+		fig.get_meta("halo").albedo_color = Color(hc.r * mod.r, hc.g * mod.g, hc.b * mod.b, hc.a)
+		fig.get_meta("lamp").light_energy = 0.9 * pulse * mod.r
+	# virado meio para a câmera, meio para o lado em que anda (como a arte 2D, que só espelhava)
+	var giro: Node3D = fig.get_node("giro")
+	if cam != null and is_instance_valid(cam) and fig.is_inside_tree():
+		var tc = cam.global_position - fig.global_position
+		tc.y = 0.0
+		var rt = cam.global_transform.basis.x
+		rt.y = 0.0
+		if tc.length() > 0.01 and rt.length() > 0.01:
+			var dir = tc.normalized() * 0.75 + rt.normalized() * (-1.0 if flip else 1.0)
+			var yaw = atan2(dir.x, dir.z) - fig.get_parent().global_rotation.y
+			giro.rotation.y = lerp_angle(giro.rotation.y, yaw, min(1.0, delta * 8.0))
+	if not fig.has_meta("skel"):
+		return
+	var sk: Skeleton3D = fig.get_meta("skel")
+	var bn: Dictionary = fig.get_meta("bones")
+	var ax: Array = fig.get_meta("ax")
+	var F: Vector3 = ax[0]
+	var S: Vector3 = ax[1]
+	var U: Vector3 = ax[2]
+	var ww: float = fig.get_meta("walk_w", 0.0)
+	ww = move_toward(ww, 1.0 if walking else 0.0, delta * 5.0)
+	fig.set_meta("walk_w", ww)
+	var br = sin(t * 2.4)
+	var w = t * 9.0
+	var k = sin(clamp(lunge, 0.0, 1.0) * PI)
+	var pose = {}
+	# braços: do "A" do modelo para junto do corpo, cotovelo um pouco dobrado
+	pose["LeftArm"] = [[F, -0.30 - 0.03 * br], [S, 0.35 * ww * sin(w)]]
+	pose["RightArm"] = [[F, 0.30 + 0.03 * br], [S, -0.35 * ww * sin(w) - 1.35 * k]]
+	pose["LeftForeArm"] = [[S, -0.25]]
+	pose["RightForeArm"] = [[S, -0.25 - 0.35 * k]]
+	# tronco: respira, gira no golpe, recua no dano
+	pose["Spine1"] = [[S, 0.025 * br - 0.12 * k + 0.22 * hurt], [U, 0.3 * k]]
+	pose["Spine2"] = [[S, 0.015 * br]]
+	pose["Head"] = [[U, 0.10 * sin(t * 0.7) - 0.15 * k], [S, -0.08 * hurt]]
+	# pernas: passada quando anda
+	pose["LeftUpLeg"] = [[S, -0.45 * ww * sin(w)]]
+	pose["RightUpLeg"] = [[S, 0.45 * ww * sin(w)]]
+	pose["LeftLeg"] = [[S, 0.55 * ww * max(0.0, sin(w + 1.4))]]
+	pose["RightLeg"] = [[S, 0.55 * ww * max(0.0, -sin(w + 1.4))]]
+	for nm in pose.keys():
+		if not bn.has(nm):
+			continue
+		var b: int = bn[nm]
+		var q: Quaternion = sk.get_bone_rest(b).basis.get_rotation_quaternion()
+		for e in pose[nm]:
+			q = q * _fig3d_q(sk, b, e[0], e[1])
+		sk.set_bone_pose_rotation(b, q)
+
+
+# selecionado: o contorno de tinta vira a cor da facção e engrossa
+func _fig3d_select(fig: Node3D, selected: bool, fc: Color) -> void:
+	var pul = 0.5 + 0.5 * sin(Time.get_ticks_msec() / 200.0)
+	if not selected and not fig.get_meta("sel", false):
+		return
+	fig.set_meta("sel", selected)
+	for o in fig.get_meta("outl"):
+		if selected:
+			o.set_shader_parameter("ink", fc.lerp(Color.WHITE, 0.25 * pul))
+			o.set_shader_parameter("px", 4.0)
+		else:
+			o.set_shader_parameter("ink", Color(0.04, 0.016, 0.063, 1.0))
+			o.set_shader_parameter("px", 2.2)
 
 
 # caminho casa a casa só pelo terreno (para a animação)
@@ -2567,7 +2773,22 @@ func _update_units(delta: float) -> void:
 		d["flags"].text = " ".join(fl)
 		var sprite = d["sprite"]
 		var selected = state.get("sel_uid", -1) == u.uid
-		if sprite != null:
+		if sprite != null and sprite.has_meta("fig3d"):
+			var mod3 = Color(0.55, 0.55, 0.55) if (u.activated and not u.barrier) else Color(1, 1, 1)
+			if d["hurt"] > 0.0:
+				d["hurt"] = max(0.0, d["hurt"] - delta * 2.5)
+				mod3 = mod3.lerp(Color(1, 0.3, 0.2), d["hurt"])
+			if d["lunge"] > 0.0:
+				d["lunge"] = max(0.0, d["lunge"] - delta * 1.6)
+			var pos3 = Vector3.ZERO
+			if walking:
+				pos3.y += abs(sin(t_now * 9.0)) * 0.05
+			if selected:
+				pos3.y += 0.06 + 0.05 * sin(t_now * 6.0)
+			sprite.position = pos3
+			_fig3d_tick(sprite, delta, t_now + d["bob"], d["flip"], mod3, walking, d["lunge"], d["hurt"])
+			_fig3d_select(sprite, selected, d["ring"].get_meta("fcol", Color.WHITE))
+		elif sprite != null:
 			var base_mod = Color(0.55, 0.55, 0.55) if (u.activated and not u.barrier) else Color(1, 1, 1)
 			if d["hurt"] > 0.0:
 				d["hurt"] = max(0.0, d["hurt"] - delta * 2.5)
