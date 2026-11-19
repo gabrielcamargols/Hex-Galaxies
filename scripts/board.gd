@@ -2475,6 +2475,21 @@ func _figure3d(cid: String, body_h: float) -> Node3D:
 			root.set_meta("skel", sk)
 			root.set_meta("bones", bones)
 			root.set_meta("ax", [fw, left, up])
+			# mãos fechadas (punho): cada falange dobra em direção à palma; a palma olha para o corpo
+			for side in ["Left", "Right"]:
+				var palm = -left if side == "Left" else left
+				for fg in [["Index", 1.25], ["Middle", 1.35], ["Ring", 1.35], ["Pinky", 1.3], ["Thumb", 0.55]]:
+					for j in range(1, 4):
+						var b = sk.find_bone("mixamorig_%sHand%s%d" % [side, fg[0], j])
+						var c = sk.find_bone("mixamorig_%sHand%s%d" % [side, fg[0], j + 1])
+						if b < 0 or c < 0:
+							continue
+						var dv = (sk.get_bone_global_rest(c).origin - sk.get_bone_global_rest(b).origin).normalized()
+						var ax_c = dv.cross(palm)
+						if ax_c.length() < 0.01:
+							continue
+						var ang = fg[1] * (0.6 if (fg[0] == "Thumb" and j == 1) else 1.0)
+						sk.set_bone_pose_rotation(b, sk.get_bone_rest(b).basis.get_rotation_quaternion() * _fig3d_q(sk, b, ax_c.normalized(), ang))
 			# visor aceso: brilho aditivo preso à cabeça (o shader acende a textura; isto dá o halo)
 			if _fig3d_glow_tex == null:
 				_fig3d_glow_tex = GradientTexture2D.new()
