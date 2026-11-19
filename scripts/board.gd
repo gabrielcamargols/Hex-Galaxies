@@ -2550,7 +2550,7 @@ func _fig3d_q(sk: Skeleton3D, b: int, axis: Vector3, ang: float) -> Quaternion:
 	return Quaternion((gb.inverse() * axis).normalized(), ang)
 
 
-func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, walking: bool, lunge: float, hurt: float) -> void:
+func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, walking: bool, lunge: float, hurt: float, run: bool = false, mdir: Vector3 = Vector3.ZERO) -> void:
 	for m in fig.get_meta("mats"):
 		m.set_shader_parameter("mod_col", mod)
 	for o in fig.get_meta("outl"):
@@ -2563,9 +2563,13 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 		hs[0].albedo_color = Color(1.0 * mod.r, 0.1 * mod.g, 0.05 * mod.b, 0.8 * a)
 		hs[1].albedo_color = Color(1.0 * mod.r, 0.62 * mod.g, 0.55 * mod.b, 1.0 * a)
 		fig.get_meta("lamp").light_energy = 1.6 * a * mod.r
-	# virado meio para a câmera, meio para o lado em que anda (como a arte 2D, que só espelhava)
+	# andando: olha para onde vai; parado: meio para a câmera, meio para o lado (como a arte 2D, que só espelhava)
 	var giro: Node3D = fig.get_node("giro")
-	if cam != null and is_instance_valid(cam) and fig.is_inside_tree():
+	var md = Vector3(mdir.x, 0.0, mdir.z)
+	if walking and md.length() > 0.01 and fig.is_inside_tree():
+		var yaw_m = atan2(md.x, md.z) - fig.get_parent().global_rotation.y
+		giro.rotation.y = lerp_angle(giro.rotation.y, yaw_m, min(1.0, delta * 12.0))
+	elif cam != null and is_instance_valid(cam) and fig.is_inside_tree():
 		var tc = cam.global_position - fig.global_position
 		tc.y = 0.0
 		var rt = cam.global_transform.basis.x
@@ -2573,7 +2577,7 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 		if tc.length() > 0.01 and rt.length() > 0.01:
 			var dir = tc.normalized() * 0.75 + rt.normalized() * (-1.0 if flip else 1.0)
 			var yaw = atan2(dir.x, dir.z) - fig.get_parent().global_rotation.y
-			giro.rotation.y = lerp_angle(giro.rotation.y, yaw, min(1.0, delta * 8.0))
+			giro.rotation.y = lerp_angle(giro.rotation.y, yaw, min(1.0, delta * 6.0))
 	if not fig.has_meta("skel"):
 		return
 	var sk: Skeleton3D = fig.get_meta("skel")
@@ -2583,30 +2587,45 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 	var S: Vector3 = ax[1]
 	var U: Vector3 = ax[2]
 	var ww: float = fig.get_meta("walk_w", 0.0)
-	ww = move_toward(ww, 1.0 if walking else 0.0, delta * 5.0)
+	ww = move_toward(ww, 1.0 if walking else 0.0, delta * 6.0)
 	fig.set_meta("walk_w", ww)
+	var rw: float = fig.get_meta("run_w", 0.0)          # 0 = andando, 1 = correndo
+	rw = move_toward(rw, 1.0 if (walking and run) else (0.0 if walking else rw), delta * 5.0)
+	fig.set_meta("run_w", rw)
+	# fase da passada acumulada (trocar de andar para correr não dá tranco)
+	var ph: float = fig.get_meta("fase", 0.0) + delta * lerp(7.0, 12.5, rw) * (1.0 if ww > 0.0 else 0.0)
+	fig.set_meta("fase", fmod(ph, TAU * 100.0))
 	var br = sin(t * 2.2)                       # respiração
 	var sh = sin(t * 0.55)                      # troca o peso de uma perna para a outra, devagar
 	var lk = sin(t * 0.42) + 0.35 * sin(t * 1.13)   # olha em volta (vigia o campo)
 	var idle = 1.0 - ww
-	var w = t * 9.0
+	var sw = sin(ph)
 	var k = sin(clamp(lunge, 0.0, 1.0) * PI)
+	# amplitudes: andar -> correr
+	var leg_a = lerp(0.42, 0.78, rw) * ww
+	var knee_a = lerp(0.55, 1.15, rw) * ww
+	var knee_0 = lerp(0.05, 0.3, rw) * ww
+	var arm_a = lerp(0.32, 0.65, rw) * ww
+	var elbow = lerp(-0.30, -1.25, rw * ww)
+	var lean = lerp(0.04, 0.24, rw) * ww
+	# sobe e desce a cada passo (duas vezes por ciclo)
+	fig.position.y += abs(sw) * lerp(0.035, 0.1, rw) * ww
 	var pose = {}
-	# braços: do "A" do modelo para junto do corpo, cotovelo dobrado; sobem e descem com a respiração
-	pose["LeftArm"] = [[F, -0.30 - 0.06 * br * idle + 0.04 * sh * idle], [S, 0.35 * ww * sin(w) + 0.06 * sin(t * 0.8) * idle]]
-	pose["RightArm"] = [[F, 0.30 + 0.06 * br * idle + 0.04 * sh * idle], [S, -0.35 * ww * sin(w) - 1.35 * k - 0.05 * sin(t * 0.8 + 1.0) * idle]]
-	pose["LeftForeArm"] = [[S, -0.30 - 0.05 * br * idle]]
-	pose["RightForeArm"] = [[S, -0.30 - 0.05 * br * idle - 0.35 * k]]
-	# tronco: respira fundo, balança o peso, gira no golpe, recua no dano
-	pose["Spine"] = [[F, 0.035 * sh * idle]]
-	pose["Spine1"] = [[S, 0.05 * br * idle - 0.12 * k + 0.22 * hurt], [U, 0.3 * k + 0.05 * lk * idle]]
+	# braços: do "A" do modelo para junto do corpo; respiram parado; balançam contra as pernas andando
+	pose["LeftArm"] = [[F, -0.30 - 0.06 * br * idle + 0.04 * sh * idle + 0.08 * rw * ww], [S, arm_a * sw + 0.06 * sin(t * 0.8) * idle]]
+	pose["RightArm"] = [[F, 0.30 + 0.06 * br * idle + 0.04 * sh * idle - 0.08 * rw * ww], [S, -arm_a * sw - 1.35 * k - 0.05 * sin(t * 0.8 + 1.0) * idle]]
+	pose["LeftForeArm"] = [[S, elbow - 0.05 * br * idle]]
+	pose["RightForeArm"] = [[S, elbow - 0.05 * br * idle - 0.35 * k]]
+	# tronco: respira, balança o peso, inclina para a frente correndo, entra no golpe, recua no dano
+	pose["Spine"] = [[F, 0.035 * sh * idle], [U, 0.08 * sw * ww]]
+	pose["Spine1"] = [[S, 0.05 * br * idle + lean + 0.12 * k - 0.22 * hurt], [U, 0.3 * k + 0.05 * lk * idle - 0.1 * sw * ww]]
 	pose["Spine2"] = [[S, 0.03 * br * idle], [F, -0.02 * sh * idle]]
-	pose["Head"] = [[U, 0.2 * lk * idle - 0.15 * k], [S, -0.04 * br * idle - 0.08 * hurt], [F, -0.03 * sh * idle]]
-	# pernas: passada quando anda
-	pose["LeftUpLeg"] = [[S, -0.45 * ww * sin(w)]]
-	pose["RightUpLeg"] = [[S, 0.45 * ww * sin(w)]]
-	pose["LeftLeg"] = [[S, 0.55 * ww * max(0.0, sin(w + 1.4))]]
-	pose["RightLeg"] = [[S, 0.55 * ww * max(0.0, -sin(w + 1.4))]]
+	pose["Head"] = [[U, 0.2 * lk * idle - 0.15 * k], [S, -0.04 * br * idle - 0.08 * hurt - lean * 0.6], [F, -0.03 * sh * idle]]
+	# pernas: coxa vai e volta, joelho dobra quando a perna volta (mais ainda correndo)
+	pose["LeftUpLeg"] = [[S, -leg_a * sw - knee_0 * 0.4]]
+	pose["RightUpLeg"] = [[S, leg_a * sw - knee_0 * 0.4]]
+	pose["LeftLeg"] = [[S, knee_0 + knee_a * max(0.0, sin(ph + 1.4))]]
+	pose["RightLeg"] = [[S, knee_0 + knee_a * max(0.0, -sin(ph + 1.4))]]
 	for nm in pose.keys():
 		if not bn.has(nm):
 			continue
@@ -2750,6 +2769,7 @@ func _update_units(delta: float) -> void:
 			d["from"] = Vector3(node.position.x, node.position.y, node.position.z)
 			d["seg_t"] = 0.0
 			d["long"] = path.size() == 1 and DB.dist(d["hex"], goal) > 1
+			d["run"] = path.size() >= 3          # personagem 3D: perto anda, longe corre
 			d["hex"] = goal
 		if d["pop"] < 1.0:
 			d["pop"] = min(1.0, d["pop"] + delta * 3.5)
@@ -2759,11 +2779,19 @@ func _update_units(delta: float) -> void:
 		if walking:
 			var w2 = world_xz(d["path"][0])
 			var w = Vector3(w2.x, top_y(d["path"][0]), w2.y)
-			d["seg_t"] += delta * (1.6 if d.get("long", false) else 5.0)
+			var is3d = d["sprite"] != null and d["sprite"].has_meta("fig3d")
+			var lng = d.get("long", false)
+			# 3D: passo contínuo (sem pulinho), andando ou correndo; 2D: salta de casa em casa
+			var spd = 1.6 if lng else ((4.0 if d.get("run", false) else 2.1) if is3d else 5.0)
+			d["seg_t"] += delta * spd
 			var t = min(1.0, d["seg_t"])
-			var e2 = 2.0 * t * t if t < 0.5 else 1.0 - pow(-2.0 * t + 2.0, 2.0) / 2.0
+			var e2 = t if (is3d and not lng) else (2.0 * t * t if t < 0.5 else 1.0 - pow(-2.0 * t + 2.0, 2.0) / 2.0)
 			var p = d["from"].lerp(w, e2)
-			p.y += sin(PI * t) * (1.2 if d.get("long", false) else 0.3)
+			var arc = 1.2 if lng else 0.3
+			if is3d and not lng:
+				arc = 0.3 if abs(w.y - d["from"].y) > 0.2 else 0.0     # só pula degrau
+			p.y += sin(PI * t) * arc
+			d["mdir"] = w - d["from"]
 			node.position = p
 			var sa = cam.unproject_position(d["from"])
 			var sb = cam.unproject_position(w)
@@ -2803,12 +2831,10 @@ func _update_units(delta: float) -> void:
 			if d["lunge"] > 0.0:
 				d["lunge"] = max(0.0, d["lunge"] - delta * 1.6)
 			var pos3 = Vector3.ZERO
-			if walking:
-				pos3.y += abs(sin(t_now * 9.0)) * 0.05
 			if selected:
 				pos3.y += 0.06 + 0.05 * sin(t_now * 6.0)
 			sprite.position = pos3
-			_fig3d_tick(sprite, delta, t_now + d["bob"], d["flip"], mod3, walking, d["lunge"], d["hurt"])
+			_fig3d_tick(sprite, delta, t_now + d["bob"], d["flip"], mod3, walking and not d.get("long", false), d["lunge"], d["hurt"], d.get("run", false), d.get("mdir", Vector3.ZERO))
 			_fig3d_select(sprite, selected, d["ring"].get_meta("fcol", Color.WHITE))
 		elif sprite != null:
 			var base_mod = Color(0.55, 0.55, 0.55) if (u.activated and not u.barrier) else Color(1, 1, 1)
