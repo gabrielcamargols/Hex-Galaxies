@@ -13,7 +13,7 @@ uniform float dot_px = 6.0;
 uniform float sat = 1.18;
 uniform float bright = 1.18;                            // a textura do Tripo vem mais escura que a arte                               // cores um pouco mais vivas, como a arte
 // visor: os pixels bem vermelhos da textura viram luz
-uniform vec3 glow_col : source_color = vec3(1.0, 0.12, 0.08);
+uniform vec3 glow_col : source_color = vec3(1.0, 0.06, 0.04);
 uniform float glow_amt = 2.6;
 uniform float rim_amt = 0.35;
 // luz "de desenho": vem do alto à esquerda, presa à câmera (todo personagem é sombreado do mesmo jeito)
@@ -24,7 +24,7 @@ void fragment() {
 	// máscara do visor: vermelho puro (no laranja das faixas o verde passa de ~45% do vermelho e fica de fora)
 	float gr = c0.g / max(c0.r, 0.01);
 	float br = c0.b / max(c0.r, 0.01);
-	float glow_m = smoothstep(0.34, 0.22, gr) * smoothstep(0.45, 0.3, br) * smoothstep(0.35, 0.5, c0.r);
+	float glow_m = smoothstep(0.4, 0.24, gr) * smoothstep(0.5, 0.32, br) * smoothstep(0.35, 0.5, c0.r);
 	float l0 = dot(c0, vec3(0.299, 0.587, 0.114));
 	vec3 c = clamp(mix(vec3(l0), c0, sat) * bright, 0.0, 1.0);
 	vec3 nrm = normalize(NORMAL);
@@ -52,6 +52,8 @@ void fragment() {
 	float fr = pow(1.0 - clamp(dot(nrm, VIEW), 0.0, 1.0), 3.0);
 	col += c * fr * rim_amt;
 	float pulse = 0.82 + 0.18 * sin(TIME * 3.2);
-	col = mix(col, glow_col * (1.15 + 0.35 * pulse), glow_m);
+	// visor aceso: vermelho de luz (passa do 1.0) com miolo quente quase branco
+	vec3 hot = glow_col * (2.0 + 0.6 * pulse) + vec3(1.0, 0.55, 0.45) * pow(glow_m, 4.0) * 0.22 * pulse;
+	col = mix(col, hot, glow_m);
 	ALBEDO = col * mod_col.rgb;
 }

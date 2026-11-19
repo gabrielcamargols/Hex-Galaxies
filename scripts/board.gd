@@ -2493,37 +2493,37 @@ func _figure3d(cid: String, body_h: float) -> Node3D:
 			att.bone_idx = hb
 			sk.add_child(att)
 			var hg = sk.get_bone_global_rest(hb)
-			var vp = hg.origin + fw * 0.05 + up * 0.036
-			var halo = Sprite3D.new()
-			halo.name = "visor"
-			halo.texture = _fig3d_glow_tex
-			halo.pixel_size = 0.0011
-			halo.scale = Vector3(2.0, 0.85, 1.0)
-			halo.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-			halo.modulate = Color(1.0, 0.16, 0.1, 0.85)
-			halo.shaded = false
-			halo.transparent = true
-			halo.alpha_cut = SpriteBase3D.ALPHA_CUT_DISABLED
-			halo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-			halo.position = hg.affine_inverse() * vp
-			att.add_child(halo)
-			var am = StandardMaterial3D.new()
-			am.albedo_texture = _fig3d_glow_tex
-			am.albedo_color = halo.modulate
-			am.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-			am.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-			am.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-			am.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
-			am.billboard_keep_scale = true
-			am.no_depth_test = false
-			halo.material_override = am
-			root.set_meta("halo", am)
+			var vp = hg.origin + fw * 0.075 + up * 0.03
+			# duas camadas aditivas: halo largo e suave + risco horizontal quente (como o visor da ilustração)
+			var hp = hg.affine_inverse() * vp
+			var halos = []
+			for spec in [["visor_halo", 0.0024, Vector2(2.2, 1.0)], ["visor_risco", 0.0016, Vector2(2.8, 0.28)]]:
+				var halo = Sprite3D.new()
+				halo.name = spec[0]
+				halo.texture = _fig3d_glow_tex
+				halo.pixel_size = spec[1]
+				halo.scale = Vector3(spec[2].x, spec[2].y, 1.0)
+				halo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+				halo.position = hp
+				att.add_child(halo)
+				var am = StandardMaterial3D.new()
+				am.albedo_texture = _fig3d_glow_tex
+				am.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+				am.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+				am.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+				am.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+				am.billboard_keep_scale = true
+				am.render_priority = 2
+				am.no_depth_test = true      # o brilho passa por cima do capacete, como o bloom da ilustração
+				halo.material_override = am
+				halos.append(am)
+			root.set_meta("halos", halos)
 			var lamp = OmniLight3D.new()
 			lamp.light_color = Color(1.0, 0.18, 0.1)
-			lamp.light_energy = 0.9
-			lamp.omni_range = 0.55
+			lamp.light_energy = 1.6
+			lamp.omni_range = 0.8
 			lamp.shadow_enabled = false
-			lamp.position = halo.position
+			lamp.position = hp
 			att.add_child(lamp)
 			root.set_meta("lamp", lamp)
 	return root
@@ -2541,10 +2541,13 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 	for o in fig.get_meta("outl"):
 		o.set_shader_parameter("mod_col", Color(1, 1, 1) if mod.r > 0.9 else mod)
 	var pulse = 0.82 + 0.18 * sin(t * 3.2)
-	if fig.has_meta("halo"):
-		var hc: Color = Color(1.0, 0.16, 0.1, 0.7 * pulse)
-		fig.get_meta("halo").albedo_color = Color(hc.r * mod.r, hc.g * mod.g, hc.b * mod.b, hc.a)
-		fig.get_meta("lamp").light_energy = 0.9 * pulse * mod.r
+	if fig.has_meta("halos"):
+		var hs: Array = fig.get_meta("halos")
+		var flick = 0.94 + 0.06 * sin(t * 23.0) * sin(t * 7.3)     # tremidinha de luz viva
+		var a = pulse * flick
+		hs[0].albedo_color = Color(1.0 * mod.r, 0.1 * mod.g, 0.05 * mod.b, 0.8 * a)
+		hs[1].albedo_color = Color(1.0 * mod.r, 0.62 * mod.g, 0.55 * mod.b, 1.0 * a)
+		fig.get_meta("lamp").light_energy = 1.6 * a * mod.r
 	# virado meio para a câmera, meio para o lado em que anda (como a arte 2D, que só espelhava)
 	var giro: Node3D = fig.get_node("giro")
 	if cam != null and is_instance_valid(cam) and fig.is_inside_tree():
@@ -2567,19 +2570,23 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 	var ww: float = fig.get_meta("walk_w", 0.0)
 	ww = move_toward(ww, 1.0 if walking else 0.0, delta * 5.0)
 	fig.set_meta("walk_w", ww)
-	var br = sin(t * 2.4)
+	var br = sin(t * 2.2)                       # respiração
+	var sh = sin(t * 0.55)                      # troca o peso de uma perna para a outra, devagar
+	var lk = sin(t * 0.42) + 0.35 * sin(t * 1.13)   # olha em volta (vigia o campo)
+	var idle = 1.0 - ww
 	var w = t * 9.0
 	var k = sin(clamp(lunge, 0.0, 1.0) * PI)
 	var pose = {}
-	# braços: do "A" do modelo para junto do corpo, cotovelo um pouco dobrado
-	pose["LeftArm"] = [[F, -0.30 - 0.03 * br], [S, 0.35 * ww * sin(w)]]
-	pose["RightArm"] = [[F, 0.30 + 0.03 * br], [S, -0.35 * ww * sin(w) - 1.35 * k]]
-	pose["LeftForeArm"] = [[S, -0.25]]
-	pose["RightForeArm"] = [[S, -0.25 - 0.35 * k]]
-	# tronco: respira, gira no golpe, recua no dano
-	pose["Spine1"] = [[S, 0.025 * br - 0.12 * k + 0.22 * hurt], [U, 0.3 * k]]
-	pose["Spine2"] = [[S, 0.015 * br]]
-	pose["Head"] = [[U, 0.10 * sin(t * 0.7) - 0.15 * k], [S, -0.08 * hurt]]
+	# braços: do "A" do modelo para junto do corpo, cotovelo dobrado; sobem e descem com a respiração
+	pose["LeftArm"] = [[F, -0.30 - 0.06 * br * idle + 0.04 * sh * idle], [S, 0.35 * ww * sin(w) + 0.06 * sin(t * 0.8) * idle]]
+	pose["RightArm"] = [[F, 0.30 + 0.06 * br * idle + 0.04 * sh * idle], [S, -0.35 * ww * sin(w) - 1.35 * k - 0.05 * sin(t * 0.8 + 1.0) * idle]]
+	pose["LeftForeArm"] = [[S, -0.30 - 0.05 * br * idle]]
+	pose["RightForeArm"] = [[S, -0.30 - 0.05 * br * idle - 0.35 * k]]
+	# tronco: respira fundo, balança o peso, gira no golpe, recua no dano
+	pose["Spine"] = [[F, 0.035 * sh * idle]]
+	pose["Spine1"] = [[S, 0.05 * br * idle - 0.12 * k + 0.22 * hurt], [U, 0.3 * k + 0.05 * lk * idle]]
+	pose["Spine2"] = [[S, 0.03 * br * idle], [F, -0.02 * sh * idle]]
+	pose["Head"] = [[U, 0.2 * lk * idle - 0.15 * k], [S, -0.04 * br * idle - 0.08 * hurt], [F, -0.03 * sh * idle]]
 	# pernas: passada quando anda
 	pose["LeftUpLeg"] = [[S, -0.45 * ww * sin(w)]]
 	pose["RightUpLeg"] = [[S, 0.45 * ww * sin(w)]]
