@@ -45,7 +45,7 @@ const ZOOM_MAX = 140.0
 # personagens que já têm modelo 3D com esqueleto (Tripo): entram no lugar da arte 2D
 const FIG3D = {
 	"k_cmd": {"path": "res://models/personagens/k_cmd.glb", "visor": true, "punho": true, "jeito": "militar"},
-	"rhazur": {"path": "res://models/personagens/rhazur.glb", "visor": false, "punho": false, "jeito": "bruto"},
+	"rhazur": {"path": "res://models/personagens/rhazur.glb", "visor": false, "punho": false, "jeito": "bruto", "giro": 0.0, "anims": {"andar": "Walking", "correr": "Running"}},
 	"rei_mina": {"path": "res://models/personagens/rei_mina.glb", "visor": false, "punho": false, "jeito": "rei", "brilho": "rachaduras", "cintila": true, "pegadas": "LeftFoot", "conjura": [0.07, 0.035, 0.032]},
 	"z_dragao": {"path": "res://models/personagens/z_dragao.glb", "corpo": "dragao", "escala": 1.35, "brilho": "gemas"},
 	"karo": {"path": "res://models/personagens/karo.glb", "visor": false, "punho": true, "jeito": "malandro", "bracos": "bolso", "cauda": [-0.05, 0.45, 0.0]},
@@ -2460,7 +2460,7 @@ func _figure3d(cid: String, body_h: float) -> Node3D:
 	var cfg: Dictionary = FIG3D[cid]
 	var inst: Node3D = load(cfg["path"]).instantiate()
 	giro.add_child(inst)
-	inst.rotation.y = -PI / 2.0          # o Tripo entrega o boneco olhando para +X; aqui ele olha para +Z
+	inst.rotation.y = float(cfg.get("giro", -PI / 2.0))   # o Tripo entrega o boneco olhando para +X; o Meshy/Mixamo já olha para +Z
 	var mats: Array = []
 	var outl: Array = []
 	var hgt = 1.0
@@ -2508,6 +2508,20 @@ func _figure3d(cid: String, body_h: float) -> Node3D:
 	root.set_meta("mats", mats)
 	root.set_meta("outl", outl)
 	root.set_meta("pegadas", cfg.get("pegadas", ""))
+	# animações que vieram no próprio modelo (Meshy/Mixamo): andar e correr tocam o arquivo; o resto é no código
+	if cfg.has("anims"):
+		for ap in inst.find_children("*", "AnimationPlayer", true, false):
+			var ok = {}
+			for k in cfg["anims"].keys():
+				var an: String = cfg["anims"][k]
+				for nome in ap.get_animation_list():
+					if String(nome).ends_with(an):
+						ok[k] = nome
+						ap.get_animation(nome).loop_mode = Animation.LOOP_LINEAR
+			if not ok.is_empty():
+				root.set_meta("anim_p", ap)
+				root.set_meta("anim_n", ok)
+			break
 	if cfg.has("conjura"):
 		root.set_meta("conjura", true)
 		root.set_meta("cj_t", 0.0)
@@ -2742,6 +2756,22 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 	var F: Vector3 = ax[0]
 	var S: Vector3 = ax[1]
 	var U: Vector3 = ax[2]
+	if fig.has_meta("anim_p"):
+		var apl: AnimationPlayer = fig.get_meta("anim_p")
+		var ann: Dictionary = fig.get_meta("anim_n")
+		var quer = ""
+		if walking and lunge <= 0.0:
+			quer = ann.get("correr", ann.get("andar", "")) if run else ann.get("andar", "")
+		if quer != "":
+			if apl.current_animation != quer:
+				apl.play(quer, 0.15)
+				apl.speed_scale = 1.0
+			fig.set_meta("walk_w", 1.0)
+			return
+		elif apl.is_playing():
+			apl.stop()
+			sk.reset_bone_poses()
+			fig.set_meta("walk_w", 0.0)
 	var J: Dictionary = fig.get_meta("jeito", JEITOS["padrao"])
 	var ww: float = fig.get_meta("walk_w", 0.0)
 	ww = move_toward(ww, 1.0 if walking else 0.0, delta * 6.0)
