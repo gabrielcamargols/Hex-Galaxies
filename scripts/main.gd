@@ -5963,7 +5963,7 @@ func _banter(uid: int) -> void:
 			var who = (u if pr["a"] == u.cid else o) if i % 2 == 0 else (o if pr["a"] == u.cid else u)
 			var other = o if who == u else u
 			_say(who.uid, pr["fala"][i], t0, "prov" if other.owner != who.owner else "fala")
-			t0 += 2.2
+			t0 += max(2.2, _dur_fala(who.cid, pr["fala"][i]) + 0.4)   # quem responde espera a gravação acabar
 		return
 	var enemies = others.filter(func(x): return x.owner != u.owner)
 	var allies = others.filter(func(x): return x.owner == u.owner)
@@ -5988,7 +5988,7 @@ func _banter(uid: int) -> void:
 	if tgt != null:
 		var l2 = _pick(dlg.get("resp_inimigo" if mode == "provoca" else "resp_aliado", {}).get(_fac_of(tgt), []))
 		if l2 != "":
-			_say(tgt.uid, l2, 2.6, "prov" if mode == "provoca" else "fala")
+			_say(tgt.uid, l2, max(2.6, 0.6 + _dur_fala(u.cid, l1) + 0.4), "prov" if mode == "provoca" else "fala")
 
 
 func _banter_death(uid: int) -> void:
@@ -6055,7 +6055,12 @@ func _say(uid: int, text: String, delay: float = 0.0, mood: String = "fala") -> 
 	var dur_b = 2.0 + text.length() * 0.035
 	var gvb = fala_gravada(u.cid, text)
 	if gvb != "":
-		dur_b = max(dur_b, sfx.streams[gvb].get_length() + 0.3)   # o balão fica enquanto a gravação toca
+		# fala gravada: o texto vai sendo escrito no ritmo da voz e o balão fica até ela terminar
+		var lv = sfx.streams[gvb].get_length()
+		dur_b = max(dur_b, lv + 0.6)
+		tl.visible_ratio = 0.0
+		var tt = create_tween()
+		tt.tween_property(tl, "visible_ratio", 1.0, lv * 0.92)
 	tw.tween_interval(dur_b)
 	tw.tween_property(p, "modulate:a", 0.0, 0.35)
 	tw.tween_callback(p.queue_free)
@@ -6500,6 +6505,12 @@ func fala_gravada(cid: String, text: String) -> String:
 	if n != "" and sfx != null and sfx.has_sound(n):
 		return n
 	return ""
+
+
+# duração da fala gravada (0 se não houver)
+func _dur_fala(cid: String, text: String) -> float:
+	var g = fala_gravada(cid, text)
+	return sfx.streams[g].get_length() if g != "" else 0.0
 
 
 func _talk_voice(u, text: String, mood: String) -> void:

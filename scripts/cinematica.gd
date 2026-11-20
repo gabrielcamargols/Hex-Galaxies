@@ -204,16 +204,20 @@ func _scene(c: Dictionary) -> void:
 	line_l.visible_ratio = 0.0
 	var tw = create_tween()
 	tw.tween_property(fade_rect, "color:a", 0.0, 0.6)
-	var tl = create_tween()
-	tl.tween_interval(0.9)
-	tl.tween_property(line_l, "visible_ratio", 1.0, info["line"].length() * 0.035)
 	var gv: String = main.fala_gravada(c["cid"], info["line"])
+	# fala gravada: a legenda é escrita no ritmo da voz e a cena dura até ela terminar
+	var dur_voz: float = main.sfx.streams[gv].get_length() if gv != "" else 0.0
+	var tl = create_tween()
+	tl.tween_interval(1.0 if gv != "" else 0.9)
+	tl.tween_property(line_l, "visible_ratio", 1.0, dur_voz * 0.92 if gv != "" else info["line"].length() * 0.035)
 	main.sfx.play_later(gv if gv != "" else "v_%s_fala" % c["cid"], 1.0, 2.0)
-	if info.has("voice2"):
+	if info.has("voice2") and gv == "":
 		main.sfx.play_later(info["voice2"], info.get("voice2_at", 3.2), 0.0)
-	var total = path["d"] + 1.1
+	var total = max(path["d"] + 1.1, 1.0 + dur_voz + 0.6)
 	while scene_t < total - 0.5 and not skip:
 		await get_tree().process_frame
+	if skip and gv != "":
+		main.sfx.stop_sound(gv)   # pulou a cena: a fala não continua por cima do jogo
 	var tf = create_tween()
 	tf.tween_property(fade_rect, "color:a", 1.0, 0.25 if skip else 0.5)
 	await tf.finished

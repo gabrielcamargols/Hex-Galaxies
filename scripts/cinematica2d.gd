@@ -29,6 +29,9 @@ static func has_art(cid: String) -> bool:
 
 func run(m, cmds: Array) -> void:
 	main = m
+	# a cena roda sempre em velocidade normal (a voz gravada não acelera junto)
+	var vel_antes = Engine.time_scale
+	Engine.time_scale = 1.0
 	layer = 50
 	fade = ColorRect.new()
 	fade.color = Color(0.03, 0.01, 0.08, 1.0)
@@ -42,6 +45,7 @@ func run(m, cmds: Array) -> void:
 	var tf = create_tween()
 	tf.tween_property(fade, "color:a", 0.0, 0.35)
 	await tf.finished
+	Engine.time_scale = vel_antes
 
 
 func _input(e: InputEvent) -> void:
@@ -184,8 +188,18 @@ func _scene(c: Dictionary) -> void:
 		tl.tween_property(ln, "modulate:a", 0.75, 0.08)
 		tl.parallel().tween_property(ln, "scale", ln.scale * 0.8, 0.5).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
 		tl.tween_property(ln, "modulate:a", 0.0, 0.6)
-	# ---- balão de fala: estoura de repente, treme e fica
-	var bt = _tex(cid, "balao.png")
+	# ---- fala: se o comandante tem falas de entrada gravadas, sorteia uma; o balão vem vazio
+	# e o texto é escrito nele no ritmo da voz (a cena dura até a fala acabar)
+	var fala_txt = ""
+	var fala_som = ""
+	var gravadas = []
+	for ln in main.dlg.get("personagem", {}).get(cid, {}).get("entrada", []):
+		if main.fala_gravada(cid, ln) != "":
+			gravadas.append(ln)
+	if not gravadas.is_empty() and _tex(cid, "balao_vazio.png") != null:
+		fala_txt = gravadas[randi() % gravadas.size()]
+		fala_som = main.fala_gravada(cid, fala_txt)
+	var bt = _tex(cid, "balao_vazio.png" if fala_som != "" else "balao.png")
 	var balao: Sprite2D = null
 	var t_fala = 0.85 + andar + 0.05
 	if bt != null:
@@ -206,10 +220,25 @@ func _scene(c: Dictionary) -> void:
 			var a = 6.0 * (1.0 - i * 0.3)
 			tbl.tween_property(balao, "position", bc + Vector2(randf_range(-a, a), randf_range(-a, a)), 0.03)
 		tbl.tween_property(balao, "position", bc, 0.03)
-	main.sfx.play_later("v_%s_fala" % cid, t_fala, 2.0)
+	var dur_cena = DUR
+	var txt_l: Label = null
+	if fala_som != "" and balao != null:
+		var lv: float = main.sfx.streams[fala_som].get_length()
+		dur_cena = max(DUR, t_fala + lv + 0.8)
+		txt_l = _texto_balao(balao, fala_txt)
+		var tt = create_tween()
+		tt.tween_interval(t_fala + 0.08)
+		tt.tween_property(txt_l, "visible_ratio", 1.0, lv * 0.92)
+		main.sfx.play_later(fala_som, t_fala, 2.0)
+	else:
+		main.sfx.play_later("v_%s_fala" % cid, t_fala, 2.0)
 	# ---- espera (ou pulo) e sai dissolvendo na retícula hexagonal
-	while t < DUR and not skip:
+	while t < dur_cena and not skip:
 		await get_tree().process_frame
+	if skip and fala_som != "":
+		main.sfx.stop_sound(fala_som)
+	if txt_l != null:
+		create_tween().tween_property(txt_l, "modulate:a", 0.0, 0.2)
 	var ultimo: Tween = null
 	for s in sprites:
 		if is_instance_valid(s) and s.visible:
@@ -249,3 +278,33 @@ func _passo(heroi: Sprite2D, forte: bool) -> void:
 		tw.tween_property(d, "scale", Vector2.ONE * randf_range(1.6, 2.4), 0.55)
 		tw.tween_property(d, "color:a", 0.0, 0.55)
 		tw.chain().tween_callback(d.queue_free)
+
+
+# texto dentro do balão vazio (coordenadas da imagem do balão, 900x450): letras de HQ grossas,
+# tamanho escolhido para caber na área branca; começa invisível e é escrito aos poucos
+func _texto_balao(balao: Sprite2D, txt: String) -> Label:
+	var l = Label.new()
+	var tw: Vector2 = balao.texture.get_size()
+	var area = Rect2(Vector2(70, 70) / Vector2(900, 450) * tw, Vector2(760, 245) / Vector2(900, 450) * tw)
+	l.position = area.position - tw * 0.5
+	l.size = area.size
+	l.text = txt.to_upper()
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	var f: Font = main.font_title if main.font_title != null else ThemeDB.fallback_font
+	l.add_theme_font_override("font", f)
+	var fs = 72
+	while fs > 22:
+		var sz = f.get_multiline_string_size(l.text, HORIZONTAL_ALIGNMENT_CENTER, area.size.x, fs)
+		if sz.y <= area.size.y * 0.95:
+			break
+		fs -= 2
+	l.add_theme_font_size_override("font_size", fs)
+	l.add_theme_color_override("font_color", Color("#0b1330"))
+	l.add_theme_constant_override("outline_size", 0)
+	l.add_theme_constant_override("line_spacing", -int(fs * 0.12))
+	l.visible_ratio = 0.0
+	l.z_index = 1
+	balao.add_child(l)
+	return l

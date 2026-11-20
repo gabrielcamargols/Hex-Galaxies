@@ -132,6 +132,15 @@ func _play_raw(n: String, vol_db: float = 0.0, pitch: float = 1.0, vary: float =
 	p.play()
 
 
+# interrompe um som que esteja tocando (ex.: fala gravada quando a cena é pulada)
+func stop_sound(n: String) -> void:
+	if not streams.has(n):
+		return
+	for q in pool:
+		if q.playing and q.stream == streams[n]:
+			q.stop()
+
+
 func play_later(n: String, delay: float, vol_db: float = 0.0, pitch: float = 1.0) -> void:
 	if delay <= 0.0:
 		play(n, vol_db, pitch)
