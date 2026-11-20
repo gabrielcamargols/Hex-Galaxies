@@ -1,5 +1,95 @@
 [gd_resource type="AudioBusLayout" format=3]
 
+[sub_resource type="AudioEffectAmplify" id="AudioEffectAmplify_j3pel"]
+
+[sub_resource type="AudioEffectHighPassFilter" id="AudioEffectHighPassFilter_g28q7"]
+cutoff_hz = 380.0
+db = 3
+
+[sub_resource type="AudioEffectLowPassFilter" id="AudioEffectLowPassFilter_n8wo2"]
+cutoff_hz = 3200.0
+db = 3
+
+[sub_resource type="AudioEffectDistortion" id="AudioEffectDistortion_5t1r3"]
+mode = 3
+pre_gain = 4.0
+keep_hf_hz = 4000.0
+drive = 0.42
+post_gain = -5.0
+
+[sub_resource type="AudioEffectCompressor" id="AudioEffectCompressor_cenje"]
+threshold = -18.0
+ratio = 6.0
+gain = 4.0
+
+[sub_resource type="AudioEffectChorus" id="AudioEffectChorus_dqt2m"]
+dry = 0.85
+wet = 0.35
+
+[sub_resource type="AudioEffectReverb" id="AudioEffectReverb_7kkex"]
+predelay_msec = 40.0
+room_size = 0.85
+damping = 0.25
+hipass = 0.15
+dry = 0.9
+wet = 0.32
+
+[sub_resource type="AudioEffectPitchShift" id="AudioEffectPitchShift_k2ilm"]
+pitch_scale = 2.0
+
+[sub_resource type="AudioEffectHighPassFilter" id="AudioEffectHighPassFilter_2g6t7"]
+cutoff_hz = 700.0
+
+[sub_resource type="AudioEffectReverb" id="AudioEffectReverb_y2dp7"]
+predelay_msec = 80.0
+room_size = 0.95
+damping = 0.1
+dry = 0.35
+wet = 0.8
+
+[sub_resource type="AudioEffectPhaser" id="AudioEffectPhaser_dapn3"]
+range_min_hz = 900.0
+range_max_hz = 5200.0
+rate_hz = 0.35
+feedback = 0.72
+depth = 0.8
+
+[sub_resource type="AudioEffectChorus" id="AudioEffectChorus_e2wrs"]
+voice_count = 3
+dry = 0.8
+wet = 0.45
+voice/3/delay_ms = 12.0
+voice/3/rate_hz = 1.0
+voice/3/depth_ms = 0.0
+voice/3/level_db = 0.0
+voice/3/cutoff_hz = 16000.0
+voice/3/pan = 0.0
+
+[sub_resource type="AudioEffectEQ6" id="AudioEffectEQ6_ro4dx"]
+band_db/32_hz = -3.0
+band_db/3200_hz = 3.5
+band_db/10000_hz = 5.0
+
+[sub_resource type="AudioEffectReverb" id="AudioEffectReverb_51bpa"]
+predelay_msec = 15.0
+room_size = 0.45
+damping = 0.05
+hipass = 0.3
+dry = 0.9
+wet = 0.28
+
+[sub_resource type="AudioEffectPitchShift" id="AudioEffectPitchShift_2mq3o"]
+pitch_scale = 1.5
+
+[sub_resource type="AudioEffectHighPassFilter" id="AudioEffectHighPassFilter_5tfch"]
+cutoff_hz = 1500.0
+
+[sub_resource type="AudioEffectReverb" id="AudioEffectReverb_sjxdv"]
+room_size = 0.6
+damping = 0.0
+dry = 0.4
+wet = 0.7
+
 [resource]
 bus/1/name = &"Musica"
 bus/1/solo = false
@@ -19,3 +109,73 @@ bus/3/mute = false
 bus/3/bypass_fx = false
 bus/3/volume_db = 0.0
 bus/3/send = &"Master"
+bus/4/name = &"Narrador"
+bus/4/solo = false
+bus/4/mute = false
+bus/4/bypass_fx = false
+bus/4/volume_db = 0.0
+bus/4/send = &"Master"
+bus/4/effect/0/effect = SubResource("AudioEffectAmplify_j3pel")
+bus/4/effect/0/enabled = true
+bus/5/name = &"Radio"
+bus/5/solo = false
+bus/5/mute = false
+bus/5/bypass_fx = false
+bus/5/volume_db = 0.0
+bus/5/send = &"Vozes"
+bus/5/effect/0/effect = SubResource("AudioEffectHighPassFilter_g28q7")
+bus/5/effect/0/enabled = true
+bus/5/effect/1/effect = SubResource("AudioEffectLowPassFilter_n8wo2")
+bus/5/effect/1/enabled = true
+bus/5/effect/2/effect = SubResource("AudioEffectDistortion_5t1r3")
+bus/5/effect/2/enabled = true
+bus/5/effect/3/effect = SubResource("AudioEffectCompressor_cenje")
+bus/5/effect/3/enabled = true
+bus/6/name = &"Celeste"
+bus/6/solo = false
+bus/6/mute = false
+bus/6/bypass_fx = false
+bus/6/volume_db = 0.0
+bus/6/send = &"Vozes"
+bus/6/effect/0/effect = SubResource("AudioEffectChorus_dqt2m")
+bus/6/effect/0/enabled = true
+bus/6/effect/1/effect = SubResource("AudioEffectReverb_7kkex")
+bus/6/effect/1/enabled = true
+bus/7/name = &"CelesteAlto"
+bus/7/solo = false
+bus/7/mute = false
+bus/7/bypass_fx = false
+bus/7/volume_db = -15.0
+bus/7/send = &"Vozes"
+bus/7/effect/0/effect = SubResource("AudioEffectPitchShift_k2ilm")
+bus/7/effect/0/enabled = true
+bus/7/effect/1/effect = SubResource("AudioEffectHighPassFilter_2g6t7")
+bus/7/effect/1/enabled = true
+bus/7/effect/2/effect = SubResource("AudioEffectReverb_y2dp7")
+bus/7/effect/2/enabled = true
+bus/8/name = &"Cristal"
+bus/8/solo = false
+bus/8/mute = false
+bus/8/bypass_fx = false
+bus/8/volume_db = -3.5
+bus/8/send = &"Vozes"
+bus/8/effect/0/effect = SubResource("AudioEffectPhaser_dapn3")
+bus/8/effect/0/enabled = true
+bus/8/effect/1/effect = SubResource("AudioEffectChorus_e2wrs")
+bus/8/effect/1/enabled = true
+bus/8/effect/2/effect = SubResource("AudioEffectEQ6_ro4dx")
+bus/8/effect/2/enabled = true
+bus/8/effect/3/effect = SubResource("AudioEffectReverb_51bpa")
+bus/8/effect/3/enabled = true
+bus/9/name = &"CristalAlto"
+bus/9/solo = false
+bus/9/mute = false
+bus/9/bypass_fx = false
+bus/9/volume_db = -13.0
+bus/9/send = &"Vozes"
+bus/9/effect/0/effect = SubResource("AudioEffectPitchShift_2mq3o")
+bus/9/effect/0/enabled = true
+bus/9/effect/1/effect = SubResource("AudioEffectHighPassFilter_5tfch")
+bus/9/effect/1/enabled = true
+bus/9/effect/2/effect = SubResource("AudioEffectReverb_sjxdv")
+bus/9/effect/2/enabled = true
