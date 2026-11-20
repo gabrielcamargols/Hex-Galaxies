@@ -1,0 +1,7 @@
+{
+ "_ajuda": "Falas gravadas (vozes feitas no Fish Audio). Para cada personagem: texto exato da fala (como em dialogos.json) -> som em sounds/ (sem extensão). Quando a fala sai num balão ou na cinemática, toca a gravação no lugar do som genérico e da voz do aparelho.",
+ "rhazur": {
+  "Rhazur desperta. Tremam.": "v_rhazur_l01",
+  "O rei das profundezas exige tributo.": "v_rhazur_l02"
+ }
+}

@@ -207,7 +207,8 @@ func _scene(c: Dictionary) -> void:
 	var tl = create_tween()
 	tl.tween_interval(0.9)
 	tl.tween_property(line_l, "visible_ratio", 1.0, info["line"].length() * 0.035)
-	main.sfx.play_later("v_%s_fala" % c["cid"], 1.0, 2.0)
+	var gv: String = main.fala_gravada(c["cid"], info["line"])
+	main.sfx.play_later(gv if gv != "" else "v_%s_fala" % c["cid"], 1.0, 2.0)
 	if info.has("voice2"):
 		main.sfx.play_later(info["voice2"], info.get("voice2_at", 3.2), 0.0)
 	var total = path["d"] + 1.1

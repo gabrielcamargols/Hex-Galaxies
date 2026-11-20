@@ -68,6 +68,7 @@ var intro: bool = false        # próxima partida começa com o zoom no planeta
 var card_hover: String = ""      # carta com o mouse em cima (destaca o que ela afeta)
 var last_st: Dictionary = {}       # destaques atuais do tabuleiro (sem a carta)
 var dlg: Dictionary = {}           # falas (data/dialogos.json)
+var falas_voz: Dictionary = {}     # falas gravadas: cid -> {texto: som} (data/falas_voz.json)
 var bubbles: Array = []            # balões de fala ativos
 var plates: Dictionary = {}        # uid -> placa de vida 2D (estilo da HUD)
 var rgb_on: bool = true          # desalinho RGB sobre o 3D (leve)
@@ -198,6 +199,10 @@ func _ready() -> void:
 	fader.set_anchors_preset(Control.PRESET_FULL_RECT)
 	fader.mouse_filter = Control.MOUSE_FILTER_STOP
 	top_layer.add_child(fader)
+	if FileAccess.file_exists("res://data/falas_voz.json"):
+		var fv = JSON.parse_string(FileAccess.get_file_as_string("res://data/falas_voz.json"))
+		if fv is Dictionary:
+			falas_voz = fv
 	if FileAccess.file_exists("res://data/dialogos.json"):
 		var parsed = JSON.parse_string(FileAccess.get_file_as_string("res://data/dialogos.json"))
 		if parsed is Dictionary:
@@ -6047,7 +6052,11 @@ func _say(uid: int, text: String, delay: float = 0.0, mood: String = "fala") -> 
 	p.modulate.a = 0.0
 	var tw = create_tween()
 	tw.tween_property(p, "modulate:a", 1.0, 0.18)
-	tw.tween_interval(2.0 + text.length() * 0.035)
+	var dur_b = 2.0 + text.length() * 0.035
+	var gvb = fala_gravada(u.cid, text)
+	if gvb != "":
+		dur_b = max(dur_b, sfx.streams[gvb].get_length() + 0.3)   # o balão fica enquanto a gravação toca
+	tw.tween_interval(dur_b)
 	tw.tween_property(p, "modulate:a", 0.0, 0.35)
 	tw.tween_callback(p.queue_free)
 	bubbles.append({"uid": uid, "node": p})
@@ -6484,8 +6493,23 @@ func _leader_speak(u, text: String, mood: String) -> void:
 	DisplayServer.tts_speak(text, vid, int(clamp(float(vol.get("Vozes", 90.0)), 0.0, 100.0)), clamp(pitch, 0.0, 2.0), clamp(float(cfg[1]), 0.1, 10.0))
 
 
+# som gravado para esta fala deste personagem ("" se não houver)
+func fala_gravada(cid: String, text: String) -> String:
+	var m: Dictionary = falas_voz.get(cid, {})
+	var n: String = m.get(text, "")
+	if n != "" and sfx != null and sfx.has_sound(n):
+		return n
+	return ""
+
+
 func _talk_voice(u, text: String, mood: String) -> void:
 	if sfx == null:
+		return
+	var gv = fala_gravada(u.cid, text)
+	if gv != "":
+		# fala gravada: toca inteira, sem variar o tom
+		DisplayServer.tts_stop()
+		sfx.play(gv, 2.0, 1.0, 0.0)
 		return
 	if u.is_cmd and voice_on:
 		_leader_speak(u, text, mood)
