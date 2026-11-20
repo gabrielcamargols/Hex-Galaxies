@@ -2552,6 +2552,25 @@ func _figure3d(cid: String, body_h: float) -> Node3D:
 							continue
 						var ang = fg[1] * (0.6 if (fg[0] == "Thumb" and j == 1) else 1.0)
 						sk.set_bone_pose_rotation(b, sk.get_bone_rest(b).basis.get_rotation_quaternion() * _fig3d_q(sk, b, ax_c.normalized(), ang))
+			# garra para conjurar: dedos abertos e curvados, como quem segura uma esfera
+			if cfg.has("conjura"):
+				var garra = []
+				for side in ["Left", "Right"]:
+					var palm = -left if side == "Left" else left
+					var sg = 1.0 if side == "Left" else -1.0
+					for fg in [["Index", [0.35, 0.75, 0.6], -0.34], ["Middle", [0.4, 0.8, 0.6], -0.1],
+							["Ring", [0.45, 0.8, 0.6], 0.16], ["Pinky", [0.5, 0.85, 0.65], 0.38], ["Thumb", [0.15, 0.35, 0.3], 0.45]]:
+						for j in range(1, 4):
+							var b = sk.find_bone("mixamorig_%sHand%s%d" % [side, fg[0], j])
+							var c = sk.find_bone("mixamorig_%sHand%s%d" % [side, fg[0], j + 1])
+							if b < 0 or c < 0:
+								continue
+							var dv = (sk.get_bone_global_rest(c).origin - sk.get_bone_global_rest(b).origin).normalized()
+							var ax_c = dv.cross(palm)
+							if ax_c.length() < 0.01:
+								continue
+							garra.append([b, ax_c.normalized(), fg[1][j - 1], palm, fg[2] * sg if j == 1 else 0.0])
+				root.set_meta("garra", garra)
 			if cfg.get("visor", false):
 				# visor aceso: brilho aditivo preso à cabeça (o shader acende a textura; isto dá o halo)
 				if _fig3d_glow_tex == null:
@@ -2886,6 +2905,13 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 			var qf = Quaternion(cur_f, cur_f.slerp(alvo_d, e4).normalized())
 			var pgf = sk.get_bone_global_pose(ab)
 			sk.set_bone_pose_rotation(fb, (pgf.basis.inverse() * (Basis(qf) * gf.basis)).get_rotation_quaternion())
+	if fig.has_meta("garra"):
+		var eg = cjw * cjw * (3.0 - 2.0 * cjw)
+		for gd in fig.get_meta("garra"):
+			var q0: Quaternion = sk.get_bone_rest(gd[0]).basis.get_rotation_quaternion()
+			if eg > 0.001:
+				q0 = q0 * _fig3d_q(sk, gd[0], gd[3], gd[4] * eg) * _fig3d_q(sk, gd[0], gd[1], gd[2] * eg)
+			sk.set_bone_pose_rotation(gd[0], q0)
 
 
 # Rei da Mina: cada passo do pé de cristal deixa cristaizinhos que brotam do chão e somem
