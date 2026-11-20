@@ -19,6 +19,8 @@ func bus_of(n: String) -> String:
 		return "Musica"
 	if n.begins_with("v_k_") or n.begins_with("radio_"):
 		return "Radio"     # os Krieg falam pelo rádio
+	if n.begins_with("v_z_dragao"):
+		return "Celeste"   # o Dragão Zukunft fala como um anjo
 	if n.begins_with("v_"):
 		return "Vozes"
 	return "Efeitos"
@@ -39,6 +41,7 @@ func _ready() -> void:
 			AudioServer.set_bus_name(AudioServer.bus_count - 1, b)
 			AudioServer.set_bus_send(AudioServer.bus_count - 1, "Master")
 	_radio_bus()
+	_celeste_bus()
 	for n in NAMES:
 		var path = "res://sounds/%s.wav" % n
 		if not ResourceLoader.exists(path):
@@ -104,9 +107,55 @@ func _radio_bus() -> void:
 	AudioServer.add_bus_effect(i, cp)
 
 
+# voz celestial (Dragão Zukunft): a voz principal num salão enorme com coro suave, e uma
+# segunda camada uma oitava acima, baixinha e banhada em eco longo (o "brilho" angelical)
+func _celeste_bus() -> void:
+	if AudioServer.get_bus_index("Celeste") >= 0:
+		return
+	AudioServer.add_bus()
+	var i = AudioServer.bus_count - 1
+	AudioServer.set_bus_name(i, "Celeste")
+	AudioServer.set_bus_send(i, "Vozes")
+	var ch = AudioEffectChorus.new()
+	ch.voice_count = 2
+	ch.dry = 0.85
+	ch.wet = 0.35
+	AudioServer.add_bus_effect(i, ch)
+	var rv = AudioEffectReverb.new()
+	rv.room_size = 0.85
+	rv.damping = 0.25
+	rv.spread = 1.0
+	rv.predelay_msec = 40.0
+	rv.dry = 0.9
+	rv.wet = 0.32
+	rv.hipass = 0.15
+	AudioServer.add_bus_effect(i, rv)
+	AudioServer.add_bus()
+	var j = AudioServer.bus_count - 1
+	AudioServer.set_bus_name(j, "CelesteAlto")
+	AudioServer.set_bus_send(j, "Vozes")
+	AudioServer.set_bus_volume_db(j, -15.0)
+	var ps = AudioEffectPitchShift.new()
+	ps.pitch_scale = 2.0
+	AudioServer.add_bus_effect(j, ps)
+	var hp = AudioEffectHighPassFilter.new()
+	hp.cutoff_hz = 700.0
+	AudioServer.add_bus_effect(j, hp)
+	var rv2 = AudioEffectReverb.new()
+	rv2.room_size = 0.95
+	rv2.damping = 0.1
+	rv2.spread = 1.0
+	rv2.predelay_msec = 80.0
+	rv2.dry = 0.35
+	rv2.wet = 0.8
+	AudioServer.add_bus_effect(j, rv2)
+
+
 func play(n: String, vol_db: float = 0.0, pitch: float = 1.0, vary: float = 0.08) -> void:
 	if not has_sound(n):
 		return
+	if n.begins_with("v_z_dragao"):
+		_play_raw(n, vol_db, pitch, 0.0, "CelesteAlto")
 	if n.begins_with("v_k_"):
 		# abre o rádio, fala e fecha com o chiado
 		_play_raw("radio_on", vol_db - 4.0, 1.0)
@@ -115,7 +164,7 @@ func play(n: String, vol_db: float = 0.0, pitch: float = 1.0, vary: float = 0.08
 	_play_raw(n, vol_db, pitch, vary)
 
 
-func _play_raw(n: String, vol_db: float = 0.0, pitch: float = 1.0, vary: float = 0.0) -> void:
+func _play_raw(n: String, vol_db: float = 0.0, pitch: float = 1.0, vary: float = 0.0, bus: String = "") -> void:
 	if not has_sound(n):
 		return
 	var p: AudioStreamPlayer = null
@@ -126,7 +175,7 @@ func _play_raw(n: String, vol_db: float = 0.0, pitch: float = 1.0, vary: float =
 	if p == null:
 		p = pool[0]
 	p.stream = streams[n]
-	p.bus = bus_of(n)
+	p.bus = bus if bus != "" else bus_of(n)
 	p.volume_db = vol_db + master_db
 	p.pitch_scale = pitch * randf_range(1.0 - vary, 1.0 + vary)
 	p.play()

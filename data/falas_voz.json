@@ -22,5 +22,14 @@
   "Toda grande obra exige sacrifício. O deles... calculado até o último homem.": "v_k_cmd_l05",
   "Fileiras, em posição. Flancos cobertos. Que o espetáculo comece.": "v_k_cmd_l06",
   "A guerra é uma arte, soldados. E eu já conheço o final desta obra.": "v_k_cmd_l07"
+ },
+ "z_dragao": {
+  "Zukunft me chamou... e eu vim. Ninguém aqui ficará desamparado.": "v_z_dragao_l01",
+  "Não desejo esta guerra. Mas não deixarei que ela alcance meu povo.": "v_z_dragao_l02",
+  "Não temam, filhos de Motterlich. Eu estou com vocês.": "v_z_dragao_l03",
+  "Preferia a paz... mas, se é preciso lutar, lutarei até o fim.": "v_z_dragao_l04",
+  "Analisei cada caminho possível. Escolho aquele que protege vocês.": "v_z_dragao_l05",
+  "Motterlich nos deu a vida. Eu darei a minha para preservá-la.": "v_z_dragao_l06",
+  "Pela paz de Zukunft... nenhum esforço será poupado.": "v_z_dragao_l07"
  }
 }
