@@ -49,6 +49,7 @@ const FIG3D = {
 	"rei_mina": {"path": "res://models/personagens/rei_mina.glb", "visor": false, "punho": false, "jeito": "rei", "brilho": "rachaduras", "cintila": true, "pegadas": "LeftFoot", "conjura": [0.07, 0.035, 0.032]},
 	"z_dragao": {"path": "res://models/personagens/z_dragao.glb", "corpo": "dragao", "escala": 1.35, "brilho": "gemas"},
 	"w_mamute": {"path": "res://models/personagens/w_mamute.glb", "visor": false, "punho": false, "jeito": "mamute", "escala": 1.12, "giro": 0.0, "brilho": "gemas_laranja", "anims": {"correr": "run"}},
+	"l_general": {"path": "res://models/personagens/l_general.glb", "visor": false, "punho": false, "jeito": "cristal", "brilho": "gemas"},
 	"karo": {"path": "res://models/personagens/karo.glb", "visor": false, "punho": true, "jeito": "malandro", "bracos": "bolso", "cauda": [-0.05, 0.45, 0.0]},
 }
 # padrão de tinta de cada facção (data/vfx_paletas.json "pattern") -> pat do hq_personagem
@@ -78,6 +79,10 @@ const JEITOS = {
 	"mamute": {"resp": [0.06, 1.2], "olha": [0.12, 0.25], "peso": 0.06, "cad": [4.8, 8.0], "passo": [0.3, 0.55],
 		"joelho": [0.35, 0.8], "bal": [0.22, 0.45], "quica": [0.025, 0.05], "ginga": 0.12, "incl": [0.06, 0.18],
 		"vel": [1.6, 3.0], "tique": ""},
+	# Lithari Líder: leve e cortante, quase flutua, passos longos e precisos, olhar frio
+	"cristal": {"resp": [0.03, 1.4], "olha": [0.14, 0.32], "peso": 0.015, "cad": [6.2, 11.0], "passo": [0.4, 0.8],
+		"joelho": [0.45, 1.05], "bal": [0.12, 0.5], "quica": [0.01, 0.04], "ginga": 0.0, "incl": [0.02, 0.3],
+		"vel": [2.2, 4.4], "tique": "vigia"},
 	# Rhazur: pesado, passada larga e lenta, balança o corpo todo, respiração funda
 	"bruto": {"resp": [0.07, 1.5], "olha": [0.14, 0.3], "peso": 0.05, "cad": [5.4, 9.0], "passo": [0.38, 0.62],
 		"joelho": [0.4, 0.9], "bal": [0.28, 0.5], "quica": [0.03, 0.06], "ginga": 0.1, "incl": [0.08, 0.22],
