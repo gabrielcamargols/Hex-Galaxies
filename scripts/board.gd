@@ -2490,6 +2490,19 @@ func _figure(cid: String, body_h: float) -> MeshInstance3D:
 		ol.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		ol.visible = false
 		mi.add_child(ol)
+	# Lithari são cristais vivos: uma camada de luz brilha e cintila por cima da arte
+	if DB.cards.has(cid) and DB.cards[cid]["f"] == "LIT":
+		var br = MeshInstance3D.new()
+		br.name = "brilho_lit"
+		br.mesh = q
+		var bm = ShaderMaterial.new()
+		bm.shader = load("res://shaders/lithari_brilho.gdshader")
+		bm.set_shader_parameter("tex", tex)
+		bm.set_shader_parameter("hi_col", DB.pal("LIT", "highlight", Color(0.85, 0.95, 1.0)))
+		bm.set_shader_parameter("fase", randf() * 50.0)
+		br.material_override = bm
+		br.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mi.add_child(br)
 	return mi
 
 
@@ -2503,6 +2516,10 @@ func _figure_look(fig: MeshInstance3D, flip: bool, mod: Color) -> void:
 	var ol = fig.get_node_or_null("contorno")
 	if ol != null:
 		ol.material_override.set_shader_parameter("flip", 1.0 if flip else 0.0)
+	var br = fig.get_node_or_null("brilho_lit")
+	if br != null:
+		br.material_override.set_shader_parameter("flip", 1.0 if flip else 0.0)
+		br.material_override.set_shader_parameter("mod_col", mod)
 
 
 # ---------- personagem 3D (modelo com esqueleto Mixamo) ----------
@@ -2543,6 +2560,8 @@ func _figure3d(cid: String, body_h: float) -> Node3D:
 			m.set_shader_parameter("pat", PADROES.find(String(DB.vfx_pal.get(fac3, {}).get("pattern", "reticula"))) if PADROES.has(String(DB.vfx_pal.get(fac3, {}).get("pattern", "reticula"))) else 0)
 			if cfg.get("cintila", false):
 				m.set_shader_parameter("cintila", 1.0)
+			if fac3 == "LIT":
+				m.set_shader_parameter("vivo", 1.0)   # Lithari: cristal vivo
 			if cfg.get("brilho", "") == "gemas_laranja":
 				m.set_shader_parameter("glow_mode", 1.0)
 				m.set_shader_parameter("glow_col", Color(1.0, 0.6, 0.1))

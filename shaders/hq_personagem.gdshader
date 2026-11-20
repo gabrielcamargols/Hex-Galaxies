@@ -21,6 +21,7 @@ uniform vec3 glow_col : source_color = vec3(1.0, 0.06, 0.04);
 uniform float glow_amt = 2.6;
 uniform float glow_mode = 0.0;   // 0 = vermelho puro (visor) | 1 = laranja vivo (rachaduras de magma)
 uniform float cintila = 0.0;      // 1 = partes de cristal roxo cintilam (Rei da Mina)
+uniform float vivo = 0.0;         // 1 = cristal vivo (Lithari): o corpo todo brilha, cintila e reflete a luz
 uniform float glow_on = 1.0;                            // 0 = personagem sem visor/olhos acesos
 uniform float rim_amt = 0.35;
 // luz "de desenho": vem do alto à esquerda, presa à câmera (todo personagem é sombreado do mesmo jeito)
@@ -154,6 +155,33 @@ void fragment() {
 		float pisca = pow(max(0.0, sin(TIME * (1.5 + hs * 2.5) + hs * 40.0)), 24.0) * step(0.86, h21(cel + 7.1));
 		vec3 lav = vec3(0.93, 0.78, 1.0);
 		col += cm * (vec3(0.35, 0.12, 0.45) * onda * 0.5 + lav * pisca * 1.6);
+	}
+	if (vivo > 0.5) {
+		// cristal vivo: cada faceta reflete a luz (normal achatada por faceta), uma faixa de reflexo
+		// varre o corpo, o miolo pulsa de luz própria e estrelinhas piscam por toda parte
+		vec3 fn = normalize(cross(dFdx(VERTEX), dFdy(VERTEX)));
+		vec3 ldir = normalize(vec3(sin(TIME * 0.6) * 0.8, 0.55, 0.6 + cos(TIME * 0.6) * 0.3));
+		vec3 rf = reflect(-VIEW, fn);
+		float spec = pow(max(dot(rf, ldir), 0.0), 24.0);
+		float spec2 = pow(max(dot(rf, normalize(key_dir)), 0.0), 40.0);
+		vec3 branco = vec3(1.0, 0.97, 1.0);
+		col += mix(hi_col, branco, 0.6) * (spec * 0.9 + spec2 * 0.7);
+		// faixa de reflexo que corre de baixo para cima pela tela
+		float faixa = fract((FRAGCOORD.y * 0.004 + FRAGCOORD.x * 0.0015) + TIME * 0.22);
+		faixa = smoothstep(0.0, 0.04, faixa) * smoothstep(0.1, 0.04, faixa);
+		col += mix(c, branco, 0.5) * faixa * 0.35 * (0.4 + 0.6 * l);
+		// luz de dentro do cristal: as partes claras da textura acendem e respiram
+		float lumi = smoothstep(0.35, 0.85, l0);
+		col += c * lumi * (0.22 + 0.12 * sin(TIME * 1.9 + UV.y * 9.0));
+		// irisação na borda: o cristal muda de cor de acordo com o ângulo
+		float ir = pow(1.0 - clamp(dot(nrm, VIEW), 0.0, 1.0), 2.0);
+		vec3 arco = 0.5 + 0.5 * cos(6.2831 * (ir * 1.3 + TIME * 0.08 + vec3(0.0, 0.33, 0.67)));
+		col += arco * ir * 0.28;
+		// estrelinhas piscando no corpo todo
+		vec2 cel = floor(UV * 120.0);
+		float hs = h21(cel);
+		float pisca = pow(max(0.0, sin(TIME * (1.2 + hs * 3.0) + hs * 50.0)), 30.0) * step(0.8, h21(cel + 3.7));
+		col += branco * pisca * 1.8;
 	}
 	ALBEDO = col * mod_col.rgb;
 }

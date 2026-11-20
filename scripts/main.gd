@@ -5689,7 +5689,14 @@ func _on_fx_real(e: Dictionary) -> void:
 			vfx.flip("portal", _hex_pos(e["h"], 0.0), 2.2, 0.6, _unit_color(e["uid"]).lightened(0.4))
 			sfx.play("invocar", -5.0)
 		"move":
-			sfx.play("passo", -10.0, 1.0, 0.2)
+			var mu: Variant = game.by_uid(e["uid"])
+			if mu != null and _fac_of(mu) == "LIT":
+				# Lithari são cristal vivo: cada passo tilinta e raspa
+				var npas: int = clampi(DB.dist(e["from"], e["to"]), 1, 6) * 2
+				for k in range(npas):
+					sfx.play_later("passo_lit%d" % (k % 3 + 1), 0.08 + k * 0.3, -9.0, randf_range(0.92, 1.1))
+			else:
+				sfx.play("passo", -10.0, 1.0, 0.2)
 		"boom":
 			_comic_pop(_hex_pos(e["h"], 0.8), ["KABOOM!", "BOOM!", "KRA-KOOM!"].pick_random(), true)
 			board.boom(e["h"])
