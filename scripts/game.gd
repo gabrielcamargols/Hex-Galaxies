@@ -111,6 +111,7 @@ var ans_buf: Array = []                   # respostas recebidas e ainda não usa
 var replay: int = 0                       # > 0: repetindo uma jogada que veio do outro aparelho
 var net_depth: int = 0
 var tut: bool = false                     # partida do tutorial
+var sandbox: bool = false                 # Modo Deus: ninguém passa sozinho e a mão não tem limite
 var pre_hex: Variant = null   # casa onde a carta foi solta (arrastar e soltar)
 var tac_fx: Variant = null    # tática esperando o alvo para mostrar o efeito
 const TAC_SELF = ["propulsor", "placas", "lente", "reparo", "camuflagem"]
@@ -1881,6 +1882,8 @@ func draw_cards(p: int, n: int = 1) -> int:
 
 
 func hand_limit(p: int) -> void:
+	if sandbox:
+		return
 	var pl = P[p]
 	while pl["hand"].size() > 5:
 		var c = await ask(p, {"t": "card", "text": "Mão acima de 5: descarte %d carta(s)." % (pl["hand"].size() - 5), "opts": pl["hand"].duplicate(), "optional": false})
@@ -2663,6 +2666,8 @@ func can_start(u) -> bool:
 
 
 func auto_pass() -> void:
+	if sandbox:
+		return
 	for i in range(2):
 		if winner != NONE:
 			return

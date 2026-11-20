@@ -115,6 +115,7 @@ var opp_thinking: bool = false   # o motor espera uma resposta do outro jogador
 var net_seed: int = 0
 var tut: bool = false            # tutorial em andamento: a CPU só passa a vez
 var tut_node: Node = null
+var deus: Node = null          # Modo Deus (scripts/modo_deus.gd): caixa de areia de testes
 var net_pre_ans: Array = []      # respostas que chegaram antes da partida começar aqui   # carta de tática sendo arrastada: {id, start, on}
 var sfx = null
 var vfx = null
@@ -628,6 +629,9 @@ func _version_text() -> String:
 
 func _show_menu() -> void:
 	tut = false
+	if deus != null and is_instance_valid(deus):
+		deus.queue_free()
+	deus = null
 	if online:
 		online = false
 		net.send({"t": "bye"})
@@ -699,7 +703,8 @@ func _show_menu() -> void:
 	var tb = _cbtn(row2, "TUTORIAL", C_DEPLOY, _start_tutorial)
 	var rb = _cbtn(row2, "COMO JOGAR", C_ABIL, _rules_popup)
 	var cfgb = _cbtn(row2, "CONFIGURAÇÕES", C_HUD, _settings_panel)
-	for mb in [tb, rb, cfgb]:
+	var deb = _cbtn(row2, "MODO DEUS", C_ABIL, _start_deus)
+	for mb in [tb, rb, cfgb, deb]:
 		_menu_btn(mb)
 		mb.custom_minimum_size = Vector2(196, 52)
 		mb.add_theme_font_size_override("font_size", 17)
@@ -2438,6 +2443,24 @@ func _cpu_side(p: int, fac: String) -> Dictionary:
 	return s
 
 
+# ================= Modo Deus =================
+func _start_deus() -> void:
+	if deus != null and is_instance_valid(deus):
+		deus.queue_free()
+	if board.visible:
+		_leave_battle()
+	tut = false
+	online = false
+	intro = false
+	deus = Node.new()
+	deus.set_script(load("res://scripts/modo_deus.gd"))
+	add_child(deus)
+	if not DB.maps.has(setup_cfg["map"]):
+		setup_cfg["map"] = "posto"
+	var sides = [{"fac": "KRI", "picks": [], "start": []}, {"fac": "ZUK", "picks": [], "start": []}]
+	await _start_match(sides)
+
+
 func _start_match(sides) -> void:
 	DB.set_map(setup_cfg["map"])
 	if sides == null:
@@ -2453,7 +2476,8 @@ func _start_match(sides) -> void:
 	last_sides = sides
 	game = Game.new()
 	game.tree = get_tree()
-	game.cpu = [autotest, true]
+	game.cpu = [false, false] if deus != null else [autotest, true]
+	game.sandbox = deus != null
 	game.cpu_level = 1 if tut else cpu_level
 	game.tut = tut
 	game.clock_on = false   # sem relógio de xadrez
@@ -2475,7 +2499,7 @@ func _start_match(sides) -> void:
 	turn_seen = -1
 	game.setup(sides, setup_cfg["map"])
 	game.question.connect(_on_question)
-	if not autotest:
+	if not autotest and deus == null:
 		game.cine = _cine_commanders
 	game.changed.connect(refresh)
 	game.fx_event.connect(_on_fx)
@@ -2537,10 +2561,18 @@ func _start_match(sides) -> void:
 		add_child(tn)
 		tn.start(self)
 		tut_node = tn
-	elif not autotest:
+	elif not autotest and deus == null:
 		await _entrance()
 	_apply_speed()
-	await game.begin_game()
+	if deus != null:
+		# Modo Deus: tabuleiro vazio, 3 cartas para cada lado, já depois da entrada dos comandantes
+		deus.setup(self)
+		for p in range(2):
+			game.draw_cards(p, 3)
+		game.round_no = Game.CMD_ROUND
+		await game.start_round()
+	else:
+		await game.begin_game()
 	busy = false
 	await after()
 
@@ -2907,7 +2939,7 @@ func deploy_block_reason() -> String:
 
 
 func my_turn() -> bool:
-	return game != null and game.winner == Game.NONE and not game.cpu[game.cur] and game.cur == me and not game.remote[game.cur] and not busy and asking == null
+	return game != null and game.winner == Game.NONE and not game.cpu[game.cur] and (game.cur == me or deus != null) and not game.remote[game.cur] and not busy and asking == null
 
 
 func sel_unit() -> Variant:
@@ -4536,6 +4568,8 @@ func _confirm_pend() -> void:
 func after() -> void:
 	if game == null:
 		return
+	if deus != null:
+		deus.depois()
 	pend = null
 	am = ""
 	tip = null
@@ -4562,6 +4596,8 @@ func after() -> void:
 			await game.pass_turn(game.cur)
 			continue
 		await AI.activation(game, game.cur)
+		if deus != null and game != null:
+			deus.depois()
 	if game == null:
 		return
 	busy = false
@@ -4583,6 +4619,8 @@ func _any_hand_playable_now() -> bool:
 # ================= tabuleiro: toques e arraste =================
 func _on_hex_tapped(h) -> void:
 	if game == null:
+		return
+	if deus != null and asking == null and not busy and deus.tap(h):
 		return
 	if asking != null and asking["q"]["t"] == "hex":
 		if asking["q"]["opts"].has(h):
@@ -6359,6 +6397,10 @@ func _net_closed(reason: String) -> void:
 
 
 func _game_over() -> void:
+	if deus != null:
+		game.winner = Game.NONE
+		refresh()
+		return
 	if autotest:
 		print("AUTOTESTE FIM: vencedor=%d round=%d eventos=%d" % [game.winner, game.round_no, game.logs.size()])
 		var caps = game.logs.filter(func(l): return "capturou a Hex Energy" in l["text"]).size()
