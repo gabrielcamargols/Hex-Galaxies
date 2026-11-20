@@ -60,5 +60,24 @@
   "Lembram das florestas de Valak? É por elas que estamos aqui.": "v_rei_mina_l07",
   "Há coisas que só a pedra e eu sabemos... e é melhor assim.": "v_rei_mina_l08",
   "Não luto pela guerra. Luto pelo dia em que Valak viverá em paz.": "v_rei_mina_l09"
+ },
+ "t_dinamite": {
+  "Blub-blub! Quem pediu fogos? Eu e a Pipoca trouxemos fogos!": "v_t_dinamite_l01",
+  "Calma, Teteia... já já você brilha, tá?": "v_t_dinamite_l02",
+  "O Rei me achou quando eu era só uma gelatininha... e olha eu aqui, tremendo de coragem!": "v_t_dinamite_l03",
+  "Não tô com medo, não! É que eu sou feito de geleia mesmo!": "v_t_dinamite_l04",
+  "Chega mais perto... a Pipoca quer te dar um abraço quentinho.": "v_t_dinamite_l05",
+  "Ei! Sabe o que faz... BUM?! A Teteia sabe!": "v_t_dinamite_l06",
+  "Sai de perto, sai de perto! O pavio é curto e eu sou mole!": "v_t_dinamite_l07",
+  "Blub! Pode deixar com a gente!": "v_t_dinamite_l08",
+  "Eu, a Pipoca e a Teteia, unidos pra sempre!": "v_t_dinamite_l09",
+  "Hahaha! Que medo! Olha como eu tremo! Ah não, espera, isso é normal.": "v_t_dinamite_l10",
+  "Pode bater! Geleia não quebra, só balança!": "v_t_dinamite_l11",
+  "Bum! Boa, Teteia! Quem é a bombinha mais linda?": "v_t_dinamite_l12",
+  "Esse aí virou purpurina!": "v_t_dinamite_l13",
+  "Ah não... até a Pipoca ficou triste...": "v_t_dinamite_l14",
+  "Ninguém faz isso com o povo do Rei! Isso vai ter troco!": "v_t_dinamite_l15",
+  "Três... dois... um... BUM!": "v_t_dinamite_l16",
+  "Fica aqui quietinha, Pipoca... e explode bem bonito, tá?": "v_t_dinamite_l17"
  }
 }

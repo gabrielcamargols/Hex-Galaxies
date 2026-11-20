@@ -5800,6 +5800,7 @@ func _on_fx_real(e: Dictionary) -> void:
 		"abfx":
 			if int(e.get("uid", -1)) >= 0:
 				board.conjura(int(e["uid"]))
+				_fala_habilidade(int(e["uid"]), str(e.get("k", "")))
 			_on_abfx(e)
 		"ult":
 			board.conjura(int(e["uid"]))
@@ -5961,7 +5962,11 @@ func _pick(arr) -> String:
 func _line(kind: String, u, target = null) -> String:
 	var txt = ""
 	var pc = dlg.get("personagem", {}).get(u.cid, {})
-	if pc.has(kind) and randf() < 0.65:
+	# falas próprias gravadas: o personagem usa sempre uma delas
+	var grav_k = pc.get(kind, []).filter(func(t): return fala_gravada(u.cid, t) != "")
+	if not grav_k.is_empty():
+		txt = _pick(grav_k)
+	elif pc.has(kind) and randf() < 0.65:
 		txt = _pick(pc[kind])
 	if txt == "":
 		txt = _pick(dlg.get(kind, {}).get(_fac_of(u), []))
@@ -6033,7 +6038,7 @@ func _banter(uid: int) -> void:
 		return
 	_say(u.uid, l1, 0.6, "prov" if mode == "provoca" else "fala")
 	if tgt != null:
-		var l2 = _pick(dlg.get("resp_inimigo" if mode == "provoca" else "resp_aliado", {}).get(_fac_of(tgt), []))
+		var l2 = _line("resp_inimigo" if mode == "provoca" else "resp_aliado", tgt)
 		if l2 != "":
 			_say(tgt.uid, l2, max(2.6, 0.6 + _dur_fala(u.cid, l1) + 0.4), "prov" if mode == "provoca" else "fala")
 
@@ -6613,6 +6618,17 @@ func fala_gravada(cid: String, text: String) -> String:
 	if n != "" and sfx != null and sfx.has_sound(n):
 		return n
 	return ""
+
+
+# falas de habilidade (data/dialogos.json, personagem.<id>.hab.<efeito>): ex. o Dinamitador
+# planta a carga ("mark") e ela explode ("shell")
+func _fala_habilidade(uid: int, k: String) -> void:
+	var u: Variant = game.by_uid(uid)
+	if u == null:
+		return
+	var hl: Array = dlg.get("personagem", {}).get(u.cid, {}).get("hab", {}).get(k, [])
+	if not hl.is_empty():
+		_say(uid, hl[randi() % hl.size()], 0.2, "prov")
 
 
 # duração da fala gravada (0 se não houver)
