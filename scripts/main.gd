@@ -5901,7 +5901,7 @@ func _on_fx_real(e: Dictionary) -> void:
 		"round":
 			sfx.play("round", -6.0)
 			narrar("round_final" if e["round"] >= Game.LAST_ROUND else "round_%d" % e["round"], 0.25)
-			banner("Round %d" % e["round"], "os comandantes entram" if e["round"] == Game.CMD_ROUND else ("Você começa" if game.first == me else (_opp() + " começa")))
+			banner("Round final" if e["round"] >= Game.LAST_ROUND else "Round %d" % e["round"], "os comandantes entram" if e["round"] == Game.CMD_ROUND else ("Você começa" if game.first == me else (_opp() + " começa")))
 	board.sync_units()
 
 
