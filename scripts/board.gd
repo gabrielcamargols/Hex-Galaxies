@@ -45,7 +45,7 @@ const ZOOM_MAX = 140.0
 # personagens que já têm modelo 3D com esqueleto (Tripo): entram no lugar da arte 2D
 const FIG3D = {
 	"k_cmd": {"path": "res://models/personagens/k_cmd.glb", "visor": true, "punho": true, "jeito": "militar"},
-	"rhazur": {"path": "res://models/personagens/rhazur.glb", "visor": false, "punho": false, "jeito": "bruto", "giro": 0.0, "anims": {"andar": "Walking", "correr": "Running"}},
+	"rhazur": {"path": "res://models/personagens/rhazur.glb", "visor": false, "punho": false, "jeito": "bruto", "giro": 0.0, "cauda": [0.09, 0.32, -0.02]},
 	"rei_mina": {"path": "res://models/personagens/rei_mina.glb", "visor": false, "punho": false, "jeito": "rei", "brilho": "rachaduras", "cintila": true, "pegadas": "LeftFoot", "conjura": [0.07, 0.035, 0.032]},
 	"z_dragao": {"path": "res://models/personagens/z_dragao.glb", "corpo": "dragao", "escala": 1.35, "brilho": "gemas"},
 	"w_mamute": {"path": "res://models/personagens/w_mamute.glb", "visor": false, "punho": false, "jeito": "mamute", "escala": 1.12, "giro": 0.0, "brilho": "gemas_laranja", "anims": {"correr": "run"}},
