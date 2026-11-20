@@ -603,6 +603,47 @@ func _build_far(desert: bool) -> void:
 					_pine(holder, Vector3((_rnd(h, j + 10) - 0.5) * 1.4 * s, 0.6, (_rnd(h, j + 20) - 0.5) * 1.4 * s), 0.9 + _rnd(h, j) * 0.5)
 
 
+# para onde cada peça 3D olha parada: o último inimigo com quem trocou golpes (se ainda em campo),
+# senão o inimigo mais próximo, senão a base inimiga
+var foco: Dictionary = {}          # uid -> uid do último inimigo que atacou ou que o atacou
+
+
+func foco_par(a: int, b: int) -> void:
+	foco[a] = b
+	foco[b] = a
+
+
+func _olhar_de(u, node: Node3D) -> Vector3:
+	if g == null:
+		return _dir_inimigo(u.owner)
+	var alvo = null
+	if foco.has(u.uid):
+		var f = g.by_uid(foco[u.uid])
+		if f != null and f.st == "field" and f.owner != u.owner and f.owner < 2:
+			alvo = f
+		else:
+			foco.erase(u.uid)
+	if alvo == null:
+		var best = 999
+		for e in g.units:
+			if e.st != "field" or e.owner == u.owner or e.owner > 1 or e.barrier or e.crystal != "":
+				continue
+			var dd = DB.dist(u.pos(), e.pos())
+			if dd < best:
+				best = dd
+				alvo = e
+	if alvo == null:
+		return _dir_inimigo(u.owner)
+	var a = world_xz(u.pos())
+	var b = world_xz(alvo.pos())
+	if unit_nodes.has(alvo.uid):
+		var an: Node3D = unit_nodes[alvo.uid]["node"]
+		b = Vector2(an.global_position.x, an.global_position.z)
+		a = Vector2(node.global_position.x, node.global_position.z)
+	var dv = b - a
+	return Vector3(dv.x, 0.0, dv.y) if dv.length() > 0.01 else _dir_inimigo(u.owner)
+
+
 # direção no mundo de uma base para a base inimiga (para onde as peças 3D olham paradas)
 func _dir_inimigo(owner: int) -> Vector3:
 	if DB.entry_c.size() < 2 or owner < 0 or owner > 1:
@@ -3308,9 +3349,7 @@ func _update_units(delta: float) -> void:
 			if selected:
 				pos3.y += 0.06 + 0.05 * sin(t_now * 6.0)
 			sprite.position = pos3
-			if not sprite.has_meta("olha") or sprite.get_meta("olha_dono", -1) != u.owner:
-				sprite.set_meta("olha", _dir_inimigo(u.owner))
-				sprite.set_meta("olha_dono", u.owner)
+			sprite.set_meta("olha", _olhar_de(u, node))
 			_fig3d_tick(sprite, delta, t_now + d["bob"], d["flip"], mod3, walking and not d.get("long", false), d["lunge"], d["hurt"], d.get("run", false), d.get("mdir", Vector3.ZERO))
 			_fig3d_select(sprite, selected, d["ring"].get_meta("fcol", Color.WHITE))
 		elif sprite != null:

@@ -5609,6 +5609,7 @@ func _on_fx_real(e: Dictionary) -> void:
 		"strike":
 			board.lunge(e["from"])
 			board.conjura(e["from"])
+			board.foco_par(int(e["from"]), int(e["to"]))
 			var stu: Variant = game.by_uid(e["to"])
 			if stu != null:
 				_simbolo_hit.call_deferred(e["from"], _hex_pos(stu.pos(), 0.0))
