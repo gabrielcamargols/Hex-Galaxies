@@ -31,5 +31,14 @@
   "Analisei cada caminho possível. Escolho aquele que protege vocês.": "v_z_dragao_l05",
   "Motterlich nos deu a vida. Eu darei a minha para preservá-la.": "v_z_dragao_l06",
   "Pela paz de Zukunft... nenhum esforço será poupado.": "v_z_dragao_l07"
+ },
+ "w_mamute": {
+  "O ancião da manada chegou. Abram caminho!": "v_w_mamute_l01",
+  "Já vi muitas eras passarem... e ainda estou de pé.": "v_w_mamute_l02",
+  "Fiquem atrás de mim, pequenos. Eu sou a muralha.": "v_w_mamute_l03",
+  "A terra se lembra dos meus passos. Hoje, ela vai lembrar de novo.": "v_w_mamute_l04",
+  "Os ancestrais caminham comigo. Nenhum Wächter luta sozinho.": "v_w_mamute_l05",
+  "Quem ameaça a manada... enfrenta o ancião.": "v_w_mamute_l06",
+  "Sintam a terra tremer... Pela honra dos Wächter!": "v_w_mamute_l07"
  }
 }
