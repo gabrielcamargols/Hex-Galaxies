@@ -20,6 +20,36 @@ uniform float rim_amt = 0.35;
 // luz "de desenho": vem do alto à esquerda, presa à câmera (todo personagem é sombreado do mesmo jeito)
 uniform vec3 key_dir = vec3(-0.55, 0.7, 0.45);
 
+// cauda que balança: o peso vem na cor do vértice (COLOR.r: 0 na base, 1 na ponta),
+// gravado no .glb por tools/glb_peso_cauda.py; quem não tem cauda fica com tail_on = 0
+uniform float tail_on = 0.0;
+uniform vec3 tail_base = vec3(-0.05, 0.45, 0.0);
+uniform float tail_amp = 0.35;       // abertura do balanço (radianos na ponta)
+uniform float tail_spd = 2.2;        // velocidade
+uniform float tail_t = 0.0;          // relógio do personagem (cada um balança no seu tempo)
+
+vec3 roda(vec3 v, vec3 c, vec3 ax, float a) {
+	vec3 p = v - c;
+	float cs = cos(a), sn = sin(a);
+	return c + p * cs + cross(ax, p) * sn + ax * dot(ax, p) * (1.0 - cs);
+}
+
+void vertex() {
+	if (tail_on > 0.5) {
+		float w = COLOR.r;
+		if (w > 0.001) {
+			float tt = tail_t * tail_spd;
+			// onda que corre da base para a ponta: a ponta atrasa e enrola
+			float a1 = sin(tt - w * 2.4) * tail_amp * w;
+			float a2 = sin(tt * 0.7 + 1.3 - w * 1.8) * tail_amp * 0.45 * w;
+			vec3 v = roda(VERTEX, tail_base, vec3(0.0, 1.0, 0.0), a1);
+			v = roda(v, tail_base, vec3(0.0, 0.0, 1.0), a2);
+			NORMAL = normalize(roda(NORMAL, vec3(0.0), vec3(0.0, 1.0, 0.0), a1));
+			VERTEX = v;
+		}
+	}
+}
+
 void fragment() {
 	vec3 c0 = texture(tex, UV).rgb;
 	// máscara do visor: vermelho puro (no laranja das faixas o verde passa de ~45% do vermelho e fica de fora)

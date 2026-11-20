@@ -46,7 +46,7 @@ const ZOOM_MAX = 140.0
 const FIG3D = {
 	"k_cmd": {"path": "res://models/personagens/k_cmd.glb", "visor": true, "punho": true, "jeito": "militar"},
 	"rhazur": {"path": "res://models/personagens/rhazur.glb", "visor": false, "punho": false, "jeito": "bruto"},
-	"karo": {"path": "res://models/personagens/karo.glb", "visor": false, "punho": true, "jeito": "malandro", "bracos": "bolso"},
+	"karo": {"path": "res://models/personagens/karo.glb", "visor": false, "punho": true, "jeito": "malandro", "bracos": "bolso", "cauda": [-0.05, 0.45, 0.0]},
 }
 # jeito de cada personagem 3D: parado, andar e correr diferentes
 #   resp: respiração (amplitude, velocidade) · olha: vigia em volta · peso: troca de perna
@@ -2469,6 +2469,10 @@ func _figure3d(cid: String, body_h: float) -> Node3D:
 			m.set_shader_parameter("glow_on", 1.0 if cfg.get("visor", false) else 0.0)
 			var o = ShaderMaterial.new()
 			o.shader = load("res://shaders/hq_contorno3d.gdshader")
+			if cfg.has("cauda"):
+				for mm in [m, o]:
+					mm.set_shader_parameter("tail_on", 1.0)
+					mm.set_shader_parameter("tail_base", Vector3(cfg["cauda"][0], cfg["cauda"][1], cfg["cauda"][2]))
 			m.next_pass = o
 			mi.set_surface_override_material(si, m)
 			mats.append(m)
@@ -2586,10 +2590,18 @@ func _fig3d_q(sk: Skeleton3D, b: int, axis: Vector3, ang: float) -> Quaternion:
 
 
 func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, walking: bool, lunge: float, hurt: float, run: bool = false, mdir: Vector3 = Vector3.ZERO) -> void:
+	var tw: float = fig.get_meta("walk_w", 0.0)
+	var tr: float = fig.get_meta("run_w", 0.0) * tw
+	var tt: float = fig.get_meta("tail_t", 0.0) + delta * (1.0 + 0.8 * tw + 1.0 * tr + 2.0 * hurt)
+	fig.set_meta("tail_t", tt)
 	for m in fig.get_meta("mats"):
 		m.set_shader_parameter("mod_col", mod)
+		m.set_shader_parameter("tail_t", tt)
+		m.set_shader_parameter("tail_amp", 0.3 + 0.12 * tw + 0.1 * tr)
 	for o in fig.get_meta("outl"):
 		o.set_shader_parameter("mod_col", Color(1, 1, 1) if mod.r > 0.9 else mod)
+		o.set_shader_parameter("tail_t", tt)
+		o.set_shader_parameter("tail_amp", 0.3 + 0.12 * tw + 0.1 * tr)
 	var pulse = 0.82 + 0.18 * sin(t * 3.2)
 	if fig.has_meta("halos"):
 		var hs: Array = fig.get_meta("halos")
