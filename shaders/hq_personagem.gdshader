@@ -20,6 +20,7 @@ uniform float bright = 1.18;                            // a textura do Tripo ve
 uniform vec3 glow_col : source_color = vec3(1.0, 0.06, 0.04);
 uniform float glow_amt = 2.6;
 uniform float glow_mode = 0.0;   // 0 = vermelho puro (visor) | 1 = laranja vivo (rachaduras de magma)
+uniform float cintila = 0.0;      // 1 = partes de cristal roxo cintilam (Rei da Mina)
 uniform float glow_on = 1.0;                            // 0 = personagem sem visor/olhos acesos
 uniform float rim_amt = 0.35;
 // luz "de desenho": vem do alto à esquerda, presa à câmera (todo personagem é sombreado do mesmo jeito)
@@ -140,5 +141,16 @@ void fragment() {
 	// visor aceso: vermelho de luz (passa do 1.0) com miolo quente quase branco
 	vec3 hot = glow_col * (2.0 + 0.6 * pulse) + vec3(1.0, 0.55, 0.45) * pow(glow_m, 4.0) * 0.22 * pulse;
 	col = mix(col, hot, glow_m * glow_on);
+	if (cintila > 0.5) {
+		// cristal roxo: azul e vermelho bem acima do verde
+		float cm = smoothstep(1.25, 1.6, c0.b / max(c0.g, 0.02)) * smoothstep(1.05, 1.3, c0.r / max(c0.g, 0.02)) * smoothstep(0.45, 0.6, c0.b);
+		// brilho que corre devagar pelas facetas + estrelinhas que piscam em pontos soltos
+		float onda = 0.5 + 0.5 * sin(TIME * 1.7 + dot(UV, vec2(31.0, 23.0)));
+		vec2 cel = floor(UV * 90.0);
+		float hs = h21(cel);
+		float pisca = pow(max(0.0, sin(TIME * (1.5 + hs * 2.5) + hs * 40.0)), 24.0) * step(0.86, h21(cel + 7.1));
+		vec3 lav = vec3(0.93, 0.78, 1.0);
+		col += cm * (vec3(0.35, 0.12, 0.45) * onda * 0.5 + lav * pisca * 1.6);
+	}
 	ALBEDO = col * mod_col.rgb;
 }

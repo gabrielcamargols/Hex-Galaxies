@@ -46,7 +46,7 @@ const ZOOM_MAX = 140.0
 const FIG3D = {
 	"k_cmd": {"path": "res://models/personagens/k_cmd.glb", "visor": true, "punho": true, "jeito": "militar"},
 	"rhazur": {"path": "res://models/personagens/rhazur.glb", "visor": false, "punho": false, "jeito": "bruto"},
-	"rei_mina": {"path": "res://models/personagens/rei_mina.glb", "visor": false, "punho": false, "jeito": "rei", "brilho": "rachaduras"},
+	"rei_mina": {"path": "res://models/personagens/rei_mina.glb", "visor": false, "punho": false, "jeito": "rei", "brilho": "rachaduras", "cintila": true, "pegadas": "LeftFoot"},
 	"karo": {"path": "res://models/personagens/karo.glb", "visor": false, "punho": true, "jeito": "malandro", "bracos": "bolso", "cauda": [-0.05, 0.45, 0.0]},
 }
 # padrão de tinta de cada facção (data/vfx_paletas.json "pattern") -> pat do hq_personagem
@@ -2479,6 +2479,8 @@ func _figure3d(cid: String, body_h: float) -> Node3D:
 			m.set_shader_parameter("shadow_tint", DB.pal(fac3, "shadow", Color(0.34, 0.30, 0.55)))
 			m.set_shader_parameter("hi_col", DB.pal(fac3, "highlight", Color(1.0, 0.9, 0.7)))
 			m.set_shader_parameter("pat", PADROES.find(String(DB.vfx_pal.get(fac3, {}).get("pattern", "reticula"))) if PADROES.has(String(DB.vfx_pal.get(fac3, {}).get("pattern", "reticula"))) else 0)
+			if cfg.get("cintila", false):
+				m.set_shader_parameter("cintila", 1.0)
 			if cfg.get("brilho", "") == "rachaduras":
 				m.set_shader_parameter("glow_mode", 1.0)
 				m.set_shader_parameter("glow_col", Color(1.0, 0.45, 0.08))
@@ -2499,6 +2501,7 @@ func _figure3d(cid: String, body_h: float) -> Node3D:
 	inst.scale = Vector3.ONE * (body_h * 0.9 / hgt)
 	root.set_meta("mats", mats)
 	root.set_meta("outl", outl)
+	root.set_meta("pegadas", cfg.get("pegadas", ""))
 	root.set_meta("ink", DB.pal(DB.cards[cid]["f"] if DB.cards.has(cid) else "", "outline", Color(0.04, 0.016, 0.063)).darkened(0.45))
 	root.set_meta("sel", false)
 	var jt: Dictionary = JEITOS["padrao"].duplicate()
@@ -2665,6 +2668,15 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 	var lk = sin(t * J["olha"][1]) + 0.35 * sin(t * J["olha"][1] * 2.7)   # olha em volta
 	var idle = 1.0 - ww
 	var sw = sin(ph)
+	# pegadas: o pé escolhido toca o chão quando a passada troca de lado
+	var pg: String = fig.get_meta("pegadas", "")
+	if pg != "" and ww > 0.5:
+		var sw_ant: float = fig.get_meta("sw_ant", 0.0)
+		if sw_ant > 0.0 and sw <= 0.0:
+			var fb = sk.find_bone("mixamorig_" + pg)
+			if fb >= 0:
+				_pegada_cristal(sk.global_transform * sk.get_bone_global_pose(fb).origin, fig)
+		fig.set_meta("sw_ant", sw)
 	var k = sin(clamp(lunge, 0.0, 1.0) * PI)
 	var ra: float = J["resp"][0]
 	# tique de vez em quando (só parado): 0..1 durante ~1,5 s a cada ~7 s
@@ -2761,6 +2773,52 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 		for e in pose[nm]:
 			q = q * _fig3d_q(sk, b, e[0], e[1])
 		sk.set_bone_pose_rotation(b, q)
+
+
+# Rei da Mina: cada passo do pé de cristal deixa cristaizinhos que brotam do chão e somem
+var _pegada_mat: StandardMaterial3D = null
+
+
+func _pegada_cristal(pos: Vector3, fig: Node3D) -> void:
+	if not is_inside_tree():
+		return
+	if _pegada_mat == null:
+		_pegada_mat = StandardMaterial3D.new()
+		_pegada_mat.albedo_color = Color("#b45cff")
+		_pegada_mat.emission_enabled = true
+		_pegada_mat.emission = Color("#9b3dff")
+		_pegada_mat.emission_energy_multiplier = 1.4
+		_pegada_mat.roughness = 0.2
+		_pegada_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	var ground_y = fig.get_parent().global_position.y if fig.get_parent() is Node3D else pos.y
+	var root = Node3D.new()
+	add_child(root)
+	root.global_position = Vector3(pos.x, ground_y + 0.01, pos.z)
+	var n = 4 + randi() % 3
+	for i in range(n):
+		var mi = MeshInstance3D.new()
+		var cy = CylinderMesh.new()
+		cy.top_radius = 0.0
+		var r0 = randf_range(0.04, 0.075)
+		cy.bottom_radius = r0
+		cy.height = randf_range(0.14, 0.3)
+		cy.radial_segments = 5
+		cy.rings = 1
+		mi.mesh = cy
+		mi.material_override = _pegada_mat
+		var a = randf() * TAU
+		var d = randf_range(0.0, 0.12)
+		mi.position = Vector3(cos(a) * d, cy.height * 0.4, sin(a) * d)
+		mi.rotation = Vector3(randf_range(-0.45, 0.45), randf() * TAU, randf_range(-0.45, 0.45))
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		root.add_child(mi)
+	root.scale = Vector3.ONE * 0.05
+	var tw = root.create_tween()
+	tw.tween_property(root, "scale", Vector3.ONE * 1.15, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(root, "scale", Vector3.ONE, 0.12)
+	tw.tween_interval(2.2)
+	tw.tween_property(root, "scale", Vector3(1.0, 0.02, 1.0), 0.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+	tw.tween_callback(root.queue_free)
 
 
 # selecionado: o contorno de tinta vira a cor da facção e engrossa
