@@ -2821,10 +2821,13 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 			k = 0.0
 			pose["Spine1"] = [[S, -0.1 * e3], [U, 0.0]]
 			pose["Head"] = [[S, -0.12 * e3], [U, 0.0]]
-			pose["LeftUpLeg"] = [[S, 0.08 * e3]]
-			pose["RightUpLeg"] = [[S, -0.05 * e3]]
-			pose["LeftLeg"] = [[S, 0.25 * e3]]
-			pose["RightLeg"] = [[S, 0.15 * e3]]
+			# pernas esticadas e juntas, pés em ponta para baixo (como quem levita)
+			pose["LeftUpLeg"] = [[S, 0.03 * e3], [F, -0.07 * e3]]
+			pose["RightUpLeg"] = [[S, 0.03 * e3], [F, 0.07 * e3]]
+			pose["LeftLeg"] = [[S, 0.06 * e3]]
+			pose["RightLeg"] = [[S, 0.06 * e3]]
+			pose["LeftFoot"] = [[S, fig.get_meta("pe_ponta", 1.2) * e3]]
+			pose["RightFoot"] = [[S, fig.get_meta("pe_ponta", 1.2) * e3]]
 			fig.position.y += (0.32 + 0.04 * sin(t * 4.0)) * e3
 		if fig.has_meta("olhos"):
 			var fl = 0.9 + 0.1 * sin(t * 18.0)
