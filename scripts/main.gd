@@ -5979,6 +5979,12 @@ func _banter(uid: int) -> void:
 		return
 	last_banter_ms = now
 	var others = game.field().filter(func(x): return x != u and not x.barrier)
+	# comandante com falas de entrada gravadas: entra sempre falando uma delas (sorteada)
+	if u.is_cmd:
+		var grav = dlg.get("personagem", {}).get(u.cid, {}).get("entrada", []).filter(func(t): return fala_gravada(u.cid, t) != "")
+		if not grav.is_empty():
+			_say(u.uid, grav[randi() % grav.size()], 0.6, "fala")
+			return
 	# duplas com conversa própria
 	for pr in dlg.get("pares", []):
 		var other_id = ""
@@ -6009,12 +6015,6 @@ func _banter(uid: int) -> void:
 			if best == null or DB.dist(x.pos(), u.pos()) < DB.dist(best.pos(), u.pos()):
 				best = x
 		return best
-	# comandante com falas de entrada gravadas: entra sempre falando uma delas (sorteada)
-	if u.is_cmd:
-		var grav = dlg.get("personagem", {}).get(u.cid, {}).get("entrada", []).filter(func(t): return fala_gravada(u.cid, t) != "")
-		if not grav.is_empty():
-			_say(u.uid, grav[randi() % grav.size()], 0.6, "fala")
-			return
 	var tgt = null
 	var mode = "entrada"
 	if not enemies.is_empty() and (allies.is_empty() or randf() < 0.55):
@@ -6602,6 +6602,8 @@ func _talk_voice(u, text: String, mood: String) -> void:
 	if sfx == null:
 		return
 	var gv = fala_gravada(u.cid, text)
+	if autotest and OS.get_environment("NARRAR") != "":
+		print("FALA %s%s: %s" % [u.cid, " [gravada]" if gv != "" else "", text])
 	if gv != "":
 		# fala gravada: toca inteira, sem variar o tom
 		DisplayServer.tts_stop()
