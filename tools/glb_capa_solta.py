@@ -51,9 +51,13 @@ for c in range(nc):
         continue
     sel[vl == c] = np.median(d[vl == c]) > dist
 sel &= aw > 0.0
+# manto dos ombros: quanto mais alto, mais acompanha o braço (sobe junto, sem o braço atravessar)
+y_ombro = pos['mixamorig_LeftArm'][1]
+mant = np.clip((P[:, 1] - (y_ombro - 0.17)) / 0.15, 0.0, 1.0) * 0.75
 for v in np.where(sel)[0]:
-    moved = (W[v] * isarm[v]).sum()
-    W[v][isarm[v]] = 0.0
+    keep = mant[v]
+    moved = (W[v] * isarm[v]).sum() * (1.0 - keep)
+    W[v][isarm[v]] *= keep
     if sp2 in JT[v]:
         W[v][list(JT[v]).index(sp2)] += moved
     else:

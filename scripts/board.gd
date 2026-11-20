@@ -2871,7 +2871,7 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 			var ab: int = bn[an]
 			var fb: int = bn[fn]
 			var hb: int = bn[hn]
-			var alvo_d = (F * 1.0 + S * (0.22 * side[1]) + U * 0.05).normalized()
+			var alvo_d = (F * 1.0 + S * (0.42 * side[1]) - U * 0.12).normalized()
 			# braço
 			var gp = sk.get_bone_global_pose(ab)
 			var cur_d = (sk.get_bone_global_pose(fb).origin - gp.origin).normalized()
