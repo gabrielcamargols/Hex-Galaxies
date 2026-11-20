@@ -2676,7 +2676,7 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 		# mãos enfiadas nos bolsos da frente: braços descem rentes ao corpo e um pouco à frente,
 		# cotovelos levemente dobrados para dentro, ombros um pouco curvados (pose relaxada)
 		var pk = (1.0 - rw * ww) * (1.0 - k)
-		var bp: Array = fig.get_meta("bolso_p", [0.4, -0.16, -0.38, 0.3, 0.1])   # desce, frente, cotovelo, para dentro, ombro
+		var bp: Array = fig.get_meta("bolso_p", [0.2, -0.2, -0.6, 0.2, 0.06])   # desce, frente, cotovelo, para dentro, ombro
 		pose["LeftArm"] = [[F, -0.30 - bp[0] * pk + 0.02 * br * idle], [S, -bp[1] * pk + (arm_a * sw) * (1.0 - pk)]]
 		pose["RightArm"] = [[F, 0.30 + bp[0] * pk - 0.02 * br * idle], [S, -bp[1] * pk - (arm_a * sw) * (1.0 - pk) - 1.35 * k]]
 		pose["LeftForeArm"] = [[S, lerp(elbow, bp[2], pk)], [F, bp[3] * pk]]
@@ -2686,7 +2686,7 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 		pose["LeftHand"] = [[S, -0.2 * pk]]
 		pose["RightHand"] = [[S, -0.2 * pk]]
 		# a mão some dentro do bolso (encolhe a partir do pulso)
-		var hs = lerp(1.0, 0.12, pk)
+		var hs = lerp(1.0, fig.get_meta("mao_esc", 0.45), pk)
 		for hn in ["LeftHand", "RightHand"]:
 			if bn.has(hn):
 				sk.set_bone_pose_scale(bn[hn], Vector3.ONE * hs)
