@@ -2,7 +2,7 @@ extends Node
 ## Sons: efeitos curtos (vários ao mesmo tempo) e ambientes em loop com fade.
 
 const NAMES = ["golpe", "impacto", "tiro_laser", "tiro_cristal", "tiro_energia", "projetil", "cura", "escudo", "poder",
-	"maldicao", "fenix", "armadilha", "invocar", "derrota", "passo", "passo_lit1", "passo_lit2", "passo_lit3", "explosao", "verme_rumor", "verme_ataque", "dunas",
+	"maldicao", "fenix", "armadilha", "invocar", "derrota", "passo", "passo_lit1", "passo_lit2", "passo_lit3", "radio_on", "radio_off", "explosao", "verme_rumor", "verme_ataque", "dunas",
 	"round", "clique", "confirmar", "carta", "vento_loop", "tempestade_loop", "ilha_loop", "musica_deserto", "musica_galaxia", "musica_tema", "musica_valak", "musica_abnara", "musica_goraida",
 	"musica_fau", "musica_aby", "musica_kri", "musica_wac", "musica_zuk", "musica_lit", "musica_ter",
 	"entrada_fau", "entrada_aby", "entrada_kri", "entrada_wac", "entrada_zuk", "entrada_lit", "entrada_ter", "tensao_loop", "heli_loop", "abismo_loop", "caverna_loop"]
@@ -17,6 +17,8 @@ var master_db: float = 0.0
 func bus_of(n: String) -> String:
 	if n.begins_with("musica") or n.begins_with("entrada") or n == "tensao_loop":
 		return "Musica"
+	if n.begins_with("v_k_") or n.begins_with("radio_"):
+		return "Radio"     # os Krieg falam pelo rádio
 	if n.begins_with("v_"):
 		return "Vozes"
 	return "Efeitos"
@@ -36,6 +38,7 @@ func _ready() -> void:
 			AudioServer.add_bus()
 			AudioServer.set_bus_name(AudioServer.bus_count - 1, b)
 			AudioServer.set_bus_send(AudioServer.bus_count - 1, "Master")
+	_radio_bus()
 	for n in NAMES:
 		var path = "res://sounds/%s.wav" % n
 		if not ResourceLoader.exists(path):
@@ -70,7 +73,49 @@ func has_sound(n: String) -> bool:
 	return s != null
 
 
+# canal de rádio dos Krieg: faixa estreita de telefone, saturação leve e compressão;
+# passa pelo canal Vozes, então o volume de vozes das Configurações também vale para ele
+func _radio_bus() -> void:
+	if AudioServer.get_bus_index("Radio") >= 0:
+		return
+	AudioServer.add_bus()
+	var i = AudioServer.bus_count - 1
+	AudioServer.set_bus_name(i, "Radio")
+	AudioServer.set_bus_send(i, "Vozes")
+	var hp = AudioEffectHighPassFilter.new()
+	hp.cutoff_hz = 380.0
+	hp.db = AudioEffectFilter.FILTER_24DB
+	AudioServer.add_bus_effect(i, hp)
+	var lp = AudioEffectLowPassFilter.new()
+	lp.cutoff_hz = 3200.0
+	lp.db = AudioEffectFilter.FILTER_24DB
+	AudioServer.add_bus_effect(i, lp)
+	var ds = AudioEffectDistortion.new()
+	ds.mode = AudioEffectDistortion.MODE_OVERDRIVE
+	ds.drive = 0.42
+	ds.pre_gain = 4.0
+	ds.post_gain = -5.0
+	ds.keep_hf_hz = 4000.0
+	AudioServer.add_bus_effect(i, ds)
+	var cp = AudioEffectCompressor.new()
+	cp.threshold = -18.0
+	cp.ratio = 6.0
+	cp.gain = 4.0
+	AudioServer.add_bus_effect(i, cp)
+
+
 func play(n: String, vol_db: float = 0.0, pitch: float = 1.0, vary: float = 0.08) -> void:
+	if not has_sound(n):
+		return
+	if n.begins_with("v_k_"):
+		# abre o rádio, fala e fecha com o chiado
+		_play_raw("radio_on", vol_db - 4.0, 1.0)
+		var dur = streams[n].get_length() / max(pitch, 0.1)
+		get_tree().create_timer(dur + 0.05).timeout.connect(func(): _play_raw("radio_off", vol_db - 6.0, 1.0))
+	_play_raw(n, vol_db, pitch, vary)
+
+
+func _play_raw(n: String, vol_db: float = 0.0, pitch: float = 1.0, vary: float = 0.0) -> void:
 	if not has_sound(n):
 		return
 	var p: AudioStreamPlayer = null
