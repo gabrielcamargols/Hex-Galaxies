@@ -6,7 +6,7 @@
   "KRI": ["Unidade em posição. Câmbio.", "Ordem recebida. Avançando.", "Setor seguro... por enquanto.", "Krieg não recua. Câmbio e desligo.", "Contato visual confirmado.", "Armas prontas, comandante."],
   "WAC": ["A matilha chegou.", "Pela honra dos Guardiões!", "Sinto a terra tremer sob minhas garras.", "Que os ancestrais nos vejam lutar.", "Ninguém toca no meu bando.", "O instinto não mente."],
   "ZUK": ["Cálculo concluído: vitória provável.", "Iniciando protocolo de combate.", "Que ambiente primitivo.", "Eficiência máxima, por favor.", "Zukunft chegou. O futuro chegou.", "Meus sensores não mentem."],
-  "LIT": ["Nós ressoamos.", "A luz atravessa tudo.", "Este cristal não se parte fácil.", "Ouço o canto da pedra.", "Brilhamos juntos.", "Cada faceta, um propósito."],
+  "LIT": ["Nós somos muitos.", "Sinto guerreiros fortes por perto.", "Malsata Patrino tem fome.", "Mais um mundo para a colmeia.", "Crescemos onde tocamos.", "Cada vitória nos alimenta."],
   "TER": ["Quem chamou o pessoal da obra?", "Pá, picareta e paciência!", "Essa rocha esconde coisa boa por dentro.", "Cava fundo, bate forte!", "Valak manda lembranças!", "Perdemos a mina, não a teimosia!"]
  },
  "aliado": {
@@ -15,7 +15,7 @@
   "KRI": ["{nome}, cubra meu flanco. Câmbio.", "Formação, {nome}! Agora!", "{nome}, sincronizar ataque no três.", "Posição confirmada, {nome}. Aguardo ordens."],
   "WAC": ["{nome}, irmão de matilha!", "Lado a lado, {nome}.", "{nome}, mostre suas garras!", "Com você aqui, {nome}, ninguém passa."],
   "ZUK": ["{nome}, tente acompanhar meu ritmo.", "Dados compartilhados, {nome}.", "{nome}, sua eficiência está em 87%. Melhore.", "Formação ótima, {nome}. Como previsto."],
-  "LIT": ["{nome}, sinto sua ressonância.", "Brilhe comigo, {nome}.", "Nossas facetas se alinham, {nome}.", "{nome}, a luz é uma só."],
+  "LIT": ["{nome}, sente a fome também?", "Alimente-se ao meu lado, {nome}.", "{nome}, somos uma só colmeia.", "Escolha bem sua presa, {nome}."],
   "TER": ["{nome}, trouxe o lanche?", "Ô {nome}, segura essa viga aí!", "{nome}, depois da briga tem obra pra fazer!", "{nome}, cava que eu bato!"]
  },
  "resp_aliado": {
@@ -24,7 +24,7 @@
   "KRI": ["Afirmativo. Câmbio.", "Entendido.", "Copiado, em posição.", "Sim, senhor!"],
   "WAC": ["Até o fim!", "Pela matilha!", "Grrr... sim!", "Que venham!"],
   "ZUK": ["Óbvio.", "Já estava calculado.", "Sem margem de erro.", "Processando... concordo."],
-  "LIT": ["Ressoamos.", "Sim, em harmonia.", "A luz concorda.", "Brilharemos."],
+  "LIT": ["Somos um.", "A fome concorda.", "Por Malsata Patrino.", "Cresceremos."],
   "TER": ["Tá na mão!", "Deixa comigo, chefia!", "Hahaha, bora!", "Só se tiver café depois!"]
  },
  "provoca": {
@@ -33,7 +33,7 @@
   "KRI": ["Alvo identificado: {nome}. Câmbio.", "{nome}, renda-se ou seja neutralizado.", "{nome} na mira. Aguardando autorização.", "{nome}, você não tem cobertura."],
   "WAC": ["{nome}, sinto o cheiro do seu medo.", "Você é só uma presa, {nome}.", "{nome}, a caça começou.", "Ajoelhe-se, {nome}."],
   "ZUK": ["{nome}? Ameaça calculada: irrelevante.", "Que tecnologia antiga, {nome}.", "{nome}, já previ todos os seus movimentos.", "Sério, {nome}? Só isso?"],
-  "LIT": ["{nome}, sua sombra não alcança nossa luz.", "Vamos refletir seus golpes, {nome}.", "{nome}, você vai se estilhaçar.", "Sinto dissonância em você, {nome}."],
+  "LIT": ["{nome}... você ficaria lindo em cristal.", "Seu corpo será nosso, {nome}.", "{nome}, resistir só deixa você mais forte. Melhor para nós.", "Já sinto você por dentro, {nome}."],
   "TER": ["{nome}, vou te enterrar e fazer fundação em cima!", "Ô {nome}, cuidado com o buraco!", "{nome}, tu é mais mole que areia movediça!", "{nome}, já viu uma picareta de perto?"]
  },
  "resp_inimigo": {
@@ -42,7 +42,7 @@
   "KRI": ["Negativo. Câmbio.", "Ameaça registrada e ignorada.", "Mantenha a posição e veremos.", "Krieg não responde a provocação."],
   "WAC": ["Venha descobrir!", "Grrraaah!", "Palavras não ferem garras.", "Você vai engolir isso."],
   "ZUK": ["Comentário descartado.", "Que primitivo.", "Probabilidade de você vencer: 3%.", "Hmm. Fofo."],
-  "LIT": ["Sua raiva só nos fortalece.", "Seremos sua ruína cintilante.", "A luz não teme.", "Silêncio, sombra."],
+  "LIT": ["Sua força será nossa.", "Lute mais. Queremos você forte.", "A colmeia não teme.", "Você já é parte de nós."],
   "TER": ["Haha, tô morrendo de medo... de rir!", "Vem que eu te cavo!", "Fala menos e bate mais!", "Tu não aguenta um dia de obra!"]
  },
  "vitoria": {
@@ -51,7 +51,7 @@
   "KRI": ["Alvo neutralizado. Câmbio.", "Ameaça eliminada.", "Próximo alvo."],
   "WAC": ["A caça foi boa!", "Uivem, irmãos!", "Mais um troféu."],
   "ZUK": ["Como previsto.", "Eliminado com 100% de eficiência.", "Próximo."],
-  "LIT": ["Estilhaçado.", "A luz prevalece.", "Que ressoe em paz."],
+  "LIT": ["Absorvido.", "Mais um para a colmeia.", "Malsata Patrino agradece."],
   "TER": ["Enterrado!", "Esse aí virou alicerce!", "Pá de cal!"]
  },
  "lamento": {
@@ -60,7 +60,7 @@
   "KRI": ["Homem abatido! Câmbio!", "Perdemos uma unidade.", "Fechar a formação!"],
   "WAC": ["Você será lembrado, irmão.", "A matilha uiva por você!", "Vingança!"],
   "ZUK": ["Perda dentro do aceitável... ou não.", "Recalculando...", "Isso não estava nos planos."],
-  "LIT": ["Uma faceta se apagou.", "Nossa luz enfraquece...", "Ressoaremos por você."],
+  "LIT": ["Um fragmento se perdeu.", "A colmeia sente a perda...", "Cresceremos de novo."],
   "TER": ["Desabou um dos nossos!", "Segura a mina, pessoal!", "Isso vai ter troco!"]
  },
  "personagem": {
@@ -95,7 +95,7 @@
   "k_cmd": {"entrada": ["Senhores... afinem os instrumentos. Cada nota desta sinfonia já foi escrita por mim.", "Analisei cada passo do inimigo. Eles já estão mortos... apenas não sabem.", "O campo de batalha é um tabuleiro. E eu não jogo para empatar.", "Ouçam... o silêncio antes do primeiro tiro. Não há música mais bela.", "Toda grande obra exige sacrifício. O deles... calculado até o último homem.", "Fileiras, em posição. Flancos cobertos. Que o espetáculo comece.", "A guerra é uma arte, soldados. E eu já conheço o final desta obra."], "provoca": ["{nome}, sua rendição será aceita. Talvez."]},
   "w_mamute": {"entrada": ["O ancião da manada chegou. Abram caminho!", "Já vi muitas eras passarem... e ainda estou de pé.", "Fiquem atrás de mim, pequenos. Eu sou a muralha.", "A terra se lembra dos meus passos. Hoje, ela vai lembrar de novo.", "Os ancestrais caminham comigo. Nenhum Wächter luta sozinho.", "Quem ameaça a manada... enfrenta o ancião.", "Sintam a terra tremer... Pela honra dos Wächter!"], "provoca": ["{nome}, já foi pisoteado por um mamute?"]},
   "z_dragao": {"entrada": ["Zukunft me chamou... e eu vim. Ninguém aqui ficará desamparado.", "Não desejo esta guerra. Mas não deixarei que ela alcance meu povo.", "Não temam, filhos de Motterlich. Eu estou com vocês.", "Preferia a paz... mas, se é preciso lutar, lutarei até o fim.", "Analisei cada caminho possível. Escolho aquele que protege vocês.", "Motterlich nos deu a vida. Eu darei a minha para preservá-la.", "Pela paz de Zukunft... nenhum esforço será poupado."], "provoca": ["{nome}, olhe para cima. Sempre olhe para cima."]},
-  "l_general": {"entrada": ["Lithari, formação cristalina! Que nossa luz seja muralha."], "provoca": ["{nome}, sua prisão já está sendo lapidada."]},
+  "l_general": {"entrada": ["A superfície de Valak já é nossa. Agora... vocês.", "Guerreiros tão fortes... Malsata Patrino ficará satisfeita.", "Não viemos destruir vocês. Viemos fazer parte de vocês.", "Malsata Patrino tem fome. E nós somos a sua boca.", "Lithari, espalhem-se. Cada guerreiro tomado é mais um de nós.", "Um planeta de cada vez... até não restar nenhum.", "Cresçam, cristais. A colheita começou."], "provoca": ["{nome}, Malsata Patrino já escolheu você."]},
   "rei_mina": {"entrada": ["Rei da Mina em campo. Valak ainda tem dono!", "Perdemos o planeta, não a coroa. A pedra me obedece."], "provoca": ["{nome}, a rocha que você pisa responde a mim.", "Vou te mostrar o que um cristal faz com quem cruza o Rei."], "aliado": ["{nome}, firme. Eu movo a montanha por você."]},
   "pipa": {"entrada": ["Capivara na pista! Calma, galera, calma..."], "provoca": ["{nome}, tô tão tranquilo que nem vou me estressar com você."]},
   "brazucao": {"entrada": ["Brazucão chegou com as ferramentas! Gambiarra de qualidade!"]},
@@ -119,7 +119,7 @@
   "k_medico": {"entrada": ["Médico de campo na área. Ninguém morre no meu turno. Câmbio."]},
   "k_tank": {"entrada": ["Tank posicionado. Atrás de mim, Krieg!"]},
   "l_fera": {"entrada": ["GRRRRAAAH! (som de cristal rachando)"]},
-  "l_lider": {"entrada": ["Sintonizem-se comigo. Ressoem!"]},
+  "l_lider": {"entrada": ["Conectem-se a mim. A colmeia desperta!"]},
   "perfurador": {"entrada": ["Saí do buraco. Quem pediu atalho?", "Por baixo da terra eu conheço tudo."], "provoca": ["{nome}, olha pro chão. Tarde demais."]},
   "t_fendas": {"entrada": ["Brocas giratórias, prontas pra demolir!", "Cadê a parede? Eu quero a parede."], "provoca": ["{nome}, atrás da barreira ou na frente, vai sentir a ruptura!"]},
   "t_cartografo": {"entrada": ["Mapeei tudo. Sei onde vocês vão pisar.", "Cada túnel de Valak está no meu mapa."], "aliado": ["{nome}, por aqui: eu tracei uma rota mais curta."]},
@@ -141,13 +141,13 @@
   {"a": "k_cmd", "b": "k_front", "fala": ["Frontliner, relatório. Câmbio.", "Linha de frente pronta, comandante. Câmbio."]},
   {"a": "w_mamute", "b": "w_tric", "fala": ["Tric, velho amigo. Ainda com essa cabeça dura?", "Mais dura que nunca, ancião!"]},
   {"a": "z_dragao", "b": "z_cao", "fala": ["Cão, rastreie os alvos.", "Au-au! (Rastreamento iniciado.)"]},
-  {"a": "l_general", "b": "l_lider", "fala": ["Líder, mantenha a ressonância.", "Sim, General. Ressoamos como um só."]},
+  {"a": "l_general", "b": "l_lider", "fala": ["Líder, mantenha a colmeia unida.", "Sim, General. Somos um só."]},
   {"a": "rei_mina", "b": "t_basalto", "fala": ["Basalto, meu rapaz! Pronto pra segurar a muralha?", "Basalto... sempre... pronto."]},
   {"a": "pipa", "b": "tupi", "fala": ["Tupi, relaxa, mano. Ninguém tá com pressa.", "Pipa, a gente tá numa guerra!", "...e daí?"]},
   {"a": "t_enfermeira", "b": "t_fendas", "fala": ["Fendas! Tira essas brocas da minha frente!", "Desculpa, enfermeira! Eu só quebro o que me mandam."]},
   {"a": "t_pontes", "b": "t_cartografo", "fala": ["Garoto, onde eu ergo essa torre?", "Duas casas à esquerda, chefe. Tá no mapa!"]},
   {"a": "z_hacker", "b": "k_cmd", "fala": ["Ei, Krieg! Seu rádio tá aberto. Câmbio, haha.", "...Mudar frequência. Agora!"]},
-  {"a": "l_general", "b": "rhazur", "fala": ["Rhazur. Sua escuridão não apaga nossa luz.", "Toda luz se apaga no fundo do mar, cristal."]},
+  {"a": "l_general", "b": "rhazur", "fala": ["Rhazur. Seu abismo será nosso próximo ninho.", "Venha buscá-lo, cristal. O fundo do mar devora tudo."]},
   {"a": "w_mamute", "b": "z_dragao", "fala": ["Máquina com asas. Não confio em você.", "Fera com presas. O sentimento é mútuo."]}
  ]
 }
