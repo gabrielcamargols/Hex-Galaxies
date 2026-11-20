@@ -3193,6 +3193,9 @@ func _cine_commanders() -> void:
 			cmds.append({"cid": c.cid, "owner": p})
 	if cmds.is_empty():
 		return
+	# a cinemática começa depois que o narrador termina o anúncio do round
+	while narr_livre_ms > Time.get_ticks_msec():
+		await get_tree().process_frame
 	var was = ui.visible
 	ui.visible = false
 	# quem tem arte 2D ganha o quadrinho animado; os outros, a cena 3D
@@ -5983,7 +5986,9 @@ func _banter(uid: int) -> void:
 	if u.is_cmd:
 		var grav = dlg.get("personagem", {}).get(u.cid, {}).get("entrada", []).filter(func(t): return fala_gravada(u.cid, t) != "")
 		if not grav.is_empty():
-			_say(u.uid, grav[randi() % grav.size()], 0.6, "fala")
+			# espera o narrador terminar de anunciar ("O comandante entrou em campo") antes de falar
+			var espera = max(0.6, (narr_livre_ms - Time.get_ticks_msec()) / 1000.0 + 0.35)
+			_say(u.uid, grav[randi() % grav.size()], espera, "fala")
 			return
 	# duplas com conversa própria
 	for pr in dlg.get("pares", []):
