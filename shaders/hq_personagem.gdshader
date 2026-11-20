@@ -15,6 +15,7 @@ uniform float bright = 1.18;                            // a textura do Tripo ve
 // visor: os pixels bem vermelhos da textura viram luz
 uniform vec3 glow_col : source_color = vec3(1.0, 0.06, 0.04);
 uniform float glow_amt = 2.6;
+uniform float glow_on = 1.0;                            // 0 = personagem sem visor/olhos acesos
 uniform float rim_amt = 0.35;
 // luz "de desenho": vem do alto à esquerda, presa à câmera (todo personagem é sombreado do mesmo jeito)
 uniform vec3 key_dir = vec3(-0.55, 0.7, 0.45);
@@ -54,6 +55,6 @@ void fragment() {
 	float pulse = 0.82 + 0.18 * sin(TIME * 3.2);
 	// visor aceso: vermelho de luz (passa do 1.0) com miolo quente quase branco
 	vec3 hot = glow_col * (2.0 + 0.6 * pulse) + vec3(1.0, 0.55, 0.45) * pow(glow_m, 4.0) * 0.22 * pulse;
-	col = mix(col, hot, glow_m);
+	col = mix(col, hot, glow_m * glow_on);
 	ALBEDO = col * mod_col.rgb;
 }

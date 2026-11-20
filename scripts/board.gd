@@ -43,7 +43,10 @@ var UNDER = 34.0       # altura da base rochosa por baixo do planetoide
 const ZOOM_MIN = 4.0
 const ZOOM_MAX = 140.0
 # personagens que já têm modelo 3D com esqueleto (Tripo): entram no lugar da arte 2D
-const FIG3D = {"k_cmd": "res://models/personagens/k_cmd.glb"}
+const FIG3D = {
+	"k_cmd": {"path": "res://models/personagens/k_cmd.glb", "visor": true, "punho": true},
+	"rhazur": {"path": "res://models/personagens/rhazur.glb", "visor": false, "punho": false},
+}
 const BIG = ["moby", "balu", "banker", "l_behemot", "l_leviathan", "z_dragao", "w_mamute", "t_feram", "k_tank", "z_tank", "l_tank", "l_colosso", "sismico", "rhombo", "tork", "w_tric", "z_meca", "t_fendas", "t_raiz", "t_basalto", "t_carrinho", "t_sentinela", "t_britadeira", "a_garra", "k_escudeiro", "w_urso", "w_gorila", "w_javali"]
 
 var me: int = 0   # jogador deste aparelho (cores: você azul, oponente laranja)
@@ -2252,7 +2255,7 @@ func _make_unit(u) -> void:
 	elif u.barrier:
 		_mesh(node, _cyl(0.4, 0.5, 0.7, 6), Color("#6d6250"), Vector3(0, 0.35, 0))
 		body_h = 0.8
-	elif FIG3D.has(u.cid) and ResourceLoader.exists(FIG3D[u.cid]):
+	elif FIG3D.has(u.cid) and ResourceLoader.exists(FIG3D[u.cid]["path"]):
 		sprite = _figure3d(u.cid, body_h)
 		node.add_child(sprite)
 		_mask_layer(sprite)
@@ -2423,7 +2426,8 @@ func _figure3d(cid: String, body_h: float) -> Node3D:
 	var giro = Node3D.new()
 	giro.name = "giro"
 	root.add_child(giro)
-	var inst: Node3D = load(FIG3D[cid]).instantiate()
+	var cfg: Dictionary = FIG3D[cid]
+	var inst: Node3D = load(cfg["path"]).instantiate()
 	giro.add_child(inst)
 	inst.rotation.y = -PI / 2.0          # o Tripo entrega o boneco olhando para +X; aqui ele olha para +Z
 	var mats: Array = []
@@ -2439,6 +2443,7 @@ func _figure3d(cid: String, body_h: float) -> Node3D:
 			m.shader = load("res://shaders/hq_personagem.gdshader")
 			if src is BaseMaterial3D and src.albedo_texture != null:
 				m.set_shader_parameter("tex", src.albedo_texture)
+			m.set_shader_parameter("glow_on", 1.0 if cfg.get("visor", false) else 0.0)
 			var o = ShaderMaterial.new()
 			o.shader = load("res://shaders/hq_contorno3d.gdshader")
 			m.next_pass = o
@@ -2476,7 +2481,7 @@ func _figure3d(cid: String, body_h: float) -> Node3D:
 			root.set_meta("bones", bones)
 			root.set_meta("ax", [fw, left, up])
 			# mãos fechadas (punho): cada falange dobra em direção à palma; a palma olha para o corpo
-			for side in ["Left", "Right"]:
+			for side in (["Left", "Right"] if cfg.get("punho", false) else []):
 				var palm = -left if side == "Left" else left
 				for fg in [["Index", 1.25], ["Middle", 1.35], ["Ring", 1.35], ["Pinky", 1.3], ["Thumb", 0.55]]:
 					for j in range(1, 4):
@@ -2490,57 +2495,58 @@ func _figure3d(cid: String, body_h: float) -> Node3D:
 							continue
 						var ang = fg[1] * (0.6 if (fg[0] == "Thumb" and j == 1) else 1.0)
 						sk.set_bone_pose_rotation(b, sk.get_bone_rest(b).basis.get_rotation_quaternion() * _fig3d_q(sk, b, ax_c.normalized(), ang))
-			# visor aceso: brilho aditivo preso à cabeça (o shader acende a textura; isto dá o halo)
-			if _fig3d_glow_tex == null:
-				_fig3d_glow_tex = GradientTexture2D.new()
-				var gr = Gradient.new()
-				gr.set_color(0, Color(1, 1, 1, 1))
-				gr.set_color(1, Color(1, 1, 1, 0))
-				gr.add_point(0.35, Color(1, 1, 1, 0.45))
-				_fig3d_glow_tex.gradient = gr
-				_fig3d_glow_tex.fill = GradientTexture2D.FILL_RADIAL
-				_fig3d_glow_tex.fill_from = Vector2(0.5, 0.5)
-				_fig3d_glow_tex.fill_to = Vector2(1.0, 0.5)
-				_fig3d_glow_tex.width = 64
-				_fig3d_glow_tex.height = 64
-			var hb = bones["Head"]
-			var att = BoneAttachment3D.new()
-			att.bone_idx = hb
-			sk.add_child(att)
-			var hg = sk.get_bone_global_rest(hb)
-			var vp = hg.origin + fw * 0.075 + up * 0.03
-			# duas camadas aditivas: halo largo e suave + risco horizontal quente (como o visor da ilustração)
-			var hp = hg.affine_inverse() * vp
-			var halos = []
-			for spec in [["visor_halo", 0.0024, Vector2(2.2, 1.0)], ["visor_risco", 0.0016, Vector2(2.8, 0.28)]]:
-				var halo = Sprite3D.new()
-				halo.name = spec[0]
-				halo.texture = _fig3d_glow_tex
-				halo.pixel_size = spec[1]
-				halo.scale = Vector3(spec[2].x, spec[2].y, 1.0)
-				halo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-				halo.position = hp
-				att.add_child(halo)
-				var am = StandardMaterial3D.new()
-				am.albedo_texture = _fig3d_glow_tex
-				am.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-				am.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-				am.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-				am.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
-				am.billboard_keep_scale = true
-				am.render_priority = 2
-				am.no_depth_test = true      # o brilho passa por cima do capacete, como o bloom da ilustração
-				halo.material_override = am
-				halos.append(am)
-			root.set_meta("halos", halos)
-			var lamp = OmniLight3D.new()
-			lamp.light_color = Color(1.0, 0.18, 0.1)
-			lamp.light_energy = 1.6
-			lamp.omni_range = 0.8
-			lamp.shadow_enabled = false
-			lamp.position = hp
-			att.add_child(lamp)
-			root.set_meta("lamp", lamp)
+			if cfg.get("visor", false):
+				# visor aceso: brilho aditivo preso à cabeça (o shader acende a textura; isto dá o halo)
+				if _fig3d_glow_tex == null:
+					_fig3d_glow_tex = GradientTexture2D.new()
+					var gr = Gradient.new()
+					gr.set_color(0, Color(1, 1, 1, 1))
+					gr.set_color(1, Color(1, 1, 1, 0))
+					gr.add_point(0.35, Color(1, 1, 1, 0.45))
+					_fig3d_glow_tex.gradient = gr
+					_fig3d_glow_tex.fill = GradientTexture2D.FILL_RADIAL
+					_fig3d_glow_tex.fill_from = Vector2(0.5, 0.5)
+					_fig3d_glow_tex.fill_to = Vector2(1.0, 0.5)
+					_fig3d_glow_tex.width = 64
+					_fig3d_glow_tex.height = 64
+				var hb = bones["Head"]
+				var att = BoneAttachment3D.new()
+				att.bone_idx = hb
+				sk.add_child(att)
+				var hg = sk.get_bone_global_rest(hb)
+				var vp = hg.origin + fw * 0.075 + up * 0.03
+				# duas camadas aditivas: halo largo e suave + risco horizontal quente (como o visor da ilustração)
+				var hp = hg.affine_inverse() * vp
+				var halos = []
+				for spec in [["visor_halo", 0.0024, Vector2(2.2, 1.0)], ["visor_risco", 0.0016, Vector2(2.8, 0.28)]]:
+					var halo = Sprite3D.new()
+					halo.name = spec[0]
+					halo.texture = _fig3d_glow_tex
+					halo.pixel_size = spec[1]
+					halo.scale = Vector3(spec[2].x, spec[2].y, 1.0)
+					halo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+					halo.position = hp
+					att.add_child(halo)
+					var am = StandardMaterial3D.new()
+					am.albedo_texture = _fig3d_glow_tex
+					am.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+					am.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+					am.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+					am.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+					am.billboard_keep_scale = true
+					am.render_priority = 2
+					am.no_depth_test = true      # o brilho passa por cima do capacete, como o bloom da ilustração
+					halo.material_override = am
+					halos.append(am)
+				root.set_meta("halos", halos)
+				var lamp = OmniLight3D.new()
+				lamp.light_color = Color(1.0, 0.18, 0.1)
+				lamp.light_energy = 1.6
+				lamp.omni_range = 0.8
+				lamp.shadow_enabled = false
+				lamp.position = hp
+				att.add_child(lamp)
+				root.set_meta("lamp", lamp)
 	return root
 
 
