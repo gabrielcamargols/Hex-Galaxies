@@ -25212,7 +25212,7 @@
   "shake": 0.65
  },
  "ter_dina_lancar": {
-  "nome": "DINAMITADOR · Dinamite Arremessada (ataque)",
+  "nome": "DINAMITADOR · Teteia arremessada (ataque)",
   "personagem": "t_dinamite",
   "hit": "ter_dina_boom",
   "proj": {
@@ -25343,7 +25343,7 @@
   }
  },
  "ter_dina_boom": {
-  "nome": "DINAMITADOR · Explosão (acerto e carga)",
+  "nome": "DINAMITADOR · Explosão (Teteia e Pipoca)",
   "personagem": "t_dinamite",
   "layers": [
    {
@@ -26062,7 +26062,7 @@
   "shake_delay": 0.0
  },
  "ter_dina_carga": {
-  "nome": "DINAMITADOR · Carga Temporizada (coloca a carga)",
+  "nome": "DINAMITADOR · Pipoca (planta a bomba)",
   "personagem": "t_dinamite",
   "alvo": "meio",
   "layers": [

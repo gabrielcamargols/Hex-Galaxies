@@ -309,13 +309,13 @@ func _dinamitador() -> void:
 	await g.act_attack(d, alvo)
 	ok(hp_a - alvo.hp == 2, "alvo principal sofre 2 (sem dano secundário)")
 	ok(hp_al - aliado.hp == 1 and hp_i - inimigo.hp == 1, "aliado e inimigo ao redor do alvo sofrem 1")
-	# Carga Temporizada
+	# Pipoca (carga do Dinamitador)
 	var g2 = novo()
 	var d2 = put(g2, "t_dinamite", 0, 5, 1)
 	var e = put(g2, "t_basalto", 1, 4, 1)
 	var ad = put(g2, "t_fundidor", 0, 4, 2)
 	var r = await ativa(g2, d2, [H(4, 1)])
-	ok(r, "Carga Temporizada usada")
+	ok(r, "Pipoca plantada")
 	ok(g2.shells.any(func(sh): return sh["h"] == H(4, 1) and sh.get("kind", "") == "charge"), "carga fica marcada (visível) até detonar")
 	g2.act = null
 	var hpc = e.hp

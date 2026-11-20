@@ -1438,7 +1438,7 @@ func _shell_tick() -> void:
 			var a = unit_at(n)
 			if a != null:
 				damage(a, 1, src)
-		log_msg(sh["owner"], "A carga explode na casa marcada." if sh.get("kind", "") == "charge" else "A artilharia atinge a casa marcada.")
+		log_msg(sh["owner"], "A Pipoca explode: BUM!" if sh.get("kind", "") == "charge" else "A artilharia atinge a casa marcada.")
 		await pace()
 	settle()
 
@@ -4080,7 +4080,7 @@ func _act_ult_run(u) -> bool:
 		"timedcharge":
 			shells.append({"h": h, "owner": p, "round": round_no, "src": u.uid, "kind": "charge"})
 			abfx("mark", h, u.uid)
-			log_msg(p, "%s planta uma carga: explode no início do próximo round." % nm(u))
+			log_msg(p, "%s planta a Pipoca: ela explode no início do próximo round." % nm(u))
 		"guardfirm":
 			var gf_group = [u]
 			for gx in allies_of(u):
