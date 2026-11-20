@@ -49,7 +49,12 @@ const FIG3D = {
 	"rei_mina": {"path": "res://models/personagens/rei_mina.glb", "visor": false, "punho": false, "jeito": "rei", "brilho": "rachaduras", "cintila": true, "pegadas": "LeftFoot", "conjura": [0.07, 0.035, 0.032]},
 	"z_dragao": {"path": "res://models/personagens/z_dragao.glb", "corpo": "dragao", "escala": 1.35, "brilho": "gemas"},
 	"w_mamute": {"path": "res://models/personagens/w_mamute.glb", "visor": false, "punho": false, "jeito": "mamute", "escala": 1.12, "giro": 0.0, "brilho": "gemas_laranja", "anims": {"correr": "run"}},
-	"l_general": {"path": "res://models/personagens/l_general.glb", "visor": false, "punho": false, "jeito": "cristal", "brilho": "gemas"},
+	# Lithari Líder: parado na pose da ilustração (mão direita erguida e aberta, energia na palma;
+	# braço esquerdo baixo e afastado, mão fechada, onde vai entrar o escudo)
+	"l_general": {"path": "res://models/personagens/l_general.glb", "visor": false, "punho": false, "jeito": "cristal", "brilho": "gemas",
+		"dedos": {"Left": 1.0, "Right": 0.22}, "pose_arte": {
+			"Right": [[0.05, -0.7, -0.7], [0.25, -0.55, 0.8], [0.25, -0.45, 0.85]],
+			"Left": [[0.0, 0.5, -0.85], [0.1, 0.45, -0.88], [0.05, 0.35, -0.93]]}},
 	"karo": {"path": "res://models/personagens/karo.glb", "visor": false, "punho": true, "jeito": "malandro", "bracos": "bolso", "cauda": [-0.05, 0.45, 0.0]},
 }
 # padrão de tinta de cada facção (data/vfx_paletas.json "pattern") -> pat do hq_personagem
@@ -2647,8 +2652,13 @@ func _figure3d(cid: String, body_h: float) -> Node3D:
 			root.set_meta("skel", sk)
 			root.set_meta("bones", bones)
 			root.set_meta("ax", [fw, left, up])
+			if cfg.has("pose_arte"):
+				root.set_meta("pose_arte", cfg["pose_arte"])
 			# mãos fechadas (punho): cada falange dobra em direção à palma; a palma olha para o corpo
-			for side in (["Left", "Right"] if cfg.get("punho", false) else []):
+			# "dedos": quanto cada mão fecha (1 = punho, pouco = mão aberta e relaxada)
+			var dedos: Dictionary = cfg.get("dedos", {"Left": 1.0, "Right": 1.0} if cfg.get("punho", false) else {})
+			for side in dedos.keys():
+				var fecha: float = float(dedos[side])
 				var palm = -left if side == "Left" else left
 				for fg in [["Index", 1.25], ["Middle", 1.35], ["Ring", 1.35], ["Pinky", 1.3], ["Thumb", 0.55]]:
 					for j in range(1, 4):
@@ -2660,7 +2670,7 @@ func _figure3d(cid: String, body_h: float) -> Node3D:
 						var ax_c = dv.cross(palm)
 						if ax_c.length() < 0.01:
 							continue
-						var ang = fg[1] * (0.6 if (fg[0] == "Thumb" and j == 1) else 1.0)
+						var ang = fg[1] * (0.6 if (fg[0] == "Thumb" and j == 1) else 1.0) * fecha
 						sk.set_bone_pose_rotation(b, sk.get_bone_rest(b).basis.get_rotation_quaternion() * _fig3d_q(sk, b, ax_c.normalized(), ang))
 			# conjurar: mãos abertas, dedos esticados e afastados (controla os cristais)
 			if cfg.has("conjura"):
@@ -3026,6 +3036,10 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 		pose["RightLeg"][0][1] += 0.12 * tq
 		pose["RightUpLeg"][0][1] -= 0.08 * tq
 		pose["Head"].append([F, 0.18 * tq])
+	if fig.has_meta("pose_arte"):
+		for hn in ["LeftHand", "RightHand"]:
+			if not pose.has(hn):
+				pose[hn] = []   # o pulso volta ao repouso antes de a pose da ilustração mirar a mão
 	for nm in pose.keys():
 		if not bn.has(nm):
 			continue
@@ -3034,8 +3048,32 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 		for e in pose[nm]:
 			q = q * _fig3d_q(sk, b, e[0], e[1])
 		sk.set_bone_pose_rotation(b, q)
-	# conjurar: aponta os braços para a frente (mira no espaço do esqueleto, não depende da pose de repouso)
 	var cjw: float = fig.get_meta("cj_w", 0.0)
+	# pose da ilustração (parado): cada osso do braço aponta para uma direção dada em (frente, lado, cima)
+	if fig.has_meta("pose_arte"):
+		var wa = idle * (1.0 - k) * (1.0 - cjw)
+		wa = wa * wa * (3.0 - 2.0 * wa)
+		if wa > 0.001:
+			var pa: Dictionary = fig.get_meta("pose_arte")
+			for side in pa.keys():
+				var dd: Array = pa[side]
+				var cadeia = [side + "Arm", side + "ForeArm", side + "Hand"]
+				var ponta = [side + "ForeArm", side + "Hand", side + "HandMiddle1"]
+				for i in range(3):
+					var bi: int = bn.get(cadeia[i], -1)
+					var ci: int = bn.get(ponta[i], -1) if i < 2 else _osso(sk, ponta[i])
+					if bi < 0 or ci < 0:
+						continue
+					var v: Array = dd[i]
+					# respira: o braço sobe e desce de leve
+					var alvo = (F * v[0] + S * v[1] + U * (v[2] + 0.03 * br)).normalized()
+					var gb = sk.get_bone_global_pose(bi)
+					var cur = (sk.get_bone_global_pose(ci).origin - gb.origin).normalized()
+					var qr = Quaternion(cur, cur.slerp(alvo, wa).normalized())
+					var par = sk.get_bone_parent(bi)
+					var pg2 = sk.get_bone_global_pose(par) if par >= 0 else Transform3D.IDENTITY
+					sk.set_bone_pose_rotation(bi, (pg2.basis.inverse() * (Basis(qr) * gb.basis)).get_rotation_quaternion())
+	# conjurar: aponta os braços para a frente (mira no espaço do esqueleto, não depende da pose de repouso)
 	if cjw > 0.001:
 		var e4 = cjw * cjw * (3.0 - 2.0 * cjw)
 		for side in [["Left", 1.0], ["Right", -1.0]]:
