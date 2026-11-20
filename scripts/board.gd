@@ -2552,14 +2552,14 @@ func _figure3d(cid: String, body_h: float) -> Node3D:
 							continue
 						var ang = fg[1] * (0.6 if (fg[0] == "Thumb" and j == 1) else 1.0)
 						sk.set_bone_pose_rotation(b, sk.get_bone_rest(b).basis.get_rotation_quaternion() * _fig3d_q(sk, b, ax_c.normalized(), ang))
-			# garra para conjurar: dedos abertos e curvados, como quem segura uma esfera
+			# conjurar: mãos abertas, dedos esticados e afastados (controla os cristais)
 			if cfg.has("conjura"):
 				var garra = []
 				for side in ["Left", "Right"]:
 					var palm = -left if side == "Left" else left
 					var sg = 1.0 if side == "Left" else -1.0
-					for fg in [["Index", [0.35, 0.75, 0.6], -0.34], ["Middle", [0.4, 0.8, 0.6], -0.1],
-							["Ring", [0.45, 0.8, 0.6], 0.16], ["Pinky", [0.5, 0.85, 0.65], 0.38], ["Thumb", [0.15, 0.35, 0.3], 0.45]]:
+					for fg in [["Index", [0.05, 0.12, 0.08], -0.3], ["Middle", [0.06, 0.12, 0.08], -0.08],
+							["Ring", [0.1, 0.16, 0.1], 0.14], ["Pinky", [0.14, 0.2, 0.12], 0.34], ["Thumb", [0.0, 0.1, 0.08], 0.5]]:
 						for j in range(1, 4):
 							var b = sk.find_bone("mixamorig_%sHand%s%d" % [side, fg[0], j])
 							var c = sk.find_bone("mixamorig_%sHand%s%d" % [side, fg[0], j + 1])
@@ -2905,6 +2905,15 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 			var qf = Quaternion(cur_f, cur_f.slerp(alvo_d, e4).normalized())
 			var pgf = sk.get_bone_global_pose(ab)
 			sk.set_bone_pose_rotation(fb, (pgf.basis.inverse() * (Basis(qf) * gf.basis)).get_rotation_quaternion())
+			# punho dobrado para trás: a palma fica de frente, como quem lança um feitiço
+			var mid = sk.find_bone("mixamorig_%sHandMiddle1" % side[0])
+			if mid >= 0:
+				var gh = sk.get_bone_global_pose(hb)
+				var cur_h = (sk.get_bone_global_pose(mid).origin - gh.origin).normalized()
+				var alvo_h = (alvo_d * cos(0.85) + U * sin(0.85)).normalized()
+				var qh = Quaternion(cur_h, cur_h.slerp(alvo_h, e4).normalized())
+				var pgh = sk.get_bone_global_pose(fb)
+				sk.set_bone_pose_rotation(hb, (pgh.basis.inverse() * (Basis(qh) * gh.basis)).get_rotation_quaternion())
 	if fig.has_meta("garra"):
 		var eg = cjw * cjw * (3.0 - 2.0 * cjw)
 		for gd in fig.get_meta("garra"):
