@@ -274,6 +274,9 @@ func _ready() -> void:
 			if kv.size() == 2 and kv[0] == "nivel":
 				cpu_level = clamp(int(kv[1]), 0, 2)
 		Engine.time_scale = 25.0
+		for a in args:
+			if a.begins_with("--vel="):   # gravação de vídeo: velocidade escolhida em vez de 25x
+				Engine.time_scale = float(a.substr(6))
 		print("AUTOTESTE: ", setup_cfg)
 		_start_match(null)
 
