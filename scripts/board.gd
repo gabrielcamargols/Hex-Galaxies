@@ -46,6 +46,7 @@ const ZOOM_MAX = 140.0
 const FIG3D = {
 	"k_cmd": {"path": "res://models/personagens/k_cmd.glb", "visor": true, "punho": true},
 	"rhazur": {"path": "res://models/personagens/rhazur.glb", "visor": false, "punho": false},
+	"karo": {"path": "res://models/personagens/karo.glb", "visor": false, "punho": false},
 }
 const BIG = ["moby", "balu", "banker", "l_behemot", "l_leviathan", "z_dragao", "w_mamute", "t_feram", "k_tank", "z_tank", "l_tank", "l_colosso", "sismico", "rhombo", "tork", "w_tric", "z_meca", "t_fendas", "t_raiz", "t_basalto", "t_carrinho", "t_sentinela", "t_britadeira", "a_garra", "k_escudeiro", "w_urso", "w_gorila", "w_javali"]
 
