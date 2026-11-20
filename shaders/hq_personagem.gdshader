@@ -15,6 +15,7 @@ uniform float bright = 1.18;                            // a textura do Tripo ve
 // visor: os pixels bem vermelhos da textura viram luz
 uniform vec3 glow_col : source_color = vec3(1.0, 0.06, 0.04);
 uniform float glow_amt = 2.6;
+uniform float glow_mode = 0.0;   // 0 = vermelho puro (visor) | 1 = laranja vivo (rachaduras de magma)
 uniform float glow_on = 1.0;                            // 0 = personagem sem visor/olhos acesos
 uniform float rim_amt = 0.35;
 // luz "de desenho": vem do alto à esquerda, presa à câmera (todo personagem é sombreado do mesmo jeito)
@@ -56,6 +57,10 @@ void fragment() {
 	float gr = c0.g / max(c0.r, 0.01);
 	float br = c0.b / max(c0.r, 0.01);
 	float glow_m = smoothstep(0.4, 0.24, gr) * smoothstep(0.5, 0.32, br) * smoothstep(0.35, 0.5, c0.r);
+	if (glow_mode > 0.5) {
+		// laranja vivo e claro (rachaduras); o dourado tem verde demais e fica de fora
+		glow_m = smoothstep(0.62, 0.48, gr) * smoothstep(0.24, 0.42, gr) * smoothstep(0.35, 0.2, br) * smoothstep(0.62, 0.8, c0.r);
+	}
 	float l0 = dot(c0, vec3(0.299, 0.587, 0.114));
 	vec3 c = clamp(mix(vec3(l0), c0, sat) * bright, 0.0, 1.0);
 	vec3 nrm = normalize(NORMAL);

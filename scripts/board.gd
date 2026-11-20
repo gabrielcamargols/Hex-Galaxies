@@ -46,6 +46,7 @@ const ZOOM_MAX = 140.0
 const FIG3D = {
 	"k_cmd": {"path": "res://models/personagens/k_cmd.glb", "visor": true, "punho": true, "jeito": "militar"},
 	"rhazur": {"path": "res://models/personagens/rhazur.glb", "visor": false, "punho": false, "jeito": "bruto"},
+	"rei_mina": {"path": "res://models/personagens/rei_mina.glb", "visor": false, "punho": false, "jeito": "rei", "brilho": "rachaduras"},
 	"karo": {"path": "res://models/personagens/karo.glb", "visor": false, "punho": true, "jeito": "malandro", "bracos": "bolso", "cauda": [-0.05, 0.45, 0.0]},
 }
 # jeito de cada personagem 3D: parado, andar e correr diferentes
@@ -65,6 +66,10 @@ const JEITOS = {
 	"malandro": {"resp": [0.05, 2.0], "olha": [0.28, 0.6], "peso": 0.07, "cad": [8.4, 13.5], "passo": [0.46, 0.85],
 		"joelho": [0.6, 1.25], "bal": [0.0, 0.75], "quica": [0.06, 0.13], "ginga": 0.14, "incl": [0.02, 0.34],
 		"vel": [2.4, 4.6], "tique": "pe"},
+	# Rei da Mina: majestoso, passo lento e solene, tronco ereto, olhar altivo de cima para baixo
+	"rei": {"resp": [0.04, 1.5], "olha": [0.16, 0.28], "peso": 0.02, "cad": [5.6, 9.6], "passo": [0.34, 0.62],
+		"joelho": [0.38, 0.9], "bal": [0.16, 0.42], "quica": [0.012, 0.05], "ginga": 0.0, "incl": [-0.02, 0.12],
+		"vel": [1.8, 3.4], "tique": "altivo"},
 	# Rhazur: pesado, passada larga e lenta, balança o corpo todo, respiração funda
 	"bruto": {"resp": [0.07, 1.5], "olha": [0.14, 0.3], "peso": 0.05, "cad": [5.4, 9.0], "passo": [0.38, 0.62],
 		"joelho": [0.4, 0.9], "bal": [0.28, 0.5], "quica": [0.03, 0.06], "ginga": 0.1, "incl": [0.08, 0.22],
@@ -2466,7 +2471,10 @@ func _figure3d(cid: String, body_h: float) -> Node3D:
 			m.shader = load("res://shaders/hq_personagem.gdshader")
 			if src is BaseMaterial3D and src.albedo_texture != null:
 				m.set_shader_parameter("tex", src.albedo_texture)
-			m.set_shader_parameter("glow_on", 1.0 if cfg.get("visor", false) else 0.0)
+			m.set_shader_parameter("glow_on", 1.0 if (cfg.get("visor", false) or cfg.has("brilho")) else 0.0)
+			if cfg.get("brilho", "") == "rachaduras":
+				m.set_shader_parameter("glow_mode", 1.0)
+				m.set_shader_parameter("glow_col", Color(1.0, 0.45, 0.08))
 			var o = ShaderMaterial.new()
 			o.shader = load("res://shaders/hq_contorno3d.gdshader")
 			if cfg.has("cauda"):
@@ -2725,6 +2733,10 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 		# Krieg varre o campo com a cabeça, rápido para um lado e para o outro, peito estufado
 		pose["Head"][0][1] += 0.55 * sin(tq * PI * 2.0) * tq
 		pose["Spine2"][0][1] -= 0.06 * tq
+	elif J["tique"] == "altivo":
+		# Rei da Mina ergue o queixo e olha o campo de cima, devagar
+		pose["Head"].append([S, -0.18 * tq])
+		pose["Spine2"].append([S, -0.05 * tq])
 	elif J["tique"] == "pe":
 		# Karo bate o pé, impaciente, e inclina a cabeça
 		var tap = max(0.0, sin(t * 14.0)) * tq
