@@ -49,6 +49,8 @@ const FIG3D = {
 	"rei_mina": {"path": "res://models/personagens/rei_mina.glb", "visor": false, "punho": false, "jeito": "rei", "brilho": "rachaduras"},
 	"karo": {"path": "res://models/personagens/karo.glb", "visor": false, "punho": true, "jeito": "malandro", "bracos": "bolso", "cauda": [-0.05, 0.45, 0.0]},
 }
+# padrão de tinta de cada facção (data/vfx_paletas.json "pattern") -> pat do hq_personagem
+const PADROES = ["reticula", "hachura", "pixel", "entalhe", "poeira", "facetas", "pop"]
 # jeito de cada personagem 3D: parado, andar e correr diferentes
 #   resp: respiração (amplitude, velocidade) · olha: vigia em volta · peso: troca de perna
 #   cad: cadência da passada (andar, correr) · passo / joelho / bal: amplitude de perna, joelho e balanço dos braços
@@ -2472,11 +2474,17 @@ func _figure3d(cid: String, body_h: float) -> Node3D:
 			if src is BaseMaterial3D and src.albedo_texture != null:
 				m.set_shader_parameter("tex", src.albedo_texture)
 			m.set_shader_parameter("glow_on", 1.0 if (cfg.get("visor", false) or cfg.has("brilho")) else 0.0)
+			# sombra, padrão de tinta, brilho e contorno nas cores da facção (Manual de VFX e Sombras)
+			var fac3: String = DB.cards[cid]["f"] if DB.cards.has(cid) else ""
+			m.set_shader_parameter("shadow_tint", DB.pal(fac3, "shadow", Color(0.34, 0.30, 0.55)))
+			m.set_shader_parameter("hi_col", DB.pal(fac3, "highlight", Color(1.0, 0.9, 0.7)))
+			m.set_shader_parameter("pat", PADROES.find(String(DB.vfx_pal.get(fac3, {}).get("pattern", "reticula"))) if PADROES.has(String(DB.vfx_pal.get(fac3, {}).get("pattern", "reticula"))) else 0)
 			if cfg.get("brilho", "") == "rachaduras":
 				m.set_shader_parameter("glow_mode", 1.0)
 				m.set_shader_parameter("glow_col", Color(1.0, 0.45, 0.08))
 			var o = ShaderMaterial.new()
 			o.shader = load("res://shaders/hq_contorno3d.gdshader")
+			o.set_shader_parameter("ink", DB.pal(DB.cards[cid]["f"] if DB.cards.has(cid) else "", "outline", Color(0.04, 0.016, 0.063)).darkened(0.45))
 			if cfg.has("cauda"):
 				for mm in [m, o]:
 					mm.set_shader_parameter("tail_on", 1.0)
@@ -2491,6 +2499,7 @@ func _figure3d(cid: String, body_h: float) -> Node3D:
 	inst.scale = Vector3.ONE * (body_h * 0.9 / hgt)
 	root.set_meta("mats", mats)
 	root.set_meta("outl", outl)
+	root.set_meta("ink", DB.pal(DB.cards[cid]["f"] if DB.cards.has(cid) else "", "outline", Color(0.04, 0.016, 0.063)).darkened(0.45))
 	root.set_meta("sel", false)
 	var jt: Dictionary = JEITOS["padrao"].duplicate()
 	jt.merge(JEITOS.get(cfg.get("jeito", "padrao"), {}), true)
@@ -2765,7 +2774,7 @@ func _fig3d_select(fig: Node3D, selected: bool, fc: Color) -> void:
 			o.set_shader_parameter("ink", fc.lerp(Color.WHITE, 0.25 * pul))
 			o.set_shader_parameter("px", 4.0)
 		else:
-			o.set_shader_parameter("ink", Color(0.04, 0.016, 0.063, 1.0))
+			o.set_shader_parameter("ink", fig.get_meta("ink", Color(0.04, 0.016, 0.063, 1.0)))
 			o.set_shader_parameter("px", 2.2)
 
 
