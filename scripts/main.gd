@@ -69,6 +69,7 @@ var card_hover: String = ""      # carta com o mouse em cima (destaca o que ela 
 var last_st: Dictionary = {}       # destaques atuais do tabuleiro (sem a carta)
 var dlg: Dictionary = {}           # falas (data/dialogos.json)
 var falas_voz: Dictionary = {}     # falas gravadas: cid -> {texto: som} (data/falas_voz.json)
+var narrador: Dictionary = {}      # locutor: evento -> sons (data/narrador.json)
 var bubbles: Array = []            # balões de fala ativos
 var plates: Dictionary = {}        # uid -> placa de vida 2D (estilo da HUD)
 var rgb_on: bool = true          # desalinho RGB sobre o 3D (leve)
@@ -199,6 +200,10 @@ func _ready() -> void:
 	fader.set_anchors_preset(Control.PRESET_FULL_RECT)
 	fader.mouse_filter = Control.MOUSE_FILTER_STOP
 	top_layer.add_child(fader)
+	if FileAccess.file_exists("res://data/narrador.json"):
+		var nj = JSON.parse_string(FileAccess.get_file_as_string("res://data/narrador.json"))
+		if nj is Dictionary:
+			narrador = nj
 	if FileAccess.file_exists("res://data/falas_voz.json"):
 		var fv = JSON.parse_string(FileAccess.get_file_as_string("res://data/falas_voz.json"))
 		if fv is Dictionary:
@@ -5895,6 +5900,7 @@ func _on_fx_real(e: Dictionary) -> void:
 			board.worm_emerge(hs)
 		"round":
 			sfx.play("round", -6.0)
+			narrar("round_final" if e["round"] >= Game.LAST_ROUND else "round_%d" % e["round"], 0.25)
 			banner("Round %d" % e["round"], "os comandantes entram" if e["round"] == Game.CMD_ROUND else ("Você começa" if game.first == me else (_opp() + " começa")))
 	board.sync_units()
 
@@ -6496,6 +6502,18 @@ func _leader_speak(u, text: String, mood: String) -> void:
 	var vid = vs[int(abs(String(u.cid).hash())) % vs.size()]
 	DisplayServer.tts_stop()
 	DisplayServer.tts_speak(text, vid, int(clamp(float(vol.get("Vozes", 90.0)), 0.0, 100.0)), clamp(pitch, 0.0, 2.0), clamp(float(cfg[1]), 0.1, 10.0))
+
+
+# locutor: toca uma das gravações do evento (sorteada); devolve a duração (0 se não houver)
+func narrar(evento: String, atraso: float = 0.0) -> float:
+	if sfx == null or autotest:
+		return 0.0
+	var op: Array = narrador.get(evento, []).filter(func(n): return sfx.has_sound(n))
+	if op.is_empty():
+		return 0.0
+	var n: String = op[randi() % op.size()]
+	sfx.play_later(n, atraso, 3.0)
+	return sfx.streams[n].get_length()
 
 
 # som gravado para esta fala deste personagem ("" se não houver)

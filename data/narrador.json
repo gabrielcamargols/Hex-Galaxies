@@ -1,0 +1,6 @@
+{
+ "_ajuda": "Falas do narrador (locutor). Cada evento -> lista de sons em sounds/ (sem extensão); quando há mais de um, o jogo sorteia. Eventos: round_1..round_11, round_final.",
+ "round_1": ["n_round01"], "round_2": ["n_round02"], "round_3": ["n_round03"], "round_4": ["n_round04"],
+ "round_5": ["n_round05"], "round_6": ["n_round06"], "round_7": ["n_round07"], "round_8": ["n_round08"],
+ "round_9": ["n_round09"], "round_10": ["n_round10"], "round_11": ["n_round11"], "round_final": ["n_round12"]
+}

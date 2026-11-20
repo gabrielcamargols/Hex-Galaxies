@@ -21,8 +21,8 @@ func bus_of(n: String) -> String:
 		return "Radio"     # os Krieg falam pelo rádio
 	if n.begins_with("v_z_dragao"):
 		return "Celeste"   # o Dragão Zukunft fala como um anjo
-	if n.begins_with("v_"):
-		return "Vozes"
+	if n.begins_with("v_") or n.begins_with("n_"):
+		return "Vozes"     # personagens e narrador
 	return "Efeitos"
 
 
