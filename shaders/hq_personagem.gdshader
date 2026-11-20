@@ -110,7 +110,10 @@ void fragment() {
 	float gr = c0.g / max(c0.r, 0.01);
 	float br = c0.b / max(c0.r, 0.01);
 	float glow_m = smoothstep(0.4, 0.24, gr) * smoothstep(0.5, 0.32, br) * smoothstep(0.35, 0.5, c0.r);
-	if (glow_mode > 0.5) {
+	if (glow_mode > 1.5) {
+		// ciano vivo (gemas e olhos Zukunft): azul e verde altos, vermelho baixo
+		glow_m = smoothstep(0.55, 0.3, c0.r / max(c0.b, 0.01)) * smoothstep(0.65, 0.8, c0.g / max(c0.b, 0.01)) * smoothstep(0.65, 0.85, c0.b);
+	} else if (glow_mode > 0.5) {
 		// laranja vivo e claro (rachaduras); o dourado tem verde demais e fica de fora
 		glow_m = smoothstep(0.62, 0.48, gr) * smoothstep(0.24, 0.42, gr) * smoothstep(0.35, 0.2, br) * smoothstep(0.62, 0.8, c0.r);
 	}

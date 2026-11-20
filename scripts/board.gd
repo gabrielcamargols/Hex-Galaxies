@@ -47,6 +47,7 @@ const FIG3D = {
 	"k_cmd": {"path": "res://models/personagens/k_cmd.glb", "visor": true, "punho": true, "jeito": "militar"},
 	"rhazur": {"path": "res://models/personagens/rhazur.glb", "visor": false, "punho": false, "jeito": "bruto"},
 	"rei_mina": {"path": "res://models/personagens/rei_mina.glb", "visor": false, "punho": false, "jeito": "rei", "brilho": "rachaduras", "cintila": true, "pegadas": "LeftFoot", "conjura": [0.07, 0.035, 0.032]},
+	"z_dragao": {"path": "res://models/personagens/z_dragao.glb", "corpo": "dragao", "escala": 1.35, "brilho": "gemas"},
 	"karo": {"path": "res://models/personagens/karo.glb", "visor": false, "punho": true, "jeito": "malandro", "bracos": "bolso", "cauda": [-0.05, 0.45, 0.0]},
 }
 # padrão de tinta de cada facção (data/vfx_paletas.json "pattern") -> pat do hq_personagem
@@ -2481,6 +2482,9 @@ func _figure3d(cid: String, body_h: float) -> Node3D:
 			m.set_shader_parameter("pat", PADROES.find(String(DB.vfx_pal.get(fac3, {}).get("pattern", "reticula"))) if PADROES.has(String(DB.vfx_pal.get(fac3, {}).get("pattern", "reticula"))) else 0)
 			if cfg.get("cintila", false):
 				m.set_shader_parameter("cintila", 1.0)
+			if cfg.get("brilho", "") == "gemas":
+				m.set_shader_parameter("glow_mode", 2.0)
+				m.set_shader_parameter("glow_col", Color(0.2, 0.95, 1.0))
 			if cfg.get("brilho", "") == "rachaduras":
 				m.set_shader_parameter("glow_mode", 1.0)
 				m.set_shader_parameter("glow_col", Color(1.0, 0.45, 0.08))
@@ -2498,7 +2502,9 @@ func _figure3d(cid: String, body_h: float) -> Node3D:
 	for n in inst.find_children("*", "Skeleton3D", true, false):
 		sk = n
 		break
-	inst.scale = Vector3.ONE * (body_h * 0.9 / hgt)
+	inst.scale = Vector3.ONE * (body_h * 0.9 / hgt) * float(cfg.get("escala", 1.0))
+	if cfg.get("corpo", "") == "dragao" and sk != null:
+		_dragao_setup(root, sk)
 	root.set_meta("mats", mats)
 	root.set_meta("outl", outl)
 	root.set_meta("pegadas", cfg.get("pegadas", ""))
@@ -2725,6 +2731,9 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 			var dir = tc.normalized() * 0.75 + rt.normalized() * (-1.0 if flip else 1.0)
 			var yaw = atan2(dir.x, dir.z) - fig.get_parent().global_rotation.y
 			giro.rotation.y = lerp_angle(giro.rotation.y, yaw, min(1.0, delta * 6.0))
+	if fig.has_meta("dragao"):
+		_dragao_tick(fig, delta, t, walking, run, lunge, hurt)
+		return
 	if not fig.has_meta("skel"):
 		return
 	var sk: Skeleton3D = fig.get_meta("skel")
@@ -2921,6 +2930,97 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 			if eg > 0.001:
 				q0 = q0 * _fig3d_q(sk, gd[0], gd[3], gd[4] * eg) * _fig3d_q(sk, gd[0], gd[1], gd[2] * eg)
 			sk.set_bone_pose_rotation(gd[0], q0)
+
+
+# ---------- dragão (esqueleto quadrúpede do Tripo, com asas, pescoço e cauda) ----------
+const DRAGAO_OSSOS = {
+	"sp0": "Spine_0", "sp1": "Spine_1", "sp2": "Spine_2", "h0": "Head_0", "h1": "Head_1", "h2": "Head_2", "h3": "Head_3",
+	"fl0": "0_Left_Limb_1", "fl1": "0_Left_Limb_2", "fl2": "0_Left_Limb_3", "fr0": "0_Right_Limb_0", "fr1": "0_Right_Limb_1", "fr2": "0_Right_Limb_2",
+	"hl0": "1_Left_Limb_0", "hl1": "1_Left_Limb_1", "hl2": "1_Left_Limb_2", "hr0": "1_Right_Limb_0", "hr1": "1_Right_Limb_1", "hr2": "1_Right_Limb_2",
+	"t0": "Tail_0", "t1": "Tail_1", "t2": "Tail_2", "t3": "Tail_3", "tb": "bone_45",
+	"wl0": "bone_20", "wl1": "bone_21", "wl2": "bone_22", "wl3": "bone_24", "wr0": "bone_27", "wr1": "bone_28", "wr2": "bone_29", "wr3": "bone_31",
+}
+
+
+func _dragao_setup(root: Node3D, sk: Skeleton3D) -> void:
+	var bones = {}
+	for k in DRAGAO_OSSOS.keys():
+		var nm: String = DRAGAO_OSSOS[k]
+		for cand in ["tripo::" + nm, "tripo__" + nm, "tripo_" + nm, nm]:
+			var b = sk.find_bone(cand)
+			if b >= 0:
+				bones[k] = b
+				break
+	root.set_meta("dragao", true)
+	root.set_meta("conjura", true)
+	root.set_meta("cj_t", 0.0)
+	root.set_meta("cj_w", 0.0)
+	root.set_meta("skel", sk)
+	root.set_meta("bones", bones)
+	root.set_meta("vel", [2.0, 4.2])
+
+
+func _dragao_tick(fig: Node3D, delta: float, t: float, walking: bool, run: bool, lunge: float, hurt: float) -> void:
+	var sk: Skeleton3D = fig.get_meta("skel")
+	var bn: Dictionary = fig.get_meta("bones")
+	var F = Vector3(1, 0, 0)
+	var U = Vector3(0, 1, 0)
+	var S = Vector3(0, 0, -1)          # esquerda do dragão
+	var ww: float = move_toward(fig.get_meta("walk_w", 0.0), 1.0 if walking else 0.0, delta * 5.0)
+	fig.set_meta("walk_w", ww)
+	var rw: float = move_toward(fig.get_meta("run_w", 0.0), 1.0 if (walking and run) else (0.0 if walking else fig.get_meta("run_w", 0.0)), delta * 4.0)
+	fig.set_meta("run_w", rw)
+	var ph: float = fig.get_meta("fase", 0.0) + delta * lerp(6.0, 10.0, rw) * (1.0 if ww > 0.0 else 0.0)
+	fig.set_meta("fase", fmod(ph, TAU * 100.0))
+	var ct: float = max(0.0, fig.get_meta("cj_t", 0.0) - delta)
+	fig.set_meta("cj_t", ct)
+	var cw: float = move_toward(fig.get_meta("cj_w", 0.0), 1.0 if ct > 0.0 else 0.0, delta * (4.0 if ct > 0.0 else 2.0))
+	fig.set_meta("cj_w", cw)
+	var e3 = cw * cw * (3.0 - 2.0 * cw)
+	var idle = 1.0 - ww
+	var br = sin(t * 1.6)
+	var a = 0.32 * ww * lerp(1.0, 1.4, rw)          # passada
+	var pose = {}
+	# trote: dianteira esquerda junto com traseira direita
+	var ps = [["fl", 0.0], ["hr", 0.0], ["fr", PI], ["hl", PI]]
+	for pr in ps:
+		var sw = sin(ph + pr[1])
+		var lift = max(0.0, sin(ph + pr[1] + 1.3))
+		var front = pr[0].begins_with("f")
+		pose[pr[0] + "0"] = [[S, -a * sw]]
+		pose[pr[0] + "1"] = [[S, (0.55 if front else -0.55) * lift * ww]]
+		pose[pr[0] + "2"] = [[S, (-0.35 if front else 0.45) * lift * ww]]
+	# corpo: respira, balança com a passada; no golpe recua e dá o bote
+	var bote = sin(clamp(lunge, 0.0, 1.0) * PI)
+	pose["sp1"] = [[S, 0.02 * br * idle], [U, 0.05 * sin(ph) * ww]]
+	pose["sp2"] = [[S, 0.03 * br * idle - 0.12 * e3]]
+	# pescoço em S e cabeça: olha em volta parado; no ataque ergue e depois abaixa no bote
+	var lk = sin(t * 0.45) + 0.4 * sin(t * 1.2)
+	pose["h0"] = [[U, 0.12 * lk * idle], [S, 0.03 * br - 0.1 * e3 + 0.2 * bote]]
+	pose["h1"] = [[U, 0.08 * lk * idle], [S, -0.06 * e3 + 0.14 * bote]]
+	pose["h2"] = [[U, 0.05 * lk * idle], [S, 0.02 * br + 0.08 * e3 - 0.12 * bote - 0.1 * hurt]]
+	# cauda: onda lateral que corre até a ponta
+	var tw = lerp(0.12, 0.2, ww)
+	for i in range(4):
+		pose["t%d" % i] = [[U, tw * sin(t * 2.0 - i * 0.7)], [S, 0.04 * sin(t * 1.3 - i * 0.5)]]
+	# asas: dobradas respirando parado; andando balançam; correndo e atacando batem
+	var flap = sin(t * lerp(3.0, 9.0, max(rw * ww, e3)))
+	var fa = 0.05 * idle + 0.1 * ww * (1.0 - rw) + 0.28 * max(rw * ww, e3)
+	var abre = -0.15 * e3 - 0.08 * rw * ww           # abre as asas para o golpe e na corrida
+	pose["wl0"] = [[F, fa * flap + abre + 0.03 * br]]
+	pose["wr0"] = [[F, -(fa * flap + abre + 0.03 * br)]]
+	pose["wl1"] = [[F, 0.5 * fa * sin(t * lerp(3.0, 9.0, max(rw * ww, e3)) - 0.6)]]
+	pose["wr1"] = [[F, -0.5 * fa * sin(t * lerp(3.0, 9.0, max(rw * ww, e3)) - 0.6)]]
+	# sobe um pouco ao bater as asas no golpe; quica na corrida
+	fig.position.y += 0.18 * e3 * (0.6 + 0.4 * flap) + abs(sin(ph)) * 0.03 * ww
+	for k in pose.keys():
+		if not bn.has(k):
+			continue
+		var b: int = bn[k]
+		var q: Quaternion = sk.get_bone_rest(b).basis.get_rotation_quaternion()
+		for e in pose[k]:
+			q = q * _fig3d_q(sk, b, e[0], e[1])
+		sk.set_bone_pose_rotation(b, q)
 
 
 # Rei da Mina: cada passo do pé de cristal deixa cristaizinhos que brotam do chão e somem
