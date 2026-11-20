@@ -13,5 +13,14 @@
   "Alguém guardou um lugar pra mim nessa briga?": "v_karo_l06",
   "Patas firmes, olhos atentos!": "v_karo_l07",
   "Hora de mostrar o que a selva ensinou.": "v_karo_l08"
+ },
+ "k_cmd": {
+  "Senhores... afinem os instrumentos. Cada nota desta sinfonia já foi escrita por mim.": "v_k_cmd_l01",
+  "Analisei cada passo do inimigo. Eles já estão mortos... apenas não sabem.": "v_k_cmd_l02",
+  "O campo de batalha é um tabuleiro. E eu não jogo para empatar.": "v_k_cmd_l03",
+  "Ouçam... o silêncio antes do primeiro tiro. Não há música mais bela.": "v_k_cmd_l04",
+  "Toda grande obra exige sacrifício. O deles... calculado até o último homem.": "v_k_cmd_l05",
+  "Fileiras, em posição. Flancos cobertos. Que o espetáculo comece.": "v_k_cmd_l06",
+  "A guerra é uma arte, soldados. E eu já conheço o final desta obra.": "v_k_cmd_l07"
  }
 }

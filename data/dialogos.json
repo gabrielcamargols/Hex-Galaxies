@@ -92,7 +92,7 @@
   "karo": {"entrada": ["Primepatas, avançar! Ninguém fica pra trás!", "Karo chegou. Agora a festa começa."], "provoca": ["{nome}, já subiu numa rocha dessa altura? Eu sim!"]},
   "karu": {"entrada": ["Karu na área! Pula, pula, pula!"], "provoca": ["Me pega se for capaz, {nome}!"]},
   "rhazur": {"entrada": ["Rhazur desperta. Tremam.", "O rei das profundezas exige tributo."], "provoca": ["{nome}, venha... mais perto... mais perto..."]},
-  "k_cmd": {"entrada": ["Comando Krieg na escuta. Todas as unidades, avançar!"], "provoca": ["{nome}, sua rendição será aceita. Talvez."]},
+  "k_cmd": {"entrada": ["Senhores... afinem os instrumentos. Cada nota desta sinfonia já foi escrita por mim.", "Analisei cada passo do inimigo. Eles já estão mortos... apenas não sabem.", "O campo de batalha é um tabuleiro. E eu não jogo para empatar.", "Ouçam... o silêncio antes do primeiro tiro. Não há música mais bela.", "Toda grande obra exige sacrifício. O deles... calculado até o último homem.", "Fileiras, em posição. Flancos cobertos. Que o espetáculo comece.", "A guerra é uma arte, soldados. E eu já conheço o final desta obra."], "provoca": ["{nome}, sua rendição será aceita. Talvez."]},
   "w_mamute": {"entrada": ["O ancião da manada chegou. Abram caminho!"], "provoca": ["{nome}, já foi pisoteado por um mamute?"]},
   "z_dragao": {"entrada": ["Dragão Zukunft online. Sistemas de voo: 100%."], "provoca": ["{nome}, olhe para cima. Sempre olhe para cima."]},
   "l_general": {"entrada": ["Lithari, formação cristalina! Que nossa luz seja muralha."], "provoca": ["{nome}, sua prisão já está sendo lapidada."]},
