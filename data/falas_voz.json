@@ -40,5 +40,14 @@
   "Os ancestrais caminham comigo. Nenhum Wächter luta sozinho.": "v_w_mamute_l05",
   "Quem ameaça a manada... enfrenta o ancião.": "v_w_mamute_l06",
   "Sintam a terra tremer... Pela honra dos Wächter!": "v_w_mamute_l07"
+ },
+ "l_general": {
+  "A superfície de Valak já é nossa. Agora... vocês.": "v_l_general_l01",
+  "Guerreiros tão fortes... Malsata Patrino ficará satisfeita.": "v_l_general_l02",
+  "Não viemos destruir vocês. Viemos fazer parte de vocês.": "v_l_general_l03",
+  "Malsata Patrino tem fome. E nós somos a sua boca.": "v_l_general_l04",
+  "Lithari, espalhem-se. Cada guerreiro tomado é mais um de nós.": "v_l_general_l05",
+  "Um planeta de cada vez... até não restar nenhum.": "v_l_general_l06",
+  "Cresçam, cristais. A colheita começou.": "v_l_general_l07"
  }
 }

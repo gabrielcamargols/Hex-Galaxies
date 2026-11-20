@@ -21,6 +21,8 @@ func bus_of(n: String) -> String:
 		return "Radio"     # os Krieg falam pelo rádio
 	if n.begins_with("v_z_dragao"):
 		return "Celeste"   # o Dragão Zukunft fala como um anjo
+	if n.begins_with("v_l_general_l"):
+		return "Cristal"   # o General Lithari fala pelos cristais
 	if n.begins_with("v_") or n.begins_with("n_"):
 		return "Vozes"     # personagens e narrador
 	return "Efeitos"
@@ -42,6 +44,7 @@ func _ready() -> void:
 			AudioServer.set_bus_send(AudioServer.bus_count - 1, "Master")
 	_radio_bus()
 	_celeste_bus()
+	_cristal_bus()
 	for n in NAMES:
 		var path = "res://sounds/%s.wav" % n
 		if not ResourceLoader.exists(path):
@@ -151,9 +154,68 @@ func _celeste_bus() -> void:
 	AudioServer.add_bus_effect(j, rv2)
 
 
+# voz de cristal (General Lithari): a voz soa como cristal vibrando. Faseamento metálico e coro
+# curto desafinado (várias faces do cristal), agudos realçados e eco claro e curto de câmara de vidro;
+# por baixo, uma camada uma quinta acima, fina e tilintante, como o cristal ressoando junto
+func _cristal_bus() -> void:
+	if AudioServer.get_bus_index("Cristal") >= 0:
+		return
+	AudioServer.add_bus()
+	var i = AudioServer.bus_count - 1
+	AudioServer.set_bus_name(i, "Cristal")
+	AudioServer.set_bus_send(i, "Vozes")
+	AudioServer.set_bus_volume_db(i, -3.5)   # o realce dos agudos aumenta o pico
+	var ph = AudioEffectPhaser.new()
+	ph.range_min_hz = 900.0
+	ph.range_max_hz = 5200.0
+	ph.rate_hz = 0.35
+	ph.feedback = 0.72
+	ph.depth = 0.8
+	AudioServer.add_bus_effect(i, ph)
+	var ch = AudioEffectChorus.new()
+	ch.voice_count = 3
+	ch.dry = 0.8
+	ch.wet = 0.45
+	AudioServer.add_bus_effect(i, ch)
+	var eq = AudioEffectEQ6.new()
+	eq.set_band_gain_db(0, -3.0)
+	eq.set_band_gain_db(4, 3.5)
+	eq.set_band_gain_db(5, 5.0)
+	AudioServer.add_bus_effect(i, eq)
+	var rv = AudioEffectReverb.new()
+	rv.room_size = 0.45
+	rv.damping = 0.05
+	rv.spread = 1.0
+	rv.predelay_msec = 15.0
+	rv.dry = 0.9
+	rv.wet = 0.28
+	rv.hipass = 0.3
+	AudioServer.add_bus_effect(i, rv)
+	AudioServer.add_bus()
+	var j = AudioServer.bus_count - 1
+	AudioServer.set_bus_name(j, "CristalAlto")
+	AudioServer.set_bus_send(j, "Vozes")
+	AudioServer.set_bus_volume_db(j, -13.0)
+	var ps = AudioEffectPitchShift.new()
+	ps.pitch_scale = 1.5
+	AudioServer.add_bus_effect(j, ps)
+	var hp = AudioEffectHighPassFilter.new()
+	hp.cutoff_hz = 1500.0
+	AudioServer.add_bus_effect(j, hp)
+	var rv2 = AudioEffectReverb.new()
+	rv2.room_size = 0.6
+	rv2.damping = 0.0
+	rv2.spread = 1.0
+	rv2.dry = 0.4
+	rv2.wet = 0.7
+	AudioServer.add_bus_effect(j, rv2)
+
+
 func play(n: String, vol_db: float = 0.0, pitch: float = 1.0, vary: float = 0.08) -> void:
 	if not has_sound(n):
 		return
+	if n.begins_with("v_l_general_l"):
+		_play_raw(n, vol_db, pitch, 0.0, "CristalAlto")
 	if n.begins_with("v_z_dragao"):
 		_play_raw(n, vol_db, pitch, 0.0, "CelesteAlto")
 	if n.begins_with("v_k_"):
