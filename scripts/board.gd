@@ -58,9 +58,9 @@ const JEITOS = {
 		"joelho": [0.55, 1.15], "bal": [0.32, 0.65], "quica": [0.035, 0.1], "ginga": 0.0, "incl": [0.04, 0.24],
 		"vel": [2.1, 4.0], "tique": ""},
 	# Krieg: postura de sentido, marcha firme e cadenciada, olhar que varre o campo de tempos em tempos
-	"militar": {"resp": [0.03, 1.8], "olha": [0.1, 0.3], "peso": 0.01, "cad": [7.6, 12.0], "passo": [0.4, 0.72],
-		"joelho": [0.45, 1.0], "bal": [0.42, 0.6], "quica": [0.02, 0.07], "ginga": 0.0, "incl": [0.0, 0.18],
-		"vel": [2.0, 3.8], "tique": "vigia"},
+	"militar": {"resp": [0.03, 1.8], "olha": [0.1, 0.3], "peso": 0.01, "cad": [6.8, 10.5], "passo": [0.4, 0.62],
+		"joelho": [0.45, 0.8], "bal": [0.55, 0.7], "quica": [0.03, 0.06], "ginga": 0.0, "incl": [0.0, 0.06],
+		"vel": [2.0, 3.6], "tique": "vigia", "marcha": true},
 	# Karo: malandro, mãos no bolso, gingado nos ombros, passada solta e quicada, corre rápido e baixo
 	"malandro": {"resp": [0.05, 2.0], "olha": [0.28, 0.6], "peso": 0.07, "cad": [8.4, 13.5], "passo": [0.46, 0.85],
 		"joelho": [0.6, 1.25], "bal": [0.0, 0.75], "quica": [0.06, 0.13], "ginga": 0.14, "incl": [0.02, 0.34],
@@ -2678,6 +2678,26 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 	pose["RightUpLeg"] = [[S, leg_a * sw - knee_0 * 0.4]]
 	pose["LeftLeg"] = [[S, knee_0 + knee_a * max(0.0, sin(ph + 1.4))]]
 	pose["RightLeg"] = [[S, knee_0 + knee_a * max(0.0, -sin(ph + 1.4))]]
+	# marcha de soldado: joelho sobe alto na frente, pisa firme, braços retos no ritmo,
+	# tronco e cabeça eretos (também no passo acelerado)
+	if J.get("marcha", false):
+		var up_l = max(0.0, sw)
+		var up_r = max(0.0, -sw)
+		var lift = lerp(1.35, 1.5, rw) * ww
+		pose["LeftUpLeg"] = [[S, -lift * pow(up_l, 0.8) + 0.18 * ww * up_r]]
+		pose["RightUpLeg"] = [[S, -lift * pow(up_r, 0.8) + 0.18 * ww * up_l]]
+		pose["LeftLeg"] = [[S, lift * 1.15 * pow(up_l, 1.2)]]
+		pose["RightLeg"] = [[S, lift * 1.15 * pow(up_r, 1.2)]]
+		var arm_m = lerp(0.6, 0.75, rw) * ww
+		pose["LeftArm"] = [[F, -0.30 - 0.04 * br * idle], [S, -arm_m * sw]]
+		pose["RightArm"] = [[F, 0.30 + 0.04 * br * idle], [S, arm_m * sw - 1.35 * k]]
+		pose["LeftForeArm"] = [[S, -0.12 * ww - 0.3 * idle]]
+		pose["RightForeArm"] = [[S, -0.12 * ww - 0.3 * idle - 0.35 * k]]
+		pose["Spine"] = [[F, J["peso"] * sh * idle]]
+		pose["Spine1"] = [[S, ra * br * idle + 0.06 * ww + 0.12 * k - 0.22 * hurt], [U, 0.3 * k + 0.25 * J["olha"][0] * lk * idle]]
+		pose["Head"][0][1] *= idle
+		# pisada: corpo sobe quando o joelho sobe e desce de uma vez no pé
+		fig.position.y += (abs(sw) * 0.06 - 0.03) * ww
 	# tiques
 	if J["tique"] == "vigia":
 		# Krieg varre o campo com a cabeça, rápido para um lado e para o outro, peito estufado
