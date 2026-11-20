@@ -603,6 +603,16 @@ func _build_far(desert: bool) -> void:
 					_pine(holder, Vector3((_rnd(h, j + 10) - 0.5) * 1.4 * s, 0.6, (_rnd(h, j + 20) - 0.5) * 1.4 * s), 0.9 + _rnd(h, j) * 0.5)
 
 
+# direção no mundo de uma base para a base inimiga (para onde as peças 3D olham paradas)
+func _dir_inimigo(owner: int) -> Vector3:
+	if DB.entry_c.size() < 2 or owner < 0 or owner > 1:
+		return Vector3.ZERO
+	var a = world_xz(DB.entry_c[owner])
+	var b = world_xz(DB.entry_c[1 - owner])
+	var dv = b - a
+	return Vector3(dv.x, 0.0, dv.y)
+
+
 func world_xz(h: Vector2i) -> Vector2:
 	return Vector2(1.5 * h.y, -S3 * (h.x + h.y / 2.0)) * HX
 
@@ -2736,14 +2746,14 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 	if walking and md.length() > 0.01 and fig.is_inside_tree():
 		var yaw_m = atan2(md.x, md.z) - fig.get_parent().global_rotation.y
 		giro.rotation.y = lerp_angle(giro.rotation.y, yaw_m, min(1.0, delta * 12.0))
-	elif cam != null and is_instance_valid(cam) and fig.is_inside_tree():
-		var tc = cam.global_position - fig.global_position
-		tc.y = 0.0
-		var rt = cam.global_transform.basis.x
-		rt.y = 0.0
-		if tc.length() > 0.01 and rt.length() > 0.01:
-			var dir = tc.normalized() * 0.75 + rt.normalized() * (-1.0 if flip else 1.0)
-			var yaw = atan2(dir.x, dir.z) - fig.get_parent().global_rotation.y
+	elif fig.is_inside_tree():
+		# parado: virado para o lado inimigo, fixo no tabuleiro (girar a câmera não mexe as peças)
+		var od: Vector3 = fig.get_meta("olha", Vector3.ZERO)
+		if od.length() < 0.01 and cam != null and is_instance_valid(cam):
+			od = cam.global_position - fig.global_position
+		od.y = 0.0
+		if od.length() > 0.01:
+			var yaw = atan2(od.x, od.z) - fig.get_parent().global_rotation.y
 			giro.rotation.y = lerp_angle(giro.rotation.y, yaw, min(1.0, delta * 6.0))
 	if fig.has_meta("dragao"):
 		_dragao_tick(fig, delta, t, walking, run, lunge, hurt)
@@ -3298,6 +3308,9 @@ func _update_units(delta: float) -> void:
 			if selected:
 				pos3.y += 0.06 + 0.05 * sin(t_now * 6.0)
 			sprite.position = pos3
+			if not sprite.has_meta("olha") or sprite.get_meta("olha_dono", -1) != u.owner:
+				sprite.set_meta("olha", _dir_inimigo(u.owner))
+				sprite.set_meta("olha_dono", u.owner)
 			_fig3d_tick(sprite, delta, t_now + d["bob"], d["flip"], mod3, walking and not d.get("long", false), d["lunge"], d["hurt"], d.get("run", false), d.get("mdir", Vector3.ZERO))
 			_fig3d_select(sprite, selected, d["ring"].get_meta("fcol", Color.WHITE))
 		elif sprite != null:
