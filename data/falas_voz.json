@@ -49,5 +49,16 @@
   "Lithari, espalhem-se. Cada guerreiro tomado é mais um de nós.": "v_l_general_l05",
   "Um planeta de cada vez... até não restar nenhum.": "v_l_general_l06",
   "Cresçam, cristais. A colheita começou.": "v_l_general_l07"
+ },
+ "rei_mina": {
+  "Não temam, meus amados. Seu rei está aqui.": "v_rei_mina_l01",
+  "Valak ainda tem um povo... e o povo tem a mim.": "v_rei_mina_l02",
+  "Perdemos a superfície, não a nossa esperança, meus amados. Viemos retomá-la, ter o que é de nosso direito.": "v_rei_mina_l03",
+  "Fiquem perto de mim, companheiros. Ninguém luta sozinho nesta retomada.": "v_rei_mina_l04",
+  "O solo fala comigo... e hoje ele está do nosso lado.": "v_rei_mina_l05",
+  "Os Lithari tentaram me tomar por dentro. Meu sangue foi mais forte. E nesta batalha não será diferente.": "v_rei_mina_l06",
+  "Lembram das florestas de Valak? É por elas que estamos aqui.": "v_rei_mina_l07",
+  "Há coisas que só a pedra e eu sabemos... e é melhor assim.": "v_rei_mina_l08",
+  "Não luto pela guerra. Luto pelo dia em que Valak viverá em paz.": "v_rei_mina_l09"
  }
 }
