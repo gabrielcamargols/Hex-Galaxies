@@ -6584,7 +6584,11 @@ const NARR_MENOR = ["ko", "nocaute", "limite", "hex", "habilidade", "primeiro_sa
 var narr_livre_ms: int = 0
 var narr_ultimo: Dictionary = {}
 
+const NARRADOR_LIGADO = false   # desligado por enquanto (atrapalhava as falas dos personagens)
+
 func narrar(evento: String, atraso: float = 0.0) -> float:
+	if not NARRADOR_LIGADO:
+		return 0.0
 	if sfx == null or (autotest and OS.get_environment("NARRAR") == ""):
 		return 0.0
 	var op: Array = narrador.get(evento, []).filter(func(n): return sfx.has_sound(n))
