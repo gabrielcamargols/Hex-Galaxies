@@ -935,7 +935,7 @@ func _settings_panel() -> void:
 	vb.tooltip_text = "Os líderes de cada facção leem as próprias falas em voz alta (usa a voz do aparelho)."
 	vb.pressed.connect(func():
 		voice_on = not voice_on
-		if not voice_on:
+		if not voice_on and _tts_ok():
 			DisplayServer.tts_stop()
 		_save_prefs()
 		vb.text = _voice_label())
@@ -6534,8 +6534,21 @@ const LEAD_VOICE = {
 }
 
 
+# voz do aparelho só existe se o projeto ligar o TTS (audio/general/text_to_speech) e houver voz em português;
+# sem isso, qualquer chamada de TTS vira erro no console, então o teste é feito uma vez só
+var _tts_estado: int = -1
+
+func _tts_ok() -> bool:
+	if _tts_estado < 0:
+		_tts_estado = 0
+		if ProjectSettings.get_setting("audio/general/text_to_speech", false) and DisplayServer.has_feature(DisplayServer.FEATURE_TEXT_TO_SPEECH):
+			if not (DisplayServer.tts_get_voices_for_language("pt") + DisplayServer.tts_get_voices_for_language("pt-BR")).is_empty():
+				_tts_estado = 1
+	return _tts_estado == 1
+
+
 func _leader_speak(u, text: String, mood: String) -> void:
-	if not voice_on or text == "" or DisplayServer.has_feature(DisplayServer.FEATURE_TEXT_TO_SPEECH) == false:
+	if not voice_on or text == "" or not _tts_ok():
 		return
 	var vs = DisplayServer.tts_get_voices_for_language("pt")
 	if vs.is_empty():
@@ -6606,11 +6619,11 @@ func _talk_voice(u, text: String, mood: String) -> void:
 		print("FALA %s%s: %s" % [u.cid, " [gravada]" if gv != "" else "", text])
 	if gv != "":
 		# fala gravada: toca inteira, sem variar o tom
-		DisplayServer.tts_stop()
+		if _tts_ok():
+			DisplayServer.tts_stop()
 		sfx.play(gv, 2.0, 1.0, 0.0)
 		return
-	if u.is_cmd and voice_on and DisplayServer.has_feature(DisplayServer.FEATURE_TEXT_TO_SPEECH) \
-			and not (DisplayServer.tts_get_voices_for_language("pt") + DisplayServer.tts_get_voices_for_language("pt-BR")).is_empty():
+	if u.is_cmd and voice_on and _tts_ok():
 		_leader_speak(u, text, mood)
 		return
 	# sem voz do aparelho: o comandante usa o som de voz dele (antes ficava mudo)
