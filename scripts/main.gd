@@ -1007,6 +1007,7 @@ func _check_tension() -> void:
 		intense = true
 		sfx.loop("tensao_loop", -6.0, 2.0)
 		banner("COMANDANTE EM PERIGO", "a batalha está decidida por um fio")
+		narrar("cmd_perigo", 0.2)
 	elif not danger and intense:
 		intense = false
 		sfx.stop_loop("tensao_loop", 2.5)
@@ -4952,6 +4953,7 @@ func _check_low_hp(uid: int, amt: int, world: Variant) -> void:
 		return
 	low_warned[uid] = true
 	_hq_splash("limite", world)
+	narrar("limite", 0.2)
 
 
 # letreiro de impacto estilo anime de luta: linhas de velocidade, estouro e palavra com retícula
@@ -5683,6 +5685,13 @@ func _on_fx_real(e: Dictionary) -> void:
 			if du2 != null and not du2.barrier:
 				var big = du2.is_cmd
 				_later(d, _hq_splash.bind("nocaute" if big else "ko", _hex_pos(e["h"], 1.2)))
+				if big:
+					narrar("cmd_derrotado", d + 0.3)
+				elif not game.has_meta("primeiro_ko"):
+					game.set_meta("primeiro_ko", true)
+					narrar("primeiro_sangue", d + 0.3)
+				else:
+					narrar("nocaute" if randf() < 0.35 else "ko", d + 0.3)
 				_later(d + 0.05, func():
 					if big:
 						_hitstop(0.06)
@@ -5697,6 +5706,9 @@ func _on_fx_real(e: Dictionary) -> void:
 			_voice(e["uid"], "dor", 0.0, d + 0.1, 0.82)
 			_later(d + 0.15, _fx_die.bind(hp, dc))
 		"summon":
+			var su: Variant = game.by_uid(e["uid"])
+			if su != null and su.is_cmd:
+				narrar("cmd_entra", 0.2)
 			_banter(e["uid"])
 			vfx.summon_fx(_hex_pos(e["h"], 0.0), _unit_color(e["uid"]))
 			vfx.flip("portal", _hex_pos(e["h"], 0.0), 2.2, 0.6, _unit_color(e["uid"]).lightened(0.4))
@@ -5762,11 +5774,13 @@ func _on_fx_real(e: Dictionary) -> void:
 					vfx.flip("sparkle", cp2 + Vector3(0, 0.8, 0), 3.0, 0.8, Color("#c77dff"))
 					vfx.flip("ring", cp2, 3.6, 0.7, Color("#e6b8ff"), true)
 					sfx.play("hex_energy_take", -2.0, 1.0, 0.0)
+					narrar("hex", 0.4)
 				"fade":
 					vfx.flip("smoke", cp2, 2.2, 0.8)
 		"danger":
 			_later(1.0, banner.bind("O DESERTO DESPERTA", "%d buracos de verme no próximo round · fuja das casas marcadas" % int(e["n"])))
 		"zone_grow":
+			narrar("area", 2.3)
 			_later(2.2, banner.bind("ÁREA DE ENTRADA MAIOR", "Agora dá para colocar personagens até %d casas da sua base" % int(e["r"])))
 			for pz in range(2):
 				var ew = board.world_xz(DB.entry_c[pz])
@@ -5786,13 +5800,16 @@ func _on_fx_real(e: Dictionary) -> void:
 			_on_abfx(e)
 		"ult":
 			board.conjura(int(e["uid"]))
+			narrar("habilidade", 0.3)
 			banner("★ " + str(e["name"]), ("Você" if e["p"] == me else _opp()) + " · " + game.nm(game.by_uid(e["uid"])))
 			sfx.play("poder", -1.0, 0.8)
 		"wind":
+			narrar("vento", 0.2)
 			banner("O vento muda!", "tempestade de areia: as dunas vão se mover")
 			vfx.sandstorm(true)
 			sfx.loop("tempestade_loop", -6.0, 3.0)
 		"dunes":
+			narrar("dunas", 0.2)
 			banner("As dunas se movem!", "o relevo mudou")
 			board.quake()
 			sfx.play("dunas", 0.0)
@@ -5802,6 +5819,7 @@ func _on_fx_real(e: Dictionary) -> void:
 			board.shake = max(board.shake, 0.08 + 0.05 * float(e["v"]))
 			board.claw_twitch(float(e["v"]))
 		"claw":
+			narrar("garra", 0.2)
 			banner("A GARRA ATACA!", "quem está perto do buraco é arrastado")
 			if w.has("banner"):
 				w["banner"].add_theme_color_override("font_color", Color("#ff4ad0"))
@@ -5831,6 +5849,7 @@ func _on_fx_real(e: Dictionary) -> void:
 		"tremor":
 			sfx.play("verme_rumor", -2.0, 0.7)
 			board.shake = max(board.shake, 0.35)
+			narrar("areia", 0.2)
 			banner("A AREIA TREME", "saia das casas marcadas: o verme vem no próximo round")
 			if w.has("banner"):
 				w["banner"].add_theme_color_override("font_color", Color("#ff9a5a"))
@@ -5845,16 +5864,19 @@ func _on_fx_real(e: Dictionary) -> void:
 			sfx.play("verme_rumor", -3.0, 0.6)
 			board.shake = max(board.shake, 0.3)
 			var wk = String(e["kind"])
+			narrar("perigo_chao", 0.2)
 			banner("AS RAÍZES SE MEXEM" if wk == "raiz" else ("O GELO ESTALA" if wk == "fratura" else "AVALANCHE À VISTA"), "saia das casas marcadas: acontece no próximo round")
 			if w.has("banner"):
 				w["banner"].add_theme_color_override("font_color", Color("#9be85a") if wk == "raiz" else Color("#9fe8ff"))
 			for th in e["hexes"]:
 				vfx.dust_burst(_hex_pos(th, 0.0), false)
 		"rain_start":
+			narrar("chuva", 0.2)
 			banner("COMEÇA A CHOVER!", "ataques -3 de dano · o céu escurece")
 			vfx.rain(true)
 			sfx.loop("tempestade_loop", -9.0, 3.0)
 		"rain_end":
+			narrar("chuva_fim", 0.2)
 			banner("A CHUVA PASSOU", "os ataques voltam ao dano normal")
 			vfx.rain(false)
 			sfx.stop_loop("tempestade_loop", 3.0)
@@ -5873,6 +5895,7 @@ func _on_fx_real(e: Dictionary) -> void:
 			for th in e["hexes"]:
 				vfx.dust_burst(_hex_pos(th, 0.0), true)
 		"icebreak":
+			narrar("gelo", 0.2)
 			banner("O GELO SE ROMPEU!", "fendas abertas por 3 rounds")
 			board.quake()
 			sfx.play("explosao", -2.0, 0.7)
@@ -5880,6 +5903,7 @@ func _on_fx_real(e: Dictionary) -> void:
 				vfx.dust_burst(_hex_pos(th, 0.0), true)
 				vfx.flip("rock", _hex_pos(th, 0.0), 3.0, 0.7, Color("#bfeeff"))
 		"avalanche":
+			narrar("avalanche", 0.2)
 			banner("AVALANCHE!", "a neve desce pelo corredor")
 			board.quake()
 			sfx.play("verme_ataque", 0.0, 0.55)
@@ -5887,6 +5911,7 @@ func _on_fx_real(e: Dictionary) -> void:
 				vfx.dust_burst(_hex_pos(th, 0.0), true)
 				vfx.flip("boom", _hex_pos(th, 0.0), 3.5, 0.8, Color("#e8f6ff"))
 		"worm":
+			narrar("verme", 0.2)
 			banner("VERME GIGANTE!", "quem estiver nos buracos é devorado")
 			if w.has("banner"):
 				w["banner"].add_theme_color_override("font_color", Color("#ff4a3a"))
@@ -5900,7 +5925,12 @@ func _on_fx_real(e: Dictionary) -> void:
 			board.worm_emerge(hs)
 		"round":
 			sfx.play("round", -6.0)
-			narrar("round_final" if e["round"] >= Game.LAST_ROUND else "round_%d" % e["round"], 0.25)
+			var t_n = 0.25
+			if e["round"] == 1:
+				t_n += narrar("inicio", t_n) + 0.3
+			t_n += narrar("round_final" if e["round"] >= Game.LAST_ROUND else "round_%d" % e["round"], t_n) + 0.2
+			if e["round"] == 1:
+				narrar("voce_comeca" if game.first == me else "oponente_comeca", t_n)
 			banner("Round final" if e["round"] >= Game.LAST_ROUND else "Round %d" % e["round"], "os comandantes entram" if e["round"] == Game.CMD_ROUND else ("Você começa" if game.first == me else (_opp() + " começa")))
 	board.sync_units()
 
@@ -5979,6 +6009,12 @@ func _banter(uid: int) -> void:
 			if best == null or DB.dist(x.pos(), u.pos()) < DB.dist(best.pos(), u.pos()):
 				best = x
 		return best
+	# comandante com falas de entrada gravadas: entra sempre falando uma delas (sorteada)
+	if u.is_cmd:
+		var grav = dlg.get("personagem", {}).get(u.cid, {}).get("entrada", []).filter(func(t): return fala_gravada(u.cid, t) != "")
+		if not grav.is_empty():
+			_say(u.uid, grav[randi() % grav.size()], 0.6, "fala")
+			return
 	var tgt = null
 	var mode = "entrada"
 	if not enemies.is_empty() and (allies.is_empty() or randf() < 0.55):
@@ -6450,6 +6486,15 @@ func _game_over() -> void:
 		return
 	var win = game.winner
 	var title = "Empate" if win == Game.DRAW else ("Vitória!" if win == me else "Derrota")
+	# locutor: como acabou e o resultado
+	var t_fim = 0.3
+	if not game.final_score.is_empty():
+		t_fim += narrar("fim_vida", t_fim) + 0.3
+	elif game.flagged != Game.NONE:
+		t_fim += narrar("tempo", t_fim) + 0.3
+	t_fim += narrar("empate" if win == Game.DRAW else ("vitoria" if win == me else "derrota"), t_fim) + 0.4
+	if win == me:
+		narrar("que_batalha", t_fim)
 	var reason = ""
 	if not game.final_score.is_empty():
 		var f = game.final_score
@@ -6504,16 +6549,38 @@ func _leader_speak(u, text: String, mood: String) -> void:
 	DisplayServer.tts_speak(text, vid, int(clamp(float(vol.get("Vozes", 90.0)), 0.0, 100.0)), clamp(pitch, 0.0, 2.0), clamp(float(cfg[1]), 0.1, 10.0))
 
 
-# locutor: toca uma das gravações do evento (sorteada); devolve a duração (0 se não houver)
+# locutor: toca uma das gravações do evento (sorteada); devolve quanto tempo a partir de agora ele
+# fica falando (0 se não falou). Nunca fala por cima de si mesmo: avisos menores (K.O., no limite,
+# Hex Energy) são descartados se ele estiver ocupado; os importantes esperam a vez. O mesmo aviso
+# não se repete em menos de 8 s, e a área de entrada só é anunciada uma vez por partida.
+const NARR_MENOR = ["ko", "nocaute", "limite", "hex", "habilidade", "primeiro_sangue"]
+var narr_livre_ms: int = 0
+var narr_ultimo: Dictionary = {}
+
 func narrar(evento: String, atraso: float = 0.0) -> float:
-	if sfx == null or autotest:
+	if sfx == null or (autotest and OS.get_environment("NARRAR") == ""):
 		return 0.0
 	var op: Array = narrador.get(evento, []).filter(func(n): return sfx.has_sound(n))
 	if op.is_empty():
 		return 0.0
+	var agora = Time.get_ticks_msec()
+	if agora - int(narr_ultimo.get(evento, -100000)) < 8000:
+		return 0.0
+	if evento == "area" and game != null:
+		if game.has_meta("narr_area"):
+			return 0.0
+		game.set_meta("narr_area", true)
+	var inicio = agora + int(atraso * 1000.0)
+	if inicio < narr_livre_ms:
+		if evento in NARR_MENOR:
+			return 0.0
+		inicio = narr_livre_ms + 150
 	var n: String = op[randi() % op.size()]
-	sfx.play_later(n, atraso, 3.0)
-	return sfx.streams[n].get_length()
+	var dur: float = sfx.streams[n].get_length()
+	narr_ultimo[evento] = agora
+	narr_livre_ms = inicio + int(dur * 1000.0)
+	sfx.play_later(n, (inicio - agora) / 1000.0, 3.0)
+	return (inicio - agora) / 1000.0 - atraso + dur
 
 
 # som gravado para esta fala deste personagem ("" se não houver)
@@ -6540,9 +6607,11 @@ func _talk_voice(u, text: String, mood: String) -> void:
 		DisplayServer.tts_stop()
 		sfx.play(gv, 2.0, 1.0, 0.0)
 		return
-	if u.is_cmd and voice_on:
+	if u.is_cmd and voice_on and DisplayServer.has_feature(DisplayServer.FEATURE_TEXT_TO_SPEECH) \
+			and not (DisplayServer.tts_get_voices_for_language("pt") + DisplayServer.tts_get_voices_for_language("pt-BR")).is_empty():
 		_leader_speak(u, text, mood)
 		return
+	# sem voz do aparelho: o comandante usa o som de voz dele (antes ficava mudo)
 	var n = "v_%s_%s" % [u.cid, "prov" if mood == "prov" else "fala"]
 	var pitch = 0.84 if mood == "triste" else randf_range(0.96, 1.05)
 	var vol = 2.0 if mood == "prov" else 0.0

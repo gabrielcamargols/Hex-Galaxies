@@ -1,6 +1,139 @@
 {
- "_ajuda": "Falas do narrador (locutor). Cada evento -> lista de sons em sounds/ (sem extensão); quando há mais de um, o jogo sorteia. Eventos: round_1..round_11, round_final.",
- "round_1": ["n_round01"], "round_2": ["n_round02"], "round_3": ["n_round03"], "round_4": ["n_round04"],
- "round_5": ["n_round05"], "round_6": ["n_round06"], "round_7": ["n_round07"], "round_8": ["n_round08"],
- "round_9": ["n_round09"], "round_10": ["n_round10"], "round_11": ["n_round11"], "round_final": ["n_round12"]
+ "_ajuda": "Falas do narrador (locutor). Cada evento -> lista de sons em sounds/ (sem extensão); quando há mais de um, o jogo sorteia.",
+ "round_1": [
+  "n_round01"
+ ],
+ "round_2": [
+  "n_round02"
+ ],
+ "round_3": [
+  "n_round03"
+ ],
+ "round_4": [
+  "n_round04"
+ ],
+ "round_5": [
+  "n_round05"
+ ],
+ "round_6": [
+  "n_round06"
+ ],
+ "round_7": [
+  "n_round07"
+ ],
+ "round_8": [
+  "n_round08"
+ ],
+ "round_9": [
+  "n_round09"
+ ],
+ "round_10": [
+  "n_round10"
+ ],
+ "round_11": [
+  "n_round11"
+ ],
+ "round_final": [
+  "n_round12"
+ ],
+ "inicio": [
+  "n_inicio1",
+  "n_inicio2"
+ ],
+ "voce_comeca": [
+  "n_voce_comeca"
+ ],
+ "oponente_comeca": [
+  "n_oponente_comeca"
+ ],
+ "area": [
+  "n_area"
+ ],
+ "ko": [
+  "n_ko1",
+  "n_ko2",
+  "n_ko3",
+  "n_ko4"
+ ],
+ "nocaute": [
+  "n_nocaute1",
+  "n_nocaute2",
+  "n_nocaute3",
+  "n_nocaute4"
+ ],
+ "limite": [
+  "n_limite1",
+  "n_limite2",
+  "n_limite3",
+  "n_limite4"
+ ],
+ "primeiro_sangue": [
+  "n_primeiro_sangue1",
+  "n_primeiro_sangue2"
+ ],
+ "cmd_entra": [
+  "n_cmd_entra"
+ ],
+ "cmd_perigo": [
+  "n_cmd_perigo"
+ ],
+ "cmd_derrotado": [
+  "n_cmd_derrotado"
+ ],
+ "habilidade": [
+  "n_habilidade1",
+  "n_habilidade2"
+ ],
+ "hex": [
+  "n_hex1",
+  "n_hex2"
+ ],
+ "vento": [
+  "n_vento"
+ ],
+ "dunas": [
+  "n_dunas"
+ ],
+ "areia": [
+  "n_areia"
+ ],
+ "verme": [
+  "n_verme"
+ ],
+ "garra": [
+  "n_garra"
+ ],
+ "perigo_chao": [
+  "n_perigo_chao"
+ ],
+ "avalanche": [
+  "n_avalanche"
+ ],
+ "gelo": [
+  "n_gelo"
+ ],
+ "chuva": [
+  "n_chuva"
+ ],
+ "chuva_fim": [
+  "n_chuva_fim"
+ ],
+ "vitoria": [
+  "n_vitoria"
+ ],
+ "derrota": [
+  "n_derrota"
+ ],
+ "empate": [
+  "n_empate"
+ ],
+ "tempo": [
+  "n_tempo"
+ ],
+ "fim_vida": [
+  "n_fim_vida"
+ ],
+ "que_batalha": [
+  "n_que_batalha"
+ ]
 }
