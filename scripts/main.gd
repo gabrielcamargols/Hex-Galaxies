@@ -5962,6 +5962,10 @@ func _pick(arr) -> String:
 func _line(kind: String, u, target = null) -> String:
 	var txt = ""
 	var pc = dlg.get("personagem", {}).get(u.cid, {})
+	# falas só para uma facção (ex.: "provoca_LIT" do Sniper de Valak contra os Lithari)
+	if target != null and pc.has(kind + "_" + _fac_of(target)):
+		txt = _pick(pc[kind + "_" + _fac_of(target)])
+		return txt.replace("{nome}", _short(target.cid))
 	# falas próprias gravadas: o personagem usa sempre uma delas
 	var grav_k = pc.get(kind, []).filter(func(t): return fala_gravada(u.cid, t) != "")
 	if not grav_k.is_empty():
@@ -6053,7 +6057,7 @@ func _banter_death(uid: int) -> void:
 	var friends = game.field().filter(func(x): return x.owner == dead.owner and not x.barrier and x.st == "field" and x != dead)
 	if not foes.is_empty() and randf() < 0.5:
 		var f = foes[randi() % foes.size()]
-		_say(f.uid, _line("vitoria", f), 0.9, "prov")
+		_say(f.uid, _line("vitoria", f, dead), 0.9, "prov")
 	elif not friends.is_empty() and randf() < 0.45:
 		var a = friends[randi() % friends.size()]
 		_say(a.uid, _line("lamento", a), 0.9, "triste")

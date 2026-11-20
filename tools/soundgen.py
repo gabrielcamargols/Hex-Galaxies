@@ -703,8 +703,11 @@ if __name__ == "__main__":
         for cid in PERFIS:
             if cid in COMANDANTES:
                 continue   # comandantes usam só falas gravadas (sounds/v_<id>_lNN.ogg)
-            save(os.path.join(out, "v_%s_atk.wav" % cid), char_sound(cid, False), 0.8)
-            save(os.path.join(out, "v_%s_dor.wav" % cid), char_sound(cid, True), 0.75)
+            # ataque/dano gravados (.ogg) têm preferência: não gera o .wav por cima
+            if not os.path.exists(os.path.join(out, "v_%s_atk.ogg" % cid)):
+                save(os.path.join(out, "v_%s_atk.wav" % cid), char_sound(cid, False), 0.8)
+            if not os.path.exists(os.path.join(out, "v_%s_dor.ogg" % cid)):
+                save(os.path.join(out, "v_%s_dor.wav" % cid), char_sound(cid, True), 0.75)
             save(os.path.join(out, "v_%s_fala.wav" % cid), char_talk(cid, "fala"), 0.7)
             save(os.path.join(out, "v_%s_prov.wav" % cid), char_talk(cid, "prov"), 0.75)
         print("vozes ok:", len(PERFIS))

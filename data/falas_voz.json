@@ -79,5 +79,41 @@
   "Ninguém faz isso com o povo do Rei! Isso vai ter troco!": "v_t_dinamite_l15",
   "Três... dois... um... BUM!": "v_t_dinamite_l16",
   "Fica aqui quietinha, Pipoca... e explode bem bonito, tá?": "v_t_dinamite_l17"
+ },
+ "sismico": {
+  "Bom dia, minha gente! Hoje o chão vai acordar mais cedo!": "v_sismico_l01",
+  "Eu sou o terremoto que anda! E que dança também!": "v_sismico_l02",
+  "Sabe por que o mineiro nunca perde a calma? Porque ele tem a cabeça no lugar... debaixo do capacete! Hahaha!": "v_sismico_l03",
+  "Chegou o tio! Ninguém se machuca enquanto eu tiver de pé!": "v_sismico_l04",
+  "Segura o equilíbrio aí, ô... parece gelatina no terremoto!": "v_sismico_l05",
+  "Qual é o rochedo mais medroso? O que treme na minha frente!": "v_sismico_l06",
+  "Fica atrás do tio, filhão, que eu vou sacudir tudo!": "v_sismico_l07",
+  "Esse é o meu garoto!": "v_sismico_l08",
+  "Bora, minha gente! Depois tem churrasco na mina!": "v_sismico_l09",
+  "Ih, ficou bravinho! Vem que o tio te dá um abraço... sísmico!": "v_sismico_l10",
+  "Tá tremendo por quê? Eu nem comecei!": "v_sismico_l11",
+  "Caiu! Faltou base nessa construção aí!": "v_sismico_l12",
+  "Esse aí foi pro chão... porque o chão é meu amigo! Hahaha... ninguém riu?": "v_sismico_l13",
+  "Ei! Não mexe com a minha gente!": "v_sismico_l14",
+  "Ninguém derruba um dos meus! Agora o tio ficou bravo!": "v_sismico_l15",
+  "ONDA SÍSMICA! Pra longe, todo mundo! Isso que é sacudida!": "v_sismico_l16"
+ },
+ "t_sniper": {
+  "Posição assumida. Linha de visão limpa em todas as direções.": "v_t_sniper_l01",
+  "Vejo vocês a quilômetros. Vocês não me veem.": "v_t_sniper_l02",
+  "O Rei pediu olhos no campo. Os meus nunca piscam.": "v_t_sniper_l03",
+  "Valak era verde até onde a vista alcançava... e a minha alcança longe.": "v_t_sniper_l04",
+  "Calculei sua rota. Você já está na minha mira.": "v_t_sniper_l05",
+  "Lithari... cada cristal seu é um pedaço de Valak que vocês roubaram.": "v_t_sniper_l06",
+  "Avance pela esquerda. A direita está coberta.": "v_t_sniper_l07",
+  "Entendido.": "v_t_sniper_l08",
+  "Posição confirmada.": "v_t_sniper_l09",
+  "Palavras não mudam a distância entre nós.": "v_t_sniper_l10",
+  "Você errou por três passos. Eu não erro.": "v_t_sniper_l11",
+  "Alvo neutralizado.": "v_t_sniper_l12",
+  "Menos um cristal sobre o nosso solo.": "v_t_sniper_l13",
+  "Baixa registrada. Ajustando posição.": "v_t_sniper_l14",
+  "O Rei saberá disso. E eles também vão saber.": "v_t_sniper_l15",
+  "A carga ficou... e agora se espalha.": "v_t_sniper_l16"
  }
 }
