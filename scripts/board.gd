@@ -44,9 +44,31 @@ const ZOOM_MIN = 4.0
 const ZOOM_MAX = 140.0
 # personagens que já têm modelo 3D com esqueleto (Tripo): entram no lugar da arte 2D
 const FIG3D = {
-	"k_cmd": {"path": "res://models/personagens/k_cmd.glb", "visor": true, "punho": true},
-	"rhazur": {"path": "res://models/personagens/rhazur.glb", "visor": false, "punho": false},
-	"karo": {"path": "res://models/personagens/karo.glb", "visor": false, "punho": true, "braco": 0.12},
+	"k_cmd": {"path": "res://models/personagens/k_cmd.glb", "visor": true, "punho": true, "jeito": "militar"},
+	"rhazur": {"path": "res://models/personagens/rhazur.glb", "visor": false, "punho": false, "jeito": "bruto"},
+	"karo": {"path": "res://models/personagens/karo.glb", "visor": false, "punho": true, "jeito": "malandro", "bracos": "bolso"},
+}
+# jeito de cada personagem 3D: parado, andar e correr diferentes
+#   resp: respiração (amplitude, velocidade) · olha: vigia em volta · peso: troca de perna
+#   cad: cadência da passada (andar, correr) · passo / joelho / bal: amplitude de perna, joelho e balanço dos braços
+#   quica: sobe e desce · ginga: rebola ombros e quadril · incl: inclina o tronco (andar, correr)
+#   vel: velocidade no tabuleiro, casas por segundo (andar, correr) · tique: gesto de vez em quando parado
+const JEITOS = {
+	"padrao": {"resp": [0.05, 2.2], "olha": [0.2, 0.42], "peso": 0.035, "cad": [7.0, 12.5], "passo": [0.42, 0.78],
+		"joelho": [0.55, 1.15], "bal": [0.32, 0.65], "quica": [0.035, 0.1], "ginga": 0.0, "incl": [0.04, 0.24],
+		"vel": [2.1, 4.0], "tique": ""},
+	# Krieg: postura de sentido, marcha firme e cadenciada, olhar que varre o campo de tempos em tempos
+	"militar": {"resp": [0.03, 1.8], "olha": [0.1, 0.3], "peso": 0.01, "cad": [7.6, 12.0], "passo": [0.4, 0.72],
+		"joelho": [0.45, 1.0], "bal": [0.42, 0.6], "quica": [0.02, 0.07], "ginga": 0.0, "incl": [0.0, 0.18],
+		"vel": [2.0, 3.8], "tique": "vigia"},
+	# Karo: malandro, mãos no bolso, gingado nos ombros, passada solta e quicada, corre rápido e baixo
+	"malandro": {"resp": [0.05, 2.0], "olha": [0.28, 0.6], "peso": 0.07, "cad": [8.4, 13.5], "passo": [0.46, 0.85],
+		"joelho": [0.6, 1.25], "bal": [0.0, 0.75], "quica": [0.06, 0.13], "ginga": 0.14, "incl": [0.02, 0.34],
+		"vel": [2.4, 4.6], "tique": "pe"},
+	# Rhazur: pesado, passada larga e lenta, balança o corpo todo, respiração funda
+	"bruto": {"resp": [0.07, 1.5], "olha": [0.14, 0.3], "peso": 0.05, "cad": [5.4, 9.0], "passo": [0.38, 0.62],
+		"joelho": [0.4, 0.9], "bal": [0.28, 0.5], "quica": [0.03, 0.06], "ginga": 0.1, "incl": [0.08, 0.22],
+		"vel": [1.7, 3.2], "tique": ""},
 }
 const BIG = ["moby", "balu", "banker", "l_behemot", "l_leviathan", "z_dragao", "w_mamute", "t_feram", "k_tank", "z_tank", "l_tank", "l_colosso", "sismico", "rhombo", "tork", "w_tric", "z_meca", "t_fendas", "t_raiz", "t_basalto", "t_carrinho", "t_sentinela", "t_britadeira", "a_garra", "k_escudeiro", "w_urso", "w_gorila", "w_javali"]
 
@@ -2458,11 +2480,16 @@ func _figure3d(cid: String, body_h: float) -> Node3D:
 	root.set_meta("mats", mats)
 	root.set_meta("outl", outl)
 	root.set_meta("sel", false)
-	root.set_meta("braco", float(cfg.get("braco", 0.0)))     # parado: quanto a mais o braço desce para junto do corpo
+	var jt: Dictionary = JEITOS["padrao"].duplicate()
+	jt.merge(JEITOS.get(cfg.get("jeito", "padrao"), {}), true)
+	root.set_meta("jeito", jt)
+	root.set_meta("bracos", cfg.get("bracos", ""))
+	root.set_meta("vel", jt["vel"])
 	if sk != null:
 		var bones = {}
 		for nm in ["Hips", "Spine", "Spine1", "Spine2", "Neck", "Head", "LeftArm", "RightArm", "LeftForeArm", "RightForeArm",
-				"LeftUpLeg", "RightUpLeg", "LeftLeg", "RightLeg"]:
+				"LeftUpLeg", "RightUpLeg", "LeftLeg", "RightLeg", "LeftFoot", "RightFoot", "LeftHand", "RightHand",
+				"LeftShoulder", "RightShoulder"]:
 			var b = sk.find_bone("mixamorig_" + nm)
 			if b < 0:
 				b = sk.find_bone("mixamorig:" + nm)
@@ -2594,6 +2621,7 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 	var F: Vector3 = ax[0]
 	var S: Vector3 = ax[1]
 	var U: Vector3 = ax[2]
+	var J: Dictionary = fig.get_meta("jeito", JEITOS["padrao"])
 	var ww: float = fig.get_meta("walk_w", 0.0)
 	ww = move_toward(ww, 1.0 if walking else 0.0, delta * 6.0)
 	fig.set_meta("walk_w", ww)
@@ -2601,40 +2629,67 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 	rw = move_toward(rw, 1.0 if (walking and run) else (0.0 if walking else rw), delta * 5.0)
 	fig.set_meta("run_w", rw)
 	# fase da passada acumulada (trocar de andar para correr não dá tranco)
-	var ph: float = fig.get_meta("fase", 0.0) + delta * lerp(7.0, 12.5, rw) * (1.0 if ww > 0.0 else 0.0)
+	var ph: float = fig.get_meta("fase", 0.0) + delta * lerp(J["cad"][0], J["cad"][1], rw) * (1.0 if ww > 0.0 else 0.0)
 	fig.set_meta("fase", fmod(ph, TAU * 100.0))
-	var br = sin(t * 2.2)                       # respiração
-	var sh = sin(t * 0.55)                      # troca o peso de uma perna para a outra, devagar
-	var lk = sin(t * 0.42) + 0.35 * sin(t * 1.13)   # olha em volta (vigia o campo)
+	var br = sin(t * J["resp"][1])                          # respiração
+	var sh = sin(t * 0.55)                                  # troca o peso de uma perna para a outra, devagar
+	var lk = sin(t * J["olha"][1]) + 0.35 * sin(t * J["olha"][1] * 2.7)   # olha em volta
 	var idle = 1.0 - ww
 	var sw = sin(ph)
 	var k = sin(clamp(lunge, 0.0, 1.0) * PI)
+	var ra: float = J["resp"][0]
+	# tique de vez em quando (só parado): 0..1 durante ~1,5 s a cada ~7 s
+	var tq = 0.0
+	if J["tique"] != "":
+		var cyc = fmod(t + 3.0, 7.0)
+		tq = sin(clamp((cyc - 5.5) / 1.5, 0.0, 1.0) * PI) * idle * (1.0 - k)
 	# amplitudes: andar -> correr
-	var leg_a = lerp(0.42, 0.78, rw) * ww
-	var knee_a = lerp(0.55, 1.15, rw) * ww
+	var leg_a = lerp(J["passo"][0], J["passo"][1], rw) * ww
+	var knee_a = lerp(J["joelho"][0], J["joelho"][1], rw) * ww
 	var knee_0 = lerp(0.05, 0.3, rw) * ww
-	var arm_a = lerp(0.32, 0.65, rw) * ww
+	var arm_a = lerp(J["bal"][0], J["bal"][1], rw) * ww
 	var elbow = lerp(-0.30, -1.25, rw * ww)
-	var lean = lerp(0.04, 0.24, rw) * ww
+	var lean = lerp(J["incl"][0], J["incl"][1], rw) * ww
+	var gi = J["ginga"] * ww * (1.0 - rw * 0.6)
 	# sobe e desce a cada passo (duas vezes por ciclo)
-	fig.position.y += abs(sw) * lerp(0.035, 0.1, rw) * ww
+	fig.position.y += abs(sw) * lerp(J["quica"][0], J["quica"][1], rw) * ww
 	var pose = {}
 	# braços: do "A" do modelo para junto do corpo; respiram parado; balançam contra as pernas andando
-	var bx: float = fig.get_meta("braco", 0.0) * idle * (1.0 - k)
-	pose["LeftArm"] = [[F, -0.30 - bx - 0.06 * br * idle + 0.04 * sh * idle + 0.08 * rw * ww], [S, arm_a * sw + 0.06 * sin(t * 0.8) * idle]]
-	pose["RightArm"] = [[F, 0.30 + bx + 0.06 * br * idle + 0.04 * sh * idle - 0.08 * rw * ww], [S, -arm_a * sw - 1.35 * k - 0.05 * sin(t * 0.8 + 1.0) * idle]]
-	pose["LeftForeArm"] = [[S, elbow - 0.05 * br * idle]]
-	pose["RightForeArm"] = [[S, elbow - 0.05 * br * idle - 0.35 * k]]
-	# tronco: respira, balança o peso, inclina para a frente correndo, entra no golpe, recua no dano
-	pose["Spine"] = [[F, 0.035 * sh * idle], [U, 0.08 * sw * ww]]
-	pose["Spine1"] = [[S, 0.05 * br * idle + lean + 0.12 * k - 0.22 * hurt], [U, 0.3 * k + 0.05 * lk * idle - 0.1 * sw * ww]]
-	pose["Spine2"] = [[S, 0.03 * br * idle], [F, -0.02 * sh * idle]]
-	pose["Head"] = [[U, 0.2 * lk * idle - 0.15 * k], [S, -0.04 * br * idle - 0.08 * hurt - lean * 0.6], [F, -0.03 * sh * idle]]
+	pose["LeftArm"] = [[F, -0.30 - ra * 1.2 * br * idle + 0.04 * sh * idle + 0.08 * rw * ww], [S, arm_a * sw + 0.06 * sin(t * 0.8) * idle]]
+	pose["RightArm"] = [[F, 0.30 + ra * 1.2 * br * idle + 0.04 * sh * idle - 0.08 * rw * ww], [S, -arm_a * sw - 1.35 * k - 0.05 * sin(t * 0.8 + 1.0) * idle]]
+	pose["LeftForeArm"] = [[S, elbow - ra * br * idle]]
+	pose["RightForeArm"] = [[S, elbow - ra * br * idle - 0.35 * k]]
+	# mãos no bolso do casaco (parado e andando; correndo ou golpeando, os braços saem)
+	if fig.get_meta("bracos", "") == "bolso":
+		var pk = (1.0 - rw * ww) * (1.0 - k)
+		pose["LeftArm"] = [[F, -0.30 - 0.30 * pk + 0.03 * br * idle], [S, 0.18 * pk + (arm_a * sw) * (1.0 - pk)]]
+		pose["RightArm"] = [[F, 0.30 + 0.26 * pk - 0.03 * br * idle], [S, 0.08 * pk - (arm_a * sw) * (1.0 - pk) - 1.35 * k]]
+		pose["LeftForeArm"] = [[S, lerp(elbow, -0.42, pk)], [U, 0.12 * pk]]
+		pose["RightForeArm"] = [[S, lerp(elbow, -0.5, pk) - 0.35 * k], [U, 0.12 * pk]]
+		pose["LeftHand"] = [[S, 0.25 * pk]]
+		pose["RightHand"] = [[S, 0.25 * pk]]
+	# tronco: respira, balança o peso, ginga, inclina correndo, entra no golpe, recua no dano
+	pose["Spine"] = [[F, J["peso"] * sh * idle + gi * 0.5 * sw], [U, 0.08 * sw * ww]]
+	pose["Spine1"] = [[S, ra * br * idle + lean + 0.12 * k - 0.22 * hurt], [U, 0.3 * k + 0.25 * J["olha"][0] * lk * idle - 0.1 * sw * ww - gi * sw]]
+	pose["Spine2"] = [[S, ra * 0.6 * br * idle], [F, -J["peso"] * 0.6 * sh * idle]]
+	pose["Head"] = [[U, J["olha"][0] * lk * idle - 0.15 * k], [S, -ra * 0.8 * br * idle - 0.08 * hurt - lean * 0.6], [F, -J["peso"] * 0.8 * sh * idle + gi * 0.4 * sw]]
 	# pernas: coxa vai e volta, joelho dobra quando a perna volta (mais ainda correndo)
 	pose["LeftUpLeg"] = [[S, -leg_a * sw - knee_0 * 0.4]]
 	pose["RightUpLeg"] = [[S, leg_a * sw - knee_0 * 0.4]]
 	pose["LeftLeg"] = [[S, knee_0 + knee_a * max(0.0, sin(ph + 1.4))]]
 	pose["RightLeg"] = [[S, knee_0 + knee_a * max(0.0, -sin(ph + 1.4))]]
+	# tiques
+	if J["tique"] == "vigia":
+		# Krieg varre o campo com a cabeça, rápido para um lado e para o outro, peito estufado
+		pose["Head"][0][1] += 0.55 * sin(tq * PI * 2.0) * tq
+		pose["Spine2"][0][1] -= 0.06 * tq
+	elif J["tique"] == "pe":
+		# Karo bate o pé, impaciente, e inclina a cabeça
+		var tap = max(0.0, sin(t * 14.0)) * tq
+		pose["RightFoot"] = [[S, -0.35 * tap]]
+		pose["RightLeg"][0][1] += 0.12 * tq
+		pose["RightUpLeg"][0][1] -= 0.08 * tq
+		pose["Head"].append([F, 0.18 * tq])
 	for nm in pose.keys():
 		if not bn.has(nm):
 			continue
@@ -2791,7 +2846,8 @@ func _update_units(delta: float) -> void:
 			var is3d = d["sprite"] != null and d["sprite"].has_meta("fig3d")
 			var lng = d.get("long", false)
 			# 3D: passo contínuo (sem pulinho), andando ou correndo; 2D: salta de casa em casa
-			var spd = 1.6 if lng else ((4.0 if d.get("run", false) else 2.1) if is3d else 5.0)
+			var vl: Array = d["sprite"].get_meta("vel", [2.1, 4.0]) if is3d else [2.1, 4.0]
+			var spd = 1.6 if lng else ((vl[1] if d.get("run", false) else vl[0]) if is3d else 5.0)
 			d["seg_t"] += delta * spd
 			var t = min(1.0, d["seg_t"])
 			var e2 = t if (is3d and not lng) else (2.0 * t * t if t < 0.5 else 1.0 - pow(-2.0 * t + 2.0, 2.0) / 2.0)
