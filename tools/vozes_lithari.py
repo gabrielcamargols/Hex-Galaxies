@@ -27,7 +27,7 @@ SR = 44100
 
 # tamanho 0 pequeno .. 3 colosso; registro F/M/N; "beast" = mais rangido e bruto
 PERFIS = {
-    "l_general": ("M", 2, ""), "l_lider": ("M", 1, ""), "l_tank": ("N", 3, ""),
+"l_lider": ("M", 1, ""), "l_tank": ("N", 3, ""),
     "l_atirador": ("N", 1, ""), "l_scout": ("N", 0, ""), "l_healer": ("F", 1, ""),
     "l_eng": ("N", 1, ""), "l_assassino": ("N", 1, "sharp"), "l_sniper": ("N", 1, "sharp"),
     "l_colosso": ("N", 3, ""), "l_fera": ("N", 2, "beast"), "l_invoc": ("F", 1, ""),

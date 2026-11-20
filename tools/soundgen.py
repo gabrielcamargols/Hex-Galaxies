@@ -698,8 +698,11 @@ if __name__ == "__main__":
         for k, v in vfx_sounds().items():
             save(os.path.join(out, "vfx_%s.wav" % k), v, 0.8)
         print("vfx ok")
+    COMANDANTES = {"karo", "rhazur", "k_cmd", "w_mamute", "z_dragao", "l_general", "rei_mina"}
     if only in (None, "voz"):
         for cid in PERFIS:
+            if cid in COMANDANTES:
+                continue   # comandantes usam só falas gravadas (sounds/v_<id>_lNN.ogg)
             save(os.path.join(out, "v_%s_atk.wav" % cid), char_sound(cid, False), 0.8)
             save(os.path.join(out, "v_%s_dor.wav" % cid), char_sound(cid, True), 0.75)
             save(os.path.join(out, "v_%s_fala.wav" % cid), char_talk(cid, "fala"), 0.7)
