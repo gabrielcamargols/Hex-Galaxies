@@ -48,6 +48,7 @@ const FIG3D = {
 	"rhazur": {"path": "res://models/personagens/rhazur.glb", "visor": false, "punho": false, "jeito": "bruto", "giro": 0.0, "anims": {"andar": "Walking", "correr": "Running"}},
 	"rei_mina": {"path": "res://models/personagens/rei_mina.glb", "visor": false, "punho": false, "jeito": "rei", "brilho": "rachaduras", "cintila": true, "pegadas": "LeftFoot", "conjura": [0.07, 0.035, 0.032]},
 	"z_dragao": {"path": "res://models/personagens/z_dragao.glb", "corpo": "dragao", "escala": 1.35, "brilho": "gemas"},
+	"w_mamute": {"path": "res://models/personagens/w_mamute.glb", "visor": false, "punho": false, "jeito": "mamute", "escala": 1.12, "giro": 0.0, "brilho": "gemas_laranja", "anims": {"correr": "run"}},
 	"karo": {"path": "res://models/personagens/karo.glb", "visor": false, "punho": true, "jeito": "malandro", "bracos": "bolso", "cauda": [-0.05, 0.45, 0.0]},
 }
 # padrão de tinta de cada facção (data/vfx_paletas.json "pattern") -> pat do hq_personagem
@@ -73,6 +74,10 @@ const JEITOS = {
 	"rei": {"resp": [0.04, 1.5], "olha": [0.16, 0.28], "peso": 0.02, "cad": [5.6, 9.6], "passo": [0.34, 0.62],
 		"joelho": [0.38, 0.9], "bal": [0.16, 0.42], "quica": [0.012, 0.05], "ginga": 0.0, "incl": [-0.02, 0.12],
 		"vel": [1.8, 3.4], "tique": "altivo"},
+	# Mamute dos Wächter: colosso, passos pesados e lentos que balançam o corpo todo, respiração funda
+	"mamute": {"resp": [0.06, 1.2], "olha": [0.12, 0.25], "peso": 0.06, "cad": [4.8, 8.0], "passo": [0.3, 0.55],
+		"joelho": [0.35, 0.8], "bal": [0.22, 0.45], "quica": [0.025, 0.05], "ginga": 0.12, "incl": [0.06, 0.18],
+		"vel": [1.6, 3.0], "tique": ""},
 	# Rhazur: pesado, passada larga e lenta, balança o corpo todo, respiração funda
 	"bruto": {"resp": [0.07, 1.5], "olha": [0.14, 0.3], "peso": 0.05, "cad": [5.4, 9.0], "passo": [0.38, 0.62],
 		"joelho": [0.4, 0.9], "bal": [0.28, 0.5], "quica": [0.03, 0.06], "ginga": 0.1, "incl": [0.08, 0.22],
@@ -2533,6 +2538,9 @@ func _figure3d(cid: String, body_h: float) -> Node3D:
 			m.set_shader_parameter("pat", PADROES.find(String(DB.vfx_pal.get(fac3, {}).get("pattern", "reticula"))) if PADROES.has(String(DB.vfx_pal.get(fac3, {}).get("pattern", "reticula"))) else 0)
 			if cfg.get("cintila", false):
 				m.set_shader_parameter("cintila", 1.0)
+			if cfg.get("brilho", "") == "gemas_laranja":
+				m.set_shader_parameter("glow_mode", 1.0)
+				m.set_shader_parameter("glow_col", Color(1.0, 0.6, 0.1))
 			if cfg.get("brilho", "") == "gemas":
 				m.set_shader_parameter("glow_mode", 2.0)
 				m.set_shader_parameter("glow_col", Color(0.2, 0.95, 1.0))
@@ -2568,7 +2576,16 @@ func _figure3d(cid: String, body_h: float) -> Node3D:
 				for nome in ap.get_animation_list():
 					if String(nome).ends_with(an):
 						ok[k] = nome
-						ap.get_animation(nome).loop_mode = Animation.LOOP_LINEAR
+						var anm: Animation = ap.get_animation(nome)
+						anm.loop_mode = Animation.LOOP_LINEAR
+						# anda no lugar: tira o deslocamento do quadril (root motion) que levaria a peça para fora da casa
+						for ti in range(anm.get_track_count() - 1, -1, -1):
+							if anm.track_get_type(ti) != Animation.TYPE_POSITION_3D or anm.track_get_key_count(ti) < 2:
+								continue
+							var p0: Vector3 = anm.track_get_key_value(ti, 0)
+							var p1: Vector3 = anm.track_get_key_value(ti, anm.track_get_key_count(ti) - 1)
+							if Vector2(p1.x - p0.x, p1.z - p0.z).length() > 0.2 or abs(p1.y - p0.y) > 0.2:
+								anm.remove_track(ti)
 			if not ok.is_empty():
 				root.set_meta("anim_p", ap)
 				root.set_meta("anim_n", ok)
@@ -2589,15 +2606,13 @@ func _figure3d(cid: String, body_h: float) -> Node3D:
 		for nm in ["Hips", "Spine", "Spine1", "Spine2", "Neck", "Head", "LeftArm", "RightArm", "LeftForeArm", "RightForeArm",
 				"LeftUpLeg", "RightUpLeg", "LeftLeg", "RightLeg", "LeftFoot", "RightFoot", "LeftHand", "RightHand",
 				"LeftShoulder", "RightShoulder"]:
-			var b = sk.find_bone("mixamorig_" + nm)
-			if b < 0:
-				b = sk.find_bone("mixamorig:" + nm)
+			var b = _osso(sk, nm)
 			if b >= 0:
 				bones[nm] = b
 		if bones.has("Head") and bones.has("LeftUpLeg") and bones.has("RightUpLeg"):
 			var fw = Vector3(1, 0, 0)
-			var lf = sk.find_bone("mixamorig_LeftFoot")
-			var lt = sk.find_bone("mixamorig_LeftToeBase")
+			var lf = _osso(sk, "LeftFoot")
+			var lt = _osso(sk, "LeftToeBase")
 			if lf >= 0 and lt >= 0:
 				var dv = sk.get_bone_global_rest(lt).origin - sk.get_bone_global_rest(lf).origin
 				dv.y = 0.0
@@ -2613,8 +2628,8 @@ func _figure3d(cid: String, body_h: float) -> Node3D:
 				var palm = -left if side == "Left" else left
 				for fg in [["Index", 1.25], ["Middle", 1.35], ["Ring", 1.35], ["Pinky", 1.3], ["Thumb", 0.55]]:
 					for j in range(1, 4):
-						var b = sk.find_bone("mixamorig_%sHand%s%d" % [side, fg[0], j])
-						var c = sk.find_bone("mixamorig_%sHand%s%d" % [side, fg[0], j + 1])
+						var b = _osso(sk, "%sHand%s%d" % [side, fg[0], j])
+						var c = _osso(sk, "%sHand%s%d" % [side, fg[0], j + 1])
 						if b < 0 or c < 0:
 							continue
 						var dv = (sk.get_bone_global_rest(c).origin - sk.get_bone_global_rest(b).origin).normalized()
@@ -2632,8 +2647,8 @@ func _figure3d(cid: String, body_h: float) -> Node3D:
 					for fg in [["Index", [0.05, 0.12, 0.08], -0.3], ["Middle", [0.06, 0.12, 0.08], -0.08],
 							["Ring", [0.1, 0.16, 0.1], 0.14], ["Pinky", [0.14, 0.2, 0.12], 0.34], ["Thumb", [0.0, 0.1, 0.08], 0.5]]:
 						for j in range(1, 4):
-							var b = sk.find_bone("mixamorig_%sHand%s%d" % [side, fg[0], j])
-							var c = sk.find_bone("mixamorig_%sHand%s%d" % [side, fg[0], j + 1])
+							var b = _osso(sk, "%sHand%s%d" % [side, fg[0], j])
+							var c = _osso(sk, "%sHand%s%d" % [side, fg[0], j + 1])
 							if b < 0 or c < 0:
 								continue
 							var dv = (sk.get_bone_global_rest(c).origin - sk.get_bone_global_rest(b).origin).normalized()
@@ -2754,6 +2769,34 @@ func _olhos_conjura(root: Node3D, ofs: Array) -> void:
 	root.set_meta("olhos_luz", lamp)
 
 
+# acha um osso pelo nome Mixamo; aceita também o esqueleto humanoide do Tripo (L_Upperarm, Spine01...)
+const OSSOS_TRIPO = {"Hips": "Hip", "Spine": "Waist", "Spine1": "Spine01", "Spine2": "Spine02", "Neck": "NeckTwist01", "Head": "Head",
+	"Shoulder": "Clavicle", "Arm": "Upperarm", "ForeArm": "Forearm", "Hand": "Hand", "UpLeg": "Thigh", "Leg": "Calf", "Foot": "Foot", "ToeBase": "ToeBase"}
+const DEDOS_TRIPO = {"Index": "Index", "Middle": "Mid", "Ring": "Ring", "Pinky": "Pinky", "Thumb": "Thumb"}
+
+
+func _osso(sk: Skeleton3D, nm: String) -> int:
+	for pre in ["mixamorig_", "mixamorig:", ""]:
+		var b = sk.find_bone(pre + nm)
+		if b >= 0:
+			return b
+	var lado = ""
+	var resto = nm
+	if nm.begins_with("Left"):
+		lado = "L_"
+		resto = nm.substr(4)
+	elif nm.begins_with("Right"):
+		lado = "R_"
+		resto = nm.substr(5)
+	if resto.begins_with("Hand") and resto.length() > 4:
+		for d in DEDOS_TRIPO.keys():
+			if resto.begins_with("Hand" + d):
+				return sk.find_bone(lado + DEDOS_TRIPO[d] + resto.substr(4 + d.length()))
+	if OSSOS_TRIPO.has(resto):
+		return sk.find_bone(lado + OSSOS_TRIPO[resto])
+	return -1
+
+
 # gira a parte "local" do osso em torno de um eixo do esqueleto (frente / esquerda / cima)
 func _fig3d_q(sk: Skeleton3D, b: int, axis: Vector3, ang: float) -> Quaternion:
 	var gb = sk.get_bone_global_rest(b).basis.orthonormalized()
@@ -2843,7 +2886,7 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 	if pg != "" and ww > 0.5:
 		var sw_ant: float = fig.get_meta("sw_ant", 0.0)
 		if sw_ant > 0.0 and sw <= 0.0:
-			var fb = sk.find_bone("mixamorig_" + pg)
+			var fb = _osso(sk, pg)
 			if fb >= 0:
 				_pegada_cristal(sk.global_transform * sk.get_bone_global_pose(fb).origin, fig)
 		fig.set_meta("sw_ant", sw)
@@ -2996,7 +3039,7 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 			var pgf = sk.get_bone_global_pose(ab)
 			sk.set_bone_pose_rotation(fb, (pgf.basis.inverse() * (Basis(qf) * gf.basis)).get_rotation_quaternion())
 			# punho dobrado para trás: a palma fica de frente, como quem lança um feitiço
-			var mid = sk.find_bone("mixamorig_%sHandMiddle1" % side[0])
+			var mid = _osso(sk, "%sHandMiddle1" % side[0])
 			if mid >= 0:
 				var gh = sk.get_bone_global_pose(hb)
 				var cur_h = (sk.get_bone_global_pose(mid).origin - gh.origin).normalized()
