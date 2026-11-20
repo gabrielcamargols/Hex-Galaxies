@@ -2673,13 +2673,23 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 	pose["RightForeArm"] = [[S, elbow - ra * br * idle - 0.35 * k]]
 	# mãos no bolso do casaco (parado e andando; correndo ou golpeando, os braços saem)
 	if fig.get_meta("bracos", "") == "bolso":
+		# mãos enfiadas nos bolsos da frente: braços descem rentes ao corpo e um pouco à frente,
+		# cotovelos levemente dobrados para dentro, ombros um pouco curvados (pose relaxada)
 		var pk = (1.0 - rw * ww) * (1.0 - k)
-		pose["LeftArm"] = [[F, -0.30 - 0.30 * pk + 0.03 * br * idle], [S, 0.18 * pk + (arm_a * sw) * (1.0 - pk)]]
-		pose["RightArm"] = [[F, 0.30 + 0.26 * pk - 0.03 * br * idle], [S, 0.08 * pk - (arm_a * sw) * (1.0 - pk) - 1.35 * k]]
-		pose["LeftForeArm"] = [[S, lerp(elbow, -0.42, pk)], [U, 0.12 * pk]]
-		pose["RightForeArm"] = [[S, lerp(elbow, -0.5, pk) - 0.35 * k], [U, 0.12 * pk]]
-		pose["LeftHand"] = [[S, 0.25 * pk]]
-		pose["RightHand"] = [[S, 0.25 * pk]]
+		var bp: Array = fig.get_meta("bolso_p", [0.4, -0.16, -0.38, 0.3, 0.1])   # desce, frente, cotovelo, para dentro, ombro
+		pose["LeftArm"] = [[F, -0.30 - bp[0] * pk + 0.02 * br * idle], [S, -bp[1] * pk + (arm_a * sw) * (1.0 - pk)]]
+		pose["RightArm"] = [[F, 0.30 + bp[0] * pk - 0.02 * br * idle], [S, -bp[1] * pk - (arm_a * sw) * (1.0 - pk) - 1.35 * k]]
+		pose["LeftForeArm"] = [[S, lerp(elbow, bp[2], pk)], [F, bp[3] * pk]]
+		pose["RightForeArm"] = [[S, lerp(elbow, bp[2], pk) - 0.35 * k], [F, -bp[3] * pk]]
+		pose["LeftShoulder"] = [[S, -bp[4] * pk]]
+		pose["RightShoulder"] = [[S, -bp[4] * pk]]
+		pose["LeftHand"] = [[S, -0.2 * pk]]
+		pose["RightHand"] = [[S, -0.2 * pk]]
+		# a mão some dentro do bolso (encolhe a partir do pulso)
+		var hs = lerp(1.0, 0.12, pk)
+		for hn in ["LeftHand", "RightHand"]:
+			if bn.has(hn):
+				sk.set_bone_pose_scale(bn[hn], Vector3.ONE * hs)
 	# tronco: respira, balança o peso, ginga, inclina correndo, entra no golpe, recua no dano
 	pose["Spine"] = [[F, J["peso"] * sh * idle + gi * 0.5 * sw], [U, 0.08 * sw * ww]]
 	pose["Spine1"] = [[S, ra * br * idle + lean + 0.12 * k - 0.22 * hurt], [U, 0.3 * k + 0.25 * J["olha"][0] * lk * idle - 0.1 * sw * ww - gi * sw]]
