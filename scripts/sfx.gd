@@ -11,6 +11,8 @@ var streams: Dictionary = {}
 var pool: Array = []
 var loops: Dictionary = {}     # nome -> AudioStreamPlayer
 var master_db: float = 0.0
+var voz_ate_ms: int = 0        # até quando algum personagem está falando (o narrador espera e abaixa)
+var _duck_db: float = 0.0
 
 
 # canais de volume: música, efeitos e vozes (ajustados nas Configurações)
@@ -23,8 +25,10 @@ func bus_of(n: String) -> String:
 		return "Celeste"   # o Dragão Zukunft fala como um anjo
 	if n.begins_with("v_l_general_l"):
 		return "Cristal"   # o General Lithari fala pelos cristais
-	if n.begins_with("v_") or n.begins_with("n_"):
-		return "Vozes"     # personagens e narrador
+	if n.begins_with("n_"):
+		return "Narrador"  # locutor: volume próprio e abaixa sozinho quando um personagem fala
+	if n.begins_with("v_"):
+		return "Vozes"
 	return "Efeitos"
 
 
@@ -37,11 +41,15 @@ func set_volume(bus: String, pct: float) -> void:
 
 
 func _ready() -> void:
-	for b in ["Musica", "Efeitos", "Vozes"]:
+	for b in ["Musica", "Efeitos", "Vozes", "Narrador"]:
 		if AudioServer.get_bus_index(b) < 0:
 			AudioServer.add_bus()
 			AudioServer.set_bus_name(AudioServer.bus_count - 1, b)
 			AudioServer.set_bus_send(AudioServer.bus_count - 1, "Master")
+	# o narrador abaixa quando algum personagem fala (efeito de volume próprio, separado do volume das Configurações)
+	var ni = AudioServer.get_bus_index("Narrador")
+	if AudioServer.get_bus_effect_count(ni) == 0:
+		AudioServer.add_bus_effect(ni, AudioEffectAmplify.new())
 	_radio_bus()
 	_celeste_bus()
 	_cristal_bus()
@@ -214,6 +222,9 @@ func _cristal_bus() -> void:
 func play(n: String, vol_db: float = 0.0, pitch: float = 1.0, vary: float = 0.08) -> void:
 	if not has_sound(n):
 		return
+	if n.begins_with("v_"):
+		var fim = Time.get_ticks_msec() + int(streams[n].get_length() / max(pitch, 0.1) * 1000.0)
+		voz_ate_ms = max(voz_ate_ms, fim)
 	if n.begins_with("v_l_general_l"):
 		_play_raw(n, vol_db, pitch, 0.0, "CristalAlto")
 	if n.begins_with("v_z_dragao"):
@@ -306,3 +317,15 @@ func warm() -> void:
 		await get_tree().process_frame
 		p.stop()
 	p.queue_free()
+
+
+
+# enquanto um personagem fala, o narrador fica bem mais baixo (volta devagar depois)
+func _process(dt: float) -> void:
+	var alvo = -16.0 if Time.get_ticks_msec() < voz_ate_ms else 0.0
+	_duck_db = move_toward(_duck_db, alvo, dt * (80.0 if alvo < _duck_db else 20.0))
+	var ni = AudioServer.get_bus_index("Narrador")
+	if ni >= 0 and AudioServer.get_bus_effect_count(ni) > 0:
+		var a = AudioServer.get_bus_effect(ni, 0)
+		if a is AudioEffectAmplify:
+			a.volume_db = _duck_db

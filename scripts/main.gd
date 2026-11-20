@@ -76,7 +76,7 @@ var rgb_on: bool = true          # desalinho RGB sobre o 3D (leve)
 var rgb_rect: ColorRect = null
 var rgb_mask: SubViewport = null
 var rgb_mask_cam: Camera3D = null
-var vol = {"Musica": 80.0, "Efeitos": 90.0, "Vozes": 90.0}
+var vol = {"Musica": 80.0, "Efeitos": 90.0, "Vozes": 90.0, "Narrador": 70.0}
 var res_pref: String = "1600x900"
 var fullscreen: bool = false
 var render_q: float = 1.0
@@ -851,7 +851,7 @@ func _settings_panel() -> void:
 	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scr.add_child(v)
 	_label(v, "SOM", 13, C_HUD)
-	for b in [["Musica", "Música"], ["Efeitos", "Efeitos sonoros"], ["Vozes", "Vozes"]]:
+	for b in [["Musica", "Música"], ["Efeitos", "Efeitos sonoros"], ["Vozes", "Vozes"], ["Narrador", "Narrador"]]:
 		var h = _hbox(v, 10)
 		var l = _label(h, b[1], 16, C_TXT)
 		l.custom_minimum_size = Vector2(150, 0)
@@ -6589,6 +6589,11 @@ func narrar(evento: String, atraso: float = 0.0) -> float:
 			return 0.0
 		game.set_meta("narr_area", true)
 	var inicio = agora + int(atraso * 1000.0)
+	# personagem falando: avisos menores são descartados; os importantes esperam a fala acabar
+	if inicio < sfx.voz_ate_ms:
+		if evento in NARR_MENOR:
+			return 0.0
+		inicio = sfx.voz_ate_ms + 250
 	if inicio < narr_livre_ms:
 		if evento in NARR_MENOR:
 			return 0.0
@@ -6597,7 +6602,7 @@ func narrar(evento: String, atraso: float = 0.0) -> float:
 	var dur: float = sfx.streams[n].get_length()
 	narr_ultimo[evento] = agora
 	narr_livre_ms = inicio + int(dur * 1000.0)
-	sfx.play_later(n, (inicio - agora) / 1000.0, 3.0)
+	sfx.play_later(n, (inicio - agora) / 1000.0, 0.0)
 	return (inicio - agora) / 1000.0 - atraso + dur
 
 
