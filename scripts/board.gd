@@ -46,7 +46,7 @@ const ZOOM_MAX = 140.0
 const FIG3D = {
 	"k_cmd": {"path": "res://models/personagens/k_cmd.glb", "visor": true, "punho": true, "jeito": "militar"},
 	"rhazur": {"path": "res://models/personagens/rhazur.glb", "visor": false, "punho": false, "jeito": "bruto"},
-	"rei_mina": {"path": "res://models/personagens/rei_mina.glb", "visor": false, "punho": false, "jeito": "rei", "brilho": "rachaduras", "cintila": true, "pegadas": "LeftFoot"},
+	"rei_mina": {"path": "res://models/personagens/rei_mina.glb", "visor": false, "punho": false, "jeito": "rei", "brilho": "rachaduras", "cintila": true, "pegadas": "LeftFoot", "conjura": [0.07, 0.035, 0.032]},
 	"karo": {"path": "res://models/personagens/karo.glb", "visor": false, "punho": true, "jeito": "malandro", "bracos": "bolso", "cauda": [-0.05, 0.45, 0.0]},
 }
 # padrão de tinta de cada facção (data/vfx_paletas.json "pattern") -> pat do hq_personagem
@@ -2502,6 +2502,10 @@ func _figure3d(cid: String, body_h: float) -> Node3D:
 	root.set_meta("mats", mats)
 	root.set_meta("outl", outl)
 	root.set_meta("pegadas", cfg.get("pegadas", ""))
+	if cfg.has("conjura"):
+		root.set_meta("conjura", true)
+		root.set_meta("cj_t", 0.0)
+		root.set_meta("cj_w", 0.0)
 	root.set_meta("ink", DB.pal(DB.cards[cid]["f"] if DB.cards.has(cid) else "", "outline", Color(0.04, 0.016, 0.063)).darkened(0.45))
 	root.set_meta("sel", false)
 	var jt: Dictionary = JEITOS["padrao"].duplicate()
@@ -2600,7 +2604,64 @@ func _figure3d(cid: String, body_h: float) -> Node3D:
 				lamp.position = hp
 				att.add_child(lamp)
 				root.set_meta("lamp", lamp)
+	if cfg.has("conjura") and root.has_meta("skel"):
+		_olhos_conjura(root, cfg["conjura"])
 	return root
+
+
+# dois brilhos presos à cabeça, na altura dos olhos: acendem quando o personagem conjura
+func _olhos_conjura(root: Node3D, ofs: Array) -> void:
+	var sk: Skeleton3D = root.get_meta("skel")
+	var bn: Dictionary = root.get_meta("bones")
+	var ax: Array = root.get_meta("ax")
+	if not bn.has("Head"):
+		return
+	if _fig3d_glow_tex == null:
+		_fig3d_glow_tex = GradientTexture2D.new()
+		var gr = Gradient.new()
+		gr.set_color(0, Color(1, 1, 1, 1))
+		gr.set_color(1, Color(1, 1, 1, 0))
+		gr.add_point(0.35, Color(1, 1, 1, 0.45))
+		_fig3d_glow_tex.gradient = gr
+		_fig3d_glow_tex.fill = GradientTexture2D.FILL_RADIAL
+		_fig3d_glow_tex.fill_from = Vector2(0.5, 0.5)
+		_fig3d_glow_tex.fill_to = Vector2(1.0, 0.5)
+		_fig3d_glow_tex.width = 64
+		_fig3d_glow_tex.height = 64
+	var hb: int = bn["Head"]
+	var att = BoneAttachment3D.new()
+	att.bone_idx = hb
+	sk.add_child(att)
+	var hg = sk.get_bone_global_rest(hb)
+	var mats = []
+	for sgn in [-1.0, 1.0]:
+		var wp = hg.origin + ax[0] * ofs[0] + ax[2] * ofs[1] + ax[1] * ofs[2] * sgn
+		var sp = Sprite3D.new()
+		sp.texture = _fig3d_glow_tex
+		sp.pixel_size = 0.0016
+		sp.position = hg.affine_inverse() * wp
+		sp.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		var am = StandardMaterial3D.new()
+		am.albedo_texture = _fig3d_glow_tex
+		am.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+		am.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		am.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		am.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+		am.billboard_keep_scale = true
+		am.no_depth_test = true
+		am.render_priority = 3
+		am.albedo_color = Color(1.0, 0.75, 0.2, 0.0)
+		sp.material_override = am
+		att.add_child(sp)
+		mats.append(am)
+	var lamp = OmniLight3D.new()
+	lamp.light_color = Color(1.0, 0.6, 0.15)
+	lamp.light_energy = 0.0
+	lamp.omni_range = 0.9
+	lamp.position = hg.affine_inverse() * (hg.origin + ax[0] * ofs[0])
+	att.add_child(lamp)
+	root.set_meta("olhos", mats)
+	root.set_meta("olhos_luz", lamp)
 
 
 # gira a parte "local" do osso em torno de um eixo do esqueleto (frente / esquerda / cima)
@@ -2749,6 +2810,27 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 		pose["Head"][0][1] *= idle
 		# pisada: corpo sobe quando o joelho sobe e desce de uma vez no pé
 		fig.position.y += (abs(sw) * 0.06 - 0.03) * ww
+	# conjurar: mãos estendidas para a frente, flutua e os olhos acendem
+	if fig.has_meta("conjura"):
+		var ct: float = max(0.0, fig.get_meta("cj_t", 0.0) - delta)
+		fig.set_meta("cj_t", ct)
+		var cw: float = move_toward(fig.get_meta("cj_w", 0.0), 1.0 if ct > 0.0 else 0.0, delta * (5.0 if ct > 0.0 else 2.5))
+		fig.set_meta("cj_w", cw)
+		if cw > 0.001:
+			var e3 = cw * cw * (3.0 - 2.0 * cw)
+			k = 0.0
+			pose["Spine1"] = [[S, -0.1 * e3], [U, 0.0]]
+			pose["Head"] = [[S, -0.12 * e3], [U, 0.0]]
+			pose["LeftUpLeg"] = [[S, 0.08 * e3]]
+			pose["RightUpLeg"] = [[S, -0.05 * e3]]
+			pose["LeftLeg"] = [[S, 0.25 * e3]]
+			pose["RightLeg"] = [[S, 0.15 * e3]]
+			fig.position.y += (0.32 + 0.04 * sin(t * 4.0)) * e3
+		if fig.has_meta("olhos"):
+			var fl = 0.9 + 0.1 * sin(t * 18.0)
+			for om in fig.get_meta("olhos"):
+				om.albedo_color = Color(1.0, 0.75, 0.2, cw * fl)
+			fig.get_meta("olhos_luz").light_energy = 2.2 * cw
 	# tiques
 	if J["tique"] == "vigia":
 		# Krieg varre o campo com a cabeça, rápido para um lado e para o outro, peito estufado
@@ -2773,6 +2855,34 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 		for e in pose[nm]:
 			q = q * _fig3d_q(sk, b, e[0], e[1])
 		sk.set_bone_pose_rotation(b, q)
+	# conjurar: aponta os braços para a frente (mira no espaço do esqueleto, não depende da pose de repouso)
+	var cjw: float = fig.get_meta("cj_w", 0.0)
+	if cjw > 0.001:
+		var e4 = cjw * cjw * (3.0 - 2.0 * cjw)
+		for side in [["Left", 1.0], ["Right", -1.0]]:
+			var an: String = side[0] + "Arm"
+			var fn: String = side[0] + "ForeArm"
+			var hn: String = side[0] + "Hand"
+			if not (bn.has(an) and bn.has(fn) and bn.has(hn)):
+				continue
+			var ab: int = bn[an]
+			var fb: int = bn[fn]
+			var hb: int = bn[hn]
+			var alvo_d = (F * 1.0 + S * (0.22 * side[1]) + U * 0.05).normalized()
+			# braço
+			var gp = sk.get_bone_global_pose(ab)
+			var cur_d = (sk.get_bone_global_pose(fb).origin - gp.origin).normalized()
+			var qa = Quaternion(cur_d, cur_d.slerp(alvo_d, e4).normalized())
+			var par = sk.get_bone_parent(ab)
+			var pgt = sk.get_bone_global_pose(par) if par >= 0 else Transform3D.IDENTITY
+			var ng = Basis(qa) * gp.basis
+			sk.set_bone_pose_rotation(ab, (pgt.basis.inverse() * ng).get_rotation_quaternion())
+			# antebraço reto na mesma direção
+			var gf = sk.get_bone_global_pose(fb)
+			var cur_f = (sk.get_bone_global_pose(hb).origin - gf.origin).normalized()
+			var qf = Quaternion(cur_f, cur_f.slerp(alvo_d, e4).normalized())
+			var pgf = sk.get_bone_global_pose(ab)
+			sk.set_bone_pose_rotation(fb, (pgf.basis.inverse() * (Basis(qf) * gf.basis)).get_rotation_quaternion())
 
 
 # Rei da Mina: cada passo do pé de cristal deixa cristaizinhos que brotam do chão e somem
@@ -3288,6 +3398,14 @@ func boom(h: Vector2i) -> void:
 func hurt(uid: int) -> void:
 	if unit_nodes.has(uid):
 		unit_nodes[uid]["hurt"] = 1.0
+
+
+# personagem 3D que "conjura": ataque ou habilidade -> estende as mãos, flutua e os olhos acendem (~1,3 s)
+func conjura(uid: int) -> void:
+	if unit_nodes.has(uid):
+		var sp = unit_nodes[uid]["sprite"]
+		if sp != null and sp.has_meta("conjura"):
+			sp.set_meta("cj_t", 1.3)
 
 
 func lunge(uid: int) -> void:

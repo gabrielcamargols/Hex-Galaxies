@@ -5608,6 +5608,7 @@ func _on_fx_real(e: Dictionary) -> void:
 	match e["t"]:
 		"strike":
 			board.lunge(e["from"])
+			board.conjura(e["from"])
 			var stu: Variant = game.by_uid(e["to"])
 			if stu != null:
 				_simbolo_hit.call_deferred(e["from"], _hex_pos(stu.pos(), 0.0))
@@ -5759,8 +5760,11 @@ func _on_fx_real(e: Dictionary) -> void:
 			board.float_text(e["h"], DB.tactics[e["id"]]["name"], tcol.lightened(0.35))
 			sfx.play("vfx_aura", -9.0)
 		"abfx":
+			if int(e.get("uid", -1)) >= 0:
+				board.conjura(int(e["uid"]))
 			_on_abfx(e)
 		"ult":
+			board.conjura(int(e["uid"]))
 			banner("★ " + str(e["name"]), ("Você" if e["p"] == me else _opp()) + " · " + game.nm(game.by_uid(e["uid"])))
 			sfx.play("poder", -1.0, 0.8)
 		"wind":
