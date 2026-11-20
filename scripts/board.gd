@@ -46,7 +46,7 @@ const ZOOM_MAX = 140.0
 const FIG3D = {
 	"k_cmd": {"path": "res://models/personagens/k_cmd.glb", "visor": true, "punho": true},
 	"rhazur": {"path": "res://models/personagens/rhazur.glb", "visor": false, "punho": false},
-	"karo": {"path": "res://models/personagens/karo.glb", "visor": false, "punho": false},
+	"karo": {"path": "res://models/personagens/karo.glb", "visor": false, "punho": true, "braco": 0.12},
 }
 const BIG = ["moby", "balu", "banker", "l_behemot", "l_leviathan", "z_dragao", "w_mamute", "t_feram", "k_tank", "z_tank", "l_tank", "l_colosso", "sismico", "rhombo", "tork", "w_tric", "z_meca", "t_fendas", "t_raiz", "t_basalto", "t_carrinho", "t_sentinela", "t_britadeira", "a_garra", "k_escudeiro", "w_urso", "w_gorila", "w_javali"]
 
@@ -2458,6 +2458,7 @@ func _figure3d(cid: String, body_h: float) -> Node3D:
 	root.set_meta("mats", mats)
 	root.set_meta("outl", outl)
 	root.set_meta("sel", false)
+	root.set_meta("braco", float(cfg.get("braco", 0.0)))     # parado: quanto a mais o braço desce para junto do corpo
 	if sk != null:
 		var bones = {}
 		for nm in ["Hips", "Spine", "Spine1", "Spine2", "Neck", "Head", "LeftArm", "RightArm", "LeftForeArm", "RightForeArm",
@@ -2619,8 +2620,9 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 	fig.position.y += abs(sw) * lerp(0.035, 0.1, rw) * ww
 	var pose = {}
 	# braços: do "A" do modelo para junto do corpo; respiram parado; balançam contra as pernas andando
-	pose["LeftArm"] = [[F, -0.30 - 0.06 * br * idle + 0.04 * sh * idle + 0.08 * rw * ww], [S, arm_a * sw + 0.06 * sin(t * 0.8) * idle]]
-	pose["RightArm"] = [[F, 0.30 + 0.06 * br * idle + 0.04 * sh * idle - 0.08 * rw * ww], [S, -arm_a * sw - 1.35 * k - 0.05 * sin(t * 0.8 + 1.0) * idle]]
+	var bx: float = fig.get_meta("braco", 0.0) * idle * (1.0 - k)
+	pose["LeftArm"] = [[F, -0.30 - bx - 0.06 * br * idle + 0.04 * sh * idle + 0.08 * rw * ww], [S, arm_a * sw + 0.06 * sin(t * 0.8) * idle]]
+	pose["RightArm"] = [[F, 0.30 + bx + 0.06 * br * idle + 0.04 * sh * idle - 0.08 * rw * ww], [S, -arm_a * sw - 1.35 * k - 0.05 * sin(t * 0.8 + 1.0) * idle]]
 	pose["LeftForeArm"] = [[S, elbow - 0.05 * br * idle]]
 	pose["RightForeArm"] = [[S, elbow - 0.05 * br * idle - 0.35 * k]]
 	# tronco: respira, balança o peso, inclina para a frente correndo, entra no golpe, recua no dano
