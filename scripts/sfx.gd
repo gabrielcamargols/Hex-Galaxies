@@ -228,8 +228,8 @@ func _cristal_bus() -> void:
 
 # voz de foca (Sapturne): a voz sobe de tom (fofinha, bochechuda), com um brilho leve e um quartinho
 # pequeno; por baixo, uma sombra grave e abafada bem baixinha, o lado maldoso
-# personagens de capacete (fora os Krieg, que já falam pelo rádio): voz com leve efeito robótico
-const ROBO = ["z_vang", "z_tank"]
+# Zukunft de capacete (robôs): voz com leve efeito robótico
+const ROBO = ["z_vang", "z_tank", "z_meca", "z_fenix", "z_portais"]
 
 
 func _robo_bus() -> void:
