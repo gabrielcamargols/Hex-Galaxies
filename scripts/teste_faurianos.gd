@@ -128,4 +128,16 @@ func run() -> void:
 	g.end_activation()
 	ok(g.ult_kind(cm) == "berserk" and not g.ult_spent(cm), "Cameo fica com a ativa roubada")
 	ok(g.ult_spent(vit), "o inimigo perde a ativa")
+	# ---- Karo (Escalada Primepata): sobe em estruturas, mas não anda na água funda
+	limpa(g)
+	var kh = DB.hexes.filter(func(h): return g.is_free(h) and not g.blocks.has(h) and livres(g, h, 1).size() >= 3)[0]
+	var kr = put(g, "karo", 0, kh.x, kh.y)
+	var viz = livres(g, kh, 1)
+	g.terr_map[viz[0]] = {"k": "correnteza", "h": 0}
+	g.blocks[viz[0]] = true
+	g.terr_map[viz[1]] = {"k": "rocha", "h": 2}
+	g.blocks[viz[1]] = true
+	ok(not g.can_enter(kr, viz[0]), "Karo não entra na água funda")
+	ok(g.can_enter(kr, viz[1]), "Karo escala a rocha")
+	ok(not g.move_opts(kr, 6).any(func(m): return m["h"] == viz[0]), "água funda fora das casas de movimento do Karo")
 	print("TESTE FIM falhas=%d" % falhas)
