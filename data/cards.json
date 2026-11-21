@@ -1793,7 +1793,7 @@
     "name": "Mira de Precisão",
     "text": "Pode atacar a até 4 casas. Precisa de linha de visão."
    },
-   "k": {}
+   "k": {"precisao": true}
   },
   {
    "id": "z_naves",

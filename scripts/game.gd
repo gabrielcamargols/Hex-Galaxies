@@ -4641,6 +4641,8 @@ func resolve_attack(a, t) -> void:
 	# falas de passivas no golpe: Vespertina (alvo sozinho) e Lumina (tiro em quem está ofuscado e sem abrigo)
 	if K(a).has("atkIsolated") and not t.barrier and not allies_of(t).any(func(x): return DB.dist(x.pos(), t.pos()) == 1):
 		abfx("sombras", t.pos(), a.uid)
+	if K(a).has("precisao") and ranged and DB.dist(a.pos(), t.pos()) >= alc_of(a):
+		abfx("precisao", t.pos(), a.uid)   # tiro no alcance máximo
 	if K(a).has("dazeCover") and ranged and has_fx(t, "dazed"):
 		abfx("sem_abrigo", t.pos(), a.uid)
 	if passive_boost:

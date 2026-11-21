@@ -627,5 +627,23 @@
   "Escudo... falhou. Eu devia ter chegado antes.": "v_z_tank_l14",
   "Registro de perda salvo. Agora eu viro uma muralha.": "v_z_tank_l15",
   "Impacto absorvido. Campo inercial intacto.": "v_z_tank_l16"
+ },
+ "z_piloto": {
+  "Posição assumida. Motterlich observa do alto... e eu daqui.": "v_z_piloto_l01",
+  "Lentes calibradas, cano perfeito. A tecnologia nunca me decepciona.": "v_z_piloto_l02",
+  "O Dragão é o futuro. Eu sou só a mira dele.": "v_z_piloto_l03",
+  "Pela mãe Motterlich, nenhum inimigo chega perto dela.": "v_z_piloto_l04",
+  "Você está na minha mira há três segundos. Quatro.": "v_z_piloto_l05",
+  "Pode correr. O meu algoritmo já previu o seu caminho.": "v_z_piloto_l06",
+  "Abram a linha de tiro. A precisão faz o resto.": "v_z_piloto_l07",
+  "Confirmado. Alvo travado.": "v_z_piloto_l08",
+  "Pode ir. Eu cubro você daqui.": "v_z_piloto_l09",
+  "Tecnologia ultrapassada... e mira pior ainda.": "v_z_piloto_l10",
+  "Continue falando. Isso me ajuda a mirar.": "v_z_piloto_l11",
+  "Alvo neutralizado. Um tiro só.": "v_z_piloto_l12",
+  "A inovação não erra. Nunca erra.": "v_z_piloto_l13",
+  "Não... perdemos um protetor de Motterlich.": "v_z_piloto_l14",
+  "Pelo Dragão... agora eu não erro mais nenhum.": "v_z_piloto_l15",
+  "Respira... calcula... e dispara.": "v_z_piloto_l16"
  }
 }
