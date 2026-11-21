@@ -2239,6 +2239,7 @@ func end_round() -> void:
 			var t = unit_at(h)
 			if t != null:
 				heal(t, int(K(k)["endHeal"]))
+				abfx("reparo", h, k.uid)   # fala de entrega do conserto
 				log_msg(p, "%s restaura 1 de Vida de %s." % [nm(k), nm(t)])
 	for bx in units:
 		if bx.barrier and bx.st == "field" and bx.exp > 0 and bx.exp <= round_no:
