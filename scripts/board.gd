@@ -2928,6 +2928,8 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 				apl.play(quer, 0.15)
 				apl.speed_scale = 1.0
 			fig.set_meta("walk_w", 1.0)
+			# a animação do arquivo vem com o corpo no ar: assenta os pés no chão (com um voo curto da corrida)
+			_assenta(fig, sk, ["LeftToeBase", "RightToeBase", "LeftFoot", "RightFoot"], 1.0, 0.015)
 			return
 		elif apl.is_playing():
 			apl.stop()
@@ -3142,6 +3144,10 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 				var qh = Quaternion(cur_h, cur_h.slerp(alvo_h, e4).normalized())
 				var pgh = sk.get_bone_global_pose(fb)
 				sk.set_bone_pose_rotation(hb, (pgh.basis.inverse() * (Basis(qh) * gh.basis)).get_rotation_quaternion())
+	# pés no chão andando e correndo: o corpo desce o quanto o pé mais baixo ficou acima do chão
+	# (o joelho dobrado e o quique deixavam todo mundo flutuando); correndo sobra um voo curtinho
+	if ww > 0.001 and cjw < 0.999:
+		_assenta(fig, sk, ["LeftToeBase", "RightToeBase", "LeftFoot", "RightFoot"], ww * (1.0 - cjw), 0.022 * rw * abs(sw))
 	if fig.has_meta("garra"):
 		var eg = cjw * cjw * (3.0 - 2.0 * cjw)
 		for gd in fig.get_meta("garra"):
@@ -3149,6 +3155,42 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 			if eg > 0.001:
 				q0 = q0 * _fig3d_q(sk, gd[0], gd[3], gd[4] * eg) * _fig3d_q(sk, gd[0], gd[1], gd[2] * eg)
 			sk.set_bone_pose_rotation(gd[0], q0)
+
+
+# desce (ou sobe) a figura para o pé mais baixo encostar no chão de repouso; "folga" = fração da altura
+# que ele pode ficar no ar (voo da corrida); "peso" = quanto da correção vale (0 parado, 1 andando)
+func _assenta(fig: Node3D, sk: Skeleton3D, nomes: Array, peso: float, folga: float) -> void:
+	var ids: Array = fig.get_meta("pes_ids", [])
+	if ids.is_empty():
+		for n in nomes:
+			var i = _osso(sk, n) if not n.begins_with("tripo__") else sk.find_bone(n)
+			if i >= 0:
+				ids.append(i)
+		fig.set_meta("pes_ids", ids)
+	if ids.is_empty():
+		return
+	sk.force_update_all_bone_transforms()   # a pose acabou de mudar neste quadro
+	# tudo no espaço do mundo (o esqueleto pode estar girado ou escalado dentro do modelo)
+	var gx = sk.global_transform
+	var low = 1e9
+	var rep = 1e9
+	for i in ids:
+		low = min(low, (gx * sk.get_bone_global_pose(i).origin).y)
+		rep = min(rep, (gx * sk.get_bone_global_rest(i).origin).y)
+	var alt = fig.get_meta("alt_mundo", -1.0)
+	if alt < 0.0:
+		var lo = 1e9
+		var hi = -1e9
+		for i in sk.get_bone_count():
+			var y = (gx * sk.get_bone_global_rest(i).origin).y
+			lo = min(lo, y)
+			hi = max(hi, y)
+		alt = max(0.001, hi - lo)
+		fig.set_meta("alt_mundo", alt)
+	var pai_esc = fig.get_parent().global_transform.basis.get_scale().y if fig.get_parent() is Node3D else 1.0
+	# (low - rep) é quanto a pose ergueu o pé em relação ao boneco; fig.position.y é o quique do corpo
+	var acima = (low - rep - folga * alt) / max(0.0001, pai_esc) + fig.position.y
+	fig.position.y -= acima * peso
 
 
 # ---------- dragão (esqueleto quadrúpede do Tripo, com asas, pescoço e cauda) ----------
@@ -3245,6 +3287,9 @@ func _dragao_tick(fig: Node3D, delta: float, t: float, walking: bool, run: bool,
 		for e in pose[k]:
 			q = q * _fig3d_q(sk, b, e[0], e[1])
 		sk.set_bone_pose_rotation(b, q)
+	# patas no chão andando (o quique deixava o dragão pairando); no golpe ele bate as asas e sobe de propósito
+	if ww > 0.001:
+		_assenta(fig, sk, ["tripo__0_Left_Limb_4", "tripo__0_Right_Limb_3", "tripo__1_Left_Limb_3", "tripo__1_Right_Limb_3"], ww * (1.0 - e3), 0.012 * rw * abs(sin(ph)))
 
 
 # Rei da Mina: cada passo do pé de cristal deixa cristaizinhos que brotam do chão e somem
