@@ -26,7 +26,10 @@ func bus_of(n: String) -> String:
 	if n.begins_with("v_l_general_l"):
 		return "Cristal"   # o General Lithari fala pelos cristais
 	if n.begins_with("v_sapturne"):
-		return "Foca"      # Sapturne: foca fofa (voz mais aguda) e maldosa (sombra grave por baixo)
+		return "Foca"
+	for c in ROBO:
+		if n.begins_with("v_%s_" % c):
+			return "Robo"      # quem usa capacete fala com um leve tom robótico      # Sapturne: foca fofa (voz mais aguda) e maldosa (sombra grave por baixo)
 	if n.begins_with("n_"):
 		return "Narrador"  # locutor: volume próprio e abaixa sozinho quando um personagem fala
 	if n.begins_with("v_"):
@@ -56,6 +59,7 @@ func _ready() -> void:
 	_celeste_bus()
 	_cristal_bus()
 	_foca_bus()
+	_robo_bus()
 	for n in NAMES:
 		var path = "res://sounds/%s.wav" % n
 		if not ResourceLoader.exists(path):
@@ -224,6 +228,46 @@ func _cristal_bus() -> void:
 
 # voz de foca (Sapturne): a voz sobe de tom (fofinha, bochechuda), com um brilho leve e um quartinho
 # pequeno; por baixo, uma sombra grave e abafada bem baixinha, o lado maldoso
+# personagens de capacete (fora os Krieg, que já falam pelo rádio): voz com leve efeito robótico
+const ROBO = ["z_vang", "z_tank"]
+
+
+func _robo_bus() -> void:
+	if AudioServer.get_bus_index("Robo") >= 0:
+		return
+	AudioServer.add_bus()
+	var i = AudioServer.bus_count - 1
+	AudioServer.set_bus_name(i, "Robo")
+	AudioServer.set_bus_send(i, "Vozes")
+	# eco metálico curtinho (pente de atrasos fixos), como a voz batendo dentro do capacete
+	var ch = AudioEffectChorus.new()
+	ch.voice_count = 2
+	ch.set_voice_delay_ms(0, 5.5)
+	ch.set_voice_rate_hz(0, 0.1)
+	ch.set_voice_depth_ms(0, 0.0)
+	ch.set_voice_level_db(0, -2.0)
+	ch.set_voice_cutoff_hz(0, 9000.0)
+	ch.set_voice_delay_ms(1, 9.0)
+	ch.set_voice_rate_hz(1, 0.1)
+	ch.set_voice_depth_ms(1, 0.0)
+	ch.set_voice_level_db(1, -5.0)
+	ch.set_voice_cutoff_hz(1, 7000.0)
+	ch.dry = 0.85
+	ch.wet = 0.45
+	AudioServer.add_bus_effect(i, ch)
+	var eq = AudioEffectEQ6.new()
+	eq.set_band_gain_db(0, -3.0)
+	eq.set_band_gain_db(3, 2.5)
+	eq.set_band_gain_db(4, 1.5)
+	AudioServer.add_bus_effect(i, eq)
+	var rv = AudioEffectReverb.new()
+	rv.room_size = 0.08
+	rv.damping = 0.2
+	rv.dry = 0.95
+	rv.wet = 0.1
+	AudioServer.add_bus_effect(i, rv)
+
+
 func _foca_bus() -> void:
 	if AudioServer.get_bus_index("Foca") >= 0:
 		return
@@ -302,7 +346,7 @@ func _play_raw(n: String, vol_db: float = 0.0, pitch: float = 1.0, vary: float =
 # Na web o Godot toca os sons no modo "sample" do navegador, que ignora os efeitos dos buses
 # (rádio, celestial, cristal, foca). As vozes com efeito usam players próprios no modo "stream",
 # que passa pelo mixer do Godot e aplica os efeitos.
-const BUS_COM_EFEITO = ["Radio", "Celeste", "CelesteAlto", "Cristal", "CristalAlto", "Foca", "FocaGrave", "Narrador"]
+const BUS_COM_EFEITO = ["Radio", "Celeste", "CelesteAlto", "Cristal", "CristalAlto", "Foca", "FocaGrave", "Robo", "Narrador"]
 var pool_fx: Array = []
 
 

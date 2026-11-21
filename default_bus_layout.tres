@@ -20,6 +20,31 @@ pitch_scale = 0.62
 [sub_resource type="AudioEffectLowPassFilter" id="AudioEffectLowPassFilter_cenje"]
 cutoff_hz = 1400.0
 
+[sub_resource type="AudioEffectChorus" id="AudioEffectChorus_j3pel"]
+dry = 0.85
+wet = 0.45
+voice/1/delay_ms = 5.5
+voice/1/rate_hz = 0.1
+voice/1/depth_ms = 0.0
+voice/1/level_db = -2.0
+voice/1/cutoff_hz = 9000.0
+voice/2/delay_ms = 9.0
+voice/2/rate_hz = 0.1
+voice/2/depth_ms = 0.0
+voice/2/level_db = -5.0
+voice/2/cutoff_hz = 7000.0
+
+[sub_resource type="AudioEffectEQ6" id="AudioEffectEQ6_n8wo2"]
+band_db/32_hz = -3.0
+band_db/1000_hz = 2.5
+band_db/3200_hz = 1.5
+
+[sub_resource type="AudioEffectReverb" id="AudioEffectReverb_5t1r3"]
+room_size = 0.08
+damping = 0.2
+dry = 0.95
+wet = 0.1
+
 [sub_resource type="AudioEffectAmplify" id="AudioEffectAmplify_j3pel"]
 
 [sub_resource type="AudioEffectHighPassFilter" id="AudioEffectHighPassFilter_g28q7"]
@@ -221,3 +246,15 @@ bus/11/effect/0/effect = SubResource("AudioEffectPitchShift_5t1r3")
 bus/11/effect/0/enabled = true
 bus/11/effect/1/effect = SubResource("AudioEffectLowPassFilter_cenje")
 bus/11/effect/1/enabled = true
+bus/12/name = &"Robo"
+bus/12/solo = false
+bus/12/mute = false
+bus/12/bypass_fx = false
+bus/12/volume_db = 0.0
+bus/12/send = &"Vozes"
+bus/12/effect/0/effect = SubResource("AudioEffectChorus_j3pel")
+bus/12/effect/0/enabled = true
+bus/12/effect/1/effect = SubResource("AudioEffectEQ6_n8wo2")
+bus/12/effect/1/enabled = true
+bus/12/effect/2/effect = SubResource("AudioEffectReverb_5t1r3")
+bus/12/effect/2/enabled = true
