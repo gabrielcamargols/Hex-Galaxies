@@ -535,5 +535,43 @@
   "Sente isso? É assim que o mar beija.": "v_a_medusa_l16",
   "Olha nos meus olhos... e não se mexe.": "v_a_medusa_l19",
   "Eu avisei pra não encostar.": "v_a_medusa_l20"
+ },
+ "a_lumina": {
+  "Sigam a luzinha... isso, mais perto.": "v_a_lumina_l01",
+  "No escuro do abismo, eu sou o farol. E a armadilha.": "v_a_lumina_l02",
+  "Que escuro aqui... ainda bem que eu trouxe luz pra todo mundo.": "v_a_lumina_l03",
+  "Hihi... peixinhos novos no aquário.": "v_a_lumina_l04",
+  "Olha pra luz. Só um pouquinho.": "v_a_lumina_l05",
+  "Que sorriso lindo o seu. O meu é maior.": "v_a_lumina_l06",
+  "Eu ofusco, você morde. Combinado?": "v_a_lumina_l07",
+  "Deixa comigo, eu ilumino o caminho.": "v_a_lumina_l08",
+  "Vai lá! Eu cubro daqui de longe.": "v_a_lumina_l09",
+  "Gritando no escuro? Assim fica fácil te achar.": "v_a_lumina_l10",
+  "Pode correr. A luz vai atrás de você.": "v_a_lumina_l11",
+  "Hihi... caiu direitinho na isca.": "v_a_lumina_l12",
+  "Apagou mais uma luzinha... que pena.": "v_a_lumina_l13",
+  "Não... a luz dele apagou.": "v_a_lumina_l14",
+  "Fica tranquilo, eu enxergo no escuro. E eu não erro.": "v_a_lumina_l15",
+  "Surpresa! Olha o flash!": "v_a_lumina_l16",
+  "Ofuscado e sem abrigo? Que azar o seu.": "v_a_lumina_l19"
+ },
+ "a_vespertina": {
+  "Entre a sombra e a lâmina... eu escolho as duas.": "v_a_vespertina_l01",
+  "A noite caiu. É a minha hora de dançar.": "v_a_vespertina_l02",
+  "Tantos alvos... e nenhum deles olhando pra trás.": "v_a_vespertina_l03",
+  "Minhas adagas estão afiadas. Minhas nadadeiras também.": "v_a_vespertina_l04",
+  "Você nem vai ver de onde veio.": "v_a_vespertina_l05",
+  "Shh... já estou atrás de você.": "v_a_vespertina_l06",
+  "Distrai eles. Eu cuido do resto.": "v_a_vespertina_l07",
+  "Pode deixar, querido. Eu entro e saio antes de perceberem.": "v_a_vespertina_l08",
+  "Hm-hm... separa um deles pra mim.": "v_a_vespertina_l09",
+  "Tão barulhento... e tão sozinho.": "v_a_vespertina_l10",
+  "Fala mais alto. Assim eu sei exatamente onde cortar.": "v_a_vespertina_l11",
+  "Um passo, um corte... e a dança acabou.": "v_a_vespertina_l12",
+  "Hm... elegância nunca erra o alvo.": "v_a_vespertina_l13",
+  "Não... ele ficou sozinho no fim.": "v_a_vespertina_l14",
+  "A dança agora é por você. E ninguém vai sair dela.": "v_a_vespertina_l15",
+  "Ninguém pra te proteger? Que pena.": "v_a_vespertina_l16",
+  "Já fui. Tenta me acompanhar.": "v_a_vespertina_l19"
  }
 }
