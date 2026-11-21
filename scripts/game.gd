@@ -4623,6 +4623,7 @@ func resolve_attack(a, t) -> void:
 					a.fx.append({"k": "atk", "v": -1, "until": "end"})
 					log_msg(d, "Lamento do Abismo: %s perde 1 ATQ neste round." % nm(a))
 				guard_round[b.uid] = round_no
+				abfx("guarda", b.pos(), b.uid)   # fala de quem protege (ex.: Balu)
 				log_msg(d, "%s protege %s." % [nm(b), nm(t)])
 				break
 		var pl = P[d]
