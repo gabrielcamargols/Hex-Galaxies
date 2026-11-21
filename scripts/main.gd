@@ -959,6 +959,19 @@ func _settings_panel() -> void:
 			_open_oficina(false))
 		ob.custom_minimum_size = Vector2(0, 40)
 		ob.tooltip_text = "Palco para revisar os efeitos da Forja: câmera lenta, laço, fundos e lados."
+	if stage == "battle":
+		# Registro e Menu moram aqui dentro em vez de ocupar o canto da tela
+		var hp = _hbox(outer, 8)   # fora da rolagem: sempre à vista, logo acima do Fechar
+		var rb = _cbtn(hp, "Registro da partida", C_HUD, func():
+			dim.queue_free()
+			_toggle_panel("log"))
+		rb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		rb.custom_minimum_size = Vector2(0, 42)
+		var mb = _cbtn(hp, "Sair para o menu", C_ABIL, func():
+			dim.queue_free()
+			_show_menu())
+		mb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		mb.custom_minimum_size = Vector2(0, 42)
 	var close = _cbtn(outer, "Fechar", C_GOLD, func(): dim.queue_free(), true)
 	_primary(close)
 	close.custom_minimum_size = Vector2(0, 42)
@@ -2623,11 +2636,8 @@ func _build_hud() -> void:
 		if compact and not online:
 			_button(topr, "CPU", _toggle_cpu)
 		_button(topr, "Cartas", func(): _toggle_panel("cards"))
-		if not compact:
-			_button(topr, "Registro", func(): _toggle_panel("log"))
 		_button(topr, "Regras", func(): _toggle_panel("rules"))
-		_button(topr, "Opções", _settings_panel)
-		_button(topr, "Menu", _show_menu)
+		_button(topr, "Opções", _settings_panel)   # Registro e Sair para o menu ficam dentro de Opções
 	# câmera: linha compacta acima do painel de fim de turno
 	var camv = _hbox(ui, 4)
 	_place(camv, Control.PRESET_BOTTOM_RIGHT, 8)
