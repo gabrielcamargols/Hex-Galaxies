@@ -3207,12 +3207,17 @@ func _dragao_tick(fig: Node3D, delta: float, t: float, walking: bool, run: bool,
 		var lift = max(0.0, sin(ph + pr[1] + 1.3))
 		var front = pr[0].begins_with("f")
 		pose[pr[0] + "0"] = [[S, -a * sw]]
-		pose[pr[0] + "1"] = [[S, (0.55 if front else -0.55) * lift * ww]]
-		pose[pr[0] + "2"] = [[S, (-0.35 if front else 0.45) * lift * ww]]
+		# frente: antebraço vai à frente e a pata dobra para trás ao erguer (passo firme, sem pendular mole)
+		pose[pr[0] + "1"] = [[S, (-0.55 if front else -0.55) * lift * ww]]
+		pose[pr[0] + "2"] = [[S, (0.7 if front else 0.45) * lift * ww]]
 	# corpo: respira, balança com a passada; no golpe recua e dá o bote
 	var bote = sin(clamp(lunge, 0.0, 1.0) * PI)
 	pose["sp1"] = [[S, 0.02 * br * idle], [U, 0.05 * sin(ph) * ww]]
 	pose["sp2"] = [[S, 0.03 * br * idle - 0.12 * e3]]
+	# as patas da frente saem da coluna: desfaz o balanço do peito nelas para ficarem firmes no chão
+	var peito_s = 0.02 * br * idle + 0.03 * br * idle - 0.12 * e3
+	for fk in ["fl0", "fr0"]:
+		pose[fk] = [[U, -0.05 * sin(ph) * ww], [S, -peito_s]] + pose[fk]
 	# pescoço em S e cabeça: olha em volta parado; no ataque ergue e depois abaixa no bote
 	var lk = sin(t * 0.45) + 0.4 * sin(t * 1.2)
 	pose["h0"] = [[U, 0.12 * lk * idle], [S, 0.03 * br - 0.1 * e3 + 0.2 * bote]]
