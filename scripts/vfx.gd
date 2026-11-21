@@ -577,10 +577,29 @@ func play_fx(id: String, at: Vector3, from: Variant = null, tint: Color = Color.
 	var hit_t = 0.0
 	if r.has("proj") and from != null:
 		var P = _core_dict(r["proj"], ctx)
-		if P.has("rajada"):
-			hit_t = _fx_volley(P, from, at, tint, ctx)
+		# "avanco": o disparo sai à frente do atacante (boca do dragão), não do centro da casa
+		var de: Vector3 = from
+		var dh = (at - from) * Vector3(1, 0, 1)
+		if r.has("avanco") and dh.length() > 0.01:
+			de = from + dh.normalized() * float(r["avanco"]) * cam_k
+		# "mira": efeito no alvo logo no início (holograma travando a mira); "disparo": clarão na saída
+		if r.has("mira"):
+			play_fx(str(r["mira"]), at, from, tint, null, ctx)
+		var atraso = float(r.get("atraso", 0.0))
+		if r.has("disparo"):
+			_fx_after(atraso, func(): play_fx(str(r["disparo"]), de, at, tint, null, ctx))
+		var lanca = func() -> float:
+			if P.has("rajada"):
+				return _fx_volley(P, de, at, tint, ctx)
+			return _fx_proj2(P, de, at, tint, ctx) if P.has("parts") else _fx_proj(P, de, at)
+		if atraso > 0.0:
+			# tempo de voo calculado antes, para devolver o impacto certo
+			var n = int(P.get("rajada", {}).get("n", 1))
+			var base = clamp(de.distance_to(at) / float(P.get("speed", 12.0)), 0.15, 0.9)
+			hit_t = atraso + base + (float(P.get("rajada", {}).get("gap", 0.07)) * (n - 1) if n > 1 else 0.0)
+			_fx_after(atraso, func(): lanca.call())
 		else:
-			hit_t = _fx_proj2(P, from, at, tint, ctx) if P.has("parts") else _fx_proj(P, from, at)
+			hit_t = lanca.call()
 		if r.has("hit"):
 			_fx_after(hit_t, func(): play_fx(str(r["hit"]), at, from, tint, follow, ctx))
 		return hit_t
@@ -1055,7 +1074,7 @@ func _fx_volley(P: Dictionary, from: Vector3, to: Vector3, tint: Color, ctx: Dic
 # projétil em partículas: miolo brilhando + rastro emitindo enquanto voa
 func _fx_proj2(P: Dictionary, from: Vector3, to: Vector3, tint: Color, ctx: Dictionary = {}) -> float:
 	var a = from + Vector3(0, float(P.get("y", 0.9)), 0)
-	var b = to + Vector3(0, float(P.get("y", 0.9)) * 0.8, 0)
+	var b = to + Vector3(0, float(P.get("y_alvo", float(P.get("y", 0.9)) * 0.8)), 0)
 	var dist = a.distance_to(b)
 	var t = clamp(dist / float(P.get("speed", 12.0)), 0.15, 0.9)
 	var arc = float(P.get("arc", 0.6)) * clamp(dist / 6.0, 0.3, 1.5)
