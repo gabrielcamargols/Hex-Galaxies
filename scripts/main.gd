@@ -3197,7 +3197,8 @@ func _cine_commanders() -> void:
 	if tut or game == null:
 		return
 	var cmds = []
-	for p in [me, 1 - me]:
+	# só a cutscene do líder da facção do jogador (o do rival entra direto no tabuleiro)
+	for p in [me]:
 		var c = game.commander(p)
 		if c != null and c.st == "off" and DB.art.has(c.cid):
 			cmds.append({"cid": c.cid, "owner": p})
