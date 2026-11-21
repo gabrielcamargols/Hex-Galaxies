@@ -1228,6 +1228,7 @@ func settle() -> void:
 		var killer = by_uid(by) if by > 0 else null
 		if killer != null and killer.owner != t.owner and K(killer).has("killGrow") and not t.barrier:
 			killer.kills += 1
+			abfx("ganancia", killer.pos(), killer.uid)   # Ganância Dourada (fala do Banker)
 		if killer != null and killer.owner != t.owner and killer.st == "field" and not t.barrier:
 			if K(killer).has("killHeal"):
 				heal(killer, int(K(killer)["killHeal"]))

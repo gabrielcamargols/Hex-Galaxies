@@ -404,5 +404,23 @@
   "Não pude proteger você... me perdoe.": "v_balu_l14",
   "Agora... o silêncio acabou.": "v_balu_l15",
   "Não toque nele. O abismo lamenta por você.": "v_balu_l16"
+ },
+ "banker": {
+  "Quem paga a conta hoje? Porque eu é que não pago.": "v_banker_l01",
+  "Que cheirinho de dinheiro fácil... acho que vou ficar podre de rico! Hahahahah!": "v_banker_l02",
+  "Uma luta e um cofre cheio... o que mais um tubarão pode querer?": "v_banker_l03",
+  "Vim pelo ouro. Fiquei pela pancadaria.": "v_banker_l04",
+  "Vai uma moedinha, meu chapa? É a última coisa que você vai ganhar hoje!": "v_banker_l05",
+  "Vem! Luta comigo! Se você ganhar, eu até te devolvo o troco!": "v_banker_l06",
+  "Se for cair, cai longe de mim. Não pago enterro.": "v_banker_l07",
+  "Quanto eu ganho com isso?": "v_banker_l08",
+  "Fechado. Mas o espólio é meu.": "v_banker_l09",
+  "Isso, me xinga! Raiva é de graça, e eu adoro coisa de graça!": "v_banker_l10",
+  "Mais forte! Faz valer o meu tempo!": "v_banker_l11",
+  "Cobrança efetuada. Com juros.": "v_banker_l12",
+  "Hah! Que luta boa! E ainda saiu lucro!": "v_banker_l13",
+  "Uma parte a menos pra dividir.": "v_banker_l14",
+  "Alguém derrubou meu sócio? Agora a dívida é sua.": "v_banker_l15",
+  "Ganância dourada! Quanto mais eu levo... mais eu quero!": "v_banker_l16"
  }
 }
