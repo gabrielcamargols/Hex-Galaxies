@@ -69,7 +69,7 @@ func run() -> void:
 					b._fig3d_tick(fig, 1.0 / 30.0, t, false, Color.WHITE, walk, lunge, 0.0, cena[0] == "correndo", Vector3.ZERO)
 				giro.rotation.y = cena[1]
 			var ce = Vector3(0, H * 0.5, 0)
-			cam.look_at_from_position(ce + Vector3(0, H * 0.08, H * 2.1), ce)
+			cam.look_at_from_position(ce + Vector3(0, H * 0.08, H * float(OS.get_environment("CD") if OS.has_environment("CD") else "2.1")), ce)
 			await get_tree().process_frame
 			await get_tree().process_frame
 			sv.get_texture().get_image().save_png("%s/%s_%d.png" % [o, c, n])

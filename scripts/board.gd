@@ -3238,47 +3238,52 @@ func _dragao_tick(fig: Node3D, delta: float, t: float, walking: bool, run: bool,
 	var cw: float = move_toward(fig.get_meta("cj_w", 0.0), 1.0 if ct > 0.0 else 0.0, delta * (4.0 if ct > 0.0 else 2.0))
 	fig.set_meta("cj_w", cw)
 	var e3 = cw * cw * (3.0 - 2.0 * cw)
-	var idle = 1.0 - ww
+	# o Dragão Zukunft não anda: para se deslocar ele decola, voa e pousa no destino
+	var vw: float = move_toward(fig.get_meta("voo_w", 0.0), 1.0 if walking else 0.0, delta * (2.4 if walking else 1.6))
+	fig.set_meta("voo_w", vw)
+	var fv = vw * vw * (3.0 - 2.0 * vw)                 # decolagem e pouso suaves
+	var idle = 1.0 - fv
 	var br = sin(t * 1.6)
-	var a = 0.32 * ww * lerp(1.0, 1.4, rw)          # passada
+	var bat = t * 7.5                                     # batida das asas em voo
 	var pose = {}
-	# trote: dianteira esquerda junto com traseira direita
-	var ps = [["fl", 0.0], ["hr", 0.0], ["fr", PI], ["hl", PI]]
-	for pr in ps:
-		var sw = sin(ph + pr[1])
-		var lift = max(0.0, sin(ph + pr[1] + 1.3))
-		var front = pr[0].begins_with("f")
-		pose[pr[0] + "0"] = [[S, -a * sw]]
-		# frente: antebraço vai à frente e a pata dobra para trás ao erguer (passo firme, sem pendular mole)
-		pose[pr[0] + "1"] = [[S, (-0.55 if front else -0.55) * lift * ww]]
-		pose[pr[0] + "2"] = [[S, (0.7 if front else 0.45) * lift * ww]]
-	# corpo: respira, balança com a passada; no golpe recua e dá o bote
+	# patas: paradas no chão; em voo a frente dobra junto ao peito e a de trás vai esticada para trás
+	for lado in ["l", "r"]:
+		pose["f%s0" % lado] = [[S, 0.3 * fv]]
+		pose["f%s1" % lado] = [[S, 1.5 * fv]]
+		pose["f%s2" % lado] = [[S, -0.9 * fv]]
+		pose["h%s0" % lado] = [[S, 1.0 * fv]]
+		pose["h%s1" % lado] = [[S, 0.35 * fv]]
+		pose["h%s2" % lado] = [[S, 0.6 * fv]]
+	# corpo: respira parado; em voo sobe e desce com as asas e embica de leve para a frente
 	var bote = sin(clamp(lunge, 0.0, 1.0) * PI)
-	pose["sp1"] = [[S, 0.02 * br * idle], [U, 0.05 * sin(ph) * ww]]
+	pose["sp1"] = [[S, 0.02 * br * idle - 0.04 * sin(bat - 0.8) * fv]]
 	pose["sp2"] = [[S, 0.03 * br * idle - 0.12 * e3]]
 	# as patas da frente saem da coluna: desfaz o balanço do peito nelas para ficarem firmes no chão
-	var peito_s = 0.02 * br * idle + 0.03 * br * idle - 0.12 * e3
+	var peito_s = (0.02 * br + 0.03 * br) * idle - 0.12 * e3
 	for fk in ["fl0", "fr0"]:
-		pose[fk] = [[U, -0.05 * sin(ph) * ww], [S, -peito_s]] + pose[fk]
-	# pescoço em S e cabeça: olha em volta parado; no ataque ergue e depois abaixa no bote
+		pose[fk] = [[S, -peito_s]] + pose[fk]
+	# pescoço em S e cabeça: olha em volta parado; em voo estica à frente; no ataque ergue e dá o bote
 	var lk = sin(t * 0.45) + 0.4 * sin(t * 1.2)
-	pose["h0"] = [[U, 0.12 * lk * idle], [S, 0.03 * br - 0.1 * e3 + 0.2 * bote]]
-	pose["h1"] = [[U, 0.08 * lk * idle], [S, -0.06 * e3 + 0.14 * bote]]
-	pose["h2"] = [[U, 0.05 * lk * idle], [S, 0.02 * br + 0.08 * e3 - 0.12 * bote - 0.1 * hurt]]
-	# cauda: onda lateral que corre até a ponta
-	var tw = lerp(0.12, 0.2, ww)
+	pose["h0"] = [[U, 0.12 * lk * idle], [S, 0.03 * br * idle - 0.1 * e3 + 0.2 * bote + 0.12 * fv]]
+	pose["h1"] = [[U, 0.08 * lk * idle], [S, -0.06 * e3 + 0.14 * bote + 0.04 * sin(bat - 1.2) * fv]]
+	pose["h2"] = [[U, 0.05 * lk * idle], [S, 0.02 * br * idle + 0.08 * e3 - 0.12 * bote - 0.1 * hurt - 0.1 * fv]]
+	# cauda: onda lateral parada; em voo fica esticada atrás e ondula devagar como leme
 	for i in range(4):
-		pose["t%d" % i] = [[U, tw * sin(t * 2.0 - i * 0.7)], [S, 0.04 * sin(t * 1.3 - i * 0.5)]]
-	# asas: dobradas respirando parado; andando balançam; correndo e atacando batem
-	var flap = sin(t * lerp(3.0, 9.0, max(rw * ww, e3)))
-	var fa = 0.05 * idle + 0.1 * ww * (1.0 - rw) + 0.28 * max(rw * ww, e3)
-	var abre = -0.15 * e3 - 0.08 * rw * ww           # abre as asas para o golpe e na corrida
-	pose["wl0"] = [[F, fa * flap + abre + 0.03 * br]]
-	pose["wr0"] = [[F, -(fa * flap + abre + 0.03 * br)]]
-	pose["wl1"] = [[F, 0.5 * fa * sin(t * lerp(3.0, 9.0, max(rw * ww, e3)) - 0.6)]]
-	pose["wr1"] = [[F, -0.5 * fa * sin(t * lerp(3.0, 9.0, max(rw * ww, e3)) - 0.6)]]
-	# sobe um pouco ao bater as asas no golpe; quica na corrida
-	fig.position.y += 0.18 * e3 * (0.6 + 0.4 * flap) + abs(sin(ph)) * 0.03 * ww
+		pose["t%d" % i] = [[U, lerp(0.12, 0.07, fv) * sin(t * lerp(2.0, 2.6, fv) - i * 0.7)], [S, 0.04 * sin(t * 1.3 - i * 0.5) * idle - 0.08 * fv + 0.05 * sin(bat - 1.5 - i * 0.6) * fv]]
+	# asas: dobradas respirando parado; no golpe abrem e batem; em voo batem cheias
+	var flap_g = sin(t * 9.0)
+	var fa_g = 0.05 * idle + 0.28 * e3
+	var ga = fa_g * flap_g - 0.15 * e3 + 0.03 * br * idle
+	var va = 0.62 * sin(bat) - 0.2                        # batida cheia, com as asas um pouco abertas
+	var asa = lerp(ga, va, fv)
+	var asa2 = lerp(0.5 * fa_g * sin(t * 9.0 - 0.6), 0.4 * sin(bat - 0.9) - 0.15, fv)
+	pose["wl0"] = [[F, asa]]
+	pose["wr0"] = [[F, -asa]]
+	pose["wl1"] = [[F, asa2]]
+	pose["wr1"] = [[F, -asa2]]
+	# altura: em voo paira acima da casa (sobe na batida para baixo); no golpe sobe batendo as asas
+	var alt_voo: float = fig.get_meta("alt_voo", 0.85)
+	fig.position.y += alt_voo * fv + 0.07 * sin(bat + PI * 0.5) * fv + 0.18 * e3 * (0.6 + 0.4 * flap_g) * (1.0 - fv)
 	for k in pose.keys():
 		if not bn.has(k):
 			continue
@@ -3287,9 +3292,6 @@ func _dragao_tick(fig: Node3D, delta: float, t: float, walking: bool, run: bool,
 		for e in pose[k]:
 			q = q * _fig3d_q(sk, b, e[0], e[1])
 		sk.set_bone_pose_rotation(b, q)
-	# patas no chão andando (o quique deixava o dragão pairando); no golpe ele bate as asas e sobe de propósito
-	if ww > 0.001:
-		_assenta(fig, sk, ["tripo__0_Left_Limb_4", "tripo__0_Right_Limb_3", "tripo__1_Left_Limb_3", "tripo__1_Right_Limb_3"], ww * (1.0 - e3), 0.012 * rw * abs(sin(ph)))
 
 
 # Rei da Mina: cada passo do pé de cristal deixa cristaizinhos que brotam do chão e somem
