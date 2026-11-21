@@ -107,23 +107,56 @@ func _secoes() -> void:
 		_monta())
 	ob.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hf.add_child(ob)
-	var il = ItemList.new()
-	il.custom_minimum_size = Vector2(330, 190)
-	il.add_theme_font_size_override("font_size", 14)
+	# lista com barra de rolagem própria (larga, sempre visível) para caber todos os personagens da facção;
+	# no tablet também dá para arrastar a lista com o dedo
 	var lista = _chars(fac)
+	var rol = ScrollContainer.new()
+	rol.custom_minimum_size = Vector2(330, 300)
+	rol.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	rol.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_ALWAYS
+	rol.scroll_deadzone = 12
+	rol.add_theme_stylebox_override("panel", m._flat(Color(0.02, 0.01, 0.07, 0.85), Color("#3340b8"), 2, 8, 4))
+	var vb = rol.get_v_scroll_bar()
+	vb.custom_minimum_size = Vector2(22, 0)
+	vb.add_theme_stylebox_override("scroll", m._flat(Color(0.1, 0.08, 0.25), Color(0.1, 0.08, 0.25), 0, 8, 0))
+	vb.add_theme_stylebox_override("grabber", m._flat(Color("#FFD12E"), Color("#FFD12E"), 0, 8, 0))
+	vb.add_theme_stylebox_override("grabber_highlight", m._flat(Color("#ffe27a"), Color("#ffe27a"), 0, 8, 0))
+	vb.add_theme_stylebox_override("grabber_pressed", m._flat(Color("#ffe27a"), Color("#ffe27a"), 0, 8, 0))
+	corpo.add_child(rol)
+	var col = VBoxContainer.new()
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	col.add_theme_constant_override("separation", 3)
+	rol.add_child(col)
+	var sel: Button = null
 	for c in lista:
 		var cd = DB.cards[c]
-		il.add_item(("★ " if cd.get("cmd", false) else "") + "%s  ·  %d vida" % [cd["name"], int(cd["int"])])
+		var cc = c
+		var b = Button.new()
+		b.text = ("★ " if cd.get("cmd", false) else "") + "%s  ·  %d vida" % [cd["name"], int(cd["int"])]
+		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		b.custom_minimum_size = Vector2(0, 38)
+		b.add_theme_font_size_override("font_size", 14)
+		b.clip_text = true
+		b.mouse_filter = Control.MOUSE_FILTER_PASS   # deixa o arrasto chegar na rolagem
 		if DB.portraits.has(c):
-			il.set_item_icon(il.item_count - 1, DB.portraits[c])
-	il.fixed_icon_size = Vector2i(28, 28)
-	if lista.has(cid):
-		il.select(lista.find(cid))
-	il.item_selected.connect(func(i):
-		cid = lista[i]
-		ferr = "colocar"
-		_monta())
-	corpo.add_child(il)
+			b.icon = DB.portraits[c]
+			b.expand_icon = false
+			b.add_theme_constant_override("icon_max_width", 30)
+		var marcado = c == cid
+		var fundo = Color("#5b2fa0") if marcado else Color(0.09, 0.07, 0.2)
+		b.add_theme_stylebox_override("normal", m._flat(fundo, Color("#FFD12E") if marcado else fundo, 2, 6, 6))
+		b.add_theme_stylebox_override("hover", m._flat(fundo.lightened(0.15), Color("#FFD12E") if marcado else fundo.lightened(0.15), 2, 6, 6))
+		b.add_theme_stylebox_override("pressed", m._flat(fundo.lightened(0.25), Color("#FFD12E"), 2, 6, 6))
+		b.pressed.connect(func():
+			cid = cc
+			ferr = "colocar"
+			_monta())
+		col.add_child(b)
+		if marcado:
+			sel = b
+	# mantém o escolhido à vista depois de reabrir o painel
+	if sel != null:
+		rol.ensure_control_visible.call_deferred(sel)
 	# --- alvo ---
 	var u = g.by_uid(alvo) if g != null and alvo >= 0 else null
 	if u != null and u.st != "field":
