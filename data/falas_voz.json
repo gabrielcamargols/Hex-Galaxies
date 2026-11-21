@@ -422,5 +422,23 @@
   "Uma parte a menos pra dividir.": "v_banker_l14",
   "Alguém derrubou meu sócio? Agora a dívida é sua.": "v_banker_l15",
   "Ganância dourada! Quanto mais eu levo... mais eu quero!": "v_banker_l16"
+ },
+ "sterina": {
+  "Cheguei! Quem precisa de um pouquinho de brilho?": "v_sterina_l01",
+  "As estrelas do fundo do mar me contaram que hoje alguém vai precisar de mim.": "v_sterina_l02",
+  "Respira... o mar cuida de quem cuida dele.": "v_sterina_l03",
+  "Bolhinhas prontas, coral afiado! Vamos lá!": "v_sterina_l04",
+  "Ai, que coisa feia... tão bravinho e tão sozinho.": "v_sterina_l05",
+  "Sabia que estrela-do-mar come devagar? Bem... devagarinho.": "v_sterina_l06",
+  "Fica pertinho de mim, tá? Eu não deixo ninguém se machucar.": "v_sterina_l07",
+  "Tá bom! Com muito carinho!": "v_sterina_l08",
+  "Juntos a gente brilha mais!": "v_sterina_l09",
+  "Grita não, querido. Assusta os peixinhos.": "v_sterina_l10",
+  "Pode tentar... eu me regenero, sabia?": "v_sterina_l11",
+  "Mais uma estrela que se apagou...": "v_sterina_l12",
+  "Shhh... agora dorme.": "v_sterina_l13",
+  "Não, não, não! Eu cheguei tarde...": "v_sterina_l14",
+  "Vocês machucaram meu amigo... agora eu fico brava. E eu brava não brilho.": "v_sterina_l15",
+  "Estrela hexa! Ninguém toca em vocês aqui dentro!": "v_sterina_l16"
  }
 }
