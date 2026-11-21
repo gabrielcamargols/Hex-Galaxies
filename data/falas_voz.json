@@ -609,5 +609,23 @@
   "Não... isso não estava na simulação.": "v_z_brawler_l14",
   "Agora eu vou lutar sério. Ninguém sai inteiro.": "v_z_brawler_l15",
   "Errou! Esse era só o meu holograma.": "v_z_brawler_l16"
+ },
+ "z_tank": {
+  "Escudos online. Podem se esconder atrás de mim.": "v_z_tank_l01",
+  "Eu fui construído para uma coisa só: ninguém aqui vai se machucar.": "v_z_tank_l02",
+  "Campo de força estável. Integridade: cem por cento.": "v_z_tank_l03",
+  "Avançando. Devagar... mas ninguém me empurra.": "v_z_tank_l04",
+  "Pode atacar. Eu preciso testar meus escudos mesmo.": "v_z_tank_l05",
+  "Detectei sua ameaça. Classificação: irrelevante.": "v_z_tank_l06",
+  "Fique atrás de mim. Eu seguro tudo que vier.": "v_z_tank_l07",
+  "Entendido. Cobertura total ativada.": "v_z_tank_l08",
+  "Pode contar comigo. Escudo erguido.": "v_z_tank_l09",
+  "Seu grito aumentou em quarenta decibéis. Meus escudos não mudaram.": "v_z_tank_l10",
+  "Barulho não atravessa campo de força.": "v_z_tank_l11",
+  "Ameaça contida. Ninguém ferido do nosso lado.": "v_z_tank_l12",
+  "Proteção concluída. Missão cumprida.": "v_z_tank_l13",
+  "Escudo... falhou. Eu devia ter chegado antes.": "v_z_tank_l14",
+  "Registro de perda salvo. Agora eu viro uma muralha.": "v_z_tank_l15",
+  "Impacto absorvido. Campo inercial intacto.": "v_z_tank_l16"
  }
 }
