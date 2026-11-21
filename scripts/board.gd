@@ -694,8 +694,40 @@ func top_y(h: Vector2i) -> float:
 	if tiles.has(h):
 		var extra = 0.0
 		if g != null and g.blocks.has(h) and g.terr(h)["k"] != "buraco" and g.unit_at(h) != null:
+			# quem sobe numa estrutura pisa no topo do modelo que está ali (pés no chão, sem flutuar)
+			var st = _topo_props(h)
+			if st >= 0.0:
+				return tiles[h]["disp_h"] * HS + st
 			extra = float(g.tt_of(g.terr(h)["k"]).get("top", 0)) * 0.55
 		return (tiles[h]["disp_h"] + extra) * HS
+	return 0.0
+
+
+# altura (acima do chão da casa) do topo dos modelos de cenário no meio da casa; -1 se não há nada ali
+func _topo_props(h: Vector2i) -> float:
+	var tile: Dictionary = tiles[h]
+	var ja: float = float(tile.get("stand", -2.0))
+	if ja > -2.0:
+		return ja
+	var pr = tile["props"]
+	if pr == null or not pr.is_inside_tree():
+		return -1.0
+	var inv = pr.global_transform.affine_inverse()
+	var raio = 0.45 * HX
+	var topo = -1.0
+	for gi in pr.find_children("*", "GeometryInstance3D", true, false):
+		if not gi.visible:
+			continue
+		var xf: Transform3D = inv * gi.global_transform
+		var ab: AABB = xf * gi.get_aabb()
+		if ab.size.y < 0.05:
+			continue
+		# só o que está no meio da casa, onde o personagem fica
+		if ab.position.x > raio or ab.end.x < -raio or ab.position.z > raio or ab.end.z < -raio:
+			continue
+		topo = max(topo, ab.end.y)
+	tile["stand"] = topo
+	return topo
 	return 0.0
 
 
@@ -799,6 +831,7 @@ func refresh_terrain() -> void:
 		var props = Node3D.new()
 		tile["node"].add_child(props)
 		tile["props"] = props
+		tile["stand"] = -2.0   # topo dos modelos recalculado quando alguém subir
 		_add_props(props, h, t)
 		_place_tile(h)
 
