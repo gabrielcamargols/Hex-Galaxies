@@ -2529,8 +2529,7 @@ func _start_match(sides) -> void:
 	turn_seen = -1
 	game.setup(sides, setup_cfg["map"])
 	game.question.connect(_on_question)
-	if not autotest and deus == null:
-		game.cine = _cine_commanders
+	# cutscenes de entrada dos líderes desligadas: o líder entra direto no tabuleiro e fala
 	game.changed.connect(refresh)
 	game.fx_event.connect(_on_fx)
 	sel = -1
@@ -6923,6 +6922,9 @@ func _talk_voice(u, text: String, mood: String) -> void:
 	if u.is_cmd and voice_on and _tts_ok():
 		_leader_speak(u, text, mood)
 		return
+	# quem já tem voz gravada não usa mais o som provisório (balbucio sintético): só a legenda
+	if falas_voz.has(u.cid):
+		return
 	# sem voz do aparelho: o comandante usa o som de voz dele (antes ficava mudo)
 	var n = "v_%s_%s" % [u.cid, "prov" if mood == "prov" else "fala"]
 	var pitch = 0.84 if mood == "triste" else randf_range(0.96, 1.05)
@@ -7463,11 +7465,14 @@ func _entrance_side(p: int, layer: Control) -> void:
 		vfx.dust_burst(hp, true)
 		board.shake = max(board.shake, 0.3)
 		sfx.play("invocar", -4.0)
-		_voice(u.uid, "atk", -1.0, 0.2)
+		if not falas_voz.has(u.cid):
+			_voice(u.uid, "atk", -1.0, 0.2)
 		var line = _line("entrada", u)
 		if line != "":
 			_say(u.uid, line, 0.5, "fala")
-		await _wait(1.7)
+		# um de cada vez: o próximo só chega quando a fala gravada deste termina
+		var dur_f = _dur_fala(u.cid, line) if line != "" else 0.0
+		await _wait(max(1.7, 0.5 + dur_f + 0.35))
 	await _wait(1.3)
 	var tw2 = card.create_tween()
 	tw2.tween_property(card, "modulate:a", 0.0, 0.4)
