@@ -6632,12 +6632,19 @@ func fala_gravada(cid: String, text: String) -> String:
 
 # falas de habilidade (data/dialogos.json, personagem.<id>.hab.<efeito>): ex. o Dinamitador
 # planta a carga ("mark") e ela explode ("shell")
+var hab_falou: Dictionary = {}
+
 func _fala_habilidade(uid: int, k: String) -> void:
 	var u: Variant = game.by_uid(uid)
 	if u == null:
 		return
 	var hl: Array = dlg.get("personagem", {}).get(u.cid, {}).get("hab", {}).get(k, [])
 	if not hl.is_empty():
+		# efeitos que se repetem no mesmo golpe (choque em 2 alvos, puxão de 2 casas) falam uma vez só
+		var agora = Time.get_ticks_msec()
+		if agora - int(hab_falou.get(uid, -100000)) < 4000:
+			return
+		hab_falou[uid] = agora
 		_say(uid, hl[randi() % hl.size()], 0.2, "prov")
 
 
