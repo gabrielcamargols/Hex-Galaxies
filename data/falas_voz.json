@@ -295,5 +295,23 @@
   "Eu ia construir uma ponte pra ele voltar pra casa...": "v_t_pontes_l14",
   "Agora eu ergo uma muralha de raiva!": "v_t_pontes_l15",
   "FUNDAÇÕES PRESAS! PONTE DE VALAK, ERGA-SE!": "v_t_pontes_l16"
+ },
+ "sapturne": {
+  "Cheguei... e já deixei um presentinho no chão.": "v_sapturne_l01",
+  "Tudo planejado. Como sempre.": "v_sapturne_l02",
+  "Por favor, fiquem à vontade... mas cuidado onde pisam.": "v_sapturne_l03",
+  "O chefe Rhazur manda, eu preparo o terreno.": "v_sapturne_l04",
+  "Pode andar... qual casa será que tem surpresa?": "v_sapturne_l05",
+  "Você já perdeu. Só não sabe em qual passo.": "v_sapturne_l06",
+  "Fique longe daquela casa, amigo. Ela é especial.": "v_sapturne_l07",
+  "Entendido, já está tudo marcado.": "v_sapturne_l08",
+  "Hehe, deixa que eu cuido dos detalhes.": "v_sapturne_l09",
+  "Gritar não ajuda... pisar com cuidado ajuda.": "v_sapturne_l10",
+  "Errou de novo? Eu já tinha calculado isso também.": "v_sapturne_l11",
+  "Bum. Exatamente onde eu esperava.": "v_sapturne_l12",
+  "Caiu direitinho na armadilha.": "v_sapturne_l13",
+  "Não... isso não estava nos meus planos.": "v_sapturne_l14",
+  "Agora o campo inteiro vai virar armadilha.": "v_sapturne_l15",
+  "Mina armada! E quem pisar... fica.": "v_sapturne_l16"
  }
 }

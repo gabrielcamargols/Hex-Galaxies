@@ -1,5 +1,25 @@
 [gd_resource type="AudioBusLayout" format=3]
 
+[sub_resource type="AudioEffectPitchShift" id="AudioEffectPitchShift_j3pel"]
+pitch_scale = 1.22
+
+[sub_resource type="AudioEffectEQ6" id="AudioEffectEQ6_g28q7"]
+band_db/32_hz = -2.0
+band_db/1000_hz = 2.0
+band_db/3200_hz = 2.5
+
+[sub_resource type="AudioEffectReverb" id="AudioEffectReverb_n8wo2"]
+room_size = 0.25
+damping = 0.4
+dry = 0.95
+wet = 0.12
+
+[sub_resource type="AudioEffectPitchShift" id="AudioEffectPitchShift_5t1r3"]
+pitch_scale = 0.62
+
+[sub_resource type="AudioEffectLowPassFilter" id="AudioEffectLowPassFilter_cenje"]
+cutoff_hz = 1400.0
+
 [sub_resource type="AudioEffectAmplify" id="AudioEffectAmplify_j3pel"]
 
 [sub_resource type="AudioEffectHighPassFilter" id="AudioEffectHighPassFilter_g28q7"]
@@ -179,3 +199,25 @@ bus/9/effect/1/effect = SubResource("AudioEffectHighPassFilter_5tfch")
 bus/9/effect/1/enabled = true
 bus/9/effect/2/effect = SubResource("AudioEffectReverb_sjxdv")
 bus/9/effect/2/enabled = true
+bus/10/name = &"Foca"
+bus/10/solo = false
+bus/10/mute = false
+bus/10/bypass_fx = false
+bus/10/volume_db = 0.0
+bus/10/send = &"Vozes"
+bus/10/effect/0/effect = SubResource("AudioEffectPitchShift_j3pel")
+bus/10/effect/0/enabled = true
+bus/10/effect/1/effect = SubResource("AudioEffectEQ6_g28q7")
+bus/10/effect/1/enabled = true
+bus/10/effect/2/effect = SubResource("AudioEffectReverb_n8wo2")
+bus/10/effect/2/enabled = true
+bus/11/name = &"FocaGrave"
+bus/11/solo = false
+bus/11/mute = false
+bus/11/bypass_fx = false
+bus/11/volume_db = -17.0
+bus/11/send = &"Vozes"
+bus/11/effect/0/effect = SubResource("AudioEffectPitchShift_5t1r3")
+bus/11/effect/0/enabled = true
+bus/11/effect/1/effect = SubResource("AudioEffectLowPassFilter_cenje")
+bus/11/effect/1/enabled = true

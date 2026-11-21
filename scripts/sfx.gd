@@ -25,6 +25,8 @@ func bus_of(n: String) -> String:
 		return "Celeste"   # o Dragão Zukunft fala como um anjo
 	if n.begins_with("v_l_general_l"):
 		return "Cristal"   # o General Lithari fala pelos cristais
+	if n.begins_with("v_sapturne"):
+		return "Foca"      # Sapturne: foca fofa (voz mais aguda) e maldosa (sombra grave por baixo)
 	if n.begins_with("n_"):
 		return "Narrador"  # locutor: volume próprio e abaixa sozinho quando um personagem fala
 	if n.begins_with("v_"):
@@ -53,6 +55,7 @@ func _ready() -> void:
 	_radio_bus()
 	_celeste_bus()
 	_cristal_bus()
+	_foca_bus()
 	for n in NAMES:
 		var path = "res://sounds/%s.wav" % n
 		if not ResourceLoader.exists(path):
@@ -219,9 +222,47 @@ func _cristal_bus() -> void:
 	AudioServer.add_bus_effect(j, rv2)
 
 
+# voz de foca (Sapturne): a voz sobe de tom (fofinha, bochechuda), com um brilho leve e um quartinho
+# pequeno; por baixo, uma sombra grave e abafada bem baixinha, o lado maldoso
+func _foca_bus() -> void:
+	if AudioServer.get_bus_index("Foca") >= 0:
+		return
+	AudioServer.add_bus()
+	var i = AudioServer.bus_count - 1
+	AudioServer.set_bus_name(i, "Foca")
+	AudioServer.set_bus_send(i, "Vozes")
+	var ps = AudioEffectPitchShift.new()
+	ps.pitch_scale = 1.22
+	AudioServer.add_bus_effect(i, ps)
+	var eq = AudioEffectEQ6.new()
+	eq.set_band_gain_db(0, -2.0)
+	eq.set_band_gain_db(3, 2.0)
+	eq.set_band_gain_db(4, 2.5)
+	AudioServer.add_bus_effect(i, eq)
+	var rv = AudioEffectReverb.new()
+	rv.room_size = 0.25
+	rv.damping = 0.4
+	rv.dry = 0.95
+	rv.wet = 0.12
+	AudioServer.add_bus_effect(i, rv)
+	AudioServer.add_bus()
+	var j = AudioServer.bus_count - 1
+	AudioServer.set_bus_name(j, "FocaGrave")
+	AudioServer.set_bus_send(j, "Vozes")
+	AudioServer.set_bus_volume_db(j, -17.0)
+	var ps2 = AudioEffectPitchShift.new()
+	ps2.pitch_scale = 0.62
+	AudioServer.add_bus_effect(j, ps2)
+	var lp = AudioEffectLowPassFilter.new()
+	lp.cutoff_hz = 1400.0
+	AudioServer.add_bus_effect(j, lp)
+
+
 func play(n: String, vol_db: float = 0.0, pitch: float = 1.0, vary: float = 0.08) -> void:
 	if not has_sound(n):
 		return
+	if n.begins_with("v_sapturne"):
+		_play_raw(n, vol_db, pitch, 0.0, "FocaGrave")
 	if n.begins_with("v_"):
 		var fim = Time.get_ticks_msec() + int(streams[n].get_length() / max(pitch, 0.1) * 1000.0)
 		voz_ate_ms = max(voz_ate_ms, fim)
