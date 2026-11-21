@@ -573,5 +573,41 @@
   "A dança agora é por você. E ninguém vai sair dela.": "v_a_vespertina_l15",
   "Ninguém pra te proteger? Que pena.": "v_a_vespertina_l16",
   "Já fui. Tenta me acompanhar.": "v_a_vespertina_l19"
+ },
+ "z_vang": {
+  "Linha de frente estabelecida. Ninguém passa por mim.": "v_z_vang_l01",
+  "Pela paz de Zukunft... e pelo Dragão que nos guia.": "v_z_vang_l02",
+  "Escaneando o campo... ameaças identificadas. Vantagem nossa.": "v_z_vang_l03",
+  "Escudo ativo. Lança carregada. O futuro chegou.": "v_z_vang_l04",
+  "Sua chance de vitória acabou de cair para zero vírgula zero.": "v_z_vang_l05",
+  "Pode atacar. Eu já calculei a sua próxima jogada.": "v_z_vang_l06",
+  "Me sigam. Eu abro o caminho.": "v_z_vang_l07",
+  "Confirmado. Executando.": "v_z_vang_l08",
+  "Entendido. Estou com você até o fim do protocolo.": "v_z_vang_l09",
+  "Ruído detectado. Ignorando.": "v_z_vang_l10",
+  "Agressividade alta, precisão baixa. Previsível.": "v_z_vang_l11",
+  "Alvo neutralizado. Eficiência máxima.": "v_z_vang_l12",
+  "Mais um avanço. O futuro não recua.": "v_z_vang_l13",
+  "Sinal perdido... não. Não ele.": "v_z_vang_l14",
+  "Registro salvo. E a resposta vai ser total.": "v_z_vang_l15",
+  "Passo de fase. Já não estou aí.": "v_z_vang_l16"
+ },
+ "z_brawler": {
+  "Manoplas carregadas. Quem quer ser o primeiro?": "v_z_brawler_l01",
+  "Já lutei essa batalha mil vezes na simulação. Ganhei todas.": "v_z_brawler_l02",
+  "Hora do treino de verdade!": "v_z_brawler_l03",
+  "Relaxem. Eu bato, vocês caem. Simples assim.": "v_z_brawler_l04",
+  "Vem! Eu te dou o primeiro soco de graça.": "v_z_brawler_l05",
+  "Hah! Essa guarda aí é decoração?": "v_z_brawler_l06",
+  "Abre espaço pra mim, que eu entro de soco!": "v_z_brawler_l07",
+  "Fechado! Deixa que eu amasso.": "v_z_brawler_l08",
+  "É isso aí! Vamos fazer barulho!": "v_z_brawler_l09",
+  "Calculei sua força. Decepcionante.": "v_z_brawler_l10",
+  "Fala menos e bate mais. Ah, espera... você não consegue.": "v_z_brawler_l11",
+  "Nocaute! Nem precisei suar.": "v_z_brawler_l12",
+  "Simulação confirmada. Eu sou bom demais.": "v_z_brawler_l13",
+  "Não... isso não estava na simulação.": "v_z_brawler_l14",
+  "Agora eu vou lutar sério. Ninguém sai inteiro.": "v_z_brawler_l15",
+  "Errou! Esse era só o meu holograma.": "v_z_brawler_l16"
  }
 }

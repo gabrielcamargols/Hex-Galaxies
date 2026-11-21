@@ -832,6 +832,8 @@ func reduction_of(t, peek: bool = false, d: int = 1) -> int:
 		red += int(k["firstHitRed"])
 		if not peek:
 			t.hit_round = round_no
+			if t.st == "field":
+				abfx("sosia", t.pos(), t.uid)   # o golpe acertou só o holograma
 	for s in units:
 		if s == t or s.owner != t.owner or s.barrier or s.st == "dead":
 			continue
