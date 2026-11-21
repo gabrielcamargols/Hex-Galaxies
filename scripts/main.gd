@@ -5177,6 +5177,9 @@ func _prewarm() -> void:
 	var src = cb.basis.x * -2.0
 	var keep_sfx = vfx.sfx
 	vfx.sfx = null                       # sem sons durante o aquecimento
+	var antes_vfx = {}
+	for ch in vfx.get_children():
+		antes_vfx[ch] = true
 	# texturas e modelos dos efeitos ficam na memória a partida inteira
 	for n in _res_names("res://vfx/tex", ".png"):
 		var t = load("res://vfx/tex/" + n)
@@ -5277,6 +5280,11 @@ func _prewarm() -> void:
 	for q in quads:
 		q.queue_free()
 	holder.queue_free()
+	# nada do aquecimento sobra no mapa: apaga o que foi criado e cancela o que ainda estava agendado
+	vfx.epoca += 1
+	for ch in vfx.get_children():
+		if not antes_vfx.has(ch) and ch is Node3D:
+			ch.visible = false           # some da tela; cada um se apaga sozinho no fim da própria vida
 	vfx.sfx = keep_sfx
 	board.shake = 0.0
 	perf_t = 0.0                         # a medição de desempenho começa depois do aquecimento
@@ -5780,9 +5788,6 @@ func _on_fx_real(e: Dictionary) -> void:
 			var cp2 = _hex_pos(e["h"], 0.1)
 			match e["what"]:
 				"spawn":
-					vfx.flip("portal", cp2, 3.2, 1.0, Color("#b44cff"))
-					vfx.flip("ring", cp2, 4.5, 0.9, Color("#c77dff"), true)
-					vfx.flip("ring", cp2, 7.0, 1.2, Color("#b44cff"), true)
 					sfx.play("hex_energy_surge", -2.0, 1.0, 0.0)
 					_later(1.6, banner.bind("HEX ENERGY", "capture com qualquer peça: cartas ou bônus"))
 				"take":
@@ -5797,9 +5802,6 @@ func _on_fx_real(e: Dictionary) -> void:
 		"zone_grow":
 			narrar("area", 2.3)
 			_later(2.2, banner.bind("ÁREA DE ENTRADA MAIOR", "Agora dá para colocar personagens até %d casas da sua base" % int(e["r"])))
-			for pz in range(2):
-				var ew = board.world_xz(DB.entry_c[pz])
-				vfx.flip("ring", Vector3(ew.x, 0.3, ew.y), 3.0 + 2.6 * int(e["r"]), 0.9, C_DEPLOY if pz == me else C_CPU, true)
 			sfx.play("vfx_portal", -8.0)
 		"tactic_on":
 			var tcol: Color = TYPE_COL.get(DB.tactics[e["id"]]["type"], C_CARD)

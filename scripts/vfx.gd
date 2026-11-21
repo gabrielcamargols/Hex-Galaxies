@@ -678,11 +678,19 @@ func _core_dict(L: Dictionary, ctx: Dictionary) -> Dictionary:
 	return M
 
 
+# "época": o aquecimento do início da partida toca todas as receitas escondidas; ao terminar ele
+# muda a época e tudo que ainda estava agendado (camadas com atraso, projéteis, impactos) é descartado
+var epoca: int = 0
+
+
 func _fx_after(t: float, f: Callable) -> void:
 	if t <= 0.0:
 		f.call()
 		return
-	get_tree().create_timer(t).timeout.connect(f)
+	var ep = epoca
+	get_tree().create_timer(t).timeout.connect(func():
+		if ep == epoca:
+			f.call())
 
 
 func _fx_layer(L: Dictionary, at: Vector3, from: Variant, tint: Color) -> void:
