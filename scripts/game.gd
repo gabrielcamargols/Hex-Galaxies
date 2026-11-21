@@ -4396,6 +4396,9 @@ func _act_ult_run(u) -> bool:
 		"orbital":
 			abfx("orbital", h, u.uid)
 			await move_unit(u, h, true)
+			# a cena mostra a subida e o rasante (board.METEORO_T): o impacto e o dano vêm quando ele cai
+			if tree != null and pace_time > 0.0:
+				await tree.create_timer(1.35).timeout
 			emitfx({"t": "boom", "h": h})
 			for n in DB.nbrs(h):
 				var e3 = unit_at(n)

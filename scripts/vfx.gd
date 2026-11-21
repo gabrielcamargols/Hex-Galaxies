@@ -1037,6 +1037,8 @@ func _fx_part(L: Dictionary, at: Vector3, from: Variant, tint: Color, follow: No
 		var a = rad_to_deg(_screen_angle(from, at))
 		cp.angle_min = a + float(L.get("aim_off", 0.0))
 		cp.angle_max = a + float(L.get("aim_off", 0.0))
+	if L.has("segue") and follow != null and is_instance_valid(follow):
+		pos = follow.global_position + Vector3(0, pos.y - at.y, 0)   # o rastro nasce já em quem ele segue
 	cp.position = pos
 	add_child(cp)
 	cp.emitting = true

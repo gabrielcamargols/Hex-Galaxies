@@ -5463,6 +5463,23 @@ func _ter_abfx(e: Dictionary) -> bool:
 func _on_abfx(e: Dictionary) -> void:
 	if e["k"] == "bleed":
 		board.bleed_pop(e["h"])
+	# Salto Orbital do Dragão Zukunft: decola, some lá no alto e cai como um meteoro holográfico
+	var ou: Variant = game.by_uid(e["uid"]) if game != null and int(e.get("uid", -1)) >= 0 else null
+	if e["k"] == "orbital" and ou != null and not ou.barrier and ou.cid == "z_dragao":
+		board.meteoro(ou.uid)
+		var de = _hex_pos(ou.pos(), 0.0)
+		var ate = _hex_pos(e["h"], 0.0)
+		vfx.play_fx("zuk_dragao_decolagem", de, null, Color.WHITE)
+		vfx.play_fx("zuk_dragao_mira_meteoro", ate, null, Color.WHITE)
+		var nod: Node3D = board.unit_nodes[ou.uid]["node"] if board.unit_nodes.has(ou.uid) else null
+		if nod != null:
+			_later(0.76, func(): vfx.play_fx("zuk_dragao_rastro", ate, null, Color.WHITE, nod))
+		sfx.play("vfx_aura", -6.0, 0.8)
+		_later(board.METEORO_T - 0.05, func():
+			vfx.play_fx("zuk_dragao_meteoro", ate, null, Color.WHITE)
+			board.shake = max(board.shake, 1.1)
+			sfx.play("vfx_boom", 0.0, 0.7))
+		return
 	if _ter_abfx(e):
 		if e["k"] == "hack":
 			_comic_pop(_hex_pos(e["h"], 0.0) + Vector3(0, 1.6, 0), "HACK!", false)

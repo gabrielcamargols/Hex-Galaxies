@@ -3309,7 +3309,15 @@ func _dragao_tick(fig: Node3D, delta: float, t: float, walking: bool, run: bool,
 	var ga = fa_g * flap_g - 0.15 * e3 + 0.03 * br * idle
 	var va = 0.62 * sin(bat) - 0.2                        # batida cheia, com as asas um pouco abertas
 	var asa = lerp(ga, va, fv)
+	# mergulho do Salto Orbital: asas fechadas para trás e o corpo de bico para baixo
+	var mg: float = fig.get_meta("mergulho", 0.0)
+	if mg > 0.001:
+		asa = lerp(asa, -0.55, mg)
+	var giro_n: Node3D = fig.get_node_or_null("giro")
+	if giro_n != null:
+		giro_n.rotation.x = lerp(giro_n.rotation.x, 0.75 * mg, min(1.0, delta * 10.0))
 	var asa2 = lerp(0.5 * fa_g * sin(t * 9.0 - 0.6), 0.4 * sin(bat - 0.9) - 0.15, fv)
+	asa2 = lerp(asa2, -0.35, fig.get_meta("mergulho", 0.0))
 	pose["wl0"] = [[F, asa]]
 	pose["wr0"] = [[F, -asa]]
 	pose["wl1"] = [[F, asa2]]
@@ -3502,6 +3510,11 @@ func _update_units(delta: float) -> void:
 		if goal != d["hex"]:
 			var path = walk_path(d["hex"], goal)
 			path.pop_front()
+			if d.get("meteoro_pend", false):
+				# Salto Orbital: sobe direto e cai na casa de destino (sem caminho pelo chão)
+				d["meteoro_pend"] = false
+				path = [goal]
+				d["meteoro_t"] = 0.0
 			d["path"] = path
 			d["from"] = Vector3(node.position.x, node.position.y, node.position.z)
 			d["seg_t"] = 0.0
@@ -3513,7 +3526,10 @@ func _update_units(delta: float) -> void:
 			var e = 1.0 + 0.25 * sin(d["pop"] * PI) if d["pop"] < 1.0 else 1.0
 			node.scale = Vector3.ONE * d["pop"] * e
 		var walking = not d["path"].is_empty()
-		if walking:
+		if walking and d.get("meteoro_t", -1.0) >= 0.0:
+			_meteoro_passo(d, node, delta)
+			walking = not d["path"].is_empty()
+		elif walking:
 			var w2 = world_xz(d["path"][0])
 			var w = Vector3(w2.x, top_y(d["path"][0]), w2.y)
 			var is3d = d["sprite"] != null and d["sprite"].has_meta("fig3d")
@@ -3844,6 +3860,53 @@ func hurt(uid: int) -> void:
 
 
 # personagem 3D que "conjura": ataque ou habilidade -> estende as mãos, flutua e os olhos acendem (~1,3 s)
+# ---- Salto Orbital do Dragão: sobe batendo as asas, paira no alto e mergulha como um meteoro ----
+const METEORO_T = 1.5          # o jogo espera esse tempo antes do impacto (game.gd, "orbital")
+const METEORO_ALT = 5.5
+
+
+func meteoro(uid: int) -> void:
+	if unit_nodes.has(uid):
+		unit_nodes[uid]["meteoro_pend"] = true
+
+
+func _meteoro_passo(d: Dictionary, node: Node3D, delta: float) -> void:
+	var w2 = world_xz(d["path"][0])
+	var w = Vector3(w2.x, top_y(d["path"][0]), w2.y)
+	var a: Vector3 = d["from"]
+	d["meteoro_t"] = float(d["meteoro_t"]) + delta
+	var t: float = d["meteoro_t"]
+	var topo = a + Vector3(0, METEORO_ALT, 0) + (w - a) * Vector3(0.15, 0, 0.15)
+	var p: Vector3
+	var mergulho = 0.0
+	if t < 0.55:
+		# decola: sobe rápido e vai freando
+		var u = t / 0.55
+		p = a.lerp(topo, 1.0 - pow(1.0 - u, 2.2))
+	elif t < 0.78:
+		# paira lá em cima e mira
+		p = topo + Vector3(0, 0.15 * sin((t - 0.55) / 0.23 * PI), 0)
+		mergulho = (t - 0.55) / 0.23 * 0.6
+	else:
+		# rasante: cai acelerando até a casa, como um meteoro
+		var u = clamp((t - 0.78) / (METEORO_T - 0.78), 0.0, 1.0)
+		p = topo.lerp(w, u * u * u)
+		mergulho = 0.6 + 0.4 * u
+	node.position = p
+	d["mdir"] = (w - a) * Vector3(1, 0, 1)
+	var fig = d["sprite"]
+	if fig != null and is_instance_valid(fig):
+		fig.set_meta("mergulho", mergulho)
+	if t >= METEORO_T:
+		node.position = w
+		d["from"] = w
+		d["path"].clear()
+		d["meteoro_t"] = -1.0
+		if fig != null and is_instance_valid(fig):
+			fig.set_meta("mergulho", 0.0)
+			fig.set_meta("voo_w", 0.0)     # pousou: já de pé na cratera
+
+
 func conjura(uid: int) -> void:
 	if unit_nodes.has(uid):
 		var sp = unit_nodes[uid]["sprite"]
