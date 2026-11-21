@@ -4767,6 +4767,8 @@ func resolve_attack(a, t) -> void:
 	if after == "burstSafe":
 		var ss5 = field().filter(func(x): return x != a and x != target and DB.dist(x.pos(), a.pos()) == 1 and (x.owner != a.owner or (not x.is_cmd and not x.barrier and x.hp > 5)))
 		abfx("nova", a.pos(), a.uid)
+		if ss5.any(func(x): return x.owner == a.owner):
+			abfx("fogo_amigo", a.pos(), a.uid)   # os espinhos acertaram um aliado (fala do Oncus)
 		for x in ss5:
 			damage(x, 1, a)
 	if after == "burstEnemies":
