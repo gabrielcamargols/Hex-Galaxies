@@ -515,5 +515,25 @@
   "Descanse no fundo. Eu cuido do resto.": "v_a_garra_l15",
   "Isso foi tudo? As cracas nem sentiram.": "v_a_garra_l16",
   "A maré subiu. Agora ninguém corre.": "v_a_garra_l19"
+ },
+ "a_medusa": {
+  "Toquem em mim... eu insisto.": "v_a_medusa_l01",
+  "A corrente me trouxe até aqui. Vocês vão gostar da companhia.": "v_a_medusa_l02",
+  "Tantos rostos novos... quem vai ser o primeiro a se aproximar?": "v_a_medusa_l03",
+  "Venham, venham... o mar é quentinho.": "v_a_medusa_l04",
+  "Vem me abraçar, querido. Você vai sentir o choque.": "v_a_medusa_l05",
+  "Pode bater, amor. Só não reclama do formigamento.": "v_a_medusa_l06",
+  "Distraia eles pra mim, que eu cuido do resto.": "v_a_medusa_l07",
+  "Hmm... assim eu gosto.": "v_a_medusa_l08",
+  "Ai, ai... deixa que eu encanto esse aí.": "v_a_medusa_l09",
+  "Que grosseria... fala assim de novo, chega mais perto.": "v_a_medusa_l10",
+  "Que bonitinho, ficou bravo. Agora fica parado.": "v_a_medusa_l11",
+  "Ninguém resiste ao canto do mar.": "v_a_medusa_l12",
+  "Hmm... mais um que não soube dizer não.": "v_a_medusa_l13",
+  "Não... eu ainda queria você do meu lado.": "v_a_medusa_l14",
+  "Dorme no fundo, meu bem. Eles vão pagar por cada gota.": "v_a_medusa_l15",
+  "Sente isso? É assim que o mar beija.": "v_a_medusa_l16",
+  "Olha nos meus olhos... e não se mexe.": "v_a_medusa_l19",
+  "Eu avisei pra não encostar.": "v_a_medusa_l20"
  }
 }
