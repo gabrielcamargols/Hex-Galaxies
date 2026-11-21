@@ -5631,6 +5631,8 @@ func _on_fx_real(e: Dictionary) -> void:
 			var stu: Variant = game.by_uid(e["to"])
 			if stu != null:
 				_simbolo_hit.call_deferred(e["from"], _hex_pos(stu.pos(), 0.0))
+				if stu.barrier:
+					_fala_habilidade(int(e["from"]), "triturar")   # ex.: o Britadeiro quebrando cristal ou barreira
 			var a: Variant = _unit_pos(e["from"], 1.0)
 			var tgt: Variant = _unit_pos(e["to"], 0.9)
 			var col = _vfx_color(e["from"])
@@ -5718,7 +5720,7 @@ func _on_fx_real(e: Dictionary) -> void:
 			sfx.play("invocar", -5.0)
 		"move":
 			var mu: Variant = game.by_uid(e["uid"])
-			if mu != null and _fac_of(mu) == "LIT":
+			if mu != null and not (mu is Dictionary) and DB.cards.has(mu.cid) and _fac_of(mu) == "LIT":
 				# Lithari são cristal vivo: cada passo tilinta e raspa
 				var npas: int = clampi(DB.dist(e["from"], e["to"]), 1, 6) * 2
 				for k in range(npas):

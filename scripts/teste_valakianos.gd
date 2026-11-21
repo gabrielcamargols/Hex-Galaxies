@@ -216,7 +216,7 @@ func _fundidor_e_sentinela() -> void:
 	var al = put(g, "perfurador", 0, 5, 0)
 	var en = put(g, "t_britadeira", 1, 6, 0)
 	await ativa(g, f, [H(5, 0)])
-	ok(g.has_fx(al, "coat"), "Revestimento Fundido aplicado")
+	ok(g.has_fx(al, "coat"), "Fornalha de Valak aplicada")
 	g.end_activation()
 	g.start_activation(en)
 	var hp0 = al.hp
@@ -259,7 +259,7 @@ func _fundidor_e_sentinela() -> void:
 
 
 func _demolidor() -> void:
-	print("-- Demolidor de Fendas")
+	print("-- Demolidora de Fendas")
 	var g = novo()
 	var d = put(g, "t_fendas", 0, 2, 2)
 	var bar = g._make_barrier(1, H(3, 1), 4)

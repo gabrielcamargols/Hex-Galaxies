@@ -2533,10 +2533,10 @@
    "alc": 1,
    "src": "novo",
    "ab": {
-    "name": "Revestimento Fundido",
+    "name": "Fornalha de Valak",
     "kind": "ativa",
     "per": "round",
-    "text": "1 ação: um aliado a até 1 casa recebe -2 no próximo dano sofrido, até o início da próxima ativação do Fundidor."
+    "text": "1 ação: derrama metal fundido sobre um aliado a até 1 casa, que endurece em blindagem: ele recebe -2 no próximo dano sofrido, até o início da próxima ativação do Fundidor."
    },
    "k": {
     "ult": "coat",
@@ -2546,7 +2546,7 @@
   {
    "id": "t_fendas",
    "f": "TER",
-   "name": "Demolidor de Fendas",
+   "name": "Demolidora de Fendas",
    "role": "Demolidor",
    "atk": 3,
    "int": 9,
@@ -2764,7 +2764,7 @@
    "alc": 2,
    "src": "novo",
    "ab": {
-    "name": "Conexão de Terrenos",
+    "name": "Ponte de Valak",
     "kind": "ativa",
     "per": "round",
     "text": "1 ação: escolhe de 1 a 3 casas baixas livres, vizinhas entre si e a até 2 casas dele, e eleva cada uma em 1 nível (até a altura dos terrenos ligados; em terreno plano, até o nível 1). A mudança fica até o fim da partida."

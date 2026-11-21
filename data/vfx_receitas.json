@@ -22785,7 +22785,7 @@
   "shake_delay": 0.0
  },
  "ter_fundidor_reves": {
-  "nome": "FUNDIDOR · Revestimento Fundido (ajuda: -2 no próximo dano)",
+  "nome": "FUNDIDOR · Fornalha de Valak (ajuda: -2 no próximo dano)",
   "personagem": "t_fundidor",
   "alvo": "aliado",
   "layers": [
@@ -33210,7 +33210,7 @@
   "shake_delay": 0.1
  },
  "ter_pontes_conexao": {
-  "nome": "ENGENHEIRO · Conexão de Terrenos (eleva a casa)",
+  "nome": "ENGENHEIRO · Ponte de Valak (eleva a casa)",
   "personagem": "t_pontes",
   "alvo": "meio",
   "layers": [
