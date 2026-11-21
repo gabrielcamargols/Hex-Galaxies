@@ -824,6 +824,8 @@ func reduction_of(t, peek: bool = false, d: int = 1) -> int:
 			t.fx = t.fx.filter(func(f): return f["k"] != "coat")
 	if k.has("selfRed"):
 		red += int(k["selfRed"])
+		if not peek and t.st == "field":
+			abfx("carapaca", t.pos(), t.uid)   # fala da carapaça que segurou o golpe
 	if k.has("selfRedHome") and home_half(t.owner, t.pos()):
 		red += int(k["selfRedHome"])
 	if k.has("firstHitRed") and t.hit_round != round_no:
@@ -2719,6 +2721,12 @@ func start_activation(u) -> void:
 	act = _new_act(u, 2, false)
 	log_msg(u.owner, "Ativa %s." % nm(u))
 	_act_begin(u)
+	# Maré Alta: quem começa a agir colado na Garra-Funda (com um Abyssal ao lado dela) fica lento
+	if not u.barrier and u.st == "field":
+		for g in units:
+			if g.st == "field" and g.owner != u.owner and K(g).has("slowAura") and DB.dist(g.pos(), u.pos()) == 1 and allies_of(g).any(func(x): return DB.dist(x.pos(), g.pos()) == 1 and DB.cards[x.cid]["f"] == DB.cards[g.cid]["f"]):
+				abfx("mare", g.pos(), g.uid)
+				break
 
 
 func deploy(u, h: Vector2i, via_obj: bool = false) -> void:

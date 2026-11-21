@@ -496,5 +496,24 @@
   "Vou cobrar essa dívida... em silêncio.": "v_inkshadow_l15",
   "A tinta desce. Ninguém enxerga mais nada.": "v_inkshadow_l16",
   "Silêntus... Mórtis.": "v_inkshadow_l19"
+ },
+ "a_garra": {
+  "As correntes do fundo vieram comigo.": "v_a_garra_l01",
+  "Minha carapaça já quebrou âncoras. Vai quebrar vocês também.": "v_a_garra_l02",
+  "O mar me deu tempo... e paciência. Eu não tenho pressa.": "v_a_garra_l03",
+  "Fiquem atrás de mim. Ninguém passa.": "v_a_garra_l04",
+  "Pode bater. Eu adoro cócegas.": "v_a_garra_l05",
+  "Minhas pinças estão com fome... e você parece macio.": "v_a_garra_l06",
+  "Fiquem perto de mim. A maré sobe quando estamos juntos.": "v_a_garra_l07",
+  "Pode deixar. Eu seguro a linha.": "v_a_garra_l08",
+  "Vai lá. Se der errado, volta pra trás da minha casca.": "v_a_garra_l09",
+  "Grande coisa. Já fui atacada por coisas maiores... e mais bonitas.": "v_a_garra_l10",
+  "Fala o que quiser. Daqui eu não saio.": "v_a_garra_l11",
+  "Mais uma âncora quebrada.": "v_a_garra_l12",
+  "Hah... O fundo do mar sempre vence.": "v_a_garra_l13",
+  "Não... eu devia estar na frente dele.": "v_a_garra_l14",
+  "Descanse no fundo. Eu cuido do resto.": "v_a_garra_l15",
+  "Isso foi tudo? As cracas nem sentiram.": "v_a_garra_l16",
+  "A maré subiu. Agora ninguém corre.": "v_a_garra_l19"
  }
 }

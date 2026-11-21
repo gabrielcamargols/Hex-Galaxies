@@ -5814,7 +5814,9 @@ func _on_fx_real(e: Dictionary) -> void:
 			sfx.play("vfx_aura", -9.0)
 		"abfx":
 			if int(e.get("uid", -1)) >= 0:
-				board.conjura(int(e["uid"]))
+				# passivas que só disparam fala (sem pose de conjurar)
+				if not str(e.get("k", "")) in ["carapaca", "mare", "silentus"]:
+					board.conjura(int(e["uid"]))
 				_fala_habilidade(int(e["uid"]), str(e.get("k", "")))
 			_on_abfx(e)
 		"ult":
