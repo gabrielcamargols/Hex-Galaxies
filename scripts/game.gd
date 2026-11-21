@@ -1322,12 +1322,16 @@ func _mark_ko(t, src) -> void:
 		return
 	# Inkshadow (Silentus Mortis): com ele em campo, o marcado cai com 3 de Vida ou menos
 	var lim = 1
+	var sil = null
 	for ix in field():
 		if ix.owner == src.owner and K(ix).has("silentus"):
 			lim = max(lim, int(K(ix)["silentus"]))
+			sil = ix
 	if t.st == "field" and t.hp > 0 and t.hp <= lim and marked_by(t, src.owner):
 		log_msg(src.owner, "Marca Abyssal: %s é nocauteado na hora." % nm(t))
 		abfx("amark_ko", t.pos(), src.uid)
+		if sil != null and (sil == src or t.hp > 1):
+			abfx("silentus", t.pos(), sil.uid)   # fala do Silentus Mortis
 		damage(t, t.hp, src)
 
 

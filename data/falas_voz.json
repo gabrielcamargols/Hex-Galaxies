@@ -477,5 +477,24 @@
   "Mano, me ajuda!": "v_kling_l15",
   "Eles machucaram um dos nossos! Oficina Móvel!": "v_kling_l16",
   "Toma, é presente! Fiz com carinho.": "v_kling_l17"
+ },
+ "inkshadow": {
+  "Você nunca vai me achar na tinta.": "v_inkshadow_l01",
+  "Shhh... ninguém ouve a maré subir.": "v_inkshadow_l02",
+  "A luz acaba aqui. Daqui pra frente... é comigo.": "v_inkshadow_l03",
+  "Já escolhi quem não volta pra casa.": "v_inkshadow_l04",
+  "Tá sentindo esse frio na nuca? Sou eu.": "v_inkshadow_l05",
+  "Corre. Eu gosto quando correm.": "v_inkshadow_l06",
+  "Abre caminho. Eu termino o serviço.": "v_inkshadow_l07",
+  "Entendido. Sem barulho.": "v_inkshadow_l08",
+  "Deixa a marca neles... o resto é meu.": "v_inkshadow_l09",
+  "Fala baixo. Vai ser sua última frase.": "v_inkshadow_l10",
+  "Você fala demais pra quem já tá marcado.": "v_inkshadow_l11",
+  "Nem viram de onde veio.": "v_inkshadow_l12",
+  "A tinta seca... e ninguém lembra de mim.": "v_inkshadow_l13",
+  "Caiu no escuro... e eu não cheguei a tempo.": "v_inkshadow_l14",
+  "Vou cobrar essa dívida... em silêncio.": "v_inkshadow_l15",
+  "A tinta desce. Ninguém enxerga mais nada.": "v_inkshadow_l16",
+  "Silêntus... Mórtis.": "v_inkshadow_l19"
  }
 }
