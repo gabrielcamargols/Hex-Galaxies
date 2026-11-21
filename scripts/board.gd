@@ -3218,7 +3218,7 @@ func _dragao_setup(root: Node3D, sk: Skeleton3D) -> void:
 	root.set_meta("cj_w", 0.0)
 	root.set_meta("skel", sk)
 	root.set_meta("bones", bones)
-	root.set_meta("vel", [2.0, 4.2])
+	root.set_meta("vel", [1.4, 2.4])   # voo mais calmo que uma passada, para dar tempo de decolar e planar
 
 
 func _dragao_tick(fig: Node3D, delta: float, t: float, walking: bool, run: bool, lunge: float, hurt: float) -> void:
