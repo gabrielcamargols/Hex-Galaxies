@@ -2624,6 +2624,8 @@ func _figure3d(cid: String, body_h: float) -> Node3D:
 		sk = n
 		break
 	inst.scale = Vector3.ONE * (body_h * 0.9 / hgt) * float(cfg.get("escala", 1.0))
+	if sk != null:
+		_centra_fig(inst, sk, cfg)
 	if cfg.get("corpo", "") == "dragao" and sk != null:
 		_dragao_setup(root, sk)
 	root.set_meta("mats", mats)
@@ -2834,6 +2836,37 @@ func _olhos_conjura(root: Node3D, ofs: Array) -> void:
 	att.add_child(lamp)
 	root.set_meta("olhos", mats)
 	root.set_meta("olhos_luz", lamp)
+
+
+# centraliza o modelo na casa: o ponto entre os pés (o dragão: entre as quatro patas) fica no meio do
+# hexágono; cauda e asas podem passar da borda. O giro do boneco acontece em volta desse ponto.
+func _centra_fig(inst: Node3D, sk: Skeleton3D, cfg: Dictionary) -> void:
+	var nomes = ["LeftFoot", "RightFoot"]
+	if cfg.get("corpo", "") == "dragao":
+		nomes = ["tripo__0_Left_Limb_3", "tripo__0_Right_Limb_2", "tripo__1_Left_Limb_3", "tripo__1_Right_Limb_3"]
+	var ids = []
+	for n in nomes:
+		var i = sk.find_bone(n) if n.begins_with("tripo__") else _osso(sk, n)
+		if i >= 0:
+			ids.append(i)
+	if ids.is_empty():
+		var h = _osso(sk, "Hips")
+		if h < 0:
+			return
+		ids.append(h)
+	# transformação do esqueleto até o modelo (o nó ainda não está na árvore)
+	var xf = Transform3D()
+	var n: Node = sk
+	while n != null and n != inst:
+		if n is Node3D:
+			xf = (n as Node3D).transform * xf
+		n = n.get_parent()
+	var c = Vector3.ZERO
+	for i in ids:
+		c += inst.transform * (xf * sk.get_bone_global_rest(i).origin)
+	c /= float(ids.size())
+	inst.position.x -= c.x
+	inst.position.z -= c.z
 
 
 # acha um osso pelo nome Mixamo; aceita também o esqueleto humanoide do Tripo (L_Upperarm, Spine01...)
