@@ -138,7 +138,9 @@ func _ready() -> void:
 	board.set_script(load("res://scripts/board.gd"))
 	add_child(board)
 	board.hex_tapped.connect(_on_hex_tapped)
-	board.banana_pousou.connect(func(pos, col): vfx.play_fx("fau_banana_pouso", pos, null, Color.WHITE))
+	board.banana_pousou.connect(func(pos, col):
+		vfx.play_fx("fau_banana_pouso", pos, null, Color.WHITE)
+		sfx.play("esp_karo_plop", -6.0, randf_range(0.9, 1.25), 0.0))
 	board.hex_hovered.connect(_on_hex_hover)
 	board.unit_dropped.connect(_on_unit_dropped)
 	board.unit_drag_started.connect(_on_unit_drag_started)
@@ -5492,8 +5494,11 @@ func _especial_lider(e: Dictionary) -> bool:
 			var alvo: Variant = game.unit_at(e["h"])
 			board.gesto(u.uid, "rugido", ate)
 			vfx.play_fx("aby_rhazur_rugido", de, null, Color.WHITE)
-			sfx.play("vfx_sonic", -4.0, 0.7)
-			_later(0.3, func(): vfx.play_fx("aby_rhazur_redemoinho", ate, null, Color.WHITE))
+			sfx.play("esp_rhazur_rugido", -2.0, 1.0, 0.0)
+			_later(0.3, func():
+				vfx.play_fx("aby_rhazur_redemoinho", ate, null, Color.WHITE)
+				sfx.play("esp_rhazur_redemoinho", -6.0, 1.0, 0.0))
+			_later(0.72, func(): sfx.play("esp_rhazur_corrente", -3.0, 1.0, 0.0))
 			if alvo != null and board.unit_nodes.has(alvo.uid):
 				var nd: Node3D = board.unit_nodes[alvo.uid]["node"]
 				_later(0.72, func():
@@ -5505,20 +5510,23 @@ func _especial_lider(e: Dictionary) -> bool:
 			if agora - _rei_ult_ms > 1500:
 				_rei_k = 0
 				board.gesto(u.uid, "erguer", ate)
-				sfx.play("vfx_quake" if sfx.has_sound("vfx_quake") else "vfx_boom", -6.0, 0.7)
+				sfx.play("esp_rei_tremor", -5.0, 1.0, 0.0)
 			_rei_ult_ms = agora
 			board.brota_ate_ms = agora + 400
 			var atraso = 0.22 * _rei_k + 0.35
 			_rei_k += 1
 			_later(atraso, func():
 				vfx.play_fx("ter_rei_brota", ate, null, Color.WHITE)
+				sfx.play("esp_rei_cristal", -3.0, randf_range(0.92, 1.1), 0.0)
 				vfx.play_fx("ter_rei_barreira", ate, null, Color.WHITE, null, _ter_ctx(u.cid)))
 			return true
 		["w_mamute", "stampede"]:
 			board.gesto(u.uid, "pisotear")
+			sfx.play("esp_mamute_barrido", -3.0, 1.0, 0.0)
 			_later(0.6, func():
 				vfx.play_fx("wac_mamute_pisao", de, null, Color.WHITE)
-				sfx.play("vfx_boom", -2.0, 0.6))
+				sfx.play("esp_mamute_pisao", 0.0, 1.0, 0.0))
+			_later(0.8, func(): sfx.play("esp_mamute_manada", -5.0, 1.0, 0.0))
 			_later(0.75, func(): board.manada_espectral(u.uid, 2.8))
 			if board.unit_nodes.has(u.uid):
 				var nm2: Node3D = board.unit_nodes[u.uid]["node"]
@@ -5528,14 +5536,19 @@ func _especial_lider(e: Dictionary) -> bool:
 			return true
 		["l_general", "prison"]:
 			board.gesto(u.uid, "palma", ate)
+			sfx.play("esp_lit_carga", 0.0, 1.0, 0.0)
 			_later(0.2, func(): vfx.play_fx("lit_prisao_palma", de + (ate - de).normalized() * 0.5 * Vector3(1, 0, 1), null, Color.WHITE))
-			_later(0.4, func(): vfx.play_fx("lit_prisao_raio", ate, de, Color.WHITE))
+			_later(0.4, func():
+				vfx.play_fx("lit_prisao_raio", ate, de, Color.WHITE)
+				sfx.play("esp_lit_disparo", 0.0, 1.0, 0.0))
 			_later(0.78, func():
 				vfx.play_fx("lit_prisao_fecha", ate, null, Color.WHITE)
-				sfx.play("tiro_cristal", -2.0, 0.7))
+				sfx.play("esp_lit_prisao", 2.0, 1.0, 0.0))
 			return true
 		["karo", "insight"]:
 			board.gesto(u.uid, "arremesso")
+			for kk in range(6):
+				_later(0.22 + 0.13 * kk, func(): sfx.play("esp_karo_arremesso", -6.0, randf_range(0.9, 1.2), 0.0))
 			board.banana_origem = de
 			board.banana_k = 0
 			_later(1.5, func(): board.banana_origem = null)
@@ -5549,6 +5562,7 @@ func _cena_bombardeio(u, h: Vector2i) -> void:
 	var ate = _hex_pos(h, 0.0)
 	board.gesto(u.uid, "radio", ate)
 	sfx.play("radio_on", -3.0)
+	_later(0.12, func(): sfx.play("esp_krieg_radio", -4.0, 1.0, 0.0))
 	vfx.play_fx("kri_cmd_radio", de, null, Color.WHITE)
 	_later(0.55, func():
 		vfx.play_fx("kri_cmd_marca", ate, null, Color.WHITE)
@@ -5632,13 +5646,13 @@ func _cai_projetil(alvo: Vector3, chega: float, grande: bool) -> void:
 		# o nariz (-Y do modelo) aponta para onde ele cai
 		pr.global_transform.basis = Basis(Quaternion(Vector3.DOWN, dirv)).scaled(pr.scale)
 		vfx.play_fx("kri_projetil_rastro", ini, null, Color.WHITE, pr)
-		sfx.play("projetil", -6.0, 0.6)
+		sfx.play("esp_krieg_assobio", -4.0 if grande else -10.0, randf_range(0.95, 1.08), 0.0)
 		var tw = pr.create_tween()
 		tw.tween_property(pr, "global_position", fim, voo).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 		tw.tween_callback(func():
 			pr.queue_free()
 			vfx.play_fx("kri_cmd_explosao" if grande else "kri_cmd_explosao_p", alvo, null, Color.WHITE)
-			sfx.play("vfx_boom", 0.0 if grande else -5.0, 0.8 if grande else 1.1)))
+			sfx.play("esp_krieg_explosao" if grande else "esp_krieg_explosao_p", 0.0 if grande else -6.0, randf_range(0.95, 1.05), 0.0)))
 
 
 # efeitos 2.5D das habilidades: cada tipo tem seu desenho, cor e som
@@ -5658,11 +5672,12 @@ func _on_abfx(e: Dictionary) -> void:
 		var nod: Node3D = board.unit_nodes[ou.uid]["node"] if board.unit_nodes.has(ou.uid) else null
 		if nod != null:
 			_later(0.76, func(): vfx.play_fx("zuk_dragao_rastro", ate, null, Color.WHITE, nod))
-		sfx.play("vfx_aura", -6.0, 0.8)
+		sfx.play("esp_dragao_decolagem", -2.0, 1.0, 0.0)
+		_later(0.72, func(): sfx.play("esp_dragao_meteoro", -2.0, 1.0, 0.0))
 		_later(board.METEORO_T - 0.05, func():
 			vfx.play_fx("zuk_dragao_meteoro", ate, null, Color.WHITE)
 			board.shake = max(board.shake, 1.1)
-			sfx.play("vfx_boom", 0.0, 0.7))
+			sfx.play("esp_dragao_impacto", 1.0, 1.0, 0.0))
 		return
 	if _ter_abfx(e):
 		if e["k"] == "hack":
@@ -5873,7 +5888,10 @@ func _on_fx_real(e: Dictionary) -> void:
 				impact_delay = max(ht, 0.12)
 				impact_until = now + int(impact_delay * 1000.0) + 40
 				hit_fac[e["to"]] = "@ter"
-				sfx.play("tiro_energia" if e["ranged"] else "vfx_boom", -3.0, 1.0 if e["ranged"] else 1.2)
+				if fu.cid == "z_dragao":
+					_later(0.16, func(): sfx.play("esp_dragao_baforada", -2.0, randf_range(0.95, 1.05), 0.0))
+				else:
+					sfx.play("tiro_energia" if e["ranged"] else "vfx_boom", -3.0, 1.0 if e["ranged"] else 1.2)
 				return
 			if e["ranged"]:
 				var style = _shot_style(e["from"])
