@@ -281,25 +281,46 @@ func play(n: String, vol_db: float = 0.0, pitch: float = 1.0, vary: float = 0.08
 func _play_raw(n: String, vol_db: float = 0.0, pitch: float = 1.0, vary: float = 0.0, bus: String = "") -> void:
 	if not has_sound(n):
 		return
+	var bb = bus if bus != "" else bus_of(n)
+	var lista = pool
+	if BUS_COM_EFEITO.has(bb):
+		lista = _pool_efeito()
 	var p: AudioStreamPlayer = null
-	for q in pool:
+	for q in lista:
 		if not q.playing:
 			p = q
 			break
 	if p == null:
-		p = pool[0]
+		p = lista[0]
 	p.stream = streams[n]
-	p.bus = bus if bus != "" else bus_of(n)
+	p.bus = bb
 	p.volume_db = vol_db + master_db
 	p.pitch_scale = pitch * randf_range(1.0 - vary, 1.0 + vary)
 	p.play()
+
+
+# Na web o Godot toca os sons no modo "sample" do navegador, que ignora os efeitos dos buses
+# (rádio, celestial, cristal, foca). As vozes com efeito usam players próprios no modo "stream",
+# que passa pelo mixer do Godot e aplica os efeitos.
+const BUS_COM_EFEITO = ["Radio", "Celeste", "CelesteAlto", "Cristal", "CristalAlto", "Foca", "FocaGrave", "Narrador"]
+var pool_fx: Array = []
+
+
+func _pool_efeito() -> Array:
+	if pool_fx.is_empty():
+		for i in range(6):
+			var q = AudioStreamPlayer.new()
+			q.playback_type = AudioServer.PLAYBACK_TYPE_STREAM
+			add_child(q)
+			pool_fx.append(q)
+	return pool_fx
 
 
 # interrompe um som que esteja tocando (ex.: fala gravada quando a cena é pulada)
 func stop_sound(n: String) -> void:
 	if not streams.has(n):
 		return
-	for q in pool:
+	for q in pool + pool_fx:
 		if q.playing and q.stream == streams[n]:
 			q.stop()
 
