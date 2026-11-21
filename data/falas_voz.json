@@ -440,5 +440,23 @@
   "Não, não, não! Eu cheguei tarde...": "v_sterina_l14",
   "Vocês machucaram meu amigo... agora eu fico brava. E eu brava não brilho.": "v_sterina_l15",
   "Estrela hexa! Ninguém toca em vocês aqui dentro!": "v_sterina_l16"
+ },
+ "klang": {
+  "Garra carregada. Alguém quer ouvir um estalo?": "v_klang_l01",
+  "Quatro casas de distância... minha distância favorita.": "v_klang_l02",
+  "Não preciso chegar perto. O som chega por mim.": "v_klang_l03",
+  "No fundo do mar, todo mundo conhece esse barulho. E ninguém gosta dele.": "v_klang_l04",
+  "Fica bem aí. Assim fica mais fácil.": "v_klang_l05",
+  "Encosta na parede, vai... eu adoro quando tem parede.": "v_klang_l06",
+  "Segura eles aí, que eu cuido daqui de longe.": "v_klang_l07",
+  "Na mira.": "v_klang_l08",
+  "Kling, conserta o que sobrar, que eu quebro o resto.": "v_klang_l09",
+  "Fala mais alto... ah, esqueci, você tá surdo.": "v_klang_l10",
+  "Errou? Eu nem preciso mirar direito.": "v_klang_l11",
+  "Estalou.": "v_klang_l12",
+  "Atordoado e acabado.": "v_klang_l13",
+  "Isso foi um erro... e eu tenho boa memória.": "v_klang_l14",
+  "Agora eu estalo até a garra doer.": "v_klang_l15",
+  "Tiro sônico! Pra trás... e fica aí, tonto.": "v_klang_l16"
  }
 }
