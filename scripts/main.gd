@@ -2530,6 +2530,8 @@ func _start_match(sides) -> void:
 	game.setup(sides, setup_cfg["map"])
 	game.question.connect(_on_question)
 	# cutscenes de entrada dos líderes desligadas: o líder entra direto no tabuleiro e fala
+	if not autotest:
+		game.falas_lideres = _espera_falas_lideres
 	game.changed.connect(refresh)
 	game.fx_event.connect(_on_fx)
 	sel = -1
@@ -6222,6 +6224,15 @@ var entradas_pend: Array = []
 var cmd_voz_livre_ms: int = 0
 
 
+# o jogo só segue depois que todos os líderes terminaram a fala de entrada
+func _espera_falas_lideres() -> void:
+	busy = true
+	await get_tree().create_timer(0.8).timeout     # a fila de entrada se forma
+	while not entradas_pend.is_empty() or Time.get_ticks_msec() < cmd_voz_livre_ms or Time.get_ticks_msec() < sfx.voz_ate_ms:
+		await get_tree().process_frame
+	busy = false
+
+
 func _fila_entrada(u, texto: String) -> void:
 	entradas_pend.append({"uid": u.uid, "cid": u.cid, "owner": u.owner, "txt": texto})
 	if entradas_pend.size() > 1:
@@ -6244,6 +6255,8 @@ func _banter(uid: int) -> void:
 	if u == null or u.barrier:
 		return
 	var now = Time.get_ticks_msec()
+	if not u.is_cmd and (now < cmd_voz_livre_ms or not entradas_pend.is_empty()):
+		return   # os líderes estão se apresentando: os outros ficam quietos
 	if now - last_banter_ms < 3500 and not u.is_cmd:
 		return
 	last_banter_ms = now

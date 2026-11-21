@@ -69,6 +69,7 @@ class Unit:
 
 
 var cine: Callable = Callable()   # main.gd: cinemática antes de os comandantes entrarem
+var falas_lideres: Callable = Callable()   # main.gd: espera as falas de entrada dos líderes terminarem
 var round_no: int = 0
 var first: int = 0
 var cur: int = 0
@@ -1984,6 +1985,9 @@ func start_round() -> void:
 			await cine.call()
 		for p in range(2):
 			await commander_enters(p)
+		# ninguém age enquanto os líderes estão se apresentando
+		if falas_lideres.is_valid():
+			await falas_lideres.call()
 	if winner != NONE:
 		return
 	for p in range(2):
