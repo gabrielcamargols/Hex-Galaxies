@@ -590,6 +590,12 @@ func abfx(k: String, h: Vector2i, uid: int = -1) -> void:
 	emitfx({"t": "abfx", "k": k, "h": h, "uid": uid})
 
 
+# espera a cena de um especial (o golpe só cai quando a animação chega lá); nos testes não espera
+func _espera_cena(seg: float) -> void:
+	if tree != null and pace_time > 0.0:
+		await tree.create_timer(seg).timeout
+
+
 func pace() -> void:
 	changed.emit()
 	if tree != null:
@@ -3027,6 +3033,7 @@ func _stampede_run(u, h: Vector2i) -> void:
 			emitfx({"t": "strike", "from": u.uid, "to": e.uid, "ranged": false})
 			damage(e, 2, u)
 			if not side.is_empty() and e.hp > 0:
+				abfx("arremessado", side[0], e.uid)   # a cena desliza a peça para o lado (não anda)
 				await move_unit(e, side[0])
 			settle()
 			if unit_at(c) != null:
@@ -4178,11 +4185,14 @@ func _act_ult_run(u) -> bool:
 			if t != null and not spots.is_empty():
 				abfx("abyss", h, u.uid)
 				abfx("abyss", spots[0], u.uid)
+				await _espera_cena(0.95)          # rugido, redemoinho e tentáculos agarrando
 				emitfx({"t": "passive", "kind": "curse", "uid": t.uid})
 				log_msg(p, "%s foi puxado para o abismo." % nm(t))
 				await move_unit(t, spots[0])
 		"bombard":
 			abfx("bombard", h, u.uid)
+			if u.cid == "k_cmd":
+				await _espera_cena(1.75)      # rádio, marcação e os projéteis caindo do céu
 			emitfx({"t": "boom", "h": h})
 			var t2 = unit_at(h)
 			if t2 != null:
@@ -4196,6 +4206,7 @@ func _act_ult_run(u) -> bool:
 			var t3 = unit_at(h)
 			if t3 != null:
 				abfx("prison", h, u.uid)
+				await _espera_cena(0.75)          # a mão aberta dispara os cristais que fecham a prisão
 				t3.fx.append({"k": "prison", "end": round_no + 1})
 				t3.fx.append({"k": "root", "end": round_no + 1})
 				emitfx({"t": "passive", "kind": "shield", "uid": t3.uid})
@@ -4222,6 +4233,8 @@ func _act_ult_run(u) -> bool:
 					break
 				cur_h = nh
 		"stampede":
+			abfx("stampede", u.pos(), u.uid)
+			await _espera_cena(0.85)              # empina, pisa e chama a manada
 			await _stampede_run(u, h)
 		"mend":
 			var tm9 = unit_at(h)

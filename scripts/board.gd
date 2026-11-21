@@ -1775,6 +1775,7 @@ func _build_rails() -> void:
 
 # bananas do Karo: cada uma com a cor do bônus (verde cura, vermelho força, azul mira)
 var banana_nodes: Dictionary = {}
+signal banana_pousou(pos: Vector3, col: Color)
 var hover_seen: Variant = null
 var core_node: Node3D = null
 var core_next_node: Node3D = null
@@ -1955,6 +1956,39 @@ func _pulse_hex_energy() -> void:
 		core_next_node.get_node("aro").material_override.albedo_color.a = 0.25 + 0.4 * q
 
 
+var banana_origem: Variant = null    # Banquete dos Clãs: de onde o Karo arremessa (a próxima leva voa até as casas)
+var banana_k: int = 0
+
+
+func _banana_voa(n: Node3D, de: Vector3, col: Color, k: int) -> void:
+	n.visible = false
+	var alvo = n.position
+	var voa = Node3D.new()
+	scenery_root.add_child(voa)
+	for i in range(3):
+		var a = -0.5 + i * 0.5
+		var seg = _mesh(voa, CapsuleMesh.new(), Color("#ffd23a"), Vector3(sin(a) * 0.16, cos(a) * 0.05, 0), Vector3(0, 0, PI / 2 + a))
+		seg.scale = Vector3(0.11, 0.14, 0.11) * 1.3
+	var ini = de + Vector3(0, 1.6, 0)
+	voa.position = ini
+	var dur = 0.55 + DB.dist(Vector2i.ZERO, Vector2i.ZERO) * 0.0 + ini.distance_to(alvo) * 0.05
+	var alto = 1.6 + ini.distance_to(alvo) * 0.35
+	var tw = voa.create_tween()
+	tw.tween_interval(0.25 + 0.13 * k)
+	tw.tween_method(func(u):
+		voa.position = ini.lerp(alvo + Vector3(0, 0.25, 0), u) + Vector3(0, sin(u * PI) * alto, 0)
+		voa.rotation = Vector3(u * 9.0, u * 4.0, u * 6.0), 0.0, 1.0, dur)
+	tw.tween_callback(func():
+		voa.queue_free()
+		if is_instance_valid(n):
+			n.visible = true
+			n.scale = Vector3.ONE * 0.2
+			var tp = n.create_tween()
+			tp.tween_property(n, "scale", Vector3.ONE * 1.25, 0.12).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+			tp.tween_property(n, "scale", Vector3.ONE, 0.15)
+			banana_pousou.emit(alvo, col))
+
+
 func sync_bananas(b: Dictionary, viewer: int) -> void:
 	for h in banana_nodes.keys():
 		if not b.has(h):
@@ -1988,6 +2022,9 @@ func sync_bananas(b: Dictionary, viewer: int) -> void:
 		lab.position = Vector3(0, 0.62, 0)
 		n.add_child(lab)
 		banana_nodes[h] = n
+		if banana_origem != null:
+			_banana_voa(n, Vector3(banana_origem), col, banana_k)
+			banana_k += 1
 
 
 # ---- armadilhas visíveis no terreno: modelo 3D flutuando na casa até explodir ----
@@ -2458,6 +2495,17 @@ func _make_unit(u) -> void:
 	node.scale = Vector3(0.01, 0.01, 0.01)
 	unit_nodes[u.uid] = {"node": node, "sprite": sprite, "hp": hp, "heart": heart, "tag": tag, "flags": flags, "ring": ring,
 		"top": body_h, "hex": u.pos(), "path": [], "seg_t": 0.0, "from": start, "pop": 0.0, "flip": u.owner == 1, "bob": randf() * TAU, "hurt": 0.0, "lunge": 0.0, "ckey": "%s%d" % [u.crystal, u.sp_owner]}
+	if u.crystal != "" and Time.get_ticks_msec() < brota_ate_ms:
+		# vários cristais no mesmo instante brotam um depois do outro
+		var agora = Time.get_ticks_msec()
+		if agora - _brota_ult_ms > 120:
+			_brota_fila = 0
+		_brota_ult_ms = agora
+		unit_nodes[u.uid]["brota"] = -0.22 * _brota_fila
+		unit_nodes[u.uid]["pop"] = 1.0
+		unit_nodes[u.uid]["node"].scale = Vector3.ONE
+		unit_nodes[u.uid]["node"].visible = false
+		_brota_fila += 1
 
 
 # personagem: a arte num cartão que encara a câmera, com as cores originais e sombra no chão
@@ -2933,6 +2981,8 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 	elif fig.is_inside_tree():
 		# parado: virado para o lado inimigo, fixo no tabuleiro (girar a câmera não mexe as peças)
 		var od: Vector3 = fig.get_meta("olha", Vector3.ZERO)
+		if _gesto_w(fig) > 0.0 and fig.has_meta("gesto_alvo"):
+			od = Vector3(fig.get_meta("gesto_alvo")) - fig.global_position   # vira para o alvo do especial
 		if od.length() < 0.01 and cam != null and is_instance_valid(cam):
 			od = cam.global_position - fig.global_position
 		od.y = 0.0
@@ -3108,6 +3158,15 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 		for hn in ["LeftHand", "RightHand"]:
 			if not pose.has(hn):
 				pose[hn] = []   # o pulso volta ao repouso antes de a pose da ilustração mirar a mão
+	var gk: Dictionary = _gesto_quadro(fig)
+	if not gk.is_empty():
+		var gw: float = gk["w"]
+		for parte in ["Spine1", "Head"]:
+			if gk.has(parte):
+				if not pose.has(parte):
+					pose[parte] = []
+				pose[parte].append([S, float(gk[parte]) * gw])
+		fig.position.y += float(gk.get("y", 0.0)) * gw
 	for nm in pose.keys():
 		if not bn.has(nm):
 			continue
@@ -3177,6 +3236,10 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 				var qh = Quaternion(cur_h, cur_h.slerp(alvo_h, e4).normalized())
 				var pgh = sk.get_bone_global_pose(fb)
 				sk.set_bone_pose_rotation(hb, (pgh.basis.inverse() * (Basis(qh) * gh.basis)).get_rotation_quaternion())
+	if not gk.is_empty():
+		for side in ["Left", "Right"]:
+			if gk.has(side):
+				_aponta_braco(sk, bn, side, gk[side], float(gk["w"]), F, S, U)
 	# pés no chão andando e correndo: o corpo desce o quanto o pé mais baixo ficou acima do chão
 	# (o joelho dobrado e o quique deixavam todo mundo flutuando); correndo sobra um voo curtinho
 	if ww > 0.001 and cjw < 0.999:
@@ -3440,6 +3503,7 @@ func _process(delta: float) -> void:
 		if is_instance_valid(sh):
 			_orient_ship(sh)
 	_pulse_hex_energy()
+	_manada_tick(delta)
 	if g != null:
 		_update_claw(delta)
 	if not swirl_nodes.is_empty():
@@ -3510,6 +3574,11 @@ func _update_units(delta: float) -> void:
 		if goal != d["hex"]:
 			var path = walk_path(d["hex"], goal)
 			path.pop_front()
+			if d.get("arrasto_pend", false):
+				# puxado / arremessado: desliza pelo chão até a casa, sem andar
+				d["arrasto_pend"] = false
+				path = [goal]
+				d["arrasto_t"] = 0.0
 			if d.get("meteoro_pend", false):
 				# Salto Orbital: sobe direto e cai na casa de destino (sem caminho pelo chão)
 				d["meteoro_pend"] = false
@@ -3528,6 +3597,9 @@ func _update_units(delta: float) -> void:
 		var walking = not d["path"].is_empty()
 		if walking and d.get("meteoro_t", -1.0) >= 0.0:
 			_meteoro_passo(d, node, delta)
+			walking = not d["path"].is_empty()
+		elif walking and d.get("arrasto_t", -1.0) >= 0.0:
+			_arrasto_passo(d, node, delta)
 			walking = not d["path"].is_empty()
 		elif walking:
 			var w2 = world_xz(d["path"][0])
@@ -3558,6 +3630,16 @@ func _update_units(delta: float) -> void:
 		else:
 			var hw = world_xz(d["hex"])
 			node.position = Vector3(hw.x, top_y(d["hex"]), hw.y)
+			if d.has("brota"):
+				# cristal da Barreira de Valak brotando do chão (passa um pouco do ponto e assenta)
+				d["brota"] = float(d["brota"]) + delta * 1.7
+				var bt = clamp(float(d["brota"]), 0.0, 1.0)
+				var sobe = 1.0 - pow(1.0 - bt, 3.0) + 0.12 * sin(bt * PI)
+				node.position.y -= 1.8 * (1.0 - sobe)
+				node.visible = float(d["brota"]) > 0.0
+				if bt >= 1.0:
+					d.erase("brota")
+		_jaula(u, d, delta)
 		if drag != null and drag["on"] and drag["uid"] == u.uid and drag.has("world"):
 			node.position = drag["world"] + Vector3(0, 0.6, 0)
 		# vida e marcas
@@ -3860,6 +3942,315 @@ func hurt(uid: int) -> void:
 
 
 # personagem 3D que "conjura": ataque ou habilidade -> estende as mãos, flutua e os olhos acendem (~1,3 s)
+var _brota_fila: int = 0
+var brota_ate_ms: int = 0      # a Barreira de Valak liga: cristais criados até esse instante brotam do chão
+var _brota_ult_ms: int = 0
+
+
+# ---- puxado/arremessado: a peça é arrastada pelo chão até a casa ----
+func arrasto(uid: int) -> void:
+	if unit_nodes.has(uid):
+		unit_nodes[uid]["arrasto_pend"] = true
+
+
+func _arrasto_passo(d: Dictionary, node: Node3D, delta: float) -> void:
+	var w2 = world_xz(d["path"][0])
+	var w = Vector3(w2.x, top_y(d["path"][0]), w2.y)
+	d["arrasto_t"] = float(d["arrasto_t"]) + delta / 0.5
+	var t = clamp(float(d["arrasto_t"]), 0.0, 1.0)
+	var e = t * t * (3.0 - 2.0 * t)
+	var p: Vector3 = Vector3(d["from"]).lerp(w, e)
+	p.y += sin(t * PI) * 0.35
+	node.position = p
+	if t >= 1.0:
+		node.position = w
+		d["from"] = w
+		d["path"].clear()
+		d["arrasto_t"] = -1.0
+		d["hurt"] = 1.0
+
+
+# ---- Prisão de Cristal: cristais 3D em volta da peça presa enquanto a prisão durar ----
+var _jaula_mat: ShaderMaterial = null
+
+
+func _jaula(u, d: Dictionary, delta: float) -> void:
+	var presa = g.has_fx(u, "prison") if not u.barrier else false
+	var jn: Node3D = d.get("jaula", null)
+	if presa and jn == null:
+		jn = _jaula_nova(float(d.get("top", 1.6)))
+		d["node"].add_child(jn)
+		d["jaula"] = jn
+		d["jaula_t"] = 0.0
+	if jn == null:
+		return
+	if presa:
+		d["jaula_t"] = min(1.0, float(d["jaula_t"]) + delta * 1.6)
+	else:
+		d["jaula_t"] = float(d["jaula_t"]) - delta * 3.0
+		if float(d["jaula_t"]) <= 0.0:
+			jn.queue_free()
+			d.erase("jaula")
+			return
+	var jt = clamp(float(d["jaula_t"]), 0.0, 1.0)
+	var i = 0
+	for c in jn.get_children():
+		# cada lança cresce com um atraso, de fora para dentro
+		var k = clamp(jt * 1.6 - float(i) * 0.07, 0.0, 1.0)
+		var e = 1.0 - pow(1.0 - k, 3.0) + 0.1 * sin(k * PI)
+		c.scale = Vector3(1, max(0.001, e), 1) * c.get_meta("esc", 1.0)
+		i += 1
+	jn.rotation.y += delta * 0.15
+	if _jaula_mat != null:
+		_jaula_mat.set_shader_parameter("tempo", Time.get_ticks_msec() / 1000.0)
+
+
+func _jaula_nova(alt: float) -> Node3D:
+	var root = Node3D.new()
+	root.name = "jaula"
+	if _jaula_mat == null:
+		_jaula_mat = ShaderMaterial.new()
+		var sh = Shader.new()
+		sh.code = """shader_type spatial;
+render_mode blend_mix, cull_disabled, depth_draw_opaque, specular_schlick_ggx;
+uniform float tempo = 0.0;
+void fragment() {
+	float fres = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 2.2);
+	float onda = 0.5 + 0.5 * sin(tempo * 2.5 + UV.y * 9.0);
+	ALBEDO = mix(vec3(0.45, 0.85, 1.0), vec3(0.85, 0.97, 1.0), fres);
+	EMISSION = vec3(0.25, 0.7, 1.0) * (0.35 + 0.9 * fres + 0.25 * onda);
+	ALPHA = clamp(0.38 + fres * 0.55, 0.0, 0.95);
+	ROUGHNESS = 0.08;
+	METALLIC = 0.2;
+}"""
+		_jaula_mat.shader = sh
+	var n = 9
+	for k in range(n):
+		var a = TAU * float(k) / n + randf() * 0.3
+		var r = 0.55 + randf() * 0.15
+		var h = alt * (0.65 + randf() * 0.45)
+		var pivot = Node3D.new()
+		pivot.position = Vector3(cos(a) * r, 0, sin(a) * r)
+		var mi = MeshInstance3D.new()
+		var pm = CylinderMesh.new()
+		pm.top_radius = 0.0
+		pm.bottom_radius = 0.13 + randf() * 0.08
+		pm.height = h
+		pm.radial_segments = 5
+		pm.rings = 1
+		mi.mesh = pm
+		mi.position = Vector3(0, h * 0.5, 0)
+		mi.material_override = _jaula_mat
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		pivot.add_child(mi)
+		# inclinadas para dentro, como uma gaiola que se fecha sobre a peça
+		pivot.rotation = Vector3(0, -a, 0)
+		pivot.rotate_object_local(Vector3(0, 0, 1), 0.28 + randf() * 0.12)
+		pivot.set_meta("esc", 1.0)
+		pivot.scale = Vector3(1, 0.001, 1)
+		root.add_child(pivot)
+	return root
+
+
+# ---- Estouro da Manada: mamutes espectrais correm ao lado do Mamute ----
+var manada: Array = []      # [{fig, uid, lado, t, dur}]
+var _fantasma_mat: StandardMaterial3D = null
+
+
+func manada_espectral(uid: int, dur: float) -> void:
+	if not unit_nodes.has(uid):
+		return
+	var d = unit_nodes[uid]
+	var cid = g.by_uid(uid).cid if g != null and g.by_uid(uid) != null else ""
+	if not FIG3D.has(cid):
+		return
+	if _fantasma_mat == null:
+		_fantasma_mat = StandardMaterial3D.new()
+		_fantasma_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		_fantasma_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		_fantasma_mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+		_fantasma_mat.albedo_color = Color(1.0, 0.62, 0.22, 0.55)
+		_fantasma_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+		_fantasma_mat.no_depth_test = false
+	for lado in [-1.0, 1.0]:
+		var fig = _figure3d(cid, float(d.get("top", 2.0)) * 0.95)
+		for mi in fig.find_children("*", "MeshInstance3D", true, false):
+			for si in range(mi.mesh.get_surface_count()):
+				mi.set_surface_override_material(si, _fantasma_mat)
+		fig.set_meta("mats", [])
+		fig.set_meta("outl", [])
+		scenery_root.add_child(fig)
+		fig.global_position = d["node"].global_position
+		manada.append({"fig": fig, "uid": uid, "lado": lado, "t": 0.0, "dur": dur, "atraso": 0.18 if lado > 0 else 0.3})
+
+
+func _manada_tick(delta: float) -> void:
+	if manada.is_empty():
+		return
+	for m in manada.duplicate():
+		var fig: Node3D = m["fig"]
+		m["t"] = float(m["t"]) + delta
+		if not is_instance_valid(fig) or not unit_nodes.has(m["uid"]) or float(m["t"]) > float(m["dur"]):
+			if is_instance_valid(fig):
+				fig.queue_free()
+			manada.erase(m)
+			continue
+		var d = unit_nodes[m["uid"]]
+		var alvo: Vector3 = d["node"].global_position
+		var md: Vector3 = d.get("mdir", Vector3.FORWARD)
+		md.y = 0.0
+		if md.length() < 0.01:
+			md = Vector3.FORWARD
+		md = md.normalized()
+		var lado_v = md.cross(Vector3.UP).normalized() * float(m["lado"]) * 1.15
+		# um pouco atrás e ao lado; corre atrás do líder com atraso (manada)
+		var quer = alvo + lado_v - md * 0.5
+		fig.global_position = fig.global_position.lerp(quer, min(1.0, delta * (6.0 if float(m["t"]) > float(m["atraso"]) else 0.5)))
+		# entra e sai com brilho (alfa)
+		var vida = float(m["t"]) / float(m["dur"])
+		_fantasma_mat.albedo_color.a = 0.55 * clamp(min(vida * 5.0, (1.0 - vida) * 4.0), 0.0, 1.0)
+		_fig3d_tick(fig, delta, Time.get_ticks_msec() / 1000.0 + float(m["lado"]), false, Color.WHITE, true, 0.0, 0.0, true, md)
+
+
+# ---- gestos dos líderes nos especiais: quadros-chave de braços (direção em frente, lado, cima),
+# inclinação do tronco (Spine1), cabeça e altura do corpo; entre os quadros a pose desliza suave ----
+const GESTOS = {
+	# Comandante Krieg: mão no rádio pedindo o fogo, depois aponta o braço para o alvo
+	"radio": {"dur": 1.9, "keys": [
+		{"t": 0.0},
+		{"t": 0.3, "Left": [[0.15, 0.95, 0.25], [0.1, -0.35, 0.95], [-0.1, -0.6, 0.8]], "Head": 0.12},
+		{"t": 0.75, "Left": [[0.15, 0.95, 0.25], [0.1, -0.35, 0.95], [-0.1, -0.6, 0.8]], "Right": [[0.55, -0.25, 0.8], [0.6, -0.2, 0.78], [0.6, -0.2, 0.78]], "Head": -0.1},
+		{"t": 1.15, "Left": [[0.1, 0.6, -0.8], [0.25, 0.4, -0.85], [0.2, 0.3, -0.9]], "Right": [[0.97, -0.05, 0.22], [0.98, -0.05, 0.2], [0.98, -0.05, 0.2]], "Spine1": 0.06},
+		{"t": 1.6, "Left": [[0.1, 0.6, -0.8], [0.25, 0.4, -0.85], [0.2, 0.3, -0.9]], "Right": [[0.97, -0.05, 0.22], [0.98, -0.05, 0.2], [0.98, -0.05, 0.2]], "Spine1": 0.06},
+		{"t": 1.9}]},
+	# Rhazur: abre os braços e ruge para o alto; depois puxa tudo para o peito
+	"rugido": {"dur": 1.5, "keys": [
+		{"t": 0.0},
+		{"t": 0.35, "Left": [[0.25, 0.9, 0.35], [0.35, 0.75, 0.55], [0.4, 0.6, 0.7]], "Right": [[0.25, -0.9, 0.35], [0.35, -0.75, 0.55], [0.4, -0.6, 0.7]], "Spine1": -0.28, "Head": -0.35},
+		{"t": 0.7, "Left": [[0.3, 0.95, 0.15], [0.45, 0.8, 0.4], [0.5, 0.6, 0.6]], "Right": [[0.3, -0.95, 0.15], [0.45, -0.8, 0.4], [0.5, -0.6, 0.6]], "Spine1": -0.3, "Head": -0.4},
+		{"t": 1.0, "Left": [[0.85, 0.35, -0.3], [0.3, -0.6, -0.4], [0.2, -0.8, -0.3]], "Right": [[0.85, -0.35, -0.3], [0.3, 0.6, -0.4], [0.2, 0.8, -0.3]], "Spine1": 0.22, "Head": 0.1},
+		{"t": 1.5}]},
+	# Rei da Mina: as mãos sobem de baixo para o alto, erguendo a terra
+	"erguer": {"dur": 1.8, "keys": [
+		{"t": 0.0},
+		{"t": 0.3, "Left": [[0.6, 0.35, -0.7], [0.75, 0.3, -0.55], [0.8, 0.2, -0.5]], "Right": [[0.6, -0.35, -0.7], [0.75, -0.3, -0.55], [0.8, -0.2, -0.5]], "Spine1": 0.15, "y": -0.06},
+		{"t": 0.95, "Left": [[0.45, 0.35, 0.8], [0.4, 0.25, 0.88], [0.3, 0.2, 0.93]], "Right": [[0.45, -0.35, 0.8], [0.4, -0.25, 0.88], [0.3, -0.2, 0.93]], "Spine1": -0.12, "Head": -0.2, "y": 0.05},
+		{"t": 1.45, "Left": [[0.45, 0.35, 0.8], [0.4, 0.25, 0.88], [0.3, 0.2, 0.93]], "Right": [[0.45, -0.35, 0.8], [0.4, -0.25, 0.88], [0.3, -0.2, 0.93]], "Spine1": -0.12, "Head": -0.2},
+		{"t": 1.8}]},
+	# Watcher Mamute: empina com os braços erguidos e pisa com tudo antes da investida
+	"pisotear": {"dur": 1.0, "keys": [
+		{"t": 0.0},
+		{"t": 0.4, "Left": [[0.35, 0.45, 0.82], [0.3, 0.35, 0.88], [0.3, 0.3, 0.9]], "Right": [[0.35, -0.45, 0.82], [0.3, -0.35, 0.88], [0.3, -0.3, 0.9]], "Spine1": -0.3, "Head": -0.25, "y": 0.35},
+		{"t": 0.62, "Left": [[0.8, 0.35, -0.45], [0.9, 0.25, -0.35], [0.9, 0.2, -0.4]], "Right": [[0.8, -0.35, -0.45], [0.9, -0.25, -0.35], [0.9, -0.2, -0.4]], "Spine1": 0.28, "Head": 0.15, "y": -0.05},
+		{"t": 1.0, "Spine1": 0.2}]},
+	# Líder Lithari: estica a mão direita aberta para o alvo e dispara a prisão
+	"palma": {"dur": 1.6, "keys": [
+		{"t": 0.0},
+		{"t": 0.3, "Right": [[0.5, -0.4, 0.75], [0.3, -0.3, 0.9], [0.2, -0.2, 0.95]], "Spine1": -0.1},
+		{"t": 0.6, "Right": [[0.97, -0.1, 0.18], [0.98, -0.05, 0.15], [0.9, 0.0, 0.42]], "Spine1": 0.08},
+		{"t": 1.25, "Right": [[0.97, -0.1, 0.18], [0.98, -0.05, 0.15], [0.9, 0.0, 0.42]], "Spine1": 0.08},
+		{"t": 1.6}]},
+	# Karo: arremessa bananas para todo lado, um braço de cada vez
+	"arremesso": {"dur": 1.7, "keys": [
+		{"t": 0.0},
+		{"t": 0.2, "Right": [[-0.4, -0.35, 0.85], [-0.6, -0.2, 0.75], [-0.5, -0.1, 0.85]], "Spine1": -0.12},
+		{"t": 0.42, "Right": [[0.75, -0.2, 0.62], [0.85, -0.1, 0.5], [0.9, 0.0, 0.4]], "Spine1": 0.12},
+		{"t": 0.62, "Left": [[-0.4, 0.35, 0.85], [-0.6, 0.2, 0.75], [-0.5, 0.1, 0.85]], "Spine1": -0.12},
+		{"t": 0.84, "Left": [[0.75, 0.2, 0.62], [0.85, 0.1, 0.5], [0.9, 0.0, 0.4]], "Spine1": 0.12},
+		{"t": 1.04, "Right": [[-0.4, -0.35, 0.85], [-0.6, -0.2, 0.75], [-0.5, -0.1, 0.85]], "Spine1": -0.12},
+		{"t": 1.26, "Right": [[0.75, -0.2, 0.62], [0.85, -0.1, 0.5], [0.9, 0.0, 0.4]], "Spine1": 0.12, "y": 0.12},
+		{"t": 1.7}]},
+}
+
+
+func gesto(uid: int, tipo: String, alvo: Variant = null) -> void:
+	if not unit_nodes.has(uid) or not GESTOS.has(tipo):
+		return
+	var fig = unit_nodes[uid].get("sprite")
+	if fig == null or not fig.has_meta("fig3d"):
+		return
+	fig.set_meta("gesto", tipo)
+	fig.set_meta("gesto_t0", Time.get_ticks_msec())
+	if alvo != null:
+		fig.set_meta("gesto_alvo", alvo)
+	elif fig.has_meta("gesto_alvo"):
+		fig.remove_meta("gesto_alvo")
+
+
+func _gesto_w(fig: Node3D) -> float:
+	if not fig.has_meta("gesto"):
+		return 0.0
+	var g: Dictionary = GESTOS[str(fig.get_meta("gesto"))]
+	var tt = (Time.get_ticks_msec() - int(fig.get_meta("gesto_t0"))) / 1000.0
+	if tt > float(g["dur"]):
+		fig.remove_meta("gesto")
+		return 0.0
+	return 1.0
+
+
+# o quadro do gesto agora: mistura os dois quadros-chave vizinhos (cada braço é misturado osso a osso)
+func _gesto_quadro(fig: Node3D) -> Dictionary:
+	if _gesto_w(fig) <= 0.0:
+		return {}
+	var g: Dictionary = GESTOS[str(fig.get_meta("gesto"))]
+	var tt = (Time.get_ticks_msec() - int(fig.get_meta("gesto_t0"))) / 1000.0
+	var ks: Array = g["keys"]
+	var a: Dictionary = ks[0]
+	var b: Dictionary = ks[ks.size() - 1]
+	for i in range(ks.size() - 1):
+		if tt >= float(ks[i]["t"]) and tt <= float(ks[i + 1]["t"]):
+			a = ks[i]
+			b = ks[i + 1]
+			break
+	var u = clamp((tt - float(a["t"])) / max(0.001, float(b["t"]) - float(a["t"])), 0.0, 1.0)
+	u = u * u * (3.0 - 2.0 * u)
+	var out = {"w": 1.0}
+	for parte in ["Spine1", "Head", "y"]:
+		var va = float(a.get(parte, 0.0))
+		var vb = float(b.get(parte, 0.0))
+		if va != 0.0 or vb != 0.0:
+			out[parte] = lerp(va, vb, u)
+	for side in ["Left", "Right"]:
+		var da = a.get(side, null)
+		var db = b.get(side, null)
+		if da == null and db == null:
+			continue
+		# quadro sem o braço = braço solto: o peso daquele lado vai a zero
+		var wa = 1.0 if da != null else 0.0
+		var wb = 1.0 if db != null else 0.0
+		var ref = da if da != null else db
+		var fim = db if db != null else da
+		var dirs = []
+		for j in range(3):
+			var va3 = Vector3(ref[j][0], ref[j][1], ref[j][2]).normalized()
+			var vb3 = Vector3(fim[j][0], fim[j][1], fim[j][2]).normalized()
+			dirs.append(va3.slerp(vb3, u))
+		out[side] = {"dirs": dirs, "w": lerp(wa, wb, u)}
+	return out
+
+
+# aponta os três ossos do braço (braço, antebraço, mão) para as direções pedidas
+func _aponta_braco(sk: Skeleton3D, bn: Dictionary, side: String, g: Dictionary, w: float, F: Vector3, S: Vector3, U: Vector3) -> void:
+	var peso = float(g["w"]) * w
+	if peso <= 0.001:
+		return
+	var cadeia = [side + "Arm", side + "ForeArm", side + "Hand"]
+	var ponta = [side + "ForeArm", side + "Hand", side + "HandMiddle1"]
+	for i in range(3):
+		var bi: int = bn.get(cadeia[i], -1)
+		var ci: int = bn.get(ponta[i], -1) if i < 2 else _osso(sk, ponta[i])
+		if bi < 0 or ci < 0:
+			continue
+		var d: Vector3 = g["dirs"][i]
+		var alvo = (F * d.x + S * d.y + U * d.z).normalized()
+		var gb = sk.get_bone_global_pose(bi)
+		var cur = (sk.get_bone_global_pose(ci).origin - gb.origin).normalized()
+		var qr = Quaternion(cur, cur.slerp(alvo, peso).normalized())
+		var par = sk.get_bone_parent(bi)
+		var pg2 = sk.get_bone_global_pose(par) if par >= 0 else Transform3D.IDENTITY
+		sk.set_bone_pose_rotation(bi, (pg2.basis.inverse() * (Basis(qr) * gb.basis)).get_rotation_quaternion())
+
+
 # ---- Salto Orbital do Dragão: sobe batendo as asas, paira no alto e mergulha como um meteoro ----
 const METEORO_T = 1.5          # o jogo espera esse tempo antes do impacto (game.gd, "orbital")
 const METEORO_ALT = 5.5

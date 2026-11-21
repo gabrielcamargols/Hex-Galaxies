@@ -138,6 +138,7 @@ func _ready() -> void:
 	board.set_script(load("res://scripts/board.gd"))
 	add_child(board)
 	board.hex_tapped.connect(_on_hex_tapped)
+	board.banana_pousou.connect(func(pos, col): vfx.play_fx("fau_banana_pouso", pos, null, Color.WHITE))
 	board.hex_hovered.connect(_on_hex_hover)
 	board.unit_dropped.connect(_on_unit_dropped)
 	board.unit_drag_started.connect(_on_unit_drag_started)
@@ -5459,10 +5460,193 @@ func _ter_abfx(e: Dictionary) -> bool:
 	return true
 
 
+# ================= especiais dos líderes: cena com gesto, efeitos e modelos 3D =================
+var _rei_gesto_ms: int = 0
+var _rei_k: int = 0
+var _rei_ult_ms: int = 0
+var _abraco_ms: int = 0
+
+
+func _especial_lider(e: Dictionary) -> bool:
+	if game == null:
+		return false
+	var k = str(e["k"])
+	if k == "arremessado":
+		board.arrasto(int(e["uid"]))
+		return true
+	var u: Variant = game.by_uid(int(e.get("uid", -1)))
+	if u == null or u.barrier:
+		return false
+	var de = _hex_pos(u.pos(), 0.0)
+	var ate = _hex_pos(e["h"], 0.0)
+	var agora = Time.get_ticks_msec()
+	match [u.cid, k]:
+		["k_cmd", "bombard"]:
+			_cena_bombardeio(u, e["h"])
+			return true
+		["rhazur", "abyss"]:
+			# o motor manda dois avisos (alvo e casa de chegada): a cena usa só o primeiro
+			if agora - _abraco_ms < 400:
+				return true
+			_abraco_ms = agora
+			var alvo: Variant = game.unit_at(e["h"])
+			board.gesto(u.uid, "rugido", ate)
+			vfx.play_fx("aby_rhazur_rugido", de, null, Color.WHITE)
+			sfx.play("vfx_sonic", -4.0, 0.7)
+			_later(0.3, func(): vfx.play_fx("aby_rhazur_redemoinho", ate, null, Color.WHITE))
+			if alvo != null and board.unit_nodes.has(alvo.uid):
+				var nd: Node3D = board.unit_nodes[alvo.uid]["node"]
+				_later(0.72, func():
+					if is_instance_valid(nd):
+						vfx.play_fx("aby_rhazur_abraco", ate, de, Color.WHITE, nd, _ter_ctx(u.cid)))
+				_later(0.95, func(): board.arrasto(alvo.uid))
+			return true
+		["rei_mina", "crystal"]:
+			if agora - _rei_ult_ms > 1500:
+				_rei_k = 0
+				board.gesto(u.uid, "erguer", ate)
+				sfx.play("vfx_quake" if sfx.has_sound("vfx_quake") else "vfx_boom", -6.0, 0.7)
+			_rei_ult_ms = agora
+			board.brota_ate_ms = agora + 400
+			var atraso = 0.22 * _rei_k + 0.35
+			_rei_k += 1
+			_later(atraso, func():
+				vfx.play_fx("ter_rei_brota", ate, null, Color.WHITE)
+				vfx.play_fx("ter_rei_barreira", ate, null, Color.WHITE, null, _ter_ctx(u.cid)))
+			return true
+		["w_mamute", "stampede"]:
+			board.gesto(u.uid, "pisotear")
+			_later(0.6, func():
+				vfx.play_fx("wac_mamute_pisao", de, null, Color.WHITE)
+				sfx.play("vfx_boom", -2.0, 0.6))
+			_later(0.75, func(): board.manada_espectral(u.uid, 2.8))
+			if board.unit_nodes.has(u.uid):
+				var nm2: Node3D = board.unit_nodes[u.uid]["node"]
+				_later(0.85, func():
+					if is_instance_valid(nm2):
+						vfx.play_fx("wac_mamute_poeira", de, null, Color.WHITE, nm2))
+			return true
+		["l_general", "prison"]:
+			board.gesto(u.uid, "palma", ate)
+			_later(0.2, func(): vfx.play_fx("lit_prisao_palma", de + (ate - de).normalized() * 0.5 * Vector3(1, 0, 1), null, Color.WHITE))
+			_later(0.4, func(): vfx.play_fx("lit_prisao_raio", ate, de, Color.WHITE))
+			_later(0.78, func():
+				vfx.play_fx("lit_prisao_fecha", ate, null, Color.WHITE)
+				sfx.play("tiro_cristal", -2.0, 0.7))
+			return true
+		["karo", "insight"]:
+			board.gesto(u.uid, "arremesso")
+			board.banana_origem = de
+			board.banana_k = 0
+			_later(1.5, func(): board.banana_origem = null)
+			return true
+	return false
+
+
+# Bombardeio do Comandante Krieg: pede o fogo no rádio, aponta, o alvo é marcado e a artilharia cai do céu
+func _cena_bombardeio(u, h: Vector2i) -> void:
+	var de = _hex_pos(u.pos(), 0.0)
+	var ate = _hex_pos(h, 0.0)
+	board.gesto(u.uid, "radio", ate)
+	sfx.play("radio_on", -3.0)
+	vfx.play_fx("kri_cmd_radio", de, null, Color.WHITE)
+	_later(0.55, func():
+		vfx.play_fx("kri_cmd_marca", ate, null, Color.WHITE)
+		sfx.play("radio_off", -6.0))
+	# o projétil principal chega junto com o dano (game.gd espera 1,75 s); os outros caem em volta
+	_cai_projetil(ate, 1.72, true)
+	var viz = DB.nbrs(h).filter(func(n): return board.tiles.has(n))
+	viz.shuffle()
+	for i in range(min(4, viz.size())):
+		var p = _hex_pos(viz[i], 0.0) + Vector3(randf_range(-0.3, 0.3), 0, randf_range(-0.3, 0.3))
+		_cai_projetil(p, 1.82 + 0.12 * i, false)
+
+
+func _modelo_projetil() -> Node3D:
+	var root = Node3D.new()
+	var corpo = MeshInstance3D.new()
+	var cm = CylinderMesh.new()
+	cm.top_radius = 0.13
+	cm.bottom_radius = 0.13
+	cm.height = 0.7
+	cm.radial_segments = 10
+	corpo.mesh = cm
+	var metal = StandardMaterial3D.new()
+	metal.albedo_color = Color("#3a3a40")
+	metal.metallic = 0.6
+	metal.roughness = 0.35
+	corpo.material_override = metal
+	root.add_child(corpo)
+	var ponta = MeshInstance3D.new()
+	var pm = CylinderMesh.new()
+	pm.top_radius = 0.0
+	pm.bottom_radius = 0.13
+	pm.height = 0.3
+	pm.radial_segments = 10
+	ponta.mesh = pm
+	ponta.position = Vector3(0, -0.5, 0)
+	ponta.rotation = Vector3(PI, 0, 0)
+	ponta.material_override = metal
+	root.add_child(ponta)
+	var faixa = MeshInstance3D.new()
+	var fm = CylinderMesh.new()
+	fm.top_radius = 0.135
+	fm.bottom_radius = 0.135
+	fm.height = 0.09
+	fm.radial_segments = 10
+	faixa.mesh = fm
+	faixa.position = Vector3(0, -0.15, 0)
+	var verm = StandardMaterial3D.new()
+	verm.albedo_color = Color("#c8221c")
+	verm.emission_enabled = true
+	verm.emission = Color("#ff3a2a")
+	verm.emission_energy_multiplier = 1.5
+	faixa.material_override = verm
+	root.add_child(faixa)
+	for k in range(4):
+		var aleta = MeshInstance3D.new()
+		var bm = BoxMesh.new()
+		bm.size = Vector3(0.02, 0.22, 0.2)
+		aleta.mesh = bm
+		aleta.material_override = metal
+		aleta.position = Vector3(0, 0.3, 0)
+		aleta.rotation = Vector3(0, k * PI / 2.0, 0)
+		aleta.translate_object_local(Vector3(0, 0, 0.14))
+		root.add_child(aleta)
+	return root
+
+
+# projétil de artilharia caindo do céu (assobio, rastro de fumaça) e explodindo em "chega" segundos
+func _cai_projetil(alvo: Vector3, chega: float, grande: bool) -> void:
+	var voo = 0.62
+	_later(max(0.0, chega - voo), func():
+		if vfx == null or not is_instance_valid(vfx):
+			return
+		var pr = _modelo_projetil()
+		pr.scale = Vector3.ONE * (2.4 if grande else 1.6)
+		vfx.add_child(pr)
+		var ini = alvo + Vector3(randf_range(-2.5, -1.5), 14.0, randf_range(-1.0, 1.0))
+		var fim = alvo + Vector3(0, 0.2, 0)
+		var dirv = (fim - ini).normalized()
+		pr.global_position = ini
+		# o nariz (-Y do modelo) aponta para onde ele cai
+		pr.global_transform.basis = Basis(Quaternion(Vector3.DOWN, dirv)).scaled(pr.scale)
+		vfx.play_fx("kri_projetil_rastro", ini, null, Color.WHITE, pr)
+		sfx.play("projetil", -6.0, 0.6)
+		var tw = pr.create_tween()
+		tw.tween_property(pr, "global_position", fim, voo).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		tw.tween_callback(func():
+			pr.queue_free()
+			vfx.play_fx("kri_cmd_explosao" if grande else "kri_cmd_explosao_p", alvo, null, Color.WHITE)
+			sfx.play("vfx_boom", 0.0 if grande else -5.0, 0.8 if grande else 1.1)))
+
+
 # efeitos 2.5D das habilidades: cada tipo tem seu desenho, cor e som
 func _on_abfx(e: Dictionary) -> void:
 	if e["k"] == "bleed":
 		board.bleed_pop(e["h"])
+	if _especial_lider(e):
+		return
 	# Salto Orbital do Dragão Zukunft: decola, some lá no alto e cai como um meteoro holográfico
 	var ou: Variant = game.by_uid(e["uid"]) if game != null and int(e.get("uid", -1)) >= 0 else null
 	if e["k"] == "orbital" and ou != null and not ou.barrier and ou.cid == "z_dragao":
@@ -5832,7 +6016,7 @@ func _on_fx_real(e: Dictionary) -> void:
 		"abfx":
 			if int(e.get("uid", -1)) >= 0:
 				# passivas que só disparam fala (sem pose de conjurar)
-				if not str(e.get("k", "")) in ["carapaca", "mare", "silentus", "zap", "sosia", "sombras", "sem_abrigo"]:
+				if not str(e.get("k", "")) in ["carapaca", "mare", "silentus", "zap", "sosia", "sombras", "sem_abrigo", "arremessado"]:
 					board.conjura(int(e["uid"]))
 				_fala_habilidade(int(e["uid"]), str(e.get("k", "")))
 			_on_abfx(e)
