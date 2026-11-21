@@ -5992,6 +5992,28 @@ func _line(kind: String, u, target = null) -> String:
 
 
 # quando alguém entra em campo: fala com um aliado ou provoca um inimigo, e recebe resposta
+# Entrada dos comandantes: um fala de cada vez, primeiro o do jogador 1 (lado azul), depois o do
+# jogador 2. Quem entra no mesmo instante espera uma janela curta para a ordem ficar certa, e
+# cada fala só começa quando a anterior (e o narrador) terminou.
+var entradas_pend: Array = []
+var cmd_voz_livre_ms: int = 0
+
+
+func _fila_entrada(u, texto: String) -> void:
+	entradas_pend.append({"uid": u.uid, "cid": u.cid, "owner": u.owner, "txt": texto})
+	if entradas_pend.size() > 1:
+		return
+	await get_tree().create_timer(0.6).timeout
+	var fila = entradas_pend.duplicate()
+	entradas_pend.clear()
+	fila.sort_custom(func(a, b): return a["owner"] < b["owner"])
+	for e in fila:
+		var agora = Time.get_ticks_msec()
+		var ini = maxi(agora, maxi(cmd_voz_livre_ms, maxi(narr_livre_ms + 350, sfx.voz_ate_ms + 300)))
+		cmd_voz_livre_ms = ini + int(_dur_fala(e["cid"], e["txt"]) * 1000.0) + 450
+		_say(e["uid"], e["txt"], max(0.05, (ini - agora) / 1000.0), "fala")
+
+
 func _banter(uid: int) -> void:
 	if dlg.is_empty() or game == null:
 		return
@@ -6007,9 +6029,7 @@ func _banter(uid: int) -> void:
 	if u.is_cmd:
 		var grav = dlg.get("personagem", {}).get(u.cid, {}).get("entrada", []).filter(func(t): return fala_gravada(u.cid, t) != "")
 		if not grav.is_empty():
-			# espera o narrador terminar de anunciar ("O comandante entrou em campo") antes de falar
-			var espera = max(0.6, (narr_livre_ms - Time.get_ticks_msec()) / 1000.0 + 0.35)
-			_say(u.uid, grav[randi() % grav.size()], espera, "fala")
+			_fila_entrada(u, grav[randi() % grav.size()])
 			return
 	# duplas com conversa própria
 	for pr in dlg.get("pares", []):
