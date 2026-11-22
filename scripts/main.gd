@@ -5947,7 +5947,10 @@ func _on_fx_real(e: Dictionary) -> void:
 			_banter_death(e["uid"], int(e.get("by", -1)))
 			var hp = _hex_pos(e["h"], 0.2)
 			var dc = _unit_color(e["uid"])
-			_voice(e["uid"], "dor", 0.0, d + 0.1, 0.82)
+			# o gemido do golpe final já tocou com o dano; aqui só entra a fala de derrota, se gravada
+			var du3 = game.by_uid(e["uid"])
+			if du3 != null and sfx.streams.has("v_%s_morte" % du3.cid):
+				_voice(e["uid"], "morte", 0.0, d + 0.45)
 			_later(d + 0.15, _fx_die.bind(hp, dc))
 		"summon":
 			var su: Variant = game.by_uid(e["uid"])
