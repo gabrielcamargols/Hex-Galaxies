@@ -2781,238 +2781,238 @@
    "name": "Flanquear",
    "type": "Manobra",
    "cost": 0,
-   "text": "Na sua ativação, mova o personagem ativo 1 casa livre."
+   "text": "Sua peça que está agindo anda 1 casa."
   },
   {
    "id": "retirada",
    "name": "Retirada Calculada",
    "type": "Manobra",
    "cost": 0,
-   "text": "Após o ataque do seu personagem ativo, mova-o 1 casa livre."
+   "text": "Depois do ataque da sua peça, ela recua 1 casa."
   },
   {
    "id": "troca",
    "name": "Troca de Posições",
    "type": "Manobra",
    "cost": 0,
-   "text": "Troque o personagem ativo de casa com um aliado adjacente. Ambos devem estar em terreno livre."
+   "text": "Sua peça que está agindo troca de lugar com um aliado ao lado."
   },
   {
    "id": "avanco",
    "name": "Avanço Coordenado",
    "type": "Comando",
    "cost": 0,
-   "text": "Mova até 2 aliados diferentes 1 casa livre cada. Resolva um de cada vez."
+   "text": "Até 2 aliados andam 1 casa cada."
   },
   {
    "id": "cobertura",
    "name": "Cobertura de Emergência",
    "type": "Reação",
    "cost": 0,
-   "text": "Quando um aliado for atacado à distância, antes do dano: reduza o dano em 3."
+   "text": "Reação: quando um aliado leva um tiro, o dano cai 3."
   },
   {
    "id": "escudo",
    "name": "Escudo Reativo",
    "type": "Reação",
    "cost": 0,
-   "text": "Quando um aliado for atacado corpo a corpo, antes do dano: reduza o dano em 2."
+   "text": "Reação: quando um aliado leva um golpe corpo a corpo, o dano cai 2."
   },
   {
    "id": "dispersao",
    "name": "Dispersão",
    "type": "Reação",
    "cost": 0,
-   "text": "Após um aliado sobreviver a um ataque, mova-o 1 casa livre. O dano já foi aplicado."
+   "text": "Reação: depois que um aliado sobrevive a um ataque, ele foge 1 casa."
   },
   {
    "id": "propulsor",
    "name": "Propulsor Auxiliar",
    "type": "Equipamento",
    "cost": 0,
-   "text": "Equipe um personagem seu em campo (arraste a carta até ele). Ele recebe +1 Movimento. Não altera deslocamentos de distância fixa."
+   "text": "Equipamento (arraste até uma peça sua): ela anda +1 casa."
   },
   {
    "id": "placas",
    "name": "Placas Reforçadas",
    "type": "Equipamento",
    "cost": 0,
-   "text": "Equipe um personagem seu em campo (arraste a carta até ele). Reduza em 1 o dano de cada ataque recebido (mínimo 0)."
+   "text": "Equipamento (arraste até uma peça sua): ela leva 1 a menos de dano de cada ataque."
   },
   {
    "id": "lente",
    "name": "Lente de Precisão",
    "type": "Equipamento",
    "cost": 0,
-   "text": "Equipe um personagem seu em campo (arraste a carta até ele). +1 alcance em ataques normais. Não afeta habilidades."
+   "text": "Equipamento (arraste até uma peça sua): +1 de alcance nos ataques."
   },
   {
    "id": "reparo",
    "name": "Reparo de Campo",
    "type": "Comando",
    "cost": 0,
-   "text": "Um personagem seu em campo (arraste a carta até ele) recupera 4 de Vida, até o seu valor inicial."
+   "text": "Arraste até uma peça sua: cura 4 de Vida."
   },
   {
    "id": "dados",
    "name": "Dados de Combate",
    "type": "Comando",
    "cost": 0,
-   "text": "Compre 2 cartas e depois descarte 1 carta da mão."
+   "text": "Compra 2 cartas e descarta 1."
   },
   {
    "id": "fogo",
    "name": "Fogo Concentrado",
    "type": "Comando",
    "cost": 0,
-   "text": "Seu personagem ativo recebe +2 dano no próximo ataque desta ativação."
+   "text": "O próximo ataque da sua peça agindo causa +2 de dano."
   },
   {
    "id": "reforco",
    "name": "Reforço Acelerado",
    "type": "Comando",
    "cost": 0,
-   "text": "Na implantação normal de uma reserva: ela entra com as 2 ações em vez de 1. Não pode atacar neste turno. Não se soma a Brazucão."
+   "text": "A próxima peça que entrar em campo chega com 2 ações (mas não ataca neste turno)."
   },
   {
    "id": "pulso",
    "name": "Pulso de Interferência",
    "type": "Comando",
    "cost": 0,
-   "text": "Escolha um inimigo a até 2 casas do ativo, com linha de visão. Descarte seu equipamento, se houver."
+   "text": "Um inimigo a até 2 casas perde o equipamento."
   },
   {
    "id": "granada",
    "name": "Granada de Fragmentação",
    "type": "Comando",
    "cost": 0,
-   "text": "Escolha uma casa a até 3 do ativo, com linha de visão. Cada inimigo nela e nas casas em volta sofre 1 de dano."
+   "text": "Escolha uma casa a até 3: 1 de dano em cada inimigo nela e ao redor."
   },
   {
    "id": "sinalizador",
    "name": "Sinalizador de Alvo",
    "type": "Comando",
    "cost": 0,
-   "text": "Marque um inimigo a até 4 casas do ativo, com linha de visão: ataques contra ele causam +1 de dano até o fim do round."
+   "text": "Marca um inimigo a até 4 casas: ataques nele causam +1 de dano neste round."
   },
   {
    "id": "adrenalina",
    "name": "Injeção de Adrenalina",
    "type": "Comando",
    "cost": 0,
-   "text": "O personagem ativo sofre 1 de dano e ganha +1 ação nesta ativação. Ele continua atacando no máximo 1 vez."
+   "text": "Sua peça agindo perde 1 de Vida e ganha +1 ação (continua atacando só 1 vez)."
   },
   {
    "id": "barreira",
    "name": "Barreira Portátil",
    "type": "Comando",
    "cost": 0,
-   "text": "Crie uma Barreira com 3 de Vida numa casa livre adjacente ao ativo. Ela bloqueia movimento e linha de visão."
+   "text": "Cria ao lado da sua peça uma barreira de 3 de Vida que bloqueia passagem e tiros."
   },
   {
    "id": "gancho",
    "name": "Gancho Magnético",
    "type": "Manobra",
    "cost": 0,
-   "text": "Puxe um inimigo a até 3 casas do ativo, com linha de visão, 1 casa na direção dele."
+   "text": "Puxa um inimigo a até 3 casas 1 casa para perto."
   },
   {
    "id": "camuflagem",
    "name": "Camuflagem Óptica",
    "type": "Comando",
    "cost": 0,
-   "text": "Um personagem seu em campo (arraste a carta até ele) não pode ser alvo de ataques até o início do próximo round."
+   "text": "Arraste até uma peça sua: ninguém pode atacá-la até o próximo round."
   },
   {
    "id": "onda",
    "name": "Onda de Choque",
    "type": "Manobra",
    "cost": 0,
-   "text": "Empurre cada inimigo adjacente ao ativo 1 casa para longe dele."
+   "text": "Empurra 1 casa cada inimigo ao lado da sua peça."
   },
   {
    "id": "orbital",
    "name": "Bombardeio Orbital",
    "type": "Comando",
    "cost": 0,
-   "text": "Escolha um inimigo a até 5 casas do ativo, mesmo sem linha de visão: ele sofre 3 de dano."
+   "text": "3 de dano num inimigo a até 5 casas, mesmo sem linha de visão."
   },
   {
    "id": "kit",
    "name": "Kit de Campo",
    "type": "Comando",
    "cost": 0,
-   "text": "O ativo e cada aliado a até 2 casas dele recuperam 2 de Vida, até o valor inicial."
+   "text": "Cura 2 de Vida na sua peça e em cada aliado a até 2 casas."
   },
   {
    "id": "ultimo",
    "name": "Último Fôlego",
    "type": "Comando",
    "cost": 0,
-   "text": "Só se o personagem ativo estiver com metade da Vida ou menos: +3 de dano no próximo ataque desta ativação."
+   "text": "Se sua peça estiver com metade da Vida ou menos: +3 de dano no próximo ataque."
   },
   {
    "id": "revide",
    "name": "Revide",
    "type": "Reação",
    "cost": 0,
-   "text": "Quando um aliado sobreviver a um ataque corpo a corpo: ele causa 2 de dano no atacante."
+   "text": "Reação: quando um aliado sobrevive a um golpe corpo a corpo, devolve 2 de dano."
   },
   {
    "id": "resgate",
    "name": "Teletransporte de Resgate",
    "type": "Manobra",
    "cost": 0,
-   "text": "Troque de lugar o personagem ativo com um aliado a até 4 casas dele."
+   "text": "Sua peça troca de lugar com um aliado a até 4 casas."
   },
   {
    "id": "quantica",
    "name": "Troca Quântica",
    "type": "Manobra",
    "cost": 0,
-   "text": "Troque de lugar um aliado e um inimigo, ambos a até 3 casas do personagem ativo."
+   "text": "Troca de lugar um aliado e um inimigo, ambos a até 3 casas da sua peça."
   },
   {
    "id": "interceptar",
    "name": "Interceptar Suprimentos",
    "type": "Comando",
    "cost": 0,
-   "text": "Roube 1 carta aleatória da mão do oponente."
+   "text": "Rouba 1 carta aleatória do oponente."
   },
   {
    "id": "grito",
    "name": "Grito de Guerra",
    "type": "Comando",
    "cost": 0,
-   "text": "Todos os seus personagens em campo recebem +1 ATQ até o fim do round."
+   "text": "Todas as suas peças em campo ganham +1 ATQ neste round."
   },
   {
    "id": "evacuacao",
    "name": "Evacuação Médica",
    "type": "Comando",
    "cost": 0,
-   "text": "O último aliado derrotado (exceto o comandante) volta para a sua reserva com metade da Vida."
+   "text": "O último aliado derrotado (menos o líder) volta à reserva com metade da Vida."
   },
   {
    "id": "execucao",
    "name": "Golpe de Misericórdia",
    "type": "Comando",
    "cost": 0,
-   "text": "Um inimigo adjacente ao ativo com 3 de Vida ou menos é derrotado na hora. Não funciona em comandantes."
+   "text": "Derruba na hora um inimigo ao lado com 3 de Vida ou menos (não vale contra líderes)."
   },
   {
    "id": "contra",
    "name": "Contraofensiva",
    "type": "Comando",
    "cost": 0,
-   "text": "Só se você tiver menos personagens em campo que o oponente: +1 ação nesta ativação e compre 1 carta."
+   "text": "Se você tem menos peças em campo que o oponente: +1 ação e compra 1 carta."
   },
   {
    "id": "rede",
    "name": "Rede de Contenção",
    "type": "Comando",
    "cost": 0,
-   "text": "Um inimigo a até 3 casas do ativo, com linha de visão, não pode se mover até o fim do próximo round."
+   "text": "Um inimigo a até 3 casas fica sem andar até o fim do próximo round."
   }
  ]
 }

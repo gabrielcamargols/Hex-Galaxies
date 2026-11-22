@@ -4054,15 +4054,15 @@ func _card_targets(id: String) -> Dictionary:
 	var txt = ""
 	match id:
 		"flanquear":
-			txt = "Mapa: o ativo anda 1 casa"
+			txt = "Sua peça agindo anda 1 casa"
 			if u != null:
 				hs = game.step_free(u.pos())
 		"retirada":
-			txt = "Reação: após atacar, recua 1 casa"
+			txt = "Depois de atacar, recua 1 casa"
 			if u != null:
 				hs = game.step_free(u.pos())
 		"troca":
-			txt = "Ativo + aliado ao lado trocam de lugar"
+			txt = "Troca de lugar com um aliado ao lado"
 			if u != null:
 				for x in game.allies_of(u):
 					if DB.dist(x.pos(), u.pos()) == 1:
@@ -4073,107 +4073,107 @@ func _card_targets(id: String) -> Dictionary:
 				if x.owner == me and not x.barrier:
 					hs.append(x.pos())
 		"cobertura":
-			txt = "Reação: aliado atacado de longe sofre -3"
+			txt = "Aliado levou tiro: -3 de dano"
 		"escudo":
-			txt = "Reação: aliado atacado de perto sofre -2"
+			txt = "Aliado levou golpe: -2 de dano"
 		"dispersao":
-			txt = "Reação: aliado atacado recua 1 casa"
+			txt = "Aliado atacado foge 1 casa"
 		"propulsor":
-			txt = "Seu personagem (arraste): +1 Movimento"
+			txt = "Arraste numa peça: +1 de movimento"
 		"placas":
-			txt = "Seu personagem (arraste): -1 dano recebido"
+			txt = "Arraste numa peça: leva -1 de dano"
 		"lente":
-			txt = "Seu personagem (arraste): +1 Alcance"
+			txt = "Arraste numa peça: +1 de alcance"
 		"reparo":
-			txt = "Seu personagem (arraste): +4 de Vida"
+			txt = "Arraste numa peça: cura 4 de Vida"
 		"fogo":
-			txt = "Personagem ativo: +2 dano no ataque"
+			txt = "Próximo ataque: +2 de dano"
 		"dados":
-			txt = "Sua mão: compra 2, descarta 1"
+			txt = "Compra 2 cartas, descarta 1"
 		"reforco":
-			txt = "Reserva que entrar: chega com 2 ações"
+			txt = "Peça que entrar chega com 2 ações"
 			hs = game.deploy_hexes(me)
 		"pulso":
-			txt = "Inimigo a até 2 casas perde o equipamento"
+			txt = "Inimigo perto perde o equipamento"
 			if u != null:
 				for x in game.enemies_of(u):
 					if x.eq != "" and DB.dist(x.pos(), u.pos()) <= 2:
 						hs.append(x.pos())
 		"granada":
-			txt = "Inimigos numa área: 1 de dano cada"
+			txt = "1 de dano nos inimigos de uma área"
 			if u != null:
 				hs = game.granada_opts(u)
 		"sinalizador":
-			txt = "Inimigo marcado: +1 dano contra ele"
+			txt = "Marca um inimigo: +1 de dano nele"
 			if u != null:
 				for x in game.enemies_of(u):
 					if DB.dist(x.pos(), u.pos()) <= 4 and game.los(u.pos(), x.pos()):
 						hs.append(x.pos())
 		"adrenalina":
-			txt = "Ativo: -1 Vida, +1 ação"
+			txt = "Perde 1 de Vida, ganha +1 ação"
 		"barreira":
-			txt = "Casa ao lado: barreira de 3 Vida"
+			txt = "Barreira de 3 de Vida ao lado"
 			if u != null:
 				hs = game.adj_free(u.pos())
 		"gancho":
-			txt = "Inimigo a até 3: puxado 1 casa"
+			txt = "Puxa um inimigo 1 casa"
 			if u != null:
 				for x in game.gancho_targets(u):
 					hs.append(x.pos())
 		"camuflagem":
-			txt = "Seu personagem (arraste): não pode ser atacado no round"
+			txt = "Arraste numa peça: ninguém pode atacá-la"
 		"onda":
-			txt = "Inimigos ao lado: empurrados 1 casa"
+			txt = "Empurra os inimigos ao lado"
 			if u != null:
 				for x in game.enemies_of(u):
 					if DB.dist(x.pos(), u.pos()) == 1:
 						hs.append(x.pos())
 		"orbital":
-			txt = "Inimigo a até 5: 3 de dano"
+			txt = "3 de dano num inimigo a até 5"
 			if u != null:
 				for x in game.enemies_of(u):
 					if DB.dist(x.pos(), u.pos()) <= 5:
 						hs.append(x.pos())
 		"kit":
-			txt = "Ativo e aliados a até 2: +2 Vida"
+			txt = "Cura 2 nela e nos aliados perto"
 			if u != null:
 				for x in game.allies_of(u, true):
 					if DB.dist(x.pos(), u.pos()) <= 2:
 						hs.append(x.pos())
 		"ultimo":
-			txt = "Ativo ferido (metade da Vida): +3 dano no ataque"
+			txt = "Ferido? Próximo ataque +3"
 		"revide":
-			txt = "Reação: aliado atacado de perto devolve 2 de dano"
+			txt = "Aliado levou golpe: devolve 2"
 		"resgate":
-			txt = "Ativo troca de lugar com aliado a até 4"
+			txt = "Troca de lugar com aliado a até 4"
 			if u != null:
 				for x in game.allies_of(u):
 					if not x.barrier and DB.dist(x.pos(), u.pos()) <= 4:
 						hs.append(x.pos())
 		"quantica":
-			txt = "Um aliado e um inimigo a até 3 trocam de lugar"
+			txt = "Troca um aliado e um inimigo de lugar"
 			if u != null:
 				for x in game.quantica_allies(u) + game.quantica_enemies(u):
 					hs.append(x.pos())
 		"interceptar":
-			txt = "Rouba 1 carta aleatória do oponente"
+			txt = "Rouba 1 carta do oponente"
 		"grito":
-			txt = "Todos os seus em campo: +1 ATQ no round"
+			txt = "Todas as suas peças: +1 ATQ"
 			if u != null:
 				for x in game.allies_of(u, true):
 					if not x.barrier:
 						hs.append(x.pos())
 		"evacuacao":
-			txt = "Último aliado derrotado volta à reserva"
+			txt = "Último aliado caído volta à reserva"
 		"execucao":
-			txt = "Inimigo ao lado com até 3 de Vida cai na hora"
+			txt = "Derruba inimigo ao lado com 3 de Vida ou menos"
 			if u != null:
 				for x in game.execucao_targets(u):
 					hs.append(x.pos())
 		"contra":
-			txt = "Se estiver em desvantagem: +1 ação e 1 carta"
+			txt = "Com menos peças: +1 ação e 1 carta"
 		"rede":
-			txt = "Inimigo a até 3 não se move até o próximo round"
+			txt = "Inimigo fica sem andar"
 			if u != null:
 				for x in game.rede_targets(u):
 					hs.append(x.pos())
