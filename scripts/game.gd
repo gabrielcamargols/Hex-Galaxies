@@ -1622,6 +1622,9 @@ func _gen_crystals() -> void:
 			continue
 		if unit_at(h) != null or unit_at(-h) != null:
 			continue
+		# Disputa: o núcleo e a volta dele ficam livres (os cristais saem em pares espelhados)
+		if modo == "disputa" and (DB.dist(h, DB.disputa_core(map_id)) <= 1 or DB.dist(-h, DB.disputa_core(map_id)) <= 1):
+			continue
 		cand[h] = true
 	var colors = ["verde", "azul", "roxo"]
 	var best: Array = []
@@ -1702,21 +1705,29 @@ func _maze_ok(pick: Dictionary, regra: bool = true) -> bool:
 		return true
 	# auditoria dos mapas: base a base entre 14 e 17 passos, e uma segunda rota de verdade (sem as casas do meio
 	# da primeira) no máximo 3 passos mais longa; evita labirintos que encostam os exércitos ou os separam demais
-	var p1 = _maze_path(open, {})
-	if p1.is_empty() or p1.size() - 1 < 14 or p1.size() - 1 > 17:
+	var a = DB.entry_c[0]
+	var b = DB.entry_c[1]
+	var lo = 14
+	var hi = 17
+	if modo == "disputa":
+		# Disputa: do início dos Invasores até o núcleo, um pouco mais longo que a reta, com uma rota alternativa
+		a = DB.entry_c[inv]
+		b = DB.disputa_core(map_id)
+		lo = DB.dist(a, b) + 1
+		hi = DB.dist(a, b) + 4
+	var p1 = _maze_path(open, {}, a, b)
+	if p1.is_empty() or p1.size() - 1 < lo or p1.size() - 1 > hi:
 		return false
 	var ban = {}
 	for h in p1:
-		if DB.dist(h, DB.entry_c[0]) > 3 and DB.dist(h, DB.entry_c[1]) > 3:
+		if DB.dist(h, a) > (2 if modo == "disputa" else 3) and DB.dist(h, b) > (1 if modo == "disputa" else 3):
 			ban[h] = true
-	var p2 = _maze_path(open, ban)
+	var p2 = _maze_path(open, ban, a, b)
 	return not p2.is_empty() and p2.size() - p1.size() <= 3
 
 
 # caminho mais curto (em passos) de uma base à outra, sem passar pelas casas proibidas
-func _maze_path(open: Dictionary, ban: Dictionary) -> Array:
-	var a = DB.entry_c[0]
-	var b = DB.entry_c[1]
+func _maze_path(open: Dictionary, ban: Dictionary, a: Vector2i, b: Vector2i) -> Array:
 	var prev = {a: a}
 	var q = [a]
 	var i = 0
@@ -2021,8 +2032,7 @@ func begin_game() -> void:
 		return
 	if modo == "disputa":
 		# núcleo fixo no tabuleiro a partida toda; mão inicial vem da preparação (exclusivas + draft)
-		var cf = DB.maps[map_id].get("core_fixed", [0, 0])
-		core = Vector2i(int(cf[0]), int(cf[1]))
+		core = DB.disputa_core(map_id)
 		core_until = 999
 		core_next = null
 		emitfx({"t": "core", "what": "spawn", "h": core})
@@ -6145,7 +6155,7 @@ func _disputa_preparo() -> void:
 		var opts = DB.excl_of(fac_excl(p))
 		var esc: Array = []
 		if opts.size() >= 3:
-			var r = await ask(p, {"t": "excl", "text": "%s · escolha 3 táticas exclusivas da sua facção (o rival só vê quando você usar)." % papel(p), "opts": opts.duplicate(), "n": 3, "papel": papel(p)})
+			var r = await ask(p, {"t": "excl", "text": "%s · escolha 3 das 4 táticas da sua facção" % papel(p), "opts": opts.duplicate(), "n": 3, "papel": papel(p)})
 			if r is Array:
 				for id in r:
 					if opts.has(id) and not esc.has(id) and esc.size() < 3:
@@ -6168,7 +6178,7 @@ func _disputa_preparo() -> void:
 		draft_pairs.append({"par": par, "quem": quem})
 		emitfx({"t": "draft", "what": "par", "i": i})
 		changed.emit()
-		var c = await ask(quem, {"t": "draft", "text": "Draft (par %d de 2): %s escolhem uma genérica; a outra vai para o rival." % [i + 1, papel(quem)], "opts": par.duplicate(), "par": i, "quem": quem})
+		var c = await ask(quem, {"t": "draft", "text": "Draft · par %d de 2 · fique com 1, a outra vai para o rival" % (i + 1), "opts": par.duplicate(), "par": i, "quem": quem})
 		if not par.has(c):
 			c = par[0]
 		var outra = par[1] if c == par[0] else par[0]

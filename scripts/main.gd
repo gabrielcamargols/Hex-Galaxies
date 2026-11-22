@@ -26,7 +26,7 @@ const TDESC = {
 }
 const RULES = "[b]Objetivo:[/b] derrotar o Comandante inimigo (ele entra no round 6). No fim do round 12 vence quem tiver mais Vida no Comandante; empate: soma da Vida dos aliados.\n\n[b]Turno:[/b] os lados se alternam ativando 1 peça por vez. Cada peça ativada tem [b]2 ações[/b], e cada tipo só pode ser usado [b]1 vez por turno[/b]: mover 1 vez, atacar 1 vez, usar habilidade ativa (ex.: mover + atacar). [b]Táticas não gastam ação:[/b] cada peça ativada pode jogar 1 carta de graça. Arraste a carta e solte no personagem (ou na casa) destacado para escolher quem recebe o efeito. Habilidades passivas não gastam ação. Colocar uma reserva em campo gasta 1 ação. [b]A área de entrada cresce:[/b] a cada round (no round 1 vai até 1 casa da sua base, no 2 até 2 casas, e assim por diante), sempre na sua metade do mapa. Em cada round, cada lado pode colocar [b]só 1 peça[/b] da reserva em campo.\n\n[b]Chuva (Abnara):[/b] no round 6 começa a chover e a chuva dura 2 rounds (6 e 7), depois passa. Enquanto chove: todos os ataques causam 3 a menos de dano e o céu escurece. Raios caem em casas aleatórias; se acertarem a mata ela pega fogo, o incêndio se espalha pelas árvores vizinhas e quem estiver numa casa em chamas ou ao lado perde 1 de Vida a cada round. A mata queimada vira clareira. Depois que a chuva passa, o incêndio que já começou continua até se apagar.
 
-[b]Altura:[/b] atacar de cima +1 de dano, de baixo -1. Tiros (alcance 2+) de cima ganham +1 de alcance. Corpo a corpo só com até 1 nível de diferença.\n\n[b][color=#c77dff]Hex Energy[/color]:[/b] nos rounds 2, 4, 6 e 8 surge um hexágono roxo de energia que fica 2 rounds. Leve uma peça até ele para capturar: 2 cartas, +2 ATQ ou +4 Vida com defesa. O local da próxima aparece antes, com um contorno roxo no mapa.\n\n[b]Controle Lithari:[/b] [b]Lento[/b] = -1 de Movimento até o fim do round (mínimo 1). [b]Enraizado[/b] = não anda até o fim do próximo round; depois de se soltar, a peça fica imune a novo enraizamento por 1 round. [b]Zona de Cristal[/b] = casas marcadas (\"CRISTAL\") por 2 rounds: inimigo que entra nelas fica Lento. Lithari não são afetados pelas zonas deles.\n\n[b]Impulso:[/b] derrubar uma tropa dá 1 casa de movimento grátis (1 vez por ativação).\n\n[b]Linha de tiro:[/b] uma casa no caminho bloqueia se o topo dela for mais alto que o atacante e o alvo.\n\n[b]Abrigo:[/b] -2 de dano se uma rocha/ruína/ossada vizinha ao alvo estiver do lado do atacante.\n\n[b]Tarhut (o mapa mais difícil):[/b] as dunas, com até 5 níveis de altura, mudam inteiras a cada 3 rounds (aviso 1 round antes, nos rounds 4, 7 e 10). Elas bloqueiam tiros e dão vantagem de altura; quem estiver no alto quando a duna baixar despenca: 1 de dano, +1 se cair 3 níveis e +1 se cair 5. A cada 3 rounds o [color=#ff6a4a]Verme Gigante[/color] sai da areia (o \"!\" avisa 1 round antes): quem estiver no buraco sofre 4 de dano e quem estiver ao lado, 1. Fuja das casas marcadas! O deserto é enorme.\n\n[b]Valak (caverna de cristais):[/b] um labirinto de cristais que muda a cada partida. Cristais bloqueiam passagem e tiros; um ataque quebra um cristal e o efeito atinge TODOS ao lado: [color=#7dff4a]verde[/color] cura 2, [color=#5ae8ff]azul[/color] dá +1 de Movimento no próximo movimento do round, [color=#ff5ae0]roxo[/color] causa 2 de dano. No centro vive a [color=#ff4ad0]Garra[/color]: andar (+1), atacar ou usar habilidade (+2) a até 3 casas do buraco, ou passar um carrinho por ali (+3), aumenta a VIBRAÇÃO. Em 5, a garra ataca: quem está a 1 casa do buraco é arrastado e morre; a 2 ou 3 casas sofre 2 de dano e é puxado 1 casa. Carrinhos: uma peça ao lado gasta 1 ação para empurrar; ele anda até 3 casas no trilho e o primeiro atingido sofre 3 e é empurrado. [color=#ffb14a]Tempestade de areia:[/color] no round em que o vento muda (3, 6, 9) e no round em que as dunas mudam (4, 7, 10), todos os ataques causam 2 a menos de dano.\n\n[b][color=#c77dff]Disputa pela Hex Energy[/color] (Valak · Galeria):[/b] modo de 5 rounds com papéis. Os [b]Invasores[/b] precisam extrair a energia do núcleo; os [b]Guardiões[/b] seguram até o fim do round 5. Uma tropa invasora no núcleo gasta 1 ação para começar a extração; ela conclui no início da próxima ativação dessa tropa, se ela continuar no núcleo e os Guardiões já tiverem tido a vez (agir ou passar conta). Sair do núcleo, ser empurrado ou cair cancela; levar dano sem sair não. Comandantes entram no round 4 e cair não decide a partida. Antes de começar, cada lado escolhe 3 das 4 táticas exclusivas da facção (segredo até usar) e os dois disputam 2 pares de genéricas em draft: quem escolhe fica com uma e a outra vai para o rival; a prioridade inverte no segundo par. Mão inicial: 5 cartas. Na revanche os papéis trocam.\n\n[b]Escaravelhos Verdes (Tarhut):[/b] basta passar por cima de um (ou parar nele) para guardá-lo, sem gastar ação. [b]1 escaravelho[/b] restaura 6 de Vida de uma peça; [b]2 escaravelhos[/b] deixam uma peça usar a ativa mais uma vez; os que sobrarem no fim somam +1 de Vida ao seu comandante na contagem do último round. Para gastá-los (curar ou reativar), use os botões do escaravelho no painel de exército.\n\n[b]Online:[/b] na tela do exército, toque em \"⚡ Online\". Um jogador cria a sala e passa o código de 6 letras; o outro digita o código e entra. O mapa é o planeta de quem criou a sala. No app instalado (PC/Android), a sala usa o IP da rede local no lugar do código.\n\n[b]Controles:[/b] clique numa peça sua e depois numa casa verde (mover) ou num inimigo vermelho (atacar), ou arraste a peça e solte. Confirme a prévia. Botão direito gira a câmera, arrastar o fundo move o mapa, a roda aproxima. Q/E giram. Enter confirma, Esc cancela.\n\n[b]Toque (tablet/celular):[/b] toque numa peça e numa casa para agir. 1 dedo arrasta o mapa; pinça com 2 dedos aproxima/afasta; girar os 2 dedos gira a câmera; arrastar os 2 dedos para cima/baixo inclina a visão. \"Tudo\" recentraliza."
+[b]Altura:[/b] atacar de cima +1 de dano, de baixo -1. Tiros (alcance 2+) de cima ganham +1 de alcance. Corpo a corpo só com até 1 nível de diferença.\n\n[b][color=#c77dff]Hex Energy[/color]:[/b] nos rounds 2, 4, 6 e 8 surge um hexágono roxo de energia que fica 2 rounds. Leve uma peça até ele para capturar: 2 cartas, +2 ATQ ou +4 Vida com defesa. O local da próxima aparece antes, com um contorno roxo no mapa.\n\n[b]Controle Lithari:[/b] [b]Lento[/b] = -1 de Movimento até o fim do round (mínimo 1). [b]Enraizado[/b] = não anda até o fim do próximo round; depois de se soltar, a peça fica imune a novo enraizamento por 1 round. [b]Zona de Cristal[/b] = casas marcadas (\"CRISTAL\") por 2 rounds: inimigo que entra nelas fica Lento. Lithari não são afetados pelas zonas deles.\n\n[b]Impulso:[/b] derrubar uma tropa dá 1 casa de movimento grátis (1 vez por ativação).\n\n[b]Linha de tiro:[/b] uma casa no caminho bloqueia se o topo dela for mais alto que o atacante e o alvo.\n\n[b]Abrigo:[/b] -2 de dano se uma rocha/ruína/ossada vizinha ao alvo estiver do lado do atacante.\n\n[b]Tarhut (o mapa mais difícil):[/b] as dunas, com até 5 níveis de altura, mudam inteiras a cada 3 rounds (aviso 1 round antes, nos rounds 4, 7 e 10). Elas bloqueiam tiros e dão vantagem de altura; quem estiver no alto quando a duna baixar despenca: 1 de dano, +1 se cair 3 níveis e +1 se cair 5. A cada 3 rounds o [color=#ff6a4a]Verme Gigante[/color] sai da areia (o \"!\" avisa 1 round antes): quem estiver no buraco sofre 4 de dano e quem estiver ao lado, 1. Fuja das casas marcadas! O deserto é enorme.\n\n[b]Valak (caverna de cristais):[/b] um labirinto de cristais que muda a cada partida. Cristais bloqueiam passagem e tiros; um ataque quebra um cristal e o efeito atinge TODOS ao lado: [color=#7dff4a]verde[/color] cura 2, [color=#5ae8ff]azul[/color] dá +1 de Movimento no próximo movimento do round, [color=#ff5ae0]roxo[/color] causa 2 de dano. No centro vive a [color=#ff4ad0]Garra[/color]: andar (+1), atacar ou usar habilidade (+2) a até 3 casas do buraco, ou passar um carrinho por ali (+3), aumenta a VIBRAÇÃO. Em 5, a garra ataca: quem está a 1 casa do buraco é arrastado e morre; a 2 ou 3 casas sofre 2 de dano e é puxado 1 casa. Carrinhos: uma peça ao lado gasta 1 ação para empurrar; ele anda até 3 casas no trilho e o primeiro atingido sofre 3 e é empurrado. [color=#ffb14a]Tempestade de areia:[/color] no round em que o vento muda (3, 6, 9) e no round em que as dunas mudam (4, 7, 10), todos os ataques causam 2 a menos de dano.\n\n[b][color=#c77dff]Disputa pela Hex Energy[/color] (Valak · Mina de Cristais):[/b] modo de 5 rounds com papéis. O mapa é a Mina de Cristais, com o núcleo na base dos Guardiões e os Invasores começando do outro lado. Os [b]Invasores[/b] precisam extrair a energia do núcleo; os [b]Guardiões[/b] seguram até o fim do round 5. Uma tropa invasora no núcleo gasta 1 ação para começar a extração; ela conclui no início da próxima ativação dessa tropa, se ela continuar no núcleo e os Guardiões já tiverem tido a vez (agir ou passar conta). Sair do núcleo, ser empurrado ou cair cancela; levar dano sem sair não. Comandantes entram no round 4 e cair não decide a partida. Antes de começar, cada lado escolhe 3 das 4 táticas exclusivas da facção (segredo até usar) e os dois disputam 2 pares de genéricas em draft: quem escolhe fica com uma e a outra vai para o rival; a prioridade inverte no segundo par. Mão inicial: 5 cartas. Na revanche os papéis trocam.\n\n[b]Escaravelhos Verdes (Tarhut):[/b] basta passar por cima de um (ou parar nele) para guardá-lo, sem gastar ação. [b]1 escaravelho[/b] restaura 6 de Vida de uma peça; [b]2 escaravelhos[/b] deixam uma peça usar a ativa mais uma vez; os que sobrarem no fim somam +1 de Vida ao seu comandante na contagem do último round. Para gastá-los (curar ou reativar), use os botões do escaravelho no painel de exército.\n\n[b]Online:[/b] na tela do exército, toque em \"⚡ Online\". Um jogador cria a sala e passa o código de 6 letras; o outro digita o código e entra. O mapa é o planeta de quem criou a sala. No app instalado (PC/Android), a sala usa o IP da rede local no lugar do código.\n\n[b]Controles:[/b] clique numa peça sua e depois numa casa verde (mover) ou num inimigo vermelho (atacar), ou arraste a peça e solte. Confirme a prévia. Botão direito gira a câmera, arrastar o fundo move o mapa, a roda aproxima. Q/E giram. Enter confirma, Esc cancela.\n\n[b]Toque (tablet/celular):[/b] toque numa peça e numa casa para agir. 1 dedo arrasta o mapa; pinça com 2 dedos aproxima/afasta; girar os 2 dedos gira a câmera; arrastar os 2 dedos para cima/baixo inclina a visão. \"Tudo\" recentraliza."
 
 var board
 var game: Game = null
@@ -674,6 +674,7 @@ func _last_round() -> int:
 func _set_papel(inv: int) -> void:
 	setup_cfg["inv"] = inv
 	DB.troca_padrao = _disputa() and inv == 1
+	DB.modo_padrao = "disputa" if _disputa() else ""
 	if setup_cfg.has("map"):
 		DB.set_map(setup_cfg["map"])
 
@@ -1356,7 +1357,7 @@ func _planet_info(id: String) -> void:
 			var ad = _label(rv, ar["desc"], 17, C_TXT.darkened(0.1))
 			ad.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			ad.custom_minimum_size = Vector2(340 if compact else 420, 0)
-		var bb = _cbtn(rv, "BATALHAR AQUI", C_GOLD, _choose_planet.bind(id, ar["map"]))
+		var bb = _cbtn(rv, "BATALHAR AQUI", C_GOLD, _choose_planet.bind(id, ar["map"], ar.get("modo", "")))
 		_primary(bb)
 		bb.custom_minimum_size = Vector2(0, 56)
 		bb.add_theme_font_size_override("font_size", 22)
@@ -1439,13 +1440,14 @@ func _update_tags() -> void:
 		tg.position = tg.position.lerp(pos, 0.35) if tg.position.x > -900.0 else pos
 
 
-func _choose_planet(id: String, map_id: String = "") -> void:
+func _choose_planet(id: String, map_id: String = "", modo: String = "") -> void:
 	if stage != "select" and stage != "planet_info":
 		return
 	stage = "to_army"
 	planet_id = id
 	setup_cfg["map"] = map_id if map_id != "" else galaxy.data(id)["map"]
-	setup_cfg["modo"] = "disputa" if DB.maps.has(setup_cfg["map"]) and DB.maps[setup_cfg["map"]].get("disputa", false) else ""
+	# o modo vem da arena (a Disputa usa o mapa normal de Valak com base e início próprios)
+	setup_cfg["modo"] = modo if DB.maps.has(setup_cfg["map"]) and DB.maps[setup_cfg["map"]].has(modo) else ""
 	_set_papel(int(setup_cfg.get("inv", 0)))
 	sfx.play("confirmar", -6.0)
 	sfx.play("vfx_portal", -12.0)
@@ -2640,7 +2642,7 @@ func _start_match(sides) -> void:
 	game = Game.new()
 	game.tree = get_tree()
 	# Disputa pela Hex Energy: papéis e zonas de início (a zona acompanha o papel)
-	if _disputa() and deus == null and not tut and DB.maps.has(setup_cfg["map"]) and DB.maps[setup_cfg["map"]].get("disputa", false):
+	if _disputa() and deus == null and not tut and DB.maps.has(setup_cfg["map"]) and DB.maps[setup_cfg["map"]].has("disputa"):
 		game.modo = "disputa"
 		game.inv = int(setup_cfg.get("inv", 0))
 		_set_papel(game.inv)
@@ -2651,6 +2653,7 @@ func _start_match(sides) -> void:
 				sides[sp]["start"] = [{"id": ids[0], "h": spots[0]}, {"id": ids[1], "h": spots[spots.size() - 1]}]
 	else:
 		DB.troca_padrao = false
+		DB.modo_padrao = ""
 		DB.set_map(setup_cfg["map"])
 	game.cpu = [false, false] if deus != null else [autotest, true]
 	game.sandbox = deus != null
@@ -4075,30 +4078,31 @@ func _refresh_prompt() -> void:
 					var bt2 = _button(box, q["opts"][i], func(): _answer(ii))
 					bt2.custom_minimum_size = Vector2(0, 40)
 			"excl":
-				# Disputa: escolha privada de 3 das 4 exclusivas da facção
-				text += "\n[color=#8fb8cc]Escolhidas: %d de %d · o rival só vê quando você usar[/color]" % [excl_sel.size(), int(q.get("n", 3))]
+				# Disputa: escolha privada de 3 das 4 exclusivas da facção (ícones + 1 linha curta)
+				var n3 = int(q.get("n", 3))
+				text += "\n[color=#8fb8cc]%d de %d · o rival só vê quando você usar[/color]" % [excl_sel.size(), n3]
+				var gx = _tile_grid(box, q["opts"].size())
 				for id in q["opts"]:
 					var cid3 = id
-					var on = excl_sel.has(id)
-					var bt3 = _cbtn(box, ("✔ " if on else "") + DB.tactics[id]["name"] + " (" + DB.tactics[id]["type"] + ") — " + DB.tactics[id]["text"], _card_col(id) if on else C_HUD, func(): _excl_toggle(cid3, int(q.get("n", 3))), on)
-					bt3.tooltip_text = DB.tactics[id]["text"]
-				var okb = _cbtn(box, "Confirmar as %d táticas" % int(q.get("n", 3)), C_GOLD, func():
+					_tile(gx, id, _curto(id), excl_sel.has(id), func(): _excl_toggle(cid3, n3))
+				var okb = _cbtn(box, "Confirmar", C_GOLD, func():
 					var r = excl_sel.duplicate()
 					excl_sel = []
 					_answer(r))
-				okb.disabled = excl_sel.size() != int(q.get("n", 3))
+				okb.disabled = excl_sel.size() != n3
 			"draft":
 				# Disputa: par público; quem escolhe fica com uma e a outra vai para o rival
+				for dl in game.draft_log:
+					text += "\n[color=#cbbdff]Par %d: %s ficou com %s[/color]" % [int(dl["par"]) + 1, "você" if int(dl["p"]) == me else _opp(), DB.tactics[dl["id"]]["name"]]
 				var meu = game.P[me].get("excl", [])
 				if not meu.is_empty():
-					text += "\n[color=#8fb8cc]Suas exclusivas: %s[/color]" % ", ".join(meu.map(func(x): return DB.tactics[x]["name"]))
-				for dl in game.draft_log:
-					text += "\n[color=#cbbdff]Par %d: %s recebeu %s[/color]" % [int(dl["par"]) + 1, "você" if int(dl["p"]) == me else _opp(), DB.tactics[dl["id"]]["name"]]
+					var mrow = _tile_grid(box, meu.size(), 6)
+					for x in meu:
+						_mini_ic(mrow, x)
+				var gd = _tile_grid(box, q["opts"].size())
 				for id in q["opts"]:
 					var cid4 = id
-					var outra = q["opts"][1] if id == q["opts"][0] else q["opts"][0]
-					var bt4 = _cbtn(box, "Ficar com %s — %s  (o rival recebe %s)" % [DB.tactics[id]["name"], DB.tactics[id]["text"], DB.tactics[outra]["name"]], _card_col(id), func(): _answer(cid4))
-					bt4.tooltip_text = DB.tactics[id]["text"]
+					_tile(gd, id, _curto(id), false, func(): _answer(cid4))
 			"unitlist":
 				for uid in q["opts"]:
 					var u2 = game.by_uid(uid)
@@ -5146,6 +5150,94 @@ func _on_question(p: int, q: Dictionary) -> void:
 	asking = {"p": p, "q": q}
 	refresh()
 
+
+
+# ---- Disputa: escolha de táticas em ícones (ícone + nome + 1 linha) ----
+func _curto(id: String) -> String:
+	var t = DB.tactics[id]
+	return t.get("curto", t["text"])
+
+
+func _tile_grid(parent: Control, n: int, sep: int = 10) -> GridContainer:
+	var tw = 124.0 if compact else 138.0
+	var aw: float = w.get("ask_w", 600.0)
+	var gx = GridContainer.new()
+	gx.columns = max(1, n if aw >= n * (tw + sep) else int(ceil(n / 2.0)))
+	gx.add_theme_constant_override("h_separation", sep)
+	gx.add_theme_constant_override("v_separation", sep)
+	gx.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	parent.add_child(gx)
+	return gx
+
+
+func _ic_tex(id: String) -> Texture2D:
+	var ipath = "res://ui/cartas/ic/%s.png" % id
+	if not ResourceLoader.exists(ipath):
+		ipath = "res://ui/icons/%s.png" % id
+	return load(ipath) if ResourceLoader.exists(ipath) else null
+
+
+func _tile(parent: Control, id: String, sub: String, on: bool, cb: Callable) -> Button:
+	var col: Color = _card_col(id)
+	var tw = 124.0 if compact else 138.0
+	var b = Button.new()
+	b.custom_minimum_size = Vector2(tw, 190 if compact else 204)
+	b.add_theme_stylebox_override("normal", _card_box(col if on else col.darkened(0.5), 5 if on else 3))
+	b.add_theme_stylebox_override("hover", _card_box(col.lightened(0.1) if on else col.darkened(0.2), 5 if on else 4))
+	b.add_theme_stylebox_override("pressed", _card_box(col, 5))
+	b.add_theme_stylebox_override("disabled", _card_box(col.darkened(0.6), 3))
+	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	b.tooltip_text = DB.tactics[id]["name"] + "\n" + DB.tactics[id]["text"]
+	b.pressed.connect(cb)
+	parent.add_child(b)
+	var v = VBoxContainer.new()
+	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	v.add_theme_constant_override("separation", 4)
+	v.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	v.offset_left = 8
+	v.offset_right = -8
+	v.offset_top = 8
+	v.offset_bottom = -12
+	b.add_child(v)
+	var ic = TextureRect.new()
+	ic.custom_minimum_size = Vector2(0, 64 if compact else 72)
+	ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ic.texture = _ic_tex(id)
+	if not on and asking != null and asking["q"]["t"] == "excl" and excl_sel.size() >= int(asking["q"].get("n", 3)):
+		ic.modulate = Color(0.55, 0.55, 0.6)   # já tem 3: a que ficou de fora apaga
+	v.add_child(ic)
+	var nm = _label(v, DB.tactics[id]["name"], 15 if compact else 16, col.lightened(0.35) if on else Color.WHITE)
+	nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	nm.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	nm.custom_minimum_size.x = tw - 16
+	nm.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var sl = _label(v, sub, 12 if compact else 13, C_TXT.darkened(0.1))
+	sl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	sl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	sl.custom_minimum_size.x = tw - 16
+	sl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if on:
+		var ck = _label(b, "✔", 20, col.lightened(0.4))
+		ck.position = Vector2(tw - 26, 2)
+		ck.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return b
+
+
+# ícone pequeno (as exclusivas já escolhidas, na tela do draft)
+func _mini_ic(parent: Control, id: String) -> void:
+	var p = PanelContainer.new()
+	p.add_theme_stylebox_override("panel", _card_box(_card_col(id), 2))
+	p.tooltip_text = DB.tactics[id]["name"]
+	parent.add_child(p)
+	var ic = TextureRect.new()
+	ic.custom_minimum_size = Vector2(38, 38)
+	ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ic.texture = _ic_tex(id)
+	p.add_child(ic)
 
 var excl_sel: Array = []
 

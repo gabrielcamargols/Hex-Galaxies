@@ -18,16 +18,22 @@ func H(q: int, r: int) -> Vector2i:
 	return Vector2i(q, r)
 
 
+# coordenadas do teste relativas ao núcleo: T(3, 0) é o núcleo da Disputa na Mina de Cristais
+func T(q: int, r: int) -> Vector2i:
+	return DB.disputa_core("posto") + Vector2i(q - 3, r)
+
+
 func novo(fac0: String = "KRI", fac1: String = "WAC", inv: int = 0) -> Game:
 	DB.troca_padrao = inv == 1
-	DB.set_map("galeria")
+	DB.modo_padrao = "disputa"
+	DB.set_map("posto")
 	var g = Game.new()
 	g.tree = null
 	g.pace_time = 0.0
 	g.cpu = [false, false]
 	g.modo = "disputa"
 	g.inv = inv
-	g.setup([{"fac": fac0, "picks": [], "start": []}, {"fac": fac1, "picks": [], "start": []}], "galeria")
+	g.setup([{"fac": fac0, "picks": [], "start": []}, {"fac": fac1, "picks": [], "start": []}], "posto")
 	g.question.connect(func(p, q):
 		perguntas.append({"p": p, "q": q})
 		g.answered.emit.call_deferred(fila.pop_front() if not fila.is_empty() else null))
@@ -36,17 +42,25 @@ func novo(fac0: String = "KRI", fac1: String = "WAC", inv: int = 0) -> Game:
 
 func put(g: Game, cid: String, p: int, q: int, r: int) -> Game.Unit:
 	var u = g._mk(cid, p, "field")
-	u.q = q
-	u.r = r
+	var h = T(q, r)
+	u.q = h.x
+	u.r = h.y
 	return u
 
 
 # deixa o núcleo pronto sem passar pela preparação
 func arma(g: Game) -> void:
-	g.core = H(3, 0)
+	g.core = T(3, 0)
 	g.core_until = 999
 	g.round_no = 2
 	g._gen_crystals()
+	ok(g.core == DB.disputa_core("posto") and g.unit_at(g.core) == null, "núcleo livre de cristal")
+	# campo limpo em volta do núcleo para os testes de regra (o labirinto é sorteado)
+	for u in g.units.duplicate():
+		if u.barrier and u.st == "field" and DB.dist(u.pos(), g.core) <= 6:
+			g.units.erase(u)
+	g.tracks = []
+	g.carts = []
 
 
 func run() -> void:
@@ -57,8 +71,18 @@ func run() -> void:
 	ok(DB.excl_ids.size() == 28, "28 exclusivas no catálogo")
 	ok(not DB.tactic_ids.any(func(i): return DB.excl_ids.has(i)), "exclusivas fora do baralho comum")
 	ok(DB.disputa_pares.size() == 3 and DB.disputa_pares.all(func(pr): return DB.tactic_ids.has(pr[0]) and DB.tactic_ids.has(pr[1])), "3 pares públicos de genéricas existentes")
-	var gal = DB.maps["galeria"]
-	ok(gal.get("disputa", false) and gal.has("core_fixed"), "galeria de Valak marcada como mapa da Disputa")
+	ok(not DB.maps.has("galeria"), "sem mapa novo: a Disputa usa a Mina de Cristais de Valak")
+	var dp = DB.maps["posto"].get("disputa", {})
+	ok(dp.has("core") and dp.get("entry_centers", []).size() == 2, "Mina de Cristais: base dos Guardiões (núcleo) e início dos Invasores")
+	DB.troca_padrao = false
+	DB.modo_padrao = "disputa"
+	DB.set_map("posto")
+	var c0 = DB.disputa_core("posto")
+	ok(DB.dist(DB.entry_c[1], c0) <= 2 and DB.dist(DB.entry_c[0], c0) >= 5, "Guardiões começam junto da base; Invasores longe dela")
+	ok(DB.hexes.has(c0) and DB.dist(c0, Vector2i.ZERO) > 3, "núcleo fora do alcance da Garra")
+	DB.modo_padrao = ""
+	DB.set_map("posto")
+	ok(DB.entry_c[0] == Vector2i(3, -6), "partida normal na Mina mantém as entradas de sempre")
 
 	# ---------- preparação: 3 exclusivas + draft ----------
 	var g = novo("KRI", "ZUK", 0)
@@ -140,7 +164,7 @@ func run() -> void:
 	g.cur = 0
 	g.start_activation(a)
 	await g.act_extract(a)
-	await g.move_unit(a, H(2, 0))
+	await g.move_unit(a, T(2, 0))
 	ok(g.extr == null, "sair do núcleo cancela a extração")
 	# empurrado para fora cancela; outra tropa começa nova tentativa com 1 ação
 	g = novo("KRI", "WAC", 0)
@@ -152,10 +176,10 @@ func run() -> void:
 	g.start_activation(a)
 	await g.act_extract(a)
 	await g.end_activation()
-	await g.move_unit(a, H(3, 1))   # empurrão
+	await g.move_unit(a, T(3, 1))   # empurrão
 	ok(g.extr == null, "ser deslocado para fora do núcleo cancela")
 	g.cur = 0
-	await g.move_unit(b, H(3, 0))
+	await g.move_unit(b, T(3, 0))
 	g.start_activation(b)
 	ok(g.can_extract(b) and g.extr == null, "tropa que chega depois começa uma nova tentativa (precisa da ação)")
 	await g.act_extract(b)
@@ -187,6 +211,7 @@ func run() -> void:
 	ok(g.winner == 1 and g.win_cause == "eliminacao", "sem nenhum Invasor de pé, os Guardiões vencem")
 	# partida normal continua igual
 	DB.troca_padrao = false
+	DB.modo_padrao = ""
 	DB.set_map("posto")
 	var gn = Game.new()
 	gn.tree = null
@@ -197,14 +222,30 @@ func run() -> void:
 	ok(gn.winner == 0, "partida normal: comandante caído ainda decide")
 
 	# ---------- papéis: zonas acompanham ----------
+	DB.modo_padrao = "disputa"
 	DB.troca_padrao = false
-	DB.set_map("galeria")
+	DB.set_map("posto")
 	var z0 = DB.entry_c[0]
 	DB.troca_padrao = true
-	DB.set_map("galeria")
+	DB.set_map("posto")
 	ok(DB.entry_c[1] == z0, "revanche: a zona dos Invasores vai para o outro lado junto com o papel")
 	DB.troca_padrao = false
-	DB.set_map("galeria")
+	DB.set_map("posto")
+	# labirinto da Disputa: o núcleo sempre alcançável a partir do início dos Invasores
+	var alc = 0
+	for sd in range(6):
+		var gm = novo("KRI", "WAC", sd % 2)
+		gm.rng.seed = 1000 + sd
+		gm.units = gm.units.filter(func(x): return not x.barrier)
+		gm._gen_crystals()
+		var aberto = {}
+		for hh in DB.hexes:
+			if not gm.hole.has(hh) and not gm.blocks.has(hh) and not gm.cart_at(hh) and (gm.unit_at(hh) == null or not gm.unit_at(hh).barrier):
+				aberto[hh] = true
+		if not gm._maze_path(aberto, {}, DB.entry_c[gm.inv], DB.disputa_core("posto")).is_empty():
+			alc += 1
+	ok(alc == 6, "labirinto sorteado sempre deixa caminho até o núcleo (%d/6)" % alc)
+	DB.troca_padrao = false
 
 	# ---------- táticas exclusivas ----------
 	await testa_exclusivas()
@@ -277,7 +318,7 @@ func testa_exclusivas() -> void:
 	# Zukunft
 	g = novo("ZUK", "KRI", 0)
 	arma(g)
-	var z = put(g, "z_vang", 0, -2, 0)
+	var z = put(g, "z_vang", 0, 1, 1)
 	var dests = g._x_desvio_dest(z)
 	ok(not dests.is_empty() and dests.all(func(h): return DB.dist(h, z.pos()) <= 2), "Desvio Portalis: casas a até 2")
 	var zd = dests[0]
@@ -285,7 +326,7 @@ func testa_exclusivas() -> void:
 	g = novo("ZUK", "KRI", 0)
 	arma(g)
 	z = put(g, "z_vang", 0, 0, 0)
-	var atir = put(g, "k_sniper", 1, 0, 4) if g.is_free(H(0, 4)) else put(g, "k_sniper", 1, -3, 3)
+	var atir = put(g, "k_sniper", 1, 2, 0)
 	var mira = g.line_hexes(atir.pos(), z.pos(), 1e-6)
 	var meio = mira[1] if mira.size() > 2 else null
 	if meio != null and g.is_free(meio):
@@ -296,39 +337,55 @@ func testa_exclusivas() -> void:
 	arma(g)
 	var f = put(g, "karu", 0, 0, 0)
 	f.hp = f.maxhp - 3
-	var bh = H(1, 0)
+	var bh = T(1, 0)
 	ok(await joga(g, 0, "x_suprimento", f, [bh]) and g.bananas.has(bh), "Suprimento de Campo: banana na casa")
 	await g.move_unit(f, bh)
 	ok(f.hp == f.maxhp - 1 and not g.bananas.has(bh), "Suprimento de Campo: Fauriano cura 2 e consome")
 	# Abyssais: tinta bloqueia tiro
 	g = novo("ABY", "KRI", 0)
 	arma(g)
-	var ab1 = H(-2, 0)
-	var ab2 = H(2, 0)
+	var ab1 = T(0, 1)
+	var ab2 = T(4, -1)
 	var antes = g.los(ab1, ab2)
-	g.smokes.append({"h": H(0, 0), "till": g.round_no})
+	g.smokes.append({"h": T(2, 0), "till": g.round_no})
 	ok(antes and not g.los(ab1, ab2), "Maré de Recuo: a tinta bloqueia tiros que passam por ela")
 	# Lithari
 	g = novo("LIT", "KRI", 0)
 	arma(g)
 	var l = put(g, "l_tank", 0, 0, 0)
-	ok(await joga(g, 0, "x_semente", l, [H(1, 0)]) and g.czone_owner(H(1, 0)) == 0, "Semente Mineral: vira Zona de Cristal")
+	ok(await joga(g, 0, "x_semente", l, [T(1, 0)]) and g.czone_owner(T(1, 0)) == 0, "Semente Mineral: vira Zona de Cristal")
 	await g.end_round()
 	# Valakianos: Escora e Passagem
 	g = novo("TER", "KRI", 0)
 	arma(g)
-	var ter = put(g, "t_basalto", 0, 0, -3)
-	var alto = H(1, -4)
+	var ter = put(g, "t_basalto", 0, 1, 0)
+	var alto = T(2, 0)
+	g.terr_map[alto] = {"k": "colina", "h": 2}
 	var pode_antes = g.can_step(ter.pos(), alto)
 	g.escoras[alto] = g.round_no + 1
-	ok(g.terr(alto)["h"] == 1 and (pode_antes == false or g.tt_of(g.terr(alto)["k"]).get("climb", 0)) , "Escora: casa alta escolhida")
-	var esc = H(1, -3)
-	var custo = g.step_cost(H(0, -3), esc)
+	ok(not pode_antes and g.can_step(ter.pos(), alto), "Escora: a subida passa a valer 1 nível a menos")
+	var esc = T(1, 1)
+	g.terr_map[esc] = {"k": "escombros", "h": 0}
+	var custo = g.step_cost(ter.pos(), esc)
 	g.passagens[esc] = g.round_no + 1
-	ok(g.step_cost(H(0, -3), esc) == max(1, custo - 1), "Passagem Escorada: entrar custa 1 a menos")
-	var vf = put(g, "t_britadeira", 0, -2, -1)
+	ok(g.step_cost(ter.pos(), esc) == max(1, custo - 1), "Passagem Escorada: entrar custa 1 a menos")
+	var vf = put(g, "t_britadeira", 0, 4, 0)
+	var cr = Game.Unit.new()
+	cr.uid = g.next_uid
+	g.next_uid += 1
+	cr.cid = "barrier"
+	cr.owner = Game.NEUTRAL
+	cr.st = "field"
+	var hc = T(5, -1)
+	cr.q = hc.x
+	cr.r = hc.y
+	cr.hp = 1
+	cr.maxhp = 1
+	cr.barrier = true
+	cr.activated = true
+	cr.crystal = "verde"
+	g.units.append(cr)
 	g.cur = 0
 	g.start_activation(vf)
 	g.act["ferramenta"] = true
-	var cr = g.unit_at(H(-2, -2))
 	ok(cr != null and cr.crystal != "" and g._x_bonus_atk(vf, cr, false) == 2, "Ferramenta de Reserva: +2 contra cristal")

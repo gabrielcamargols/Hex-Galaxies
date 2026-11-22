@@ -2783,7 +2783,8 @@
    "name": "Flanquear",
    "type": "Manobra",
    "cost": 0,
-   "text": "Sua peça que está agindo anda 1 casa."
+   "text": "Sua peça que está agindo anda 1 casa.",
+   "curto": "Sua peça agindo anda 1 casa"
   },
   {
    "id": "retirada",
@@ -2888,7 +2889,8 @@
    "name": "Granada de Fragmentação",
    "type": "Comando",
    "cost": 0,
-   "text": "Escolha uma casa a até 3: 1 de dano em cada inimigo nela e ao redor."
+   "text": "Escolha uma casa a até 3: 1 de dano em cada inimigo nela e ao redor.",
+   "curto": "1 de dano numa área a até 3"
   },
   {
    "id": "sinalizador",
@@ -2909,7 +2911,8 @@
    "name": "Barreira Portátil",
    "type": "Comando",
    "cost": 0,
-   "text": "Cria ao lado da sua peça uma barreira de 3 de Vida que bloqueia passagem e tiros."
+   "text": "Cria ao lado da sua peça uma barreira de 3 de Vida que bloqueia passagem e tiros.",
+   "curto": "Barreira de 3 de Vida ao lado"
   },
   {
    "id": "gancho",
@@ -2930,7 +2933,8 @@
    "name": "Onda de Choque",
    "type": "Manobra",
    "cost": 0,
-   "text": "Empurra 1 casa cada inimigo ao lado da sua peça."
+   "text": "Empurra 1 casa cada inimigo ao lado da sua peça.",
+   "curto": "Empurra 1 casa os inimigos ao lado"
   },
   {
    "id": "orbital",
@@ -2944,7 +2948,8 @@
    "name": "Kit de Campo",
    "type": "Comando",
    "cost": 0,
-   "text": "Cura 2 de Vida na sua peça e em cada aliado a até 2 casas."
+   "text": "Cura 2 de Vida na sua peça e em cada aliado a até 2 casas.",
+   "curto": "Cura 2 em você e aliados perto"
   },
   {
    "id": "ultimo",
@@ -2965,7 +2970,8 @@
    "name": "Teletransporte de Resgate",
    "type": "Manobra",
    "cost": 0,
-   "text": "Sua peça troca de lugar com um aliado a até 4 casas."
+   "text": "Sua peça troca de lugar com um aliado a até 4 casas.",
+   "curto": "Troca de lugar com aliado a até 4"
   },
   {
    "id": "quantica",
@@ -3025,7 +3031,8 @@
    "cost": 0,
    "text": "Escolha um inimigo já atingido por um Krieg neste round. O próximo ataque de outro Krieg contra ele neste round causa +2 de dano.",
    "fac": "KRI",
-   "efeito": "atk"
+   "efeito": "atk",
+   "curto": "Alvo já atingido: +2 no próximo Krieg"
   },
   {
    "id": "x_retirada_ordem",
@@ -3034,7 +3041,8 @@
    "cost": 0,
    "text": "Dois Krieg adjacentes trocam de lugar, se cada um puder entrar na casa do outro.",
    "fac": "KRI",
-   "efeito": "mov"
+   "efeito": "mov",
+   "curto": "Dois Krieg vizinhos trocam de lugar"
   },
   {
    "id": "x_marcacao",
@@ -3043,7 +3051,8 @@
    "cost": 0,
    "text": "Marque um inimigo a até 3 casas e na linha de visão de um Krieg. O próximo tiro de outro Krieg contra ele neste round causa +1 de dano.",
    "fac": "KRI",
-   "efeito": "atk"
+   "efeito": "atk",
+   "curto": "Marca um inimigo: +1 no próximo tiro"
   },
   {
    "id": "x_cobrir",
@@ -3052,7 +3061,8 @@
    "cost": 0,
    "text": "Depois que um Krieg ataca, outro Krieg ao lado dele pode andar 1 casa livre.",
    "fac": "KRI",
-   "efeito": "mov"
+   "efeito": "mov",
+   "curto": "Após atacar, um Krieg vizinho anda 1"
   },
   {
    "id": "x_retomar",
@@ -3061,7 +3071,8 @@
    "cost": 0,
    "text": "Um Watcher ao lado do núcleo avança para a casa do núcleo, se estiver livre e ele puder entrar.",
    "fac": "WAC",
-   "efeito": "mov"
+   "efeito": "mov",
+   "curto": "Watcher vizinho entra no núcleo"
   },
   {
    "id": "x_linha_escudos",
@@ -3070,7 +3081,8 @@
    "cost": 0,
    "text": "Dois Watcher adjacentes levam 1 a menos de dano no próximo golpe que cada um sofrer neste round.",
    "fac": "WAC",
-   "efeito": "def"
+   "efeito": "def",
+   "curto": "Dois Watcher vizinhos: −1 de dano"
   },
   {
    "id": "x_troca_sentinela",
@@ -3079,7 +3091,8 @@
    "cost": 0,
    "text": "Um Watcher anda 1 casa em direção a outro Watcher a até 3 casas e termina ao lado dele. Ele leva 1 a menos no próximo golpe do round.",
    "fac": "WAC",
-   "efeito": "mov"
+   "efeito": "mov",
+   "curto": "Anda 1 até outro Watcher e −1 de dano"
   },
   {
    "id": "x_interposicao",
@@ -3088,7 +3101,8 @@
    "cost": 0,
    "text": "Quando um Watcher sofre um ataque corpo a corpo, outro Watcher ao lado dele absorve até 2 do dano.",
    "fac": "WAC",
-   "efeito": "def"
+   "efeito": "def",
+   "curto": "Watcher vizinho absorve até 2 de dano"
   },
   {
    "id": "x_desvio",
@@ -3097,7 +3111,8 @@
    "cost": 0,
    "text": "Um Zukunft salta para uma casa livre a até 2 casas, passando por cima do obstáculo no caminho.",
    "fac": "ZUK",
-   "efeito": "mov"
+   "efeito": "mov",
+   "curto": "Salta até 2 casas por cima de obstáculo"
   },
   {
    "id": "x_rele",
@@ -3106,7 +3121,8 @@
    "cost": 0,
    "text": "Depois de atacar, um Zukunft pode andar 1 casa para perto de outro Zukunft que esteja a até 3 casas.",
    "fac": "ZUK",
-   "efeito": "mov"
+   "efeito": "mov",
+   "curto": "Após atacar, anda 1 rumo a um aliado"
   },
   {
    "id": "x_holo",
@@ -3115,7 +3131,8 @@
    "cost": 0,
    "text": "Crie uma projeção numa casa livre ao lado de um Zukunft. O primeiro tiro inimigo que passar por ela é bloqueado e a desfaz. Some no fim do round.",
    "fac": "ZUK",
-   "efeito": "def"
+   "efeito": "def",
+   "curto": "Projeção que bloqueia 1 tiro inimigo"
   },
   {
    "id": "x_janela",
@@ -3124,7 +3141,8 @@
    "cost": 0,
    "text": "Um Zukunft ao lado de um aliado salta para outra casa livre ao lado desse mesmo aliado.",
    "fac": "ZUK",
-   "efeito": "mov"
+   "efeito": "mov",
+   "curto": "Salta para outra casa ao lado do aliado"
   },
   {
    "id": "x_revezamento",
@@ -3133,7 +3151,8 @@
    "cost": 0,
    "text": "Um Fauriano anda 1 casa. Outro Fauriano ao lado da casa de onde ele saiu pode ocupar essa casa.",
    "fac": "FAU",
-   "efeito": "mov"
+   "efeito": "mov",
+   "curto": "Anda 1 e um aliado ocupa a casa"
   },
   {
    "id": "x_suprimento",
@@ -3142,7 +3161,8 @@
    "cost": 0,
    "text": "Coloque uma banana numa casa livre a até 2 casas de um Fauriano. O primeiro Fauriano que entrar nela até o fim do próximo round cura 2 de Vida.",
    "fac": "FAU",
-   "efeito": "cura"
+   "efeito": "cura",
+   "curto": "Banana a até 2 casas: cura 2"
   },
   {
    "id": "x_caminhos",
@@ -3151,7 +3171,8 @@
    "cost": 0,
    "text": "Dois Faurianos adjacentes andam 1 casa cada, para casas livres diferentes, se afastando um do outro.",
    "fac": "FAU",
-   "efeito": "mov"
+   "efeito": "mov",
+   "curto": "Dois Faurianos se afastam 1 casa"
   },
   {
    "id": "x_ritmo",
@@ -3160,7 +3181,8 @@
    "cost": 0,
    "text": "Se o Fauriano que está agindo já andou 2 casas ou mais nesta ativação, o próximo ataque dele nesta ativação causa +1 de dano.",
    "fac": "FAU",
-   "efeito": "atk"
+   "efeito": "atk",
+   "curto": "Andou 2+: +1 de dano no ataque"
   },
   {
    "id": "x_corrente",
@@ -3169,7 +3191,8 @@
    "cost": 0,
    "text": "Depois de um Abyssal acertar um inimigo, puxe o inimigo 1 casa em direção ao atacante, se houver casa livre.",
    "fac": "ABY",
-   "efeito": "ctl"
+   "efeito": "ctl",
+   "curto": "Acertou: puxa o inimigo 1 casa"
   },
   {
    "id": "x_mare_recuo",
@@ -3178,7 +3201,8 @@
    "cost": 0,
    "text": "Depois de atacar, o Abyssal recua 1 casa para longe do alvo e deixa tinta na casa de onde saiu. A tinta bloqueia tiros até o fim do round.",
    "fac": "ABY",
-   "efeito": "mov"
+   "efeito": "mov",
+   "curto": "Após atacar, recua e deixa tinta"
   },
   {
    "id": "x_pressao",
@@ -3187,7 +3211,8 @@
    "cost": 0,
    "text": "O próximo ataque do Abyssal que está agindo, nesta ativação, causa +1 de dano se o alvo tiver outro Abyssal ao lado.",
    "fac": "ABY",
-   "efeito": "atk"
+   "efeito": "atk",
+   "curto": "+1 de dano se outro Abyssal estiver ao lado"
   },
   {
    "id": "x_cerco",
@@ -3196,7 +3221,8 @@
    "cost": 0,
    "text": "Depois que um efeito Abyssal puxa um inimigo, outro Abyssal a até 2 casas dele anda 1 casa para perto desse inimigo.",
    "fac": "ABY",
-   "efeito": "mov"
+   "efeito": "mov",
+   "curto": "Inimigo puxado: outro Abyssal se aproxima"
   },
   {
    "id": "x_esporao",
@@ -3205,7 +3231,8 @@
    "cost": 0,
    "text": "Uma Zona de Cristal sua cresce para 1 casa livre vizinha até o fim do round.",
    "fac": "LIT",
-   "efeito": "ctl"
+   "efeito": "ctl",
+   "curto": "Sua Zona de Cristal cresce 1 casa"
   },
   {
    "id": "x_reacao_cadeia",
@@ -3214,7 +3241,8 @@
    "cost": 0,
    "text": "Quando o inimigo quebra um cristal, uma casa livre ao lado dele vira Zona de Cristal até o fim do round.",
    "fac": "LIT",
-   "efeito": "ctl"
+   "efeito": "ctl",
+   "curto": "Cristal quebrado vira Zona de Cristal"
   },
   {
    "id": "x_semente",
@@ -3223,7 +3251,8 @@
    "cost": 0,
    "text": "Uma casa livre ao lado de um Lithari vira Zona de Cristal até o fim do round.",
    "fac": "LIT",
-   "efeito": "ctl"
+   "efeito": "ctl",
+   "curto": "Casa vizinha vira Zona de Cristal"
   },
   {
    "id": "x_ocupacao",
@@ -3232,7 +3261,8 @@
    "cost": 0,
    "text": "Um Lithari sobre uma Zona de Cristal leva 1 a menos no próximo golpe deste round, enquanto ficar nessa casa.",
    "fac": "LIT",
-   "efeito": "def"
+   "efeito": "def",
+   "curto": "Na Zona de Cristal: −1 de dano"
   },
   {
    "id": "x_escora",
@@ -3241,7 +3271,8 @@
    "cost": 0,
    "text": "Escolha uma subida ao lado de um Valakiano. Até o fim do round, os dois lados sobem nela como se fosse 1 nível mais baixa.",
    "fac": "TER",
-   "efeito": "mov"
+   "efeito": "mov",
+   "curto": "Subida vizinha fica 1 nível mais baixa"
   },
   {
    "id": "x_desvio_trilho",
@@ -3250,7 +3281,8 @@
    "cost": 0,
    "text": "O próximo empurrão de um carrinho ao lado de um Valakiano vai no sentido contrário, se o trilho tiver saída.",
    "fac": "TER",
-   "efeito": "ctl"
+   "efeito": "ctl",
+   "curto": "Carrinho vizinho anda no sentido contrário"
   },
   {
    "id": "x_passagem",
@@ -3259,7 +3291,8 @@
    "cost": 0,
    "text": "Uma casa de terreno difícil ao lado de um Valakiano custa 1 a menos para entrar até o fim do round (mínimo 1), para os dois lados.",
    "fac": "TER",
-   "efeito": "mov"
+   "efeito": "mov",
+   "curto": "Terreno difícil vizinho custa 1 a menos"
   },
   {
    "id": "x_ferramenta",
@@ -3268,7 +3301,8 @@
    "cost": 0,
    "text": "O próximo ataque do Valakiano que está agindo, nesta ativação, causa +2 de dano contra barreira, cristal ou estrutura.",
    "fac": "TER",
-   "efeito": "atk"
+   "efeito": "atk",
+   "curto": "+2 de dano contra cristal ou estrutura"
   }
  ],
  "disputa_pares": [

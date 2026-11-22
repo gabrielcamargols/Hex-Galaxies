@@ -92,23 +92,30 @@ var cur_map: String = ""
 
 
 var cur_troca: bool = false
+var modo_padrao: String = ""     # "disputa": usa a base dos Guardiões e o início dos Invasores do bloco "disputa" do mapa
+var cur_modo: String = ""
 var troca_padrao: bool = false   # Disputa com os Invasores no lado 1: as entradas trocam de lado
 
 
 # troca = true: as entradas trocam de lado (Disputa: a zona de início acompanha o papel)
 func set_map(id: String, troca_v: Variant = null) -> void:
 	var troca: bool = troca_padrao if troca_v == null else bool(troca_v)
-	if (id == cur_map and troca == cur_troca) or not maps.has(id):
+	var md: String = modo_padrao if maps.has(id) and maps[id].has("disputa") else ""
+	if (id == cur_map and troca == cur_troca and md == cur_modo) or not maps.has(id):
 		return
 	cur_map = id
 	cur_troca = troca
+	cur_modo = md
 	var d = maps[id]
 	var sh = d.get("shape", {"q": 6, "r": 6, "s": 6})
 	SQ = int(sh["q"])
 	SR_ = int(sh["r"])
 	SS = int(sh["s"])
 	entry_c = []
-	for ec in d.get("entry_centers", [{"q": 3, "r": -6}, {"q": -3, "r": 6}]):
+	var ecs = d.get("entry_centers", [{"q": 3, "r": -6}, {"q": -3, "r": 6}])
+	if md == "disputa":
+		ecs = d["disputa"]["entry_centers"]   # [início dos Invasores, base dos Guardiões]
+	for ec in ecs:
 		entry_c.append(Vector2i(int(ec["q"]), int(ec["r"])))
 	if troca:
 		entry_c.reverse()
@@ -125,6 +132,12 @@ func set_map(id: String, troca_v: Variant = null) -> void:
 				e.append(h)
 		e = _lado_a_lado(e, entry_c[p])
 		entry.append(e)
+
+
+# casa do núcleo (base que os Guardiões protegem) na Disputa
+func disputa_core(id: String) -> Vector2i:
+	var c = maps[id].get("disputa", {}).get("core", [0, 0])
+	return Vector2i(int(c[0]), int(c[1]))
 
 
 func in_board(h: Vector2i) -> bool:

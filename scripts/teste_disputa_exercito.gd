@@ -5,7 +5,7 @@ func run() -> void:
 	for i in 60:
 		await get_tree().process_frame
 	m.stage = "select"
-	m._choose_planet("valak", "galeria")
+	m._choose_planet("valak", "posto", "disputa")
 	for i in 200:
 		await get_tree().process_frame
 	m._army_random()

@@ -24,7 +24,7 @@ func espera_pergunta(t: String, max_f: int = 900) -> bool:
 func run() -> void:
 	dir = OS.get_environment("SAIDA")
 	m = get_parent()
-	m.setup_cfg["map"] = "galeria"
+	m.setup_cfg["map"] = "posto"
 	m.setup_cfg["modo"] = "disputa"
 	m.setup_cfg["fac"] = "KRI"
 	m.setup_cfg["cpu"] = "WAC"
