@@ -3909,7 +3909,7 @@ func _apply_overlay(h: Vector2i) -> void:
 	var col = Color(0, 0, 0, 0)
 	match hl:
 		"mv":
-			col = Color(0.30, 0.85, 0.39, 0.62)
+			col = Color(0.24, 0.55, 1.0, 0.62)   # andar: azul
 		"at":
 			col = Color(1.0, 0.30, 0.30, 0.68)
 		"pk":
@@ -3929,9 +3929,9 @@ func _apply_overlay(h: Vector2i) -> void:
 		"dnext":
 			col = Color(0.62, 0.94, 1.0, 0.35)
 		"deploy":
-			col = Color(0.13, 0.83, 0.77, 0.45 + 0.3 * (0.5 + 0.5 * sin(Time.get_ticks_msec() / 220.0)))
+			col = Color(1.0, 0.82, 0.18, 0.45 + 0.3 * (0.5 + 0.5 * sin(Time.get_ticks_msec() / 220.0)))   # entrar: dourado
 		"entry0":
-			col = Color(0.24, 0.55, 1.0, 0.28)
+			col = Color(1.0, 0.82, 0.18, 0.16)   # sua área de entrada: dourado fraco
 		"entry1":
 			col = Color(1.0, 0.48, 0.18, 0.28)
 	if hover != null and hover == h:

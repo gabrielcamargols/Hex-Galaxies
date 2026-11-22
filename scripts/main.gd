@@ -37,11 +37,14 @@ var w: Dictionary = {}
 # paleta oficial do universo: Azul espacial #10145A, Branco estelar #F8FAFF, Ciano cósmico #27DDF4,
 # Roxo galáctico #A957EC, Magenta HQ #F438A9, Amarelo solar #FFD12E (as facções expandem a partir dela)
 const C_SPACE = Color("#10145A")
-const C_MOVE = Color("#4cff6a")     # andar
+const C_MOVE = Color("#3d8bff")     # andar / movimento (azul)
+const C_HEAL = Color("#4cff6a")     # cura (verde)
+const C_RANGE = Color("#ffab40")    # alcance (laranja)
+const C_DEF = Color("#c9d6ea")      # defesa (prata)
 const C_ATK = Color("#ff3b4d")      # atacar / inimigo atacável
 const C_ABIL = Color("#A957EC")     # habilidade / escolher alvo de efeito
 const C_CARD = Color("#3da0ff")     # cartas táticas
-const C_DEPLOY = Color("#27DDF4")   # colocar reserva em campo
+const C_DEPLOY = Color("#FFD12E")   # colocar reserva em campo (dourado)
 const C_YOU = Color("#2fa8ff")      # seu lado
 const C_CPU = Color("#ff7a1a")      # lado da CPU
 const C_GOLD = Color("#FFD12E")     # títulos e destaque
@@ -2646,8 +2649,8 @@ func _build_hud() -> void:
 	var camv = _hbox(ui, 4)
 	_place(camv, Control.PRESET_BOTTOM_RIGHT, 8)
 	w["camv"] = camv
-	camv.offset_top -= 116 if compact else 128
-	camv.offset_bottom -= 116 if compact else 128
+	camv.offset_top -= 4
+	camv.offset_bottom -= 4
 	for cb in [["<", func(): board.rotate_cam(-1), "Girar a câmera"], [">", func(): board.rotate_cam(1), "Girar a câmera"], ["+", func(): board.zoom_cam(0.7), "Aproximar (roda do mouse)"], ["-", func(): board.zoom_cam(1.4), "Afastar (roda do mouse)"], ["Tudo", func(): board.fit_camera(false), "Ver o tabuleiro inteiro"]]:
 		var bb = _button(camv, cb[0], cb[1])
 		bb.tooltip_text = cb[2]
@@ -2705,13 +2708,18 @@ func _build_hud() -> void:
 	# prévia/perguntas logo acima das cartas
 	w["prompt"].reparent(botcol)
 	w["prompt"].size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	w["hand"] = _hbox(botcol, 6)
-	w["hand"].alignment = BoxContainer.ALIGNMENT_CENTER
-	var ab_p = _panel(botcol)
+	# ações da peça (Mover, Atacar...) em cima das cartas, com Passar o round ao lado
+	var acoes = _hbox(botcol, 8)
+	acoes.alignment = BoxContainer.ALIGNMENT_CENTER
+	acoes.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	w["acoes"] = acoes
+	var ab_p = _panel(acoes)
 	w["abp"] = ab_p
 	var abv = _vbox(ab_p, 4)
 	w["btns"] = _hbox(abv, 6)
 	w["btns"].alignment = BoxContainer.ALIGNMENT_CENTER
+	w["hand"] = _hbox(botcol, 6)
+	w["hand"].alignment = BoxContainer.ALIGNMENT_CENTER
 	# camada dos balões de fala
 	var bub = Control.new()
 	bub.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -2725,11 +2733,11 @@ func _build_hud() -> void:
 	var ev = _vbox(eb, 4)
 	w["end_hint"] = _label(ev, "", 13, C_DIM)
 	w["end_hint"].horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	w["end"] = _button(ev, "PASSAR O ROUND", _on_end_pressed)
-	w["end"].custom_minimum_size = Vector2(210 if compact else 270, 60 if compact else 72)
-	w["end"].add_theme_font_size_override("font_size", 20 if compact else 24)
-	if font_title != null:
-		w["end"].add_theme_font_override("font", font_title)
+	w["end"] = _button(acoes, "PASSAR O ROUND", _on_end_pressed)
+	w["end"].custom_minimum_size = Vector2(118, 46)   # mesmo tamanho dos botões Mover/Atacar
+	w["end"].add_theme_font_size_override("font_size", 15 if font_btn != null else 17)
+	w["end"].size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	eb.visible = false   # o painel antigo do canto some: o botão mora junto das ações
 	# coluna da CPU (à direita, acima do fim de turno)
 	var right = _panel(ui)
 	_place(right, Control.PRESET_TOP_RIGHT, 8)
@@ -2880,9 +2888,8 @@ func _portrait_hud() -> void:
 	uc.reparent(botcol)
 	botcol.move_child(uc, 0)
 	uc.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	var eb: Control = w["end_panel"]
-	eb.reparent(botcol)
-	eb.size_flags_horizontal = Control.SIZE_FILL
+	w["end"].reparent(botcol)
+	w["end"].size_flags_horizontal = Control.SIZE_FILL
 	w["end"].custom_minimum_size = Vector2(vw.x - 40.0, 54)
 	w["end"].add_theme_font_size_override("font_size", 20)
 	w["end_hint"].visible = false
@@ -3471,7 +3478,7 @@ func _fit_rosters() -> void:
 	var vh = ui.size.y
 	var uc: Control = w["ucard"]
 	var avail0 = vh - 32.0 - ((uc.size.y + 10.0) if uc.visible else 0.0)
-	var avail1 = vh - 64.0 - 24.0 - w["end_panel"].size.y - 56.0
+	var avail1 = vh - 64.0 - 24.0 - 56.0
 	if portrait:
 		# gavetas: do fim da barra do alto até antes da coluna de baixo
 		var top_h = w["topcol"].size.y + 14.0 if w.has("topcol") else 140.0
@@ -3525,7 +3532,7 @@ func _res_tile(u, p: int, dep_ok: bool) -> Button:
 		b.add_theme_stylebox_override("normal", _flat(C_DEPLOY.darkened(0.7), C_DEPLOY, 2, 6, 3))
 		b.add_theme_stylebox_override("hover", _flat(C_DEPLOY.darkened(0.45), C_DEPLOY.lightened(0.3), 2, 6, 3))
 		b.add_theme_color_override("font_color", C_DEPLOY.lightened(0.5))
-		b.tooltip_text += "\nClique e escolha uma casa ciano, ou arraste até ela (1 ação)."
+		b.tooltip_text += "\nClique e escolha uma casa dourada, ou arraste até ela (1 ação)."
 		var uid = u.uid
 		b.button_down.connect(func(): _start_res_drag(uid))
 	else:
@@ -3685,12 +3692,12 @@ func _refresh_actbar() -> void:
 		else:
 			note = "A CPU está jogando..." if game.cpu[game.cur] else ("O oponente está jogando..." if online else "Aguarde")
 	elif dsel >= 0:
-		note = "Escolha uma casa CIANO da sua entrada (entrar gasta 1 ação)"
+		note = "Escolha uma casa DOURADA da sua entrada (entrar gasta 1 ação)"
 	elif u == null:
 		if game.act != null:
 			note = "Sem ações restantes: clique em Encerrar"
 		elif can_deploy_now():
-			note = "1) Clique numa peça sua  —  ou  —  coloque uma reserva numa casa CIANO \"+ ENTRAR\""
+			note = "1) Clique numa peça sua  —  ou  —  coloque uma reserva numa casa DOURADA \"+ ENTRAR\""
 		else:
 			note = "1) Clique numa peça sua para ativá-la"
 	if u != null:
@@ -3705,7 +3712,7 @@ func _refresh_actbar() -> void:
 		note = "%s  ·  Ações: %s  ·  2) escolha o que fazer" % [DB.cards[u.cid]["name"], "●".repeat(left) + "○".repeat(max(0, 2 - left))]
 		var bm = _cbtn(box, "Mover" + (" (feito)" if moved else ""), C_MOVE, func(): _set_am("mv"), am == "mv")
 		bm.disabled = not can_mv
-		bm.tooltip_text = "Mover: 1 ação, no máximo 1 vez por turno. Casas VERDES."
+		bm.tooltip_text = "Mover: 1 ação, no máximo 1 vez por turno. Casas AZUIS."
 		if game.can_undo() and my_turn():
 			var bu = _cbtn(box, "↶ Desfazer", C_HUD, _undo_move)
 			bu.tooltip_text = "Volta a peça para onde estava e devolve a ação (Ctrl+Z). Só vale se nada aconteceu no caminho e ela ainda não atacou."
@@ -3759,7 +3766,7 @@ func _refresh_actbar() -> void:
 				why.append("Atacar: já atacou neste turno (máx. 1)." if attacked else ("Atacar: não pode neste turno." if cant else "Atacar: nenhum inimigo ao alcance."))
 	if mine and game.act == null and can_deploy_now():
 		var bres = _cbtn(box, "+ Colocar reserva (%d)" % game.reserve_of(me).size(), C_DEPLOY, _pick_first_reserve, dsel >= 0)
-		bres.tooltip_text = "Escolhe a primeira reserva; depois clique numa casa ciano da entrada. Para escolher outra, clique no retrato dela à esquerda."
+		bres.tooltip_text = "Escolhe a primeira reserva; depois clique numa casa dourada da entrada. Para escolher outra, clique no retrato dela à esquerda."
 	var tac_ok = false
 	if mine:
 		tac_ok = _any_card_playable()
@@ -3777,7 +3784,7 @@ func _refresh_actbar() -> void:
 	w["why"].visible = not portrait
 	var e = w["end"]
 	var acting = game.act != null and mine
-	e.text = "ENCERRAR ATIVAÇÃO" if acting else "PASSAR O ROUND ▶"
+	e.text = "Encerrar vez" if acting else "Passar round ▶"
 	e.disabled = not mine
 	var hint = ""
 	var pulse = false
@@ -3793,6 +3800,7 @@ func _refresh_actbar() -> void:
 		pulse = idle and not can_deploy_now()
 		hint = "Todas as suas peças já agiram" if idle else "Quando não quiser ativar mais peças"
 	w["end_hint"].text = hint
+	e.tooltip_text = hint
 	if mine:
 		_primary(e)
 	else:
@@ -3852,7 +3860,7 @@ func _refresh_prompt() -> void:
 					var id2 = uid
 					_button(box, DB.cards[u2.cid]["name"], func(): _answer(id2))
 	elif dsel >= 0 and my_turn():
-		text = "Escolha uma casa [color=#22d3c5][b]CIANO[/b][/color] da sua entrada para [b]%s[/b]." % DB.cards[game.by_uid(dsel).cid]["name"]
+		text = "Escolha uma casa [color=#FFD12E][b]DOURADA[/b][/color] da sua entrada para [b]%s[/b]." % DB.cards[game.by_uid(dsel).cid]["name"]
 		_button(box, "Cancelar", _cancel_dsel)
 	elif pend != null and my_turn() and sel_unit() != null:
 		var u = sel_unit()
@@ -4045,6 +4053,20 @@ func _refresh_side() -> void:
 
 # ================= cartas =================
 const TYPE_COL = {"Manobra": Color("#4cd964"), "Comando": Color("#4da3ff"), "Equipamento": Color("#ffab40"), "Reação": Color("#5fd6e8")}
+# cor da carta pelo que ela FAZ (mesmas cores do resto do jogo):
+# azul movimento · verde cura · laranja alcance · vermelho dano · prata defesa · roxo controle/cartas · dourado entrar
+const CARD_EFEITO = {
+	"flanquear": "mov", "retirada": "mov", "troca": "mov", "avanco": "mov", "dispersao": "mov", "propulsor": "mov", "resgate": "mov", "quantica": "mov",
+	"reparo": "cura", "kit": "cura", "evacuacao": "cura",
+	"lente": "alc",
+	"fogo": "atk", "granada": "atk", "sinalizador": "atk", "orbital": "atk", "ultimo": "atk", "revide": "atk", "execucao": "atk", "grito": "atk",
+	"cobertura": "def", "escudo": "def", "placas": "def", "camuflagem": "def", "barreira": "def",
+	"pulso": "ctl", "gancho": "ctl", "onda": "ctl", "rede": "ctl", "interceptar": "ctl", "dados": "ctl", "contra": "ctl", "adrenalina": "ctl",
+	"reforco": "entrar"}
+
+
+func _card_col(id: String) -> Color:
+	return {"mov": C_MOVE, "cura": C_HEAL, "alc": C_RANGE, "atk": C_ATK, "def": C_DEF, "ctl": C_ABIL, "entrar": C_DEPLOY}.get(CARD_EFEITO.get(id, ""), C_CARD)
 
 
 # o que a carta afeta: texto curto + casas para destacar no tabuleiro
@@ -4249,61 +4271,22 @@ func _refresh_hand() -> void:
 
 
 func _make_card(id: String) -> Control:
+	# só o ícone, na moldura da cor do efeito; tocar abre a explicação, arrastar usa
 	var t = DB.tactics[id]
-	var col: Color = TYPE_COL.get(t["type"], C_CARD)
+	var col: Color = _card_col(id)
 	var ok = _card_playable(id)
 	var react = t["type"] == "Reação" or id == "retirada" or id == "reforco"
 	var card = PanelContainer.new()
-	card.custom_minimum_size = Vector2(118, 150) if compact else Vector2(128, 172)
-	# moldura de HQ por tipo (tools/cartas_hq.py): faixa do tipo, retícula e sombra dura
-	var fpath = "res://ui/cartas/carta_%s.png" % t["type"].to_lower().replace("ç", "c").replace("ã", "a")
-	if ResourceLoader.exists(fpath):
-		var fs = StyleBoxTexture.new()
-		fs.texture = load(fpath)
-		fs.content_margin_left = 7
-		fs.content_margin_right = 13
-		fs.content_margin_top = 2
-		fs.content_margin_bottom = 12
-		card.add_theme_stylebox_override("panel", fs)
-	else:
-		card.add_theme_stylebox_override("panel", _tex_box("res://ui/card.png", 20, col if (ok or react) else col.darkened(0.55), 9, 7))
-	var v = VBoxContainer.new()
-	v.add_theme_constant_override("separation", 2)
-	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	card.add_child(v)
-	# na faixa cabe só o tipo; o custo aparece apenas quando a carta gasta ação
-	var cost = _label(v, t["type"].to_upper() + ((" · %d AÇÃO" % int(t["cost"])) if int(t["cost"]) > 0 else ""), 10, Color("#0a0410"))
-	cost.add_theme_constant_override("outline_size", 0)
-	if font_btn != null:
-		cost.add_theme_font_override("font", font_btn)
-	if compact:
-		cost.add_theme_font_size_override("font_size", 10)
-	cost.clip_text = true
-	cost.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	cost.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	# selo de explosão na cor do tipo, com o ícone em tinta por cima
-	var ih = 46 if compact else 58
+	card.custom_minimum_size = Vector2(70, 82) if compact else Vector2(78, 92)
+	card.add_theme_stylebox_override("panel", _tex_box("res://ui/card.png", 20, col if (ok or react) else col.darkened(0.55), 6, 6))
 	var iw = Control.new()
-	iw.custom_minimum_size = Vector2(0, ih + 4)
 	iw.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	v.add_child(iw)
-	var own_ic = ResourceLoader.exists("res://ui/cartas/ic/%s.png" % id)
-	if not own_ic and ResourceLoader.exists("res://ui/cartas/estouro.png"):
-		var bst = TextureRect.new()
-		bst.texture = load("res://ui/cartas/estouro.png")
-		bst.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		bst.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		bst.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		bst.modulate = col.lightened(0.2)
-		bst.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		iw.add_child(bst)
+	iw.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	card.add_child(iw)
 	var ic = TextureRect.new()
 	ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	ic.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	# ícone colorido próprio (adesivo pop) ocupa o selo inteiro; o antigo fica dentro do estouro
-	ic.offset_top = -ih * 0.12 if own_ic else ih * 0.22
-	ic.offset_bottom = ih * 0.04 if own_ic else -ih * 0.22
 	ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var ipath = "res://ui/cartas/ic/%s.png" % id
 	if not ResourceLoader.exists(ipath):
@@ -4311,26 +4294,12 @@ func _make_card(id: String) -> Control:
 	if ResourceLoader.exists(ipath):
 		ic.texture = load(ipath)
 	iw.add_child(ic)
-	var nm = _label(v, t["name"], 13 if compact else 11, Color.WHITE)
-	nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	nm.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	nm.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	if font_btn != null:
-		nm.add_theme_font_override("font", font_btn)
-	var tg = _card_targets(id)
-	var af = _label(v, tg["txt"], 10, col.lightened(0.75))
-	if compact:
-		af.add_theme_font_size_override("font_size", 11)
-	af.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	af.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	af.custom_minimum_size = Vector2(104, 0)
-	af.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var why_not = ""
-	if react:
-		why_not = "Esta carta é usada sozinha no momento certo (o jogo pergunta)."
-	elif not ok:
-		why_not = "Agora não dá: selecione uma peça sua que ainda pode agir e tenha ação sobrando." if my_turn() else "Espere a sua vez."
-	card.tooltip_text = "%s (%s · %s)\n%s\nAFETA: %s%s" % [t["name"], t["type"], ("custa %d ação" % int(t["cost"])) if int(t["cost"]) > 0 else "grátis", t["text"], tg["txt"], ("\n" + why_not) if why_not != "" else ""]
+	if int(t["cost"]) > 0:
+		# bolinha discreta: esta carta gasta 1 ação
+		var dot = _label(iw, "●", 12, Color.WHITE)
+		dot.position = Vector2(2, -4)
+		dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card.tooltip_text = t["name"]
 	if not ok and not react:
 		card.modulate = Color(0.75, 0.75, 0.8)
 	card.mouse_entered.connect(_card_hover_set.bind(id, card, true))
@@ -4339,13 +4308,54 @@ func _make_card(id: String) -> Control:
 	return card
 
 
+# janela da carta: o que ela faz, se dá para usar agora e o botão de usar
+func _card_info(id: String) -> void:
+	if w.has("card_pop") and is_instance_valid(w["card_pop"]):
+		w["card_pop"].queue_free()
+	var t = DB.tactics[id]
+	var col = _card_col(id)
+	var ok = _card_playable(id)
+	var react = t["type"] == "Reação" or id == "retirada" or id == "reforco"
+	var p = _panel(ui)
+	var vw = ui.get_viewport_rect().size
+	p.custom_minimum_size = Vector2(min(380.0, vw.x - 40.0), 0)
+	_place(p, Control.PRESET_CENTER)
+	var v = _vbox(p, 8)
+	var hb = _hbox(v, 12)
+	var ic = TextureRect.new()
+	ic.custom_minimum_size = Vector2(64, 64)
+	ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	var ipath = "res://ui/cartas/ic/%s.png" % id
+	if not ResourceLoader.exists(ipath):
+		ipath = "res://ui/icons/%s.png" % id
+	if ResourceLoader.exists(ipath):
+		ic.texture = load(ipath)
+	hb.add_child(ic)
+	var tv = _vbox(hb, 2)
+	_label(tv, t["name"], 22, col.lightened(0.2))
+	_label(tv, ("Gasta 1 ação" if int(t["cost"]) > 0 else "Não gasta ação") + ("  ·  usada na hora certa" if react else ""), 13, C_DIM)
+	var r = _rich(v, int(min(350.0, vw.x - 70.0)))
+	r.add_theme_font_size_override("normal_font_size", 16)
+	r.text = t["text"]
+	if react:
+		_label(v, "O jogo pergunta quando dá para usar.", 13, Color("#ffcf9a"))
+	elif not ok:
+		_label(v, "Agora não dá: selecione uma peça sua que ainda pode agir." if my_turn() else "Espere a sua vez.", 13, Color("#ffcf9a"))
+	var bh = _hbox(v, 8)
+	bh.alignment = BoxContainer.ALIGNMENT_END
+	if ok and not react:
+		_cbtn(bh, "Usar", col, func():
+			p.queue_free()
+			_play_card(id))
+	_cbtn(bh, "Fechar", C_HUD, func(): p.queue_free())
+	w["card_pop"] = p
+
+
 func _card_input(ev: InputEvent, id: String) -> void:
 	if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
-		if _card_playable(id):
-			# segurar e arrastar: solta no personagem; só tocar: usa como antes
-			card_drag = {"id": id, "start": get_viewport().get_mouse_position(), "on": false}
-		else:
-			sfx.play("clique", -10.0, 0.7)
+		# segurar e arrastar: usa a carta (solta no personagem); só tocar: abre a explicação
+		card_drag = {"id": id, "start": get_viewport().get_mouse_position(), "on": false, "ok": _card_playable(id)}
 func _card_playable(id: String) -> bool:
 	if not my_turn():
 		return false
@@ -4774,12 +4784,12 @@ func _input(event: InputEvent) -> void:
 	if card_drag != null:
 		if event is InputEventMouseMotion:
 			var mp = (event as InputEventMouseMotion).position
-			if not card_drag["on"] and mp.distance_to(card_drag["start"]) > 10.0:
+			if not card_drag["on"] and card_drag.get("ok", true) and mp.distance_to(card_drag["start"]) > 10.0:
 				card_drag["on"] = true
 				card_hover = card_drag["id"]
 				var ipath = "res://ui/icons/%s.png" % card_drag["id"]
 				w["drag_icon"].texture = load(ipath) if ResourceLoader.exists(ipath) else null
-				w["drag_icon"].modulate = TYPE_COL.get(DB.tactics[card_drag["id"]]["type"], C_CARD)
+				w["drag_icon"].modulate = _card_col(card_drag["id"])
 				w["drag_icon"].visible = true
 				w["drag_icon"].size = Vector2(96, 96)
 				w["drag_icon"].z_index = 50
@@ -4797,7 +4807,8 @@ func _input(event: InputEvent) -> void:
 			w["drag_icon"].size = Vector2(70, 70)
 			card_hover = ""
 			if not cd["on"]:
-				_play_card(cd["id"])
+				sfx.play("clique", -10.0)
+				_card_info(cd["id"])
 			else:
 				get_viewport().set_input_as_handled()
 				var h = board.pick_hex((event as InputEventMouseButton).position)

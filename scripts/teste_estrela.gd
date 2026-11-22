@@ -24,5 +24,9 @@ func run() -> void:
 	b.cam_dist = 19.0
 	for i in 90:
 		await get_tree().process_frame
+	if OS.get_environment("POP") != "":
+		m._card_info(g.P[0]["hand"][0])
+		for i in 20:
+			await get_tree().process_frame
 	get_viewport().get_texture().get_image().save_png(OS.get_environment("SAIDA"))
 	get_tree().quit()
