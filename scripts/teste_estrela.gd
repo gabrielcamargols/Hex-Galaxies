@@ -17,6 +17,7 @@ func run() -> void:
 		u.q = pos[i].x
 		u.r = pos[i].y
 	g.stars.append({"owner": 0, "c": c, "hexes": g.star_hexes(c), "till": g.round_no + 2, "src": 999})
+	m.sel = g.unit_at(c + DB.DIRS[0]).uid
 	m.refresh()
 	b.cam_goal = null
 	b.cam_target = Vector3(b.world_xz(c).x, b.top_y(c) + 0.5, b.world_xz(c).y)

@@ -1470,15 +1470,15 @@ func _impact(c: Dictionary) -> Dictionary:
 		tags.append(["Mobilidade", C_MOVE])
 	if "restaure" in txt or "cura" in txt or k.has("endHeal"):
 		tags.append(["Cura aliados", Color("#5ee08a")])
-	if "empurr" in txt or "puxa" in txt or "não pode se mover" in txt or "perde sua habilidade" in txt or "atq até" in txt or "mova o alvo" in txt:
+	if "empurr" in txt or "puxa" in txt or "sem andar" in txt or "não anda" in txt or "perde a habilidade" in txt or "-2 atq" in txt or "lento" in txt or "enraizad" in txt:
 		tags.append(["Controle do inimigo", C_ABIL])
-	if "barreira" in txt or "terreno" in txt or "buraco" in txt or "duna" in txt or "rocha" in txt or "ponte" in txt or "fenda" in txt or "estaca" in txt or "casa livre adjacente" in txt or k.has("terra"):
+	if "barreira" in txt or "terreno" in txt or "buraco" in txt or "duna" in txt or "rocha" in txt or "ponte" in txt or "fenda" in txt or "estaca" in txt or "barreira" in txt or "cristais" in txt or k.has("terra"):
 		tags.append(["Mexe no terreno", Color("#e0925a")])
 	if k.has("auraAtk") or k.has("auraRed") or k.has("guard") or k.has("guardClan") or k.has("taunt") or "aliado" in txt:
 		tags.append(["Apoia aliados", C_DEPLOY])
-	if k.has("selfRed") or k.has("firstHitRed") or k.has("selfRedHome") or "reduz" in txt or "não pode ser alvo" in txt:
+	if k.has("selfRed") or k.has("firstHitRed") or k.has("selfRedHome") or "a menos de dano" in txt or "a menos no" in txt or "não podem ser alvo" in txt or "não pode ser alvo" in txt:
 		tags.append(["Defesa", C_YOU])
-	if "dano a cada" in txt or "dano a todas" in txt or "splash" in str(k.get("after", "")):
+	if "em todos" in txt or "tudo ao redor" in txt or "inimigos ao lado" in txt or "splash" in str(k.get("after", "")):
 		tags.append(["Dano em área", Color("#ff6a3a")])
 	var parts = []
 	if hp >= 12:
@@ -3054,9 +3054,12 @@ func refresh() -> void:
 	_turn_sound()
 	var H = highlights()
 	var st = {"hl": {}, "lit": null, "labels": {}, "label_colors": {}, "tags": {}, "sel_uid": -1, "ghost": null}
-	for p in range(2):
-		for h in game.entry_zone(p):
-			st["hl"][h] = "entry%d" % (0 if p == me else 1)
+	# áreas de entrada só aparecem quando dá para colocar peças (o resto do tempo o chão fica limpo)
+	var colocando = can_deploy_now() or dsel >= 0 or (res_drag != null and res_drag.get("on", false))
+	if colocando:
+		for p in range(2):
+			for h in game.entry_zone(p):
+				st["hl"][h] = "entry%d" % (0 if p == me else 1)
 	if can_deploy_now() or dsel >= 0 or (res_drag != null and res_drag.get("on", false)):
 		var show_lbl = dsel >= 0 or (res_drag != null and res_drag.get("on", false))
 		for h in game.deploy_hexes(me):
@@ -3104,7 +3107,7 @@ func refresh() -> void:
 		st["labels"][game.core] = "HEX ENERGY"
 		st["label_colors"][game.core] = Color("#7ff0ff")
 	if game.core_next != null and game.core_next != game.core:
-		st["labels"][game.core_next] = "próxima Hex Energy · round %d" % game.core_next_round
+		st["labels"][game.core_next] = "Hex Energy · R%d" % game.core_next_round
 		st["label_colors"][game.core_next] = Color("#9fd8e8")
 	_check_tension()
 	# Valak: área de perigo da garra (mais forte quando a vibração está alta)
@@ -3608,13 +3611,13 @@ func _refresh_ucard() -> void:
 			if u.eq != "":
 				txt += "Equipado: %s\n" % DB.tactics[u.eq]["name"]
 			var abk3 = c["ab"].get("kind", "")
-			var passive = "ativa (gasta 1 ação)" if (c["k"].has("action") or abk3 == "ativa") else ("ação especial" if abk3 == "especial" else "passiva (não gasta ação)")
+			var passive = "usa 1 ação" if (c["k"].has("action") or abk3 == "ativa") else ("usa 1 ação" if abk3 == "especial" else "passiva")
 			if abk3 == "ativa" and c["ab"].get("per", "partida") == "round":
-				passive = "ativa · 1 ação · recarga %d round(s)" % Game.ABIL_RECHARGE + (" · [color=#ff8a6a]JÁ USADA[/color]" if game.ult_spent(u) else "")
+				passive = "usa 1 ação · recarrega em %d round(s)" % Game.ABIL_RECHARGE + (" · [color=#ff8a6a]JÁ USADA[/color]" if game.ult_spent(u) else "")
 			txt += "[color=#ffab40][b]%s[/b][/color] [color=#8fb8cc](%s)[/color]\n%s" % [c["ab"]["name"], passive, c["ab"]["text"]]
 			if c.has("ab2"):
 				var a2 = c["ab2"]
-				var kind2 = "passiva (não gasta ação)" if a2.get("kind", "") == "passiva" else ("ativa · 1 vez por %s · 1 ação" % a2.get("per", "partida") + (" · [color=#ff8a6a]JÁ USADA[/color]" if game.ult_spent(u) else ""))
+				var kind2 = "passiva" if a2.get("kind", "") == "passiva" else ("especial" + (" · [color=#ff8a6a]JÁ USADA[/color]" if game.ult_spent(u) else ""))
 				txt += "\n[color=#ffab40][b]★ %s[/b][/color] [color=#8fb8cc](%s)[/color]\n%s" % [a2["name"], kind2, a2["text"]]
 			if game.imprisoned(u):
 				txt += "\n[color=#9fdcff]Preso na Prisão de Cristal até o fim do próximo round.[/color]"

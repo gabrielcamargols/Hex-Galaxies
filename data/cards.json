@@ -66,7 +66,7 @@
    "src": "pdf",
    "ab": {
     "name": "Banquete dos Clãs",
-    "text": "Quando entra em campo, espalha 6 bananas pelo mapa (até 6 casas dele): 2 de cura (+3 Vida), 2 de força (+2 ATQ no round) e 2 de mira (+1 alcance no round). Os aliados ganham o bônus ao passar pelas casas onde elas estão."
+    "text": "Ao entrar: espalha 6 bananas a até 6 casas dele. Aliado que passa por uma ganha o bônus: cura (+3 Vida), força (+2 ATQ no round) ou mira (+1 alcance no round)."
    },
    "k": {
     "entry": {
@@ -78,7 +78,7 @@
    },
    "ab2": {
     "name": "Escalada Primepata",
-    "text": "Sobe em qualquer superfície: rochas, ruínas, ossadas, galpões e penhascos de qualquer altura. Sempre ligada, não gasta ação.",
+    "text": "Passiva: escala qualquer superfície, de qualquer altura.",
     "kind": "passiva"
    }
   },
@@ -95,7 +95,7 @@
    "src": "pdf",
    "ab": {
     "name": "Salto Imprevisível",
-    "text": "Após seu ataque, pode mover 1 casa livre. Esse deslocamento não gasta ação."
+    "text": "Depois de atacar: pode andar 1 casa de graça."
    },
    "k": {
     "after": "freeMove"
@@ -114,7 +114,7 @@
    "src": "pdf",
    "ab": {
     "name": "Caçada em Sequência",
-    "text": "Após atacar um inimigo, avança automaticamente (até 3 casas) até o outro inimigo mais próximo e também o ataca. Uma vez por ativação."
+    "text": "Depois de atacar: corre até 3 casas até o inimigo mais próximo e ataca ele também. 1x por ativação."
    },
    "k": {
     "hunt": 3,
@@ -134,7 +134,7 @@
    "src": "pdf",
    "ab": {
     "name": "Impacto de Rhombo",
-    "text": "Ao derrotar um inimigo, pode avançar até 3 casas em linha reta: cada inimigo no caminho é empurrado para o lado e sofre 2 de dano."
+    "text": "Ao derrotar um inimigo: pode avançar até 3 casas em linha reta, causando 2 de dano e empurrando quem estiver no caminho."
    },
    "k": {
     "killCharge": true
@@ -153,7 +153,7 @@
    "src": "pdf",
    "ab": {
     "name": "Alcance Dominante",
-    "text": "Pode atacar a até 4 casas (precisa de linha de visão). Se estiver na mira de um atirador inimigo (alcance 4 ou mais, com linha de visão), ganha +2 ALC."
+    "text": "Ataca a até 4 casas. Se um atirador inimigo estiver mirando nele, ganha +2 de alcance."
    },
    "k": {
     "domRange": 2,
@@ -161,7 +161,7 @@
    },
    "ab2": {
     "name": "Projétil Animal",
-    "text": "1 vez por partida, 1 ação: um tiro potente num inimigo no alcance que atravessa até 3 casas depois dele. Causa o ATQ de Gorun no alvo e 1 a menos em cada inimigo seguinte.",
+    "text": "1x por partida: tiro que atravessa o alvo e até 3 casas atrás dele. Causa o ATQ no alvo e 1 a menos em cada inimigo atrás.",
     "kind": "ativa"
    }
   },
@@ -178,7 +178,7 @@
    "src": "pdf",
    "ab": {
     "name": "Golpe de Emboscada",
-    "text": "Seu primeiro ataque na partida causa +2 dano. Assassino Curandeiro: cada golpe que causa dano restaura 1 de Vida de Mantis Kai."
+    "text": "Seu primeiro ataque na partida causa +2. Cada golpe que causa dano cura 1 de Vida dele."
    },
    "k": {
     "firstAtk": 2,
@@ -198,7 +198,7 @@
    "src": "pdf",
    "ab": {
     "name": "Set dos Quatro Discos",
-    "text": "Tem 4 discos, cada um com uma música e um efeito (ATQ, cura, Movimento ou defesa). Pode tocar 2 por partida, ao fim da sua ativação. Nos rounds 1-3 só beneficia Zaboo; nos rounds 4-6, também aliados a 1 casa; depois, aliados a 2 casas."
+    "text": "Tem 4 discos (ATQ, cura, movimento ou defesa) e toca 2 por partida, no fim da ativação. Rounds 1-3: só ele. Rounds 4-6: aliados ao lado também. Depois: aliados a até 2 casas."
    },
    "k": {
     "discs": 2
@@ -217,7 +217,7 @@
    "src": "pdf",
    "ab": {
     "name": "Instinto Letal",
-    "text": "Recebe +2 ATQ ao atacar um alvo com 5 de Vida restantes ou menos."
+    "text": "+2 ATQ contra alvos com 5 de Vida ou menos."
    },
    "k": {
     "atkVsLow": 2,
@@ -237,7 +237,7 @@
    "src": "pdf",
    "ab": {
     "name": "Engenho Improvisado",
-    "text": "Itens de aliados a até 6 casas de Brazucão recebem +2 (Propulsor, Lente, Placas e os itens do Kling). Matilha: com 2 ou mais caninos aliados em campo (Caninus White, Caninus Black, Vexa, Nokka), Brazucão se junta a eles e todos ganham +2 de Vida, uma vez."
+    "text": "Itens de aliados a até 6 casas dele ficam +2 mais fortes. Com 2 ou mais caninos aliados em campo, todos ganham +2 de Vida (1x)."
    },
    "k": {
     "itemBoost": 2,
@@ -257,7 +257,7 @@
    "src": "pdf",
    "ab": {
     "name": "Soco Bomba",
-    "text": "A cada round carrega o soco. Ao atacar, pode liberar a carga: +3 de dano, mas Tork perde 2 de Vida. A carga é consumida ao usar e não se acumula entre rounds."
+    "text": "Carrega o soco a cada round. Ao atacar, pode soltar a carga: +3 de dano, mas perde 2 de Vida."
    },
    "k": {
     "charge": 3,
@@ -277,7 +277,7 @@
    "src": "pdf",
    "ab": {
     "name": "Bastião Alado",
-    "text": "Um inimigo adjacente a Astrax deve atacá-lo antes de seus aliados adjacentes, se Astrax for alvo válido. Não bloqueia dano de efeitos."
+    "text": "Inimigos ao lado dele precisam atacá-lo antes de atacar os aliados ao lado."
    },
    "k": {
     "taunt": true
@@ -296,7 +296,7 @@
    "src": "pdf",
    "ab": {
     "name": "Ruído Desorientador",
-    "text": "Ao entrar, escolha 1 inimigo a até 2 casas: −2 ATQ até o fim deste round (mínimo 0)."
+    "text": "Ao entrar: 1 inimigo a até 2 casas fica com -2 ATQ neste round."
    },
    "k": {
     "entry": {
@@ -320,7 +320,7 @@
    "src": "cat",
    "ab": {
     "name": "Reflexo do Original",
-    "text": "Se Caninus Black aliado estiver em campo, Caninus White recebe +2 ATQ."
+    "text": "+2 ATQ enquanto Caninus Black aliado estiver em campo."
    },
    "k": {
     "atkTwin": 2,
@@ -340,7 +340,7 @@
    "src": "cat",
    "ab": {
     "name": "Campo Minado Clandestino",
-    "text": "Sempre que sua equipe derrota um inimigo, pode esconder uma bomba (3 de dano) invisível ao adversário numa casa a até 14 casas de Rappy."
+    "text": "Sempre que seu time derrota um inimigo: esconde uma bomba invisível (3 de dano) a até 14 casas."
    },
    "k": {
     "bombs": 14
@@ -359,14 +359,14 @@
    "src": "cat",
    "ab": {
     "name": "Infiltrada",
-    "text": "Cameo rouba a ativa de qualquer peça (ver Sistema Invadido)."
+    "text": "Pode roubar a habilidade especial de outra peça (veja Sistema Invadido)."
    },
    "k": {
     "ult": "hack"
    },
    "ab2": {
     "name": "Sistema Invadido",
-    "text": "1 vez por partida, 1 ação: escolha uma peça a até 12 casas, inimiga ou aliada. Cameo rouba a ativa dela e pode usá-la 1 vez; se for inimiga, ela perde a ativa.",
+    "text": "1x por partida: rouba a habilidade especial de uma peça a até 12 casas e pode usá-la 1 vez. Se for inimiga, ela fica sem.",
     "kind": "ativa"
    }
   },
@@ -383,7 +383,7 @@
    "src": "cat",
    "ab": {
     "name": "Manobra Rasante",
-    "text": "Ao entrar, cause 2 dano a 1 inimigo a até 3 casas."
+    "text": "Ao entrar: 2 de dano em 1 inimigo a até 3 casas."
    },
    "k": {
     "entry": {
@@ -406,7 +406,7 @@
    "src": "cat",
    "ab": {
     "name": "Espuma Adesiva",
-    "text": "Ao entrar, 1 inimigo a até 2 casas não pode se mover até o fim do próximo round."
+    "text": "Ao entrar: 1 inimigo a até 2 casas fica sem andar até o fim do próximo round."
    },
    "k": {
     "entry": {
@@ -428,7 +428,7 @@
    "src": "cat",
    "ab": {
     "name": "Chamando Reforços",
-    "text": "Na primeira vez que ficar com metade da Vida ou menos, pode chamar até dois aliados para casas ao seu lado, reposicionando-os."
+    "text": "Na primeira vez que ficar com metade da Vida: puxa até 2 aliados para o lado dela."
    },
    "k": {
     "rally": 2
@@ -446,7 +446,7 @@
    "src": "novo",
    "ab": {
     "name": "Retaliação Espinhosa",
-    "text": "Ao ser atacado, devolve 1 de dano ao atacante e, se sobreviver e tiver alcance, contra-ataca. Um contra-ataque por inimigo a cada round; o dano de retorno vale em todos os ataques."
+    "text": "Quando é atacado: devolve 1 de dano e, se puder, contra-ataca (1x por inimigo a cada round)."
    },
    "k": {
     "spiky": 1
@@ -464,7 +464,7 @@
    "src": "novo",
    "ab": {
     "name": "Superioridade Aérea",
-    "text": "Aéreo: ignora elevações ao se mover e não recebe ataques corpo a corpo de unidades terrestres. Porém, recebe +2 de dano de atiradores e snipers (alcance 3 ou mais)."
+    "text": "Voa: ignora a altura do terreno e não leva ataque corpo a corpo de quem anda no chão. Mas leva +2 de dano de atiradores."
    },
    "k": {
     "air": 2,
@@ -483,7 +483,7 @@
    "src": "novo",
    "ab": {
     "name": "Torre de Cerco",
-    "text": "Ao entrar, crie uma Barreira com 4 de Vida numa casa livre adjacente."
+    "text": "Ao entrar: cria uma barreira de 4 de Vida ao lado dele."
    },
    "k": {
     "entry": {
@@ -504,7 +504,7 @@
    "src": "novo",
    "ab": {
     "name": "Última Resistência",
-    "text": "Enquanto houver 3 ou menos personagens da sua equipe em campo, contando Boro, ele pode rolar até 3 casas (Movimento 3)."
+    "text": "Quando seu time tiver 3 peças ou menos em campo: anda até 3 casas."
    },
    "k": {
     "lastStand": 3
@@ -522,7 +522,7 @@
    "src": "novo",
    "ab": {
     "name": "Veneno Transfusor",
-    "text": "Sempre que ataca, envenena o inimigo. A cada round, o alvo envenenado perde 1 de Vida e um aliado escolhido a até 5 casas de Drako recupera 1 de Vida. Se não houver aliado ferido nesse alcance, Drako recebe a cura."
+    "text": "Seus ataques envenenam: o alvo perde 1 de Vida por round e um aliado ferido a até 5 casas cura 1 (se não houver, cura o Drako)."
    },
    "k": {
     "after": "toxin"
@@ -542,7 +542,7 @@
    "src": "pdf",
    "ab": {
     "name": "Maré Brutal",
-    "text": "Cada Abyssal aliado a até 3 casas de Rhazur recebe +1 ATQ no seu primeiro ataque após entrar. Inclui Rhazur. Fora do campo, meça desde o centro da sua entrada. Fome do Abismo: 1 vez por round, quando um Abyssal a até 3 casas de Rhazur derruba um inimigo, ele restaura 2 de Vida."
+    "text": "Abyssais a até 3 casas dele causam +1 no primeiro ataque depois de entrar. Quando um deles derrota um inimigo, cura 2 de Vida (1x por round)."
    },
    "k": {
     "mare": true,
@@ -552,7 +552,7 @@
    },
    "ab2": {
     "name": "Abraço do Abismo",
-    "text": "1 vez por partida, 1 ação: puxe 1 inimigo a até 8 casas para uma casa livre ao lado de Rhazur, ignorando construções e obstáculos.",
+    "text": "1x por partida: puxa 1 inimigo a até 8 casas para o lado dele, passando por cima de tudo.",
     "kind": "ativa"
    }
   },
@@ -569,7 +569,7 @@
    "src": "pdf",
    "ab": {
     "name": "Veneno Lento",
-    "text": "Se seu ataque causar dano, o alvo fica envenenado até o fim da partida: perde 1 de Vida no fim de cada round. Máximo de 3 envenenados por partida."
+    "text": "Se causar dano: o alvo fica envenenado até o fim da partida (-1 Vida por round). No máximo 3 envenenados por partida."
    },
    "k": {
     "after": "venom"
@@ -588,7 +588,7 @@
    "src": "pdf",
    "ab": {
     "name": "Descarga Condutiva",
-    "text": "Após atacar, cause 1 de dano a até 2 inimigos adjacentes ao alvo (2 de dano em quem estiver envenenado)."
+    "text": "Depois de atacar: 1 de dano em até 2 inimigos ao lado do alvo (2 se estiverem envenenados)."
    },
    "k": {
     "after": "arc"
@@ -607,7 +607,7 @@
    "src": "pdf",
    "ab": {
     "name": "Maré de Minas",
-    "text": "Ao entrar, marque 1 casa livre adjacente. O primeiro inimigo que entrar nela sofre 3 de dano e fica preso até o fim do próximo round; retire a mina. Pode ter até 2 minas suas. Minas em Cadeia: uma mina de Sapturne ao lado de outra mina ou bomba explode junto com ela (3 de dano ao inimigo na casa e 1 aos inimigos vizinhos), e a cadeia continua."
+    "text": "Ao entrar: arma uma mina ao lado (3 de dano e prende quem pisar). Máximo de 2 minas. Minas vizinhas explodem em cadeia."
    },
    "k": {
     "entry": {
@@ -622,7 +622,7 @@
    },
    "ab2": {
     "name": "Campo Minado",
-    "text": "Enquanto Rhazur estiver em campo, 1 ação: posicione 1 mina numa casa livre a até 8 casas de Sapturne (continua o limite de 2 minas; a mais antiga some).",
+    "text": "Com Rhazur em campo, 1 ação: arma uma mina a até 8 casas. Se passar de 2, a mais antiga some.",
     "kind": "ativa"
    }
   },
@@ -639,7 +639,7 @@
    "src": "pdf",
    "ab": {
     "name": "Arpão de Arrasto",
-    "text": "Se causar dano no ataque, pode puxar o alvo até 2 casas em direção a Rayak (uma por vez). Depois, 1 vez por round, um Abyssal adjacente ao alvo pode atacá-lo de graça."
+    "text": "Se causar dano: puxa o alvo até 2 casas para perto dela. Depois, um Abyssal ao lado do alvo ataca de graça (1x por round)."
    },
    "k": {
     "after": "pull2"
@@ -658,7 +658,7 @@
    "src": "pdf",
    "ab": {
     "name": "Guarda Silencioso",
-    "text": "Pode receber o dano destinado a outro aliado adjacente (todo o pacote, 1 única vez; não encadeie). Lamento do Abismo: ao proteger, o atacante perde 1 ATQ até o fim do round."
+    "text": "Pode levar o ataque no lugar de um aliado ao lado (1x). Quando faz isso, o atacante fica com -1 ATQ neste round."
    },
    "k": {
     "guard": true,
@@ -678,7 +678,7 @@
    "src": "pdf",
    "ab": {
     "name": "Caos de Espinhos",
-    "text": "Após atacar, cause 1 dano a todas as outras peças adjacentes a Oncus: inimigos e aliados Abyssais com mais de 5 de Vida. Nunca fere comandantes aliados."
+    "text": "Depois de atacar: 1 de dano em todos ao lado dele, inimigos e aliados Abyssais com mais de 5 de Vida. Nunca fere o líder."
    },
    "k": {
     "after": "burstSafe",
@@ -686,7 +686,7 @@
    },
    "ab2": {
     "name": "Roda Punk",
-    "text": "1 vez por partida, 1 ação: Oncus gira e acerta todos os inimigos a até 4 casas com 3 golpes: soco com espinhos (1) e dois de chifre (2 e 2). Depois, se ainda não se moveu, escolhe onde parar dentro da área do giro. Táticas e ferramentas de movimento continuam valendo.",
+    "text": "1x por partida: gira e acerta todos os inimigos a até 4 casas com 3 golpes (1 + 2 + 2). Se ainda não andou, escolhe onde parar dentro do giro.",
     "kind": "ativa"
    }
   },
@@ -703,7 +703,7 @@
    "src": "pdf",
    "ab": {
     "name": "Fúria Ferida",
-    "text": "Moby ganha +1 ATQ para cada ponto de Vida que perdeu."
+    "text": "+1 ATQ para cada ponto de Vida que perdeu."
    },
    "k": {
     "furia": 1,
@@ -711,7 +711,7 @@
    },
    "ab2": {
     "name": "Berserker Total",
-    "text": "1 vez por partida, gasta 2 ações: Moby entra em fúria total e todo o dano dos seus ataques dobra. Kamikaze: no fim do próximo round, Moby cai.",
+    "text": "1x por partida, 2 ações: entra em fúria e dobra o dano dos ataques. No fim do próximo round, ele cai.",
     "kind": "ativa"
    }
   },
@@ -758,7 +758,7 @@
    "src": "pdf",
    "ab": {
     "name": "Tiro Sônico",
-    "text": "Ao acertar um inimigo no alcance máximo (4 casas), empurra o alvo 1 casa para trás. Se algo bloquear o empurrão (elevação, terreno, peça ou borda), o alvo fica atordoado até o fim do próximo round: não ataca nem se move (em Tarhut, 1 Escaravelho liberta um aliado atordoado). Marca Abyssal: um inimigo atacado por um Abyssal neste round fica marcado; ataques Abyssais contra ele causam +1 para cada 2 de Vida que ele já perdeu, e com menos de 2 de Vida ele é nocauteado na hora."
+    "text": "Acertando a 4 casas (alcance máximo): empurra o alvo 1 casa. Se bater em algo, o alvo fica atordoado até o fim do próximo round. Marca Abyssal: inimigo atacado por um Abyssal fica marcado no round e leva mais dano quanto mais ferido estiver; com menos de 2 de Vida, cai na hora."
    },
    "k": {
     "after": "sonic",
@@ -779,7 +779,7 @@
    "src": "pdf",
    "ab": {
     "name": "Reparo de Campo",
-    "text": "No fim do round, restaure 1 de Vida de outro aliado adjacente, sem superar a Vida inicial."
+    "text": "No fim do round: cura 1 de Vida de um aliado ao lado."
    },
    "k": {
     "endHeal": 1,
@@ -788,7 +788,7 @@
    },
    "ab2": {
     "name": "Oficina Móvel",
-    "text": "1 vez por partida, 1 ação: dá um item aleatório a um aliado a até 6 casas, pelo resto da partida. Casco Duro: -4 de dano de ataques à distância. Adaga Abyssal: +5 de dano em ataques corpo a corpo. Elixir do Abismo: pode usar a ativa de novo. Garras Reforçadas (só quem tem garras): +2 MOV e +2 ALC.",
+    "text": "1x por partida: dá um item aleatório a um aliado a até 6 casas (Casco Duro, Adaga Abyssal, Elixir do Abismo ou Garras Reforçadas).",
     "kind": "ativa"
    }
   },
@@ -805,7 +805,7 @@
    "src": "pdf",
    "ab": {
     "name": "Silentus Mortis",
-    "text": "Inimigos com 3 de Vida ou menos que estejam com a Marca Abyssal são nocauteados na hora."
+    "text": "Inimigos com a Marca Abyssal e 3 de Vida ou menos caem na hora."
    },
    "k": {
     "silentus": 3,
@@ -813,7 +813,7 @@
    },
    "ab2": {
     "name": "Cortina de Tinta",
-    "text": "1 vez por partida, 1 ação: Inkshadow corre duas vezes, cada vez para uma casa livre a até 8 casas de onde começou, deixando um rastro de tinta por 2 rounds. Aliados no rastro ganham +2 ALC e +4 ATQ; inimigos com a Marca Abyssal atacados de dentro do rastro sofrem +6. Inimigos não conseguem atacar à distância quem está no rastro (perdem a visão).",
+    "text": "1x por partida: corre 2 vezes (até 8 casas) deixando um rastro de tinta por 2 rounds. Aliados no rastro ganham +2 alcance e +4 ATQ (+6 contra marcados) e não podem ser alvo de tiros.",
     "kind": "ativa"
    }
   },
@@ -830,7 +830,7 @@
    "src": "cat",
    "ab": {
     "name": "Ganância Dourada",
-    "text": "Sempre que derrotar uma peça, recebe +1 ATQ permanente (máx. +3) e restaura 1 de Vida."
+    "text": "Ao derrotar uma peça: +1 ATQ para sempre (máx. +3) e cura 1 de Vida."
    },
    "k": {
     "killGrow": 3,
@@ -850,7 +850,7 @@
    "src": "novo",
    "ab": {
     "name": "Isca Ofuscante",
-    "text": "Ao entrar, ofusque 1 inimigo a até 3 casas: -2 ATQ até o fim do round. Alvos ofuscados não têm abrigo contra ataques à distância dos Abyssais."
+    "text": "Ao entrar: ofusca 1 inimigo a até 3 casas (-2 ATQ no round e sem abrigo contra tiros Abyssais)."
    },
    "k": {
     "entry": {
@@ -874,7 +874,7 @@
    "src": "novo",
    "ab": {
     "name": "Toque Elétrico",
-    "text": "Passiva o jogo todo: quem a atacar corpo a corpo sofre 2 de dano depois do ataque. Olhar Petrificante: ao entrar, 1 inimigo a até 3 casas não pode se mover até o fim do próximo round."
+    "text": "Quem atacá-la corpo a corpo leva 2 de dano. Ao entrar: 1 inimigo a até 3 casas fica sem andar até o fim do próximo round."
    },
    "k": {
     "thorns": 2,
@@ -888,7 +888,7 @@
    },
    "ab2": {
     "name": "Queimadura Insuportável",
-    "text": "1 vez por round, 1 ação: um inimigo a até 3 casas sofre 1 de dano (2 se tiver a Marca Abyssal) e fica eletrocutado até o fim do round: não pode atacar e, no fim do round, sofre mais 1.",
+    "text": "1x por round: 1 de dano num inimigo a até 3 casas (2 se tiver a Marca Abyssal). Ele não ataca neste round e leva mais 1 no fim.",
     "kind": "ativa"
    }
   },
@@ -905,7 +905,7 @@
    "src": "novo",
    "ab": {
     "name": "Carapaça de Cracas",
-    "text": "Sofre 1 a menos de dano de cada ataque. Maré Alta: enquanto houver outro Abyssal adjacente a ela, inimigos adjacentes a ela têm -1 de MOV."
+    "text": "Leva 1 a menos de dano de cada ataque. Com outro Abyssal ao lado, inimigos ao lado dele andam 1 casa a menos."
    },
    "k": {
     "selfRed": 1,
@@ -926,7 +926,7 @@
    "src": "novo",
    "ab": {
     "name": "Manto da Penumbra",
-    "text": "Após atacar, pode mover 1 casa livre sem gastar ação. Golpe nas Sombras: +2 ATQ contra um alvo sem nenhum aliado adjacente a ele."
+    "text": "Depois de atacar: pode andar 1 casa de graça. +2 ATQ contra inimigo sem aliados ao lado."
    },
    "k": {
     "after": "freeMove",
@@ -948,7 +948,7 @@
    "src": "cat",
    "ab": {
     "name": "Ordem de Guerra",
-    "text": "Outras unidades Krieg a até 2 casas recebem +1 ATQ. Fora do campo, meça desde o centro da sua entrada. Glória do Clã: 1 vez por round, quando uma unidade Krieg a até 3 casas do Comandante derruba um inimigo, você compra 1 carta. Sabre e Pistola: ataca a até 3 casas, mas de longe causa 2 a menos. O golpe corpo a corpo causa Sangramento: o inimigo perde 1 de Vida no início de cada um dos 2 próximos rounds."
+    "text": "Krieg a até 2 casas: +1 ATQ. Quando um Krieg perto dele derrota um inimigo, você compra 1 carta (1x por round). Ataca a até 3 casas (de longe causa 2 a menos); corpo a corpo, o alvo sangra 1 por round durante 2 rounds."
    },
    "k": {
     "auraAtk": {
@@ -963,7 +963,7 @@
    },
    "ab2": {
     "name": "Bombardeio",
-    "text": "1 vez por partida, 1 ação: escolha uma casa a até 6, sem precisar de linha de visão. A peça nela sofre 3 de dano e todas as peças ao redor sofrem 1, inclusive aliadas.",
+    "text": "1x por partida: bombardeia uma casa a até 6. 3 de dano nela e 1 em tudo ao redor, inclusive aliados.",
     "kind": "ativa"
    }
   },
@@ -981,7 +981,7 @@
    "src": "cat",
    "ab": {
     "name": "Formação de Assalto",
-    "text": "Recebe +1 ATQ para cada outra unidade Krieg aliada adjacente (máx. +3)."
+    "text": "+1 ATQ para cada Krieg aliado ao lado (máx. +3)."
    },
    "k": {
     "atkAllyAdj": {
@@ -1006,7 +1006,7 @@
    "src": "cat",
    "ab": {
     "name": "Muralha Móvel",
-    "text": "Outras unidades Krieg aliadas adjacentes ao Tank não podem ser alvo de ataques à distância (2 ou mais casas). Corpo a corpo e efeitos ainda as atingem."
+    "text": "Krieg aliados ao lado dele não podem ser alvo de tiros."
    },
    "k": {
     "guardClan": "KRI"
@@ -1026,7 +1026,7 @@
    "src": "cat",
    "ab": {
     "name": "Mira Travada",
-    "text": "Pode atacar a até 6 casas (precisa de linha de visão). Se não se moveu neste turno, recebe +2 ATQ e ignora o abrigo do alvo."
+    "text": "Ataca a até 6 casas. Se não andou neste turno: +2 ATQ e ignora abrigo."
    },
    "k": {
     "atkStill": 2
@@ -1046,7 +1046,7 @@
    "src": "cat",
    "ab": {
     "name": "Combate Cerrado",
-    "text": "Recebe +2 ATQ ao atacar um inimigo adjacente. Sangue Frio: ao derrubar uma unidade, restaura 2 de Vida."
+    "text": "+2 ATQ contra inimigo ao lado. Ao derrotar alguém, cura 2 de Vida."
    },
    "k": {
     "atkMelee": 2,
@@ -1067,7 +1067,7 @@
    "src": "cat",
    "ab": {
     "name": "Detonação de Entrada",
-    "text": "Ao entrar em campo, cause 2 dano a 1 inimigo a até 2 casas."
+    "text": "Ao entrar: 2 de dano em 1 inimigo a até 2 casas."
    },
    "k": {
     "entry": {
@@ -1079,7 +1079,7 @@
    },
    "ab2": {
     "name": "Detonador",
-    "text": "1 vez por partida, 1 ação: detone uma mina Krieg sua em qualquer lugar do mapa. Os inimigos adjacentes a ela sofrem 3 de dano.",
+    "text": "1x por partida: explode uma mina Krieg sua. Inimigos ao lado dela levam 3 de dano.",
     "kind": "ativa",
     "per": "partida"
    }
@@ -1098,7 +1098,7 @@
    "src": "cat",
    "ab": {
     "name": "Triagem de Combate",
-    "text": "Ao entrar, restaure 3 de Vida de outra unidade Krieg aliada a até 2 casas. Última Dose: 1 vez por partida, quando uma unidade Krieg a até 2 casas seria derrotada, ela volta à reserva com 3 de Vida (o Comandante fica em campo com 3)."
+    "text": "Ao entrar: cura 3 de Vida de um Krieg a até 2 casas. 1x por partida, salva um Krieg perto que cairia: ele volta à reserva com 3 de Vida."
    },
    "k": {
     "entry": {
@@ -1125,7 +1125,7 @@
    "src": "cat",
    "ab": {
     "name": "Fortificação de Cerco",
-    "text": "Outras unidades Krieg aliadas adjacentes sofrem 1 a menos de dano de ataques."
+    "text": "Krieg aliados ao lado dele levam 1 a menos de dano."
    },
    "k": {
     "auraRed": {
@@ -1138,7 +1138,7 @@
    },
    "ab2": {
     "name": "Barricada Rápida",
-    "text": "1 vez por round, 1 ação: crie uma Barreira de 3 de Vida numa casa livre adjacente.",
+    "text": "1x por round: cria uma barreira de 3 de Vida ao lado dele.",
     "kind": "ativa",
     "per": "round"
    }
@@ -1157,7 +1157,7 @@
    "src": "cat",
    "ab": {
     "name": "Terra Queimada",
-    "text": "Ao atacar, cause 1 dano a cada outro inimigo adjacente ao alvo. A casa do alvo pega fogo até o fim do próximo round: quem entrar nela ou começar o round nela sofre 1 de dano."
+    "text": "Ao atacar: 1 de dano nos inimigos ao lado do alvo, e a casa do alvo pega fogo até o fim do próximo round (1 de dano em quem estiver nela)."
    },
    "k": {
     "after": "burn"
@@ -1177,7 +1177,7 @@
    "src": "cat",
    "ab": {
     "name": "Pinça",
-    "text": "Recebe +2 ATQ ao atacar um alvo que tenha outra unidade Krieg aliada adjacente a ele."
+    "text": "+2 ATQ contra inimigo que tenha outro Krieg ao lado."
    },
    "k": {
     "atkFlank": {
@@ -1199,7 +1199,7 @@
    "src": "novo",
    "ab": {
     "name": "Estandarte do Clã",
-    "text": "Unidades Krieg aliadas adjacentes recebem +1 ATQ. Vingança do Clã: se for derrotado, as unidades Krieg a até 2 casas recebem +2 ATQ até o fim do round."
+    "text": "Krieg aliados ao lado dele: +1 ATQ. Se ele cair, Krieg a até 2 casas ganham +2 ATQ no round."
    },
    "k": {
     "allyAtk": {
@@ -1226,7 +1226,7 @@
    "src": "novo",
    "ab": {
     "name": "Barragem Coordenada",
-    "text": "Pode atacar a até 5 casas. Ao atacar, cause 1 dano a cada outro inimigo adjacente ao alvo. Recebe +2 ATQ contra um alvo que outra unidade Krieg já atacou neste round."
+    "text": "Ataca a até 5 casas e causa 1 de dano nos inimigos ao lado do alvo. +2 ATQ em quem outro Krieg já atacou neste round."
    },
    "k": {
     "after": "splash",
@@ -1246,7 +1246,7 @@
    "src": "novo",
    "ab": {
     "name": "Escudo-Torre",
-    "text": "1 vez por round, pode receber o ataque destinado a um aliado adjacente. Contragolpe: ao proteger, devolve ao atacante (a até 2 casas) um golpe com o seu ATQ."
+    "text": "1x por round: leva o ataque no lugar de um aliado ao lado e devolve um golpe no atacante (se estiver a até 2 casas)."
    },
    "k": {
     "guard": true,
@@ -1267,7 +1267,7 @@
    "src": "novo",
    "ab": {
     "name": "Reconhecimento",
-    "text": "Ao entrar, marque 1 inimigo a até 4 casas: ataques contra ele causam +1 dano até o fim do round. Observador Avançado: enquanto a Batedora estiver em campo, ataques à distância das unidades Krieg contra um alvo marcado ignoram a linha de visão."
+    "text": "Ao entrar: marca 1 inimigo a até 4 casas (+1 de dano nele neste round). Tiros Krieg contra marcados não precisam de linha de visão."
    },
    "k": {
     "entry": {
@@ -1290,7 +1290,7 @@
    "src": "novo",
    "ab": {
     "name": "Chamar Artilharia",
-    "text": "Ao entrar, chama a artilharia: cause 2 de dano a 1 inimigo a até 4 casas."
+    "text": "Ao entrar: 2 de dano em 1 inimigo a até 4 casas."
    },
    "k": {
     "entry": {
@@ -1303,7 +1303,7 @@
    },
    "ab2": {
     "name": "Artilharia Pesada",
-    "text": "1 vez por round, 1 ação: marque uma casa a até 5. No início do próximo round ela sofre 3 de dano e as peças ao redor sofrem 1, inclusive as aliadas.",
+    "text": "1x por round: marca uma casa a até 5. No próximo round ela leva 3 de dano e tudo ao redor leva 1, inclusive aliados.",
     "kind": "ativa",
     "per": "round"
    }
@@ -1321,7 +1321,7 @@
    "src": "novo",
    "ab": {
     "name": "Campo Minado",
-    "text": "Ao entrar, arme uma mina numa casa livre adjacente: o primeiro inimigo que entrar sofre 3 de dano. Pode ter 2 minas em campo e arma uma nova no local onde cada unidade Krieg aliada é derrotada."
+    "text": "Ao entrar: arma uma mina ao lado (3 de dano). Máximo de 2 minas. Quando um Krieg cai, uma mina nova aparece onde ele estava."
    },
    "k": {
     "entry": {
@@ -1345,7 +1345,7 @@
    "src": "novo",
    "ab": {
     "name": "Saraivada",
-    "text": "Ao entrar, cause 1 de dano a cada inimigo adjacente. Seus ataques são granadas: passam por cima de obstáculos (sem linha de visão, ignorando abrigo). Se for derrotado, lança uma última granada: 1 de dano nos inimigos adjacentes."
+    "text": "Ao entrar: 1 de dano nos inimigos ao lado. Seus ataques passam por cima de obstáculos. Ao cair, 1 de dano nos inimigos ao lado."
    },
    "k": {
     "entry": {
@@ -1359,7 +1359,7 @@
    },
    "ab2": {
     "name": "Granada",
-    "text": "1 vez por round, 1 ação: lance uma granada num inimigo a até 3 casas, por cima de obstáculos. Ele sofre 2 de dano e os outros inimigos adjacentes a ele sofrem 1.",
+    "text": "1x por round: granada num inimigo a até 3 casas. 2 de dano nele e 1 nos inimigos ao lado dele.",
     "kind": "ativa",
     "per": "round"
    }
@@ -1378,7 +1378,7 @@
    "src": "cat",
    "ab": {
     "name": "Rastro de Caça",
-    "text": "1 ação: mova até seu MOV e faça 1 ataque normal. Conta no limite de 1 ataque por ativação."
+    "text": "1 ação: anda e ataca no mesmo movimento."
    },
    "k": {
     "action": "moveAttack"
@@ -1398,7 +1398,7 @@
    "src": "cat",
    "ab": {
     "name": "Carga Frontal",
-    "text": "Quando terminar um movimento adjacente a um inimigo, cause 2 dano a 1 inimigo adjacente. 1 vez por ativação."
+    "text": "Ao terminar o movimento ao lado de um inimigo: 2 de dano nele. 1x por ativação."
    },
    "k": {
     "tricer": 2
@@ -1418,7 +1418,7 @@
    "src": "cat",
    "ab": {
     "name": "Muralha de Marfim",
-    "text": "Aliados adjacentes ao Mamute sofrem 2 a menos de dano de ataques."
+    "text": "Aliados ao lado dele levam 2 a menos de dano."
    },
    "k": {
     "auraRed": {
@@ -1429,7 +1429,7 @@
    },
    "ab2": {
     "name": "Estouro da Manada",
-    "text": "1 vez por partida, 1 ação: avance em linha reta até 3 casas. Cada inimigo no caminho sofre 2 de dano e é empurrado para o lado.",
+    "text": "1x por partida: avança até 3 casas em linha reta. 2 de dano e empurrão em cada inimigo no caminho.",
     "kind": "ativa"
    },
    "cmd": true
@@ -1448,7 +1448,7 @@
    "src": "cat",
    "ab": {
     "name": "Presa de Aço",
-    "text": "Quando causar dano a um inimigo, ele não pode se mover até o fim do próximo round."
+    "text": "Se causar dano: o alvo fica sem andar até o fim do próximo round."
    },
    "k": {
     "after": "rootHit"
@@ -1468,7 +1468,7 @@
    "src": "cat",
    "ab": {
     "name": "Bote Feroz",
-    "text": "Se moveu nesta ativação antes de atacar, recebe +2 ATQ."
+    "text": "+2 ATQ se andou antes de atacar."
    },
    "k": {
     "atkMoved": 2
@@ -1488,7 +1488,7 @@
    "src": "cat",
    "ab": {
     "name": "Bolhas Reparadoras",
-    "text": "Ao entrar, restaure 3 de Vida de 1 aliado a até 2 casas."
+    "text": "Ao entrar: cura 3 de Vida de 1 aliado a até 2 casas."
    },
    "k": {
     "entry": {
@@ -1513,7 +1513,7 @@
    "src": "cat",
    "ab": {
     "name": "Visão Estratégica",
-    "text": "Ao entrar, olhe as 3 cartas do topo do seu baralho e devolva-as na ordem que quiser."
+    "text": "Ao entrar: vê as 3 próximas cartas do seu baralho e escolhe a ordem."
    },
    "k": {
     "entry": {
@@ -1535,7 +1535,7 @@
    "src": "cat",
    "ab": {
     "name": "Rota Segura",
-    "text": "Ao entrar, mova 1 aliado a até 2 casas da Raposa 1 casa livre."
+    "text": "Ao entrar: move 1 aliado perto dela 1 casa."
    },
    "k": {
     "entry": {
@@ -1558,7 +1558,7 @@
    "src": "cat",
    "ab": {
     "name": "Barreira Modular",
-    "text": "Ao entrar, crie uma Barreira com 4 de Vida numa casa livre adjacente. Ela bloqueia movimento e visão e pode ser atacada."
+    "text": "Ao entrar: cria uma barreira de 4 de Vida ao lado dele."
    },
    "k": {
     "entry": {
@@ -1581,7 +1581,7 @@
    "src": "cat",
    "ab": {
     "name": "Linha de Tiro",
-    "text": "Pode atacar a até 5 casas. Precisa de linha de visão."
+    "text": "Ataca a até 5 casas."
    },
    "k": {}
   },
@@ -1598,7 +1598,7 @@
    "src": "novo",
    "ab": {
     "name": "Couraça de Urso",
-    "text": "Sofre 1 a menos de dano de cada ataque."
+    "text": "Leva 1 a menos de dano de cada ataque."
    },
    "k": {
     "selfRed": 1
@@ -1617,7 +1617,7 @@
    "src": "novo",
    "ab": {
     "name": "Investida",
-    "text": "1 ação: mova até seu MOV e faça 1 ataque normal. Conta no limite de 1 ataque por ativação."
+    "text": "1 ação: anda e ataca no mesmo movimento."
    },
    "k": {
     "action": "moveAttack"
@@ -1636,7 +1636,7 @@
    "src": "novo",
    "ab": {
     "name": "Arremesso",
-    "text": "Após atacar, empurre o alvo 1 casa para longe, se o destino estiver livre."
+    "text": "Depois de atacar: empurra o alvo 1 casa."
    },
    "k": {
     "after": "knock"
@@ -1655,7 +1655,7 @@
    "src": "novo",
    "ab": {
     "name": "Veneno de Naja",
-    "text": "Se o ataque causar dano, o alvo sofre mais 1 dano no fim do round."
+    "text": "Se causar dano: o alvo leva mais 1 no fim do round."
    },
    "k": {
     "after": "pending"
@@ -1674,7 +1674,7 @@
    "src": "novo",
    "ab": {
     "name": "Galhada Protetora",
-    "text": "1 vez por round, pode receber o ataque destinado a um aliado adjacente."
+    "text": "1x por round: leva o ataque no lugar de um aliado ao lado."
    },
    "k": {
     "guard": true,
@@ -1694,7 +1694,7 @@
    "src": "novo",
    "ab": {
     "name": "Bote Solitário",
-    "text": "+2 ATQ contra um inimigo sem aliados adjacentes."
+    "text": "+2 ATQ contra inimigo sem aliados ao lado."
    },
    "k": {
     "atkIsolated": 2
@@ -1713,7 +1713,7 @@
    "src": "novo",
    "ab": {
     "name": "Asas de Varetas",
-    "text": "Voa: sobe em qualquer superfície, de qualquer altura."
+    "text": "Voa: sobe em qualquer superfície."
    },
    "k": {
     "climbAll": true
@@ -1733,7 +1733,7 @@
    "src": "cat",
    "ab": {
     "name": "Passo de Fase",
-    "text": "Após atacar, pode mover 1 casa livre sem gastar ação."
+    "text": "Depois de atacar: pode andar 1 casa de graça."
    },
    "k": {
     "after": "freeMove"
@@ -1753,7 +1753,7 @@
    "src": "cat",
    "ab": {
     "name": "Campo Inercial",
-    "text": "O primeiro ataque sofrido a cada round causa 3 a menos de dano."
+    "text": "O primeiro ataque que leva em cada round causa 3 a menos."
    },
    "k": {
     "firstHitRed": 3
@@ -1772,7 +1772,7 @@
    "src": "novo",
    "ab": {
     "name": "Sósia Holográfico",
-    "text": "O primeiro ataque sofrido a cada round causa 2 a menos de dano."
+    "text": "O primeiro ataque que leva em cada round causa 2 a menos."
    },
    "k": {
     "firstHitRed": 2
@@ -1791,7 +1791,7 @@
    "src": "novo",
    "ab": {
     "name": "Mira de Precisão",
-    "text": "Pode atacar a até 4 casas. Precisa de linha de visão."
+    "text": "Ataca a até 4 casas."
    },
    "k": {"precisao": true}
   },
@@ -1808,7 +1808,7 @@
    "src": "novo",
    "ab": {
     "name": "Ponte Aérea",
-    "text": "Ao entrar, mova 1 aliado a até 3 casas para uma casa livre adjacente a este piloto."
+    "text": "Ao entrar: traz 1 aliado a até 3 casas para o lado dele."
    },
    "k": {
     "entry": {
@@ -1830,7 +1830,7 @@
    "src": "novo",
    "ab": {
     "name": "Manipulação Tática",
-    "text": "Ao entrar, empurre 1 inimigo a até 2 casas 1 casa para longe dele, se o destino estiver livre."
+    "text": "Ao entrar: empurra 1 inimigo a até 2 casas 1 casa para longe."
    },
    "k": {
     "entry": {
@@ -1852,7 +1852,7 @@
    "src": "novo",
    "ab": {
     "name": "Duelo",
-    "text": "Recebe +2 ATQ ao atacar um inimigo que não tem aliados adjacentes a ele."
+    "text": "+2 ATQ contra inimigo sem aliados ao lado."
    },
    "k": {
     "atkIsolated": 2
@@ -1871,7 +1871,7 @@
    "src": "novo",
    "ab": {
     "name": "Upgrade",
-    "text": "Ao entrar, 1 aliado a até 2 casas recebe +2 ATQ até o fim do round."
+    "text": "Ao entrar: 1 aliado a até 2 casas ganha +2 ATQ neste round."
    },
    "k": {
     "entry": {
@@ -1894,7 +1894,7 @@
    "src": "novo",
    "ab": {
     "name": "Invasão de Sistema",
-    "text": "Ao entrar, 1 inimigo a até 3 casas perde sua habilidade até o fim do round."
+    "text": "Ao entrar: 1 inimigo a até 3 casas perde a habilidade neste round."
    },
    "k": {
     "entry": {
@@ -1916,7 +1916,7 @@
    "src": "novo",
    "ab": {
     "name": "Proteção Real",
-    "text": "Aliados adjacentes sofrem 1 a menos de dano de ataques."
+    "text": "Aliados ao lado dele levam 1 a menos de dano."
    },
    "k": {
     "auraRed": {
@@ -1938,7 +1938,7 @@
    "src": "novo",
    "ab": {
     "name": "Farejador",
-    "text": "1 ação: mova até seu MOV e faça 1 ataque normal. Conta no limite de 1 ataque por ativação."
+    "text": "1 ação: anda e ataca no mesmo movimento."
    },
    "k": {
     "action": "moveAttack"
@@ -1957,7 +1957,7 @@
    "src": "novo",
    "ab": {
     "name": "Rajada Tecnológica",
-    "text": "Ao atacar, cause 1 dano a cada outro inimigo adjacente ao alvo."
+    "text": "Ao atacar: 1 de dano nos outros inimigos ao lado do alvo."
    },
    "k": {
     "after": "splash",
@@ -1965,7 +1965,7 @@
    },
    "ab2": {
     "name": "Salto Orbital",
-    "text": "1 vez por partida, 1 ação: voe para qualquer casa livre a até 5, ignorando terreno e peças, e cause 2 de dano a cada inimigo ao redor de onde pousar.",
+    "text": "1x por partida: voa para uma casa livre a até 5 e causa 2 de dano em todos os inimigos ao redor de onde pousar.",
     "kind": "ativa"
    },
    "cmd": true
@@ -1983,7 +1983,7 @@
    "src": "novo",
    "ab": {
     "name": "Muralha Tecnológica",
-    "text": "Ao entrar, crie uma Barreira com 4 de Vida numa casa livre adjacente."
+    "text": "Ao entrar: cria uma barreira de 4 de Vida ao lado dele."
    },
    "k": {
     "entry": {
@@ -2005,7 +2005,7 @@
    "src": "novo",
    "ab": {
     "name": "Renascer",
-    "text": "Na primeira vez que chegaria a 0 de Vida, fica com 3 de Vida em vez de sair."
+    "text": "Na primeira vez que cairia, fica com 3 de Vida."
    },
    "k": {
     "phoenix": 3
@@ -2026,7 +2026,7 @@
     "name": "Portalis",
     "kind": "ativa",
     "per": "round",
-    "text": "1 ação: escolhe 2 casas livres a até 6 casas dele, uma ENTRADA e uma SAÍDA, ambas visíveis (um portal por vez). Aliados ao lado da entrada atravessam com uma ação de movimento e saem na saída. Aliados que alcançam a entrada (dentro do seu alcance) podem atacar o portal: ataques básicos, habilidades e táticas saem pela saída, com o alcance contado a partir dela."
+    "text": "1 ação: abre um portal de entrada e outro de saída a até 6 casas. Aliados entram por um e saem pelo outro, e podem atacar através dele."
    },
    "k": {
     "ult": "portalis",
@@ -2047,7 +2047,7 @@
    "src": "novo",
    "ab": {
     "name": "Voo",
-    "text": "Voa: sobe em qualquer superfície, de qualquer altura. Pode atacar a até 4 casas com linha de visão."
+    "text": "Voa: sobe em qualquer superfície. Ataca a até 4 casas."
    },
    "k": {
     "climbAll": true
@@ -2066,7 +2066,7 @@
    "src": "novo",
    "ab": {
     "name": "Matriz Hexagonal",
-    "text": "Outros Zukunft a até 2 casas sofrem 1 a menos de dano de ataques."
+    "text": "Zukunft a até 2 casas dela levam 1 a menos de dano."
    },
    "k": {
     "auraRed": {
@@ -2089,7 +2089,7 @@
    "src": "novo",
    "ab": {
     "name": "Formação Cristalina",
-    "text": "Inimigos a até 2 casas dele ficam Lentos (-1 MOV). Fora do campo, meça desde o centro da sua entrada."
+    "text": "Inimigos a até 2 casas dele ficam Lentos (-1 de movimento)."
    },
    "k": {
     "slowNear": {
@@ -2100,7 +2100,7 @@
    },
    "ab2": {
     "name": "Prisão de Cristal",
-    "text": "1 vez por partida, 1 ação: prenda 1 inimigo a até 4 casas até o fim do próximo round (não anda, não ataca e não pode ser atacado). Os outros inimigos adjacentes a ele ficam Lentos.",
+    "text": "1x por partida: prende 1 inimigo a até 4 casas até o fim do próximo round (não anda, não ataca e não pode ser atacado). Inimigos ao lado dele ficam Lentos.",
     "kind": "ativa"
    }
   },
@@ -2116,7 +2116,7 @@
    "src": "novo",
    "ab": {
     "name": "Ressonância",
-    "text": "Aliados Lithari causam +1 de dano em alvos Lentos ou Enraizados a até 3 casas dele."
+    "text": "Lithari a até 3 casas causam +1 de dano em alvos Lentos ou Enraizados."
    },
    "k": {
     "resDmg": 1
@@ -2134,7 +2134,7 @@
    "src": "novo",
    "ab": {
     "name": "Âncora",
-    "text": "Inimigos adjacentes a ele só podem mover 1 casa."
+    "text": "Inimigos ao lado dele só andam 1 casa."
    },
    "k": {
     "anchor": true
@@ -2152,7 +2152,7 @@
    "src": "novo",
    "ab": {
     "name": "Chuva de Cristais",
-    "text": "Ao causar dano com um ataque, o alvo fica Lento até o fim do round."
+    "text": "Se causar dano: o alvo fica Lento neste round."
    },
    "k": {
     "after": "slowHit"
@@ -2170,7 +2170,7 @@
    "src": "novo",
    "ab": {
     "name": "Rastro Cristalino",
-    "text": "A casa onde termina cada movimento vira Zona de Cristal até o fim do round."
+    "text": "Onde termina cada movimento, deixa uma Zona de Cristal até o fim do round."
    },
    "k": {
     "trail": true
@@ -2188,7 +2188,7 @@
    "src": "novo",
    "ab": {
     "name": "Cristal Curativo",
-    "text": "Ao entrar, restaure 3 de Vida de 1 aliado a até 2 casas (+1 se ele estiver numa Zona de Cristal). Pode escolher a si mesmo."
+    "text": "Ao entrar: cura 3 de Vida de 1 aliado a até 2 casas, ou dele mesmo (+1 numa Zona de Cristal)."
    },
    "k": {
     "entry": {
@@ -2210,7 +2210,7 @@
    "src": "novo",
    "ab": {
     "name": "Obelisco",
-    "text": "Ao entrar, crie uma Barreira com 3 de Vida numa casa livre adjacente; as casas ao redor dela viram Zona de Cristal por 2 rounds."
+    "text": "Ao entrar: cria uma barreira de 3 de Vida ao lado, cercada por Zona de Cristal por 2 rounds."
    },
    "k": {
     "entry": {
@@ -2231,7 +2231,7 @@
    "src": "novo",
    "ab": {
     "name": "Lâminas do Corpo",
-    "text": "Recebe +2 ATQ ao atacar um alvo Lento/Enraizado ou com 3 de Vida restantes ou menos."
+    "text": "+2 ATQ contra alvo Lento, Enraizado ou com 3 de Vida ou menos."
    },
    "k": {
     "atkVsLow": 2,
@@ -2251,7 +2251,7 @@
    "src": "novo",
    "ab": {
     "name": "Fragmento Gélido",
-    "text": "Pode atacar a até 6 casas (precisa de linha de visão). Ao causar dano, o alvo fica Lento até o fim do round."
+    "text": "Ataca a até 6 casas. Se causar dano, o alvo fica Lento neste round."
    },
    "k": {
     "after": "slowHit"
@@ -2269,7 +2269,7 @@
    "src": "novo",
    "ab": {
     "name": "Presença Esmagadora",
-    "text": "Um inimigo adjacente ao Colosso deve atacá-lo antes de seus aliados adjacentes, se ele for alvo válido."
+    "text": "Inimigos ao lado dele precisam atacá-lo antes de atacar os aliados ao lado."
    },
    "k": {
     "taunt": true
@@ -2287,7 +2287,7 @@
    "src": "novo",
    "ab": {
     "name": "Fúria Selvagem",
-    "text": "1 ação: mova até seu MOV e faça 1 ataque normal. Se andou 2 ou mais casas antes de atacar e causar dano, o alvo fica Enraizado até o fim do próximo round."
+    "text": "1 ação: anda e ataca. Se andou 2 casas ou mais e causou dano, o alvo fica Enraizado até o fim do próximo round."
    },
    "k": {
     "action": "moveAttack",
@@ -2306,7 +2306,7 @@
    "src": "novo",
    "ab": {
     "name": "Invocar Zona",
-    "text": "Ao entrar, crie uma Zona de Cristal (raio 1) centrada numa casa a até 3 casas, por 2 rounds."
+    "text": "Ao entrar: cria uma Zona de Cristal a até 3 casas, por 2 rounds."
    },
    "k": {
     "entry": {
@@ -2327,7 +2327,7 @@
    "src": "novo",
    "ab": {
     "name": "Prisma",
-    "text": "Ao entrar, troque de lugar com qualquer peça a até 4 casas. Se for inimigo, ele fica Enraizado até o fim do próximo round."
+    "text": "Ao entrar: troca de lugar com uma peça a até 4 casas. Se for inimiga, fica Enraizada até o fim do próximo round."
    },
    "k": {
     "entry": {
@@ -2348,7 +2348,7 @@
    "src": "novo",
    "ab": {
     "name": "Orbes Protetores",
-    "text": "Aliados adjacentes sofrem 1 a menos de dano de ataques à distância."
+    "text": "Aliados ao lado dele levam 1 a menos de dano de tiros."
    },
    "k": {
     "auraRed": {
@@ -2370,7 +2370,7 @@
    "src": "novo",
    "ab": {
     "name": "Quebra-gelo",
-    "text": "Causa +2 de dano em alvo Enraizado e, ao atacar, desfaz o enraizamento dele."
+    "text": "+2 de dano em alvo Enraizado, e solta ele da raiz."
    },
    "k": {
     "atkVsRoot": 2,
@@ -2389,7 +2389,7 @@
    "src": "novo",
    "ab": {
     "name": "Varredura de Cauda",
-    "text": "Após atacar, cause 1 dano a todas as outras peças adjacentes a ele, incluindo aliados."
+    "text": "Depois de atacar: 1 de dano em todos ao lado dele, inclusive aliados."
    },
    "k": {
     "after": "burstAll"
@@ -2407,7 +2407,7 @@
    "src": "novo",
    "ab": {
     "name": "Massa Cristalina",
-    "text": "As casas adjacentes a ele são Zona de Cristal: inimigos que entram nelas ficam Lentos."
+    "text": "As casas ao lado dele são Zona de Cristal: inimigos que entram nelas ficam Lentos."
    },
    "k": {
     "zoneAura": 1
@@ -2427,7 +2427,7 @@
    "ab": {
     "name": "Manipulação Mineral",
     "kind": "especial",
-    "text": "Ação especial de manipulação: escolha 1 cristal ou estrutura móvel a até 6 casas e mova-o até 2 casas, ou mude a cor de um cristal. Terrenos altos (mais de 1 nível) podem ser rebaixados em 1, virando um bloco móvel, e ruínas, rochas, raízes e plantas podem ser arrancadas do chão e viram blocos móveis. Também cria túneis e ataca arremessando estruturas (4 de dano, destrói a estrutura)."
+    "text": "1 ação: move cristais, rochas e estruturas a até 6 casas, rebaixa terreno alto, cria túneis ou arremessa uma estrutura num inimigo (4 de dano)."
    },
    "k": {
     "manip": true,
@@ -2437,7 +2437,7 @@
     "name": "Barreira de Valak",
     "kind": "ativa",
     "per": "partida",
-    "text": "1 vez por partida, 1 ação: cria de 2 a 5 cristais especiais em linha, em casas livres a até 6 casas dele. Você escolhe onde a barreira começa e onde termina (até 4 casas entre as pontas) e a cor de cada cristal. Bloqueiam passagem e tiros até serem quebrados."
+    "text": "1x por partida: ergue uma linha de 2 a 5 cristais a até 6 casas dele. Bloqueiam passagem e tiros até serem quebrados."
    }
   },
   {
@@ -2454,7 +2454,7 @@
     "name": "Perfuração Subterrânea",
     "kind": "ativa",
     "per": "round",
-    "text": "1 ação: entra no subsolo, anda até 2 casas e emerge numa casa livre. Pode causar 2 de dano a um inimigo adjacente à saída. A posição é sempre visível."
+    "text": "1 ação: cava, anda até 2 casas por baixo da terra e sai causando 2 de dano num inimigo ao lado."
    },
    "k": {
     "ult": "burrow",
@@ -2475,7 +2475,7 @@
     "name": "Muralha de Basalto",
     "kind": "ativa",
     "per": "round",
-    "text": "1 ação: cria numa casa livre adjacente uma barreira de 4 de Vida, que bloqueia passagem e tiros. Dura até o fim do próximo round."
+    "text": "1 ação: cria ao lado uma barreira de 4 de Vida que bloqueia passagem e tiros, até o fim do próximo round."
    },
    "k": {
     "ult": "bwall",
@@ -2496,7 +2496,7 @@
     "name": "Carga de Impacto",
     "kind": "ativa",
     "per": "round",
-    "text": "1 ação: avança até 2 casas na direção que você escolher (não precisa ser em linha reta). Ao encontrar uma unidade, para, causa 2 de dano e empurra 1 casa. Pode atacar normalmente depois, com a segunda ação."
+    "text": "1 ação: avança até 2 casas. Se bater em alguém, causa 2 de dano e empurra 1 casa."
    },
    "k": {
     "ult": "cartcharge",
@@ -2516,7 +2516,7 @@
    "ab": {
     "name": "Triturar",
     "kind": "passiva",
-    "text": "Seus ataques básicos causam +2 de dano a barreiras e construções destrutíveis. Cristais de Valak quebram com um único ataque."
+    "text": "+2 de dano em barreiras e construções. Quebra cristais com um golpe só."
    },
    "k": {
     "atkBarrier": 2
@@ -2536,7 +2536,7 @@
     "name": "Fornalha de Valak",
     "kind": "ativa",
     "per": "round",
-    "text": "1 ação: derrama metal fundido sobre um aliado a até 1 casa, que endurece em blindagem: ele recebe -2 no próximo dano sofrido, até o início da próxima ativação do Fundidor."
+    "text": "1 ação: blinda um aliado ao lado. Ele leva 2 a menos no próximo dano."
    },
    "k": {
     "ult": "coat",
@@ -2557,7 +2557,7 @@
     "name": "Ruptura",
     "kind": "ativa",
     "per": "round",
-    "text": "1 ação: causa 4 de dano a uma barreira adjacente. Se a destruir, empurra 1 casa o inimigo que estava logo atrás dela."
+    "text": "1 ação: 4 de dano numa barreira ao lado. Se quebrar, empurra o inimigo que estava atrás."
    },
    "k": {
     "ult": "rupture",
@@ -2578,7 +2578,7 @@
     "name": "Onda Sísmica",
     "kind": "ativa",
     "per": "round",
-    "text": "1 ação: causa 1 de dano a todos os inimigos adjacentes e empurra cada um 1 casa para longe. Construções adjacentes sofrem 2 de dano."
+    "text": "1 ação: 1 de dano em todos os inimigos ao lado e empurra cada um 1 casa. Construções ao lado levam 2."
    },
    "k": {
     "ult": "quake",
@@ -2599,7 +2599,7 @@
     "name": "Pipoca",
     "kind": "ativa",
     "per": "round",
-    "text": "Ataque básico com a Teteia (dinamite arremessada: passa por cima de estruturas): o alvo sofre o dano e todas as unidades nas 6 casas ao redor dele (aliadas ou inimigas) sofrem 1. Ativa, 1 ação: planta a Pipoca, uma bomba visível, numa casa livre a até 2 casas; ela explode no início da próxima ativação do Dinamitador ou do próximo round (o que vier primeiro): 3 de dano na casa e 1 ao redor, em quem estiver lá."
+    "text": "Ataca jogando dinamite por cima de estruturas: o alvo leva o dano e tudo ao redor leva 1. 1 ação: planta a Pipoca a até 2 casas, que explode depois (3 na casa, 1 ao redor)."
    },
    "k": {
     "ult": "timedcharge",
@@ -2622,7 +2622,7 @@
     "name": "Guarda Firme",
     "kind": "ativa",
     "per": "round",
-    "text": "1 ação: ela e os aliados adjacentes recebem -1 de dano até o início da próxima ativação da Sentinela."
+    "text": "1 ação: ela e os aliados ao lado levam 1 a menos de dano até a próxima vez que ela agir."
    },
    "k": {
     "ult": "guardfirm",
@@ -2643,7 +2643,7 @@
     "name": "Luz de Amparo",
     "kind": "ativa",
     "per": "round",
-    "text": "1 ação: cura 2 de Vida de um aliado a até 2 casas (3 se o aliado estiver ao lado de um cristal)."
+    "text": "1 ação: cura 2 de Vida de um aliado a até 2 casas (3 se ele estiver perto de um cristal)."
    },
    "k": {
     "ult": "lumen",
@@ -2664,7 +2664,7 @@
     "name": "Trama Protetora",
     "kind": "ativa",
     "per": "round",
-    "text": "1 ação: cria numa casa livre adjacente uma barreira de raízes de 3 de Vida. Bloqueia movimento, mas não tiros, e não dá abrigo. Dura até o fim do próximo round."
+    "text": "1 ação: cria ao lado uma barreira de raízes de 3 de Vida que bloqueia passagem (não tiros), até o fim do próximo round."
    },
    "k": {
     "ult": "rootweb",
@@ -2685,7 +2685,7 @@
     "name": "Rota Traçada",
     "kind": "ativa",
     "per": "round",
-    "text": "1 ação: um aliado a até 2 casas ganha +1 de Movimento no próximo movimento e pode subir 1 nível adicional de terreno, até o fim do próximo round."
+    "text": "1 ação: um aliado a até 2 casas anda +1 casa e sobe +1 nível de terreno, até o fim do próximo round."
    },
    "k": {
     "ult": "route",
@@ -2705,7 +2705,7 @@
    "ab": {
     "name": "Descarga Persistente",
     "kind": "passiva",
-    "text": "Seu ataque aplica uma carga elétrica ao alvo, que o acompanha. No início da próxima ativação do alvo, cada inimigo do Sniper ao lado dele sofre 1 de dano elétrico, uma única vez. Sem ativa própria."
+    "text": "Seus tiros deixam uma carga elétrica: quando o alvo for agir, inimigos ao lado dele levam 1 de dano."
    },
    "k": {
     "after": "elec"
@@ -2725,7 +2725,7 @@
     "name": "Tratamento Mineral",
     "kind": "ativa",
     "per": "round",
-    "text": "1 ação: cura 3 de Vida de um aliado a até 2 casas (4 se houver um cristal ao lado dela ou do alvo). O cristal não é consumido."
+    "text": "1 ação: cura 3 de Vida de um aliado a até 2 casas (4 se houver um cristal perto)."
    },
    "k": {
     "ult": "nursing",
@@ -2746,7 +2746,7 @@
     "name": "Investida Escavadora",
     "kind": "ativa",
     "per": "round",
-    "text": "1 ação: avança até 2 casas na direção que você escolher (não precisa ser em linha reta). Ao encontrar um inimigo, para, causa 2 de dano e empurra 1 casa. Contra uma construção, causa 4 de dano."
+    "text": "1 ação: avança até 2 casas. Se bater num inimigo, causa 2 de dano e empurra 1 casa (4 de dano em construções)."
    },
    "k": {
     "ult": "ferram",
@@ -2767,7 +2767,7 @@
     "name": "Ponte de Valak",
     "kind": "ativa",
     "per": "round",
-    "text": "1 ação: escolhe de 1 a 3 casas baixas livres, vizinhas entre si e a até 2 casas dele, e eleva cada uma em 1 nível (até a altura dos terrenos ligados; em terreno plano, até o nível 1). A mudança fica até o fim da partida."
+    "text": "1 ação: eleva até 3 casas baixas perto dele em 1 nível, criando uma ponte até o fim da partida."
    },
    "k": {
     "ult": "bridge",
