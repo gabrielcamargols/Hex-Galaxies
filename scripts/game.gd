@@ -854,6 +854,9 @@ func reduction_of(t, peek: bool = false, d: int = 1) -> int:
 		var pt = s.pos() if s.st == "field" else DB.entry_c[s.owner]
 		if DB.dist(pt, t.pos()) <= int(ar["r"]):
 			red += int(ar["n"])
+			# fala de quem protegeu (Guardião Real / Engenheira de Escudos)
+			if not peek and s.st == "field" and t.st == "field" and (s.cid == "z_real" or s.cid == "z_escudo"):
+				abfx("protecao_real" if s.cid == "z_real" else "matriz", t.pos(), s.uid)
 	return red
 
 
@@ -1214,6 +1217,7 @@ func settle() -> void:
 			t.hp = int(K(t)["phoenix"])
 			log_msg(t.owner, "%s renasceu com %d de Vida." % [nm(t), t.hp])
 			emitfx({"t": "passive", "kind": "phoenix", "uid": t.uid})
+			abfx("renascer", t.pos(), t.uid)   # fala do renascimento
 			emitfx({"t": "heal", "h": t.pos(), "amt": t.hp, "uid": t.uid})
 			continue
 		var medic = _dose_medic(t)
