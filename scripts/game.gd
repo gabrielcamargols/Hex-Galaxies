@@ -438,6 +438,73 @@ func rooted(u) -> bool:
 
 
 # Klang: atordoado não ataca nem se move; Medusa: eletrocutado não ataca
+# estados visíveis da peça (ícones sobre ela e na ficha): [{ic, nome, bom, txt, rounds}]
+# rounds = por quantos rounds ainda vale contando o atual (0 = até ser usado)
+const ESTADO_INFO = {
+	"stun": ["st_atordoado", "Atordoado", false, "não ataca nem anda"],
+	"semataque": ["st_atordoado", "Sem ataque", false, "não pode atacar"],
+	"shock": ["st_atordoado", "Eletrocutado", false, "não pode atacar"],
+	"root": ["st_preso", "Preso", false, "não pode andar"],
+	"prison": ["st_preso", "Aprisionado", false, "não anda nem ataca"],
+	"slow": ["st_lento", "Lento", false, "-1 de Movimento"],
+	"semcura": ["st_semcura", "Sem cura", false, "não recupera Vida"],
+	"armadura": ["st_escudo", "Armadura", true, "segura dano; quem bate fica preso"],
+	"red": ["st_escudo", "Proteção", true, "recebe menos dano"],
+	"coat": ["st_escudo", "Revestido", true, "recebe menos dano no próximo golpe"],
+	"plated": ["st_escudo", "Blindado", true, "recebe menos dano"],
+	"venom": ["st_veneno", "Envenenado", false, "perde Vida com o tempo"],
+	"tox": ["st_veneno", "Intoxicado", false, "perde Vida com o tempo"],
+	"bleed": ["st_veneno", "Sangrando", false, "perde Vida com o tempo"],
+	"mark": ["st_marcado", "Marcado", false, "leva mais dano"],
+	"amark": ["st_marcado", "Marcado", false, "leva mais dano"],
+	"xfire": ["st_marcado", "Na mira", false, "o próximo ataque contra ele causa mais"],
+	"dazed": ["st_marcado", "Tonto", false, "perde o abrigo contra Abyssais"],
+	"silence": ["st_silencio", "Silenciado", false, "não usa habilidade"],
+	"golpe_stun": ["st_golpe", "Golpe atordoante", true, "o próximo ataque atordoa o alvo"],
+	"berserk": ["st_furia", "Fúria", true, "dano em dobro"],
+	"veil": ["st_oculto", "Oculto", true, "difícil de mirar"],
+}
+
+
+func estados(u) -> Array:
+	var out: Array = []
+	var vistos = {}
+	var atk = 0
+	var mov = 0
+	for f in u.fx:
+		var k = String(f["k"])
+		if f.has("end") and int(f["end"]) < round_no:
+			continue
+		if k == "atk":
+			atk += int(f.get("v", 0))
+			continue
+		if k == "mov":
+			mov += int(f.get("v", 0))
+			continue
+		if not ESTADO_INFO.has(k) or vistos.has(ESTADO_INFO[k][1]):
+			continue
+		vistos[ESTADO_INFO[k][1]] = true
+		var rd = 0
+		if f.has("end"):
+			rd = int(f["end"]) - round_no + 1
+		elif f.has("till"):
+			rd = int(f["till"]) - round_no + 1
+		elif f.get("until", "") == "end":
+			rd = 1
+		var inf = ESTADO_INFO[k]
+		var txt = inf[3]
+		if k == "armadura":
+			txt = "segura %d de dano; quem bate fica preso" % int(f.get("v", 0))
+		out.append({"ic": inf[0], "nome": inf[1], "bom": inf[2], "txt": txt, "rounds": rd})
+	if atk != 0:
+		out.append({"ic": "st_atk_mais" if atk > 0 else "st_atk_menos", "nome": "%+d de ATQ" % atk, "bom": atk > 0, "txt": "nos ataques", "rounds": -1})
+	if mov != 0:
+		out.append({"ic": "st_mov_mais" if mov > 0 else "st_lento", "nome": "%+d de Movimento" % mov, "bom": mov > 0, "txt": "no próximo movimento", "rounds": -1})
+	# ruins primeiro: é o que o jogador mais precisa ver
+	out.sort_custom(func(a, b): return (not a["bom"]) and b["bom"])
+	return out
+
+
 func stunned(u) -> bool:
 	for f in u.fx:
 		if (f["k"] == "stun" or f["k"] == "semataque") and int(f["end"]) >= round_no:

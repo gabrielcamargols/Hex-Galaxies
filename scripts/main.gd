@@ -3834,6 +3834,16 @@ func _refresh_ucard() -> void:
 			# números com ícone: vida, ataque, movimento, alcance
 			var IC = func(n): return "[img=26x26]res://ui/hud/%s.svg[/img]" % n
 			txt += "[color=#cbbdff]%s[/color]\n%s %d    %s %d    %s %d\n" % [c["role"], IC.call("ataque"), game.atk_of(u, null), IC.call("movimento"), game.mov_of(u), IC.call("alcance"), game.alc_of(u)]
+			# estados: ícone, nome, o que faz e por quantos rounds
+			for es in game.estados(u):
+				var dur = ""
+				if int(es["rounds"]) == 0:
+					dur = " · até usar"
+				elif int(es["rounds"]) == 1:
+					dur = " · este round"
+				elif int(es["rounds"]) > 1:
+					dur = " · %d rounds" % int(es["rounds"])
+				txt += "[img=20x20]res://ui/hud/%s.svg[/img] [color=%s][b]%s[/b][/color] [color=#b8b0d0]%s%s[/color]\n" % [es["ic"], "#8dffa0" if es["bom"] else "#ff8a8a", es["nome"], es["txt"], dur]
 			if u.st == "reserve":
 				txt += "[i]Na reserva (arraste para a entrada)[/i]\n"
 			elif u.st == "off":

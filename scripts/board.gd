@@ -2250,6 +2250,35 @@ func bleed_pop(h: Vector2i, kind: String = "bleed") -> void:
 
 
 # ícone da HUD (ui/hud/*.svg) flutuando no tabuleiro, sempre de frente para a câmera
+# fileira de ícones de estado sobre a peça (atordoado, preso, armadura, +ATQ...): os ruins primeiro
+func _estados_icones(u, d: Dictionary) -> void:
+	var est: Array = [] if (u.barrier or g == null) else g.estados(u)
+	var sig = ",".join(est.map(func(e): return e["ic"]))
+	if String(d.get("est_sig", "")) == sig:
+		return
+	d["est_sig"] = sig
+	if d.has("est_row") and is_instance_valid(d["est_row"]):
+		d["est_row"].queue_free()
+	d.erase("est_row")
+	if est.is_empty():
+		return
+	var row = Node3D.new()
+	row.position = Vector3(0, float(d["top"]) + 0.95, 0)
+	d["node"].add_child(row)
+	badges.append(row)
+	var n = min(est.size(), 4)
+	var passo = 0.82
+	for i in range(n):
+		var sp = icone3d(est[i]["ic"], 0.85)
+		sp.billboard = BaseMaterial3D.BILLBOARD_DISABLED   # a fileira inteira já gira para a câmera
+		sp.position = Vector3((i - (n - 1) / 2.0) * passo, 0, 0)
+		row.add_child(sp)
+	d["est_row"] = row
+	# aparece com um pulinho para chamar a atenção
+	row.scale = Vector3.ONE * 0.3
+	create_tween().tween_property(row, "scale", Vector3.ONE, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+
 func icone3d(nome: String, tam: float = 0.5) -> Sprite3D:
 	var sp = Sprite3D.new()
 	var path = "res://ui/hud/%s.svg" % nome
@@ -3636,7 +3665,7 @@ func _process(delta: float) -> void:
 		badges = badges.filter(func(bg): return is_instance_valid(bg))
 		for bg in badges:
 			var to = cam.global_position - bg.global_position
-			bg.rotation = Vector3(0, atan2(to.x, to.z), 0)
+			bg.global_rotation = Vector3(0, atan2(to.x, to.z), 0)
 	for sh in ship_nodes:
 		if is_instance_valid(sh):
 			_orient_ship(sh)
@@ -3795,6 +3824,7 @@ func _update_units(delta: float) -> void:
 		if g.has_fx(u, "mark"):
 			fl.append("ALVO")
 		d["flags"].text = " ".join(fl)
+		_estados_icones(u, d)
 		var sprite = d["sprite"]
 		var selected = state.get("sel_uid", -1) == u.uid
 		if sprite != null and sprite.has_meta("fig3d"):

@@ -44,6 +44,21 @@ I = {
  "habilidade": ("#d29bff", "#6a1fc8", '<path d="%s" fill="#fff" %s/>' % (star(8, 29, 16), W)),
  "escaravelho": ("#7dff8e", "#14a83c", '<ellipse cx="32" cy="36" rx="16" ry="20" fill="#fff" %s/><circle cx="32" cy="14" r="8" fill="#fff" %s/><path d="M32 18 L32 56" stroke="%s" stroke-width="3"/><path d="M16 30 L6 24 M16 42 L6 46 M48 30 L58 24 M48 42 L58 46" stroke="%s" stroke-width="5" stroke-linecap="round"/>' % (W, W, O, O)),
  "reserva": ("#ffe76a", "#f08a00", '<circle cx="32" cy="22" r="12" fill="#fff" %s/><path d="M10 58 C10 40 54 40 54 58 Z" fill="#fff" %s/>' % (W, W)),
+ # ---- estados das peças (verde/azul = bom, vermelho/roxo = ruim) ----
+ "st_atordoado": ("#ffe76a", "#c46a00", '<path d="%s" fill="#fff" %s/>' % (star(5, 16, 7), W) + '<circle cx="12" cy="14" r="5" fill="#fff" %s/><circle cx="52" cy="50" r="5" fill="#fff" %s/>' % (W, W)),
+ "st_preso": ("#c9a0ff", "#5a2aa8", '<rect x="14" y="28" width="36" height="28" rx="5" fill="#fff" %s/><path d="M22 28 L22 20 C22 8 42 8 42 20 L42 28" fill="none" stroke="%s" stroke-width="12"/><path d="M22 28 L22 20 C22 8 42 8 42 20 L42 28" fill="none" stroke="#fff" stroke-width="5"/>' % (W, O)),
+ "st_lento": ("#9ad0ff", "#3a5ca8", '<path d="M8 14 L28 32 L8 50 Z" fill="#fff" %s/><path d="M34 26 L56 26 L56 38 L34 38 Z" fill="#fff" %s/>' % (W, W)),
+ "st_semcura": ("#ff8a8a", "#a8101c", '<path d="M32 54 C10 38 6 26 12 17 C18 9 28 11 32 19 C36 11 46 9 52 17 C58 26 54 38 32 54 Z" fill="#fff" %s/><path d="M8 8 L56 56" stroke="%s" stroke-width="12" stroke-linecap="round"/><path d="M8 8 L56 56" stroke="#ff3a3a" stroke-width="5" stroke-linecap="round"/>' % (W, O)),
+ "st_escudo": ("#8ae6ff", "#1a6ad8", '<path d="M32 6 L54 14 L52 34 C50 46 42 54 32 58 C22 54 14 46 12 34 L10 14 Z" fill="#fff" %s/>' % W),
+ "st_atk_mais": ("#7dff8e", "#14a83c", '<path d="M40 8 L50 8 L50 18 L28 40 L20 32 Z" fill="#fff" %s/><path d="M8 50 L22 50 M15 43 L15 57" stroke="%s" stroke-width="11" stroke-linecap="round"/><path d="M8 50 L22 50 M15 43 L15 57" stroke="#fff" stroke-width="5" stroke-linecap="round"/>' % (W, O, )),
+ "st_atk_menos": ("#ff8a8a", "#a8101c", '<path d="M40 8 L50 8 L50 18 L28 40 L20 32 Z" fill="#fff" %s/><path d="M8 50 L22 50" stroke="%s" stroke-width="11" stroke-linecap="round"/><path d="M8 50 L22 50" stroke="#fff" stroke-width="5" stroke-linecap="round"/>' % (W, O)),
+ "st_mov_mais": ("#7dff8e", "#14a83c", '<path d="M8 14 L28 32 L8 50 L8 40 L18 32 L8 24 Z" fill="#fff" %s/><path d="M36 32 L56 32 M46 22 L46 42" stroke="%s" stroke-width="11" stroke-linecap="round"/><path d="M36 32 L56 32 M46 22 L46 42" stroke="#fff" stroke-width="5" stroke-linecap="round"/>' % (W, O)),
+ "st_veneno": ("#b6ff5a", "#4a8a10", '<path d="M32 6 C40 20 50 30 50 40 C50 52 42 58 32 58 C22 58 14 52 14 40 C14 30 24 20 32 6 Z" fill="#fff" %s/>' % W),
+ "st_marcado": ("#ff8a8a", "#a8101c", '<circle cx="32" cy="32" r="20" fill="none" stroke="%s" stroke-width="12"/><circle cx="32" cy="32" r="20" fill="none" stroke="#fff" stroke-width="5"/><circle cx="32" cy="32" r="7" fill="#fff" %s/>' % (O, W)),
+ "st_silencio": ("#c9a0ff", "#5a2aa8", '<path d="M10 24 L22 24 L36 12 L36 52 L22 40 L10 40 Z" fill="#fff" %s/><path d="M44 24 L56 40 M56 24 L44 40" stroke="%s" stroke-width="11" stroke-linecap="round"/><path d="M44 24 L56 40 M56 24 L44 40" stroke="#fff" stroke-width="5" stroke-linecap="round"/>' % (W, O)),
+ "st_golpe": ("#ffe76a", "#c46a00", '<rect x="16" y="22" width="32" height="26" rx="8" fill="#fff" %s/><path d="M20 22 L20 14 M28 22 L28 12 M36 22 L36 12 M44 22 L44 14" stroke="%s" stroke-width="10" stroke-linecap="round"/><path d="M20 22 L20 14 M28 22 L28 12 M36 22 L36 12 M44 22 L44 14" stroke="#fff" stroke-width="4" stroke-linecap="round"/>' % (W, O)),
+ "st_furia": ("#ff8a5a", "#c4200c", '<path d="M32 58 C16 58 10 46 14 34 C18 24 26 22 24 8 C36 14 40 24 38 32 C42 28 44 24 44 20 C54 30 56 44 48 52 C44 56 38 58 32 58 Z" fill="#fff" %s/>' % W),
+ "st_oculto": ("#d9ccff", "#4a3a8a", '<path d="M4 32 C16 14 48 14 60 32 C48 50 16 50 4 32 Z" fill="#fff" %s/><circle cx="32" cy="32" r="8" fill="%s"/>' % (W, O)),
 }
 HEX = "M50 4 L93 28 L93 72 L50 96 L7 72 L7 28 Z"   # selo em 100x100
 for nome, (c1, c2, corpo) in I.items():
