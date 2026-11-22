@@ -4048,7 +4048,7 @@ func _refresh_prompt() -> void:
 		text = "[b]%s[/b]" % q.get("text", "")
 		match q["t"]:
 			"hex":
-				text += "\n[color=#8fb8cc](clique numa casa com [color=#b06cff][b]X[/b][/color])[/color]"
+				pass   # as casas válidas já aparecem marcadas no tabuleiro
 				if q.get("optional", false):
 					_button(box, "Pular", func(): _answer(null))
 			"yesno":
@@ -4146,13 +4146,25 @@ func _show_ask(text: String, q: Dictionary) -> void:
 	w["note"].get_parent().get_parent().visible = false
 	var ask: PanelContainer = w["ask"]
 	var on_board = q["t"] == "hex"
-	var y = 0.2 if on_board else 0.5
+	# escolha no tabuleiro: só uma faixa fina no alto, para o campo ficar livre
+	if w.has("card_pop") and is_instance_valid(w["card_pop"]):
+		w["card_pop"].queue_free()
+	var y = 0.17 if on_board else 0.5
 	ask.anchor_top = y
 	ask.anchor_bottom = y
 	w["ask_dim"].visible = not on_board
-	w["ask_head"].text = "ESCOLHA NO TABULEIRO" if on_board else "SUA DECISÃO"
+	w["ask_head"].text = "SUA DECISÃO"
+	w["ask_head"].visible = not on_board
+	var asb: StyleBoxFlat = w["ask_sb"]
+	asb.set_content_margin_all(10 if on_board else 20)
+	asb.content_margin_left = 18 if on_board else 20
+	asb.content_margin_right = 18 if on_board else 20
+	asb.shadow_size = 6 if on_board else 18
+	asb.bg_color.a = 0.88 if on_board else 0.97
+	w["ask_text"].add_theme_font_size_override("normal_font_size", (16 if on_board else 18) if compact else (17 if on_board else 19))
+	w["ask_text"].add_theme_font_size_override("bold_font_size", (17 if on_board else 20) if compact else (18 if on_board else 21))
 	w["ask_text"].text = "[center]" + text + "[/center]"
-	var aw: float = w["ask_w"]
+	var aw: float = min(w["ask_w"], 480.0) if on_board else w["ask_w"]
 	w["ask_text"].custom_minimum_size.x = aw
 	var bts: Array = []
 	var longo = 0
@@ -4167,8 +4179,10 @@ func _show_ask(text: String, q: Dictionary) -> void:
 		if nb == 0 and not q["t"] in ["hex", "excl", "draft"]:
 			_primary(b)
 		nb += 1
-		b.add_theme_font_size_override("font_size", 18)
-		if lado:
+		b.add_theme_font_size_override("font_size", 15 if on_board else 18)
+		if on_board and lado:
+			b.custom_minimum_size = Vector2(100, 36)
+		elif lado:
 			b.custom_minimum_size = Vector2(max(130.0, b.custom_minimum_size.x), 50)
 		else:
 			# lista: todas da mesma largura, texto quebra em linhas se precisar
@@ -4584,12 +4598,21 @@ func _card_info(id: String) -> void:
 	var react = t["type"] == "Reação" or id == "retirada" or id == "reforco"
 	var p = _panel(ui)
 	var vw = ui.get_viewport_rect().size
-	p.custom_minimum_size = Vector2(min(380.0, vw.x - 40.0), 0)
-	_place(p, Control.PRESET_CENTER)
-	var v = _vbox(p, 8)
-	var hb = _hbox(v, 12)
+	p.custom_minimum_size = Vector2(min(340.0, vw.x - 40.0), 0)
+	# fica no canto de baixo à direita (acima dos botões da câmera), sem cobrir o meio do tabuleiro
+	if portrait:
+		_place(p, Control.PRESET_CENTER_BOTTOM, 0)
+		p.offset_bottom = -vw.y * 0.24
+	else:
+		_place(p, Control.PRESET_BOTTOM_RIGHT, 0)
+		p.offset_right = -14
+		p.offset_left = p.offset_right
+		p.offset_bottom = -78
+	p.offset_top = p.offset_bottom
+	var v = _vbox(p, 6)
+	var hb = _hbox(v, 10)
 	var ic = TextureRect.new()
-	ic.custom_minimum_size = Vector2(64, 64)
+	ic.custom_minimum_size = Vector2(46, 46)
 	ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	var ipath = "res://ui/cartas/ic/%s.png" % id
@@ -4599,15 +4622,15 @@ func _card_info(id: String) -> void:
 		ic.texture = load(ipath)
 	hb.add_child(ic)
 	var tv = _vbox(hb, 2)
-	_label(tv, t["name"], 22, col.lightened(0.2))
-	_label(tv, ("Gasta 1 ação" if int(t["cost"]) > 0 else "Não gasta ação") + ("  ·  usada na hora certa" if react else ""), 13, C_DIM)
-	var r = _rich(v, int(min(350.0, vw.x - 70.0)))
-	r.add_theme_font_size_override("normal_font_size", 16)
+	_label(tv, t["name"], 19, col.lightened(0.2))
+	_label(tv, ("Gasta 1 ação" if int(t["cost"]) > 0 else "Não gasta ação") + ("  ·  reação" if react else ""), 12, C_DIM)
+	var r = _rich(v, int(min(310.0, vw.x - 70.0)))
+	r.add_theme_font_size_override("normal_font_size", 14)
 	r.text = t["text"]
-	if react:
-		_label(v, "O jogo pergunta quando dá para usar.", 13, Color("#ffcf9a"))
-	elif not ok:
-		_label(v, "Agora não dá: selecione uma peça sua que ainda pode agir." if my_turn() else "Espere a sua vez.", 13, Color("#ffcf9a"))
+	if not react and not ok:
+		var aviso = _label(v, "Agora não dá: selecione uma peça sua que ainda pode agir." if my_turn() else "Espere a sua vez.", 12, Color("#ffcf9a"))
+		aviso.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		aviso.custom_minimum_size.x = min(310.0, vw.x - 70.0)
 	var bh = _hbox(v, 8)
 	bh.alignment = BoxContainer.ALIGNMENT_END
 	if ok and not react:
