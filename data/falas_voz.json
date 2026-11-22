@@ -808,5 +808,41 @@
   "Conexão perdida... não, não, volta!": "v_z_hacker_l14",
   "Ok. Agora é pessoal. Vou formatar todos vocês.": "v_z_hacker_l15",
   "Invasão concluída! Sua habilidade? Desativada.": "v_z_hacker_l16"
+ },
+ "z_portais": {
+  "O espaço é só uma sugestão. E eu sei reescrevê-la.": "v_z_portais_l01",
+  "A inovação de Motterlich dobrou as estrelas. Eu dobro o campo de batalha.": "v_z_portais_l02",
+  "Seis casas, um passo. Distância é coisa do passado.": "v_z_portais_l03",
+  "Onde o Dragão precisar, eu abro o caminho.": "v_z_portais_l04",
+  "Você corre em linha reta. Que antiquado.": "v_z_portais_l05",
+  "Cuidado onde pisa. Eu decido onde cada passo termina.": "v_z_portais_l06",
+  "Venham até a entrada. A saída leva vocês aonde precisam estar.": "v_z_portais_l07",
+  "Coordenadas recebidas. Caminho aberto.": "v_z_portais_l08",
+  "Atravesse sem medo. Do outro lado, eu já calculei tudo.": "v_z_portais_l09",
+  "Seu grito ecoa... mas não chega a lugar nenhum.": "v_z_portais_l10",
+  "Me ameace daqui ou de lá. Para mim, é o mesmo lugar.": "v_z_portais_l11",
+  "O caminho se fechou. E a vitória ficou do nosso lado.": "v_z_portais_l12",
+  "Mais uma prova: quem domina o espaço domina a batalha.": "v_z_portais_l13",
+  "Não... nenhum portal alcança onde ele foi.": "v_z_portais_l14",
+  "Abrirei caminhos até o fim deste campo. Nenhum de vocês escapa.": "v_z_portais_l15",
+  "Portalis! Entrada... e saída.": "v_z_portais_l16"
+ },
+ "z_bio": {
+  "Excelente! Tantos corpos... e tanto espaço para melhorias.": "v_z_bio_l01",
+  "A carne é só o rascunho. A tecnologia de Motterlich é a versão final.": "v_z_bio_l02",
+  "Drones médicos online, scanner calibrado... hoje vamos fazer ciência!": "v_z_bio_l03",
+  "Não se preocupem. Ninguém aqui vai morrer... sem antes virar um protótipo melhor.": "v_z_bio_l04",
+  "Escaneando você... músculos fracos, reflexos lentos. Que desperdício de matéria-prima.": "v_z_bio_l05",
+  "Interessante. Seu corpo ainda é da versão um ponto zero, não é?": "v_z_bio_l06",
+  "Chega mais perto! Deixa eu ver o que dá pra aprimorar em você.": "v_z_bio_l07",
+  "Ótimo! Anotado no seu prontuário.": "v_z_bio_l08",
+  "Viu só? Eu disse que o implante ia funcionar!": "v_z_bio_l09",
+  "Seus batimentos subiram. Isso é medo... ou só falta de upgrade?": "v_z_bio_l10",
+  "Pode gritar. Eu estou registrando tudo para estudos futuros.": "v_z_bio_l11",
+  "Experimento concluído com sucesso! O progresso venceu de novo.": "v_z_bio_l12",
+  "Cada vitória é um dado a mais. E cada dado nos deixa mais perfeitos.": "v_z_bio_l13",
+  "Não... os sinais vitais dele... zeraram.": "v_z_bio_l14",
+  "Eu ainda não tinha terminado de te consertar. Alguém vai pagar por isso.": "v_z_bio_l15",
+  "Upgrade aplicado! Versão dois ponto zero, pode testar!": "v_z_bio_l16"
  }
 }
