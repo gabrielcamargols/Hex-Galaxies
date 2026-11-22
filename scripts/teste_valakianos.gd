@@ -535,6 +535,17 @@ func _rei_cores() -> void:
 	var n2 = g._make_crystal(0, H(1, 3), "ciano")
 	_quebra(g, n1)
 	ok(n2.st == "dead", "combo: azul natural e ciano do Rei são parecidos e quebram juntos")
+	# prévia: o que vai acontecer antes de confirmar
+	gr = _rei()
+	g = gr[0]
+	g.units = g.units.filter(func(x): return not x.barrier)
+	var p1 = g._make_crystal(0, H(-3, 3), "preto")
+	var p2 = g._make_crystal(0, H(-3, 4), "preto")
+	var ini = put(g, "t_basalto", 1, -3, 1)
+	var ali = put(g, "t_basalto", 0, -4, 3)
+	ok(g.combo_cadeia(p1).size() == 2 and g.combo_cadeia(p1).has(p2), "prévia: o combo mostra os 2 cristais pretos")
+	var pv = g.cristal_previa(p1, ini)
+	ok(String(pv.get(ini.uid, "")).contains("PUXADO") and String(pv.get(ali.uid, "")).contains("LANÇADO"), "prévia: quem é puxado e quem é lançado (%s)" % str(pv))
 
 
 func _rei_barreira() -> void:

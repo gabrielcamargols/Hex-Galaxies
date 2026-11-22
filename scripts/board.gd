@@ -2633,8 +2633,8 @@ func _make_unit(u) -> void:
 	hp.visible = false
 	node.add_child(hp)
 	var tag = Label3D.new()
-	tag.font_size = 40
-	tag.outline_size = 14
+	tag.font_size = 58          # etiqueta da prévia (dano, combo, efeito do cristal): legível de longe
+	tag.outline_size = 18
 	tag.pixel_size = 0.006
 	tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	tag.no_depth_test = true

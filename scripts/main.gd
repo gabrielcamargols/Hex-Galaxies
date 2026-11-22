@@ -3331,6 +3331,18 @@ func refresh() -> void:
 		var tt = game.by_uid(pend["tuid"])
 		if tt != null:
 			st["hl"][tt.pos()] = "tgt"
+			# alvo é um cristal: marca todos que quebram no combo e o que cada peça vai sofrer
+			if tt.crystal != "" and su != null:
+				var cad = game.combo_cadeia(tt)
+				for k in cad:
+					st["hl"][k.pos()] = "tgt"
+					st["tags"][k.uid] = {"text": "QUEBRA" if k == tt else "COMBO", "color": Color("#ffe08a")}
+				var pvc = game.cristal_previa(tt, su)
+				for uid in pvc:
+					var au = game.by_uid(uid)
+					if au != null:
+						var bom = au.owner == su.owner
+						st["tags"][uid] = {"text": pvc[uid], "color": Color("#8dffa0") if bom else Color("#ff8a8a")}
 	if tip != null:
 		if tip.has("hex"):
 			st["hl"][tip["hex"]] = "no"
@@ -3342,8 +3354,12 @@ func refresh() -> void:
 	if foe_view:
 		var fpos = H["ghost"] if (H["ghost"] != null and not ab) else null
 		for t in game.field():
-			if t.owner == att.owner or t.barrier:
-				continue
+			if t.crystal != "" and H["at"].has(t.pos()) and not st["tags"].has(t.uid):
+				var nc = game.combo_cadeia(t).size()
+				if nc > 1:
+					st["tags"][t.uid] = {"text": "COMBO x%d" % nc, "color": Color("#ffe08a")}
+			if t.owner == att.owner or t.barrier or st["tags"].has(t.uid):
+				continue   # já tem etiqueta da prévia do cristal
 			if H["at"].has(t.pos()):
 				var pv = game.preview_damage(att, t, fpos)
 				var tx = "-%d" % pv["dmg"]
@@ -4175,6 +4191,20 @@ func _refresh_prompt() -> void:
 			var pv = game.preview_damage(u, t, pend["h"] if pend["kind"] == "moveatk" else null)
 			var res_txt = " (derrota o alvo)" if pv["kills"] else " (fica com %d de Vida)" % (t.hp - pv["dmg"])
 			text += ("\nDepois ataca " if text != "" else "Prévia: [b]%s[/b] ataca " % nm_u) + "[b]%s[/b]: %s = [color=#ffb14a][b]%d de dano[/b][/color]%s. Reações do rival podem reduzir." % [game.nm(t), " ".join(pv["parts"]), pv["dmg"], res_txt]
+		var ct = game.by_uid(pend.get("tuid", -1)) if pend.has("tuid") else null
+		if ct != null and ct.crystal != "":
+			# cristal: quantos quebram no combo e o que acontece com cada peça
+			var cad2 = game.combo_cadeia(ct)
+			if cad2.size() > 1:
+				text += "\n[color=#ffe08a][b]Combo de cores:[/b] %d cristais quebram juntos.[/color]" % cad2.size()
+			var pv2 = game.cristal_previa(ct, u)
+			var linhas = []
+			for uid2 in pv2:
+				var au2 = game.by_uid(uid2)
+				if au2 != null:
+					linhas.append("[color=%s]%s: %s[/color]" % ["#8dffa0" if au2.owner == u.owner else "#ff8a8a", game.nm(au2), pv2[uid2]])
+			if not linhas.is_empty():
+				text += "\n" + "  ·  ".join(linhas)
 		if pend["kind"] == "ab":
 			text = "Prévia: [b]%s[/b] para a casa marcada · 1 ação." % DB.cards[u.cid]["ab"]["name"]
 		var n = 2 if pend["kind"] == "moveatk" else 1

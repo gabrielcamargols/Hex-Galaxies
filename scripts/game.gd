@@ -1836,6 +1836,87 @@ func cristal_familia(c: String) -> String:
 	return {"ciano": "azul"}.get(c, c)
 
 
+# ---- prévia dos cristais (antes de confirmar o ataque) ----
+# todos os cristais que quebram juntos com c (combo de cores), c incluído
+func combo_cadeia(c) -> Array:
+	var out = [c]
+	var i = 0
+	while i < out.size():
+		var x = out[i]
+		i += 1
+		for n in DB.nbrs(x.pos()):
+			var y = unit_at(n)
+			if y != null and y.crystal != "" and y.st == "field" and not out.has(y) and cristal_familia(y.crystal) == cristal_familia(x.crystal):
+				out.append(y)
+	return out
+
+
+# o que cada peça sofre se a cadeia de c quebrar pelas mãos de quem (uid -> texto curto)
+func cristal_previa(c, quem) -> Dictionary:
+	var tags = {}
+	var add = func(u, t: String):
+		if u == null:
+			return
+		tags[u.uid] = (tags[u.uid] + " · " + t) if tags.has(u.uid) else t
+	for k in combo_cadeia(c):
+		var ctr = k.pos()
+		var viz = units.filter(func(x): return x.st == "field" and not x.barrier and DB.dist(x.pos(), ctr) == 1)
+		var sp = k.sp_owner
+		var aliado = quem != null and sp >= 0 and quem.owner == sp
+		var inimigo = quem != null and sp >= 0 and quem.owner != sp
+		match k.crystal:
+			"verde":
+				for x in viz:
+					add.call(x, ("+2 Vida" if (sp < 0 or x.owner == sp) else "-2"))
+			"azul":
+				for x in viz:
+					add.call(x, ("+1 Mov" if (sp < 0 or x.owner == sp) else "-1 Mov"))
+			"roxo":
+				for x in viz:
+					add.call(x, ("-%d" % int(vrule("purple_dmg", 2))) if sp < 0 else ("+2 ATQ" if x.owner == sp else "-2 ATQ"))
+			"vermelho":
+				if aliado:
+					add.call(quem, "+2 ATQ")
+				elif inimigo:
+					add.call(quem, "-2")
+			"preto":
+				for x in units:
+					if x.st != "field" or x.barrier or sp < 0:
+						continue
+					var d = DB.dist(x.pos(), ctr)
+					if x.owner != sp and x.owner != NEUTRAL and d <= 2:
+						add.call(x, "PUXADO · sem ataque" if d == 2 else "sem ataque")
+					elif x.owner == sp and d == 1:
+						add.call(x, "LANÇADO · golpe atordoa")
+			"anil":
+				if aliado:
+					add.call(quem, "ARMADURA 2")
+				elif inimigo:
+					var amigos = units.filter(func(x): return x.st == "field" and not x.barrier and x.owner == quem.owner and x != quem)
+					amigos.sort_custom(func(a, b): return DB.dist(a.pos(), quem.pos()) < DB.dist(b.pos(), quem.pos()))
+					if not amigos.is_empty():
+						add.call(amigos[0], "-%d (aliado confuso)" % max(0, atk_of(quem, amigos[0]) - 2))
+			"ciano":
+				if aliado:
+					var vistos = {quem.uid: true}
+					var fila = [[quem, 4]]
+					while not fila.is_empty():
+						var it = fila.pop_front()
+						add.call(it[0], "+%d Vida" % it[1])
+						if it[1] - 1 <= 0:
+							continue
+						for y in units:
+							if y.st == "field" and not y.barrier and y.owner == quem.owner and not vistos.has(y.uid) and DB.dist(y.pos(), it[0].pos()) == 1:
+								vistos[y.uid] = true
+								fila.append([y, it[1] - 1])
+				elif inimigo:
+					add.call(quem, "SEM CURA")
+					for x in viz:
+						if x.owner == quem.owner and x != quem:
+							add.call(x, "SEM CURA")
+	return tags
+
+
 # cristal quebrado: efeito em todos os personagens ao lado (aliados e inimigos)
 func _crystal_burst(t, by = -1) -> bool:
 	var hit = false
