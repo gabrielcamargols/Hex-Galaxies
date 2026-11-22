@@ -973,6 +973,25 @@ func _disc(radius: float, seg: int) -> ArrayMesh:
 	return st.commit()
 
 
+# anel (só a borda) de um polígono: contorno de zona sem tampar a casa
+func _anel(r0: float, r1: float, seg: int) -> ArrayMesh:
+	var st = SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_normal(Vector3.UP)
+	for k in range(seg):
+		var a1 = TAU / seg * k
+		var a2 = TAU / seg * (k + 1)
+		var p1 = Vector3(cos(a1), 0, sin(a1))
+		var p2 = Vector3(cos(a2), 0, sin(a2))
+		st.add_vertex(p1 * r0)
+		st.add_vertex(p1 * r1)
+		st.add_vertex(p2 * r1)
+		st.add_vertex(p1 * r0)
+		st.add_vertex(p2 * r1)
+		st.add_vertex(p2 * r0)
+	return st.commit()
+
+
 func _overlay_mat(c: Color) -> StandardMaterial3D:
 	var m = StandardMaterial3D.new()
 	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
@@ -2204,8 +2223,61 @@ func bleed_pop(h: Vector2i, kind: String = "bleed") -> void:
 var star_nodes: Dictionary = {}
 
 
+# A estrela tem que se explicar sozinha: casas em rosa-estelar (não amarelo, que é a cor de
+# movimento) só com o contorno, uma estrela girando no centro e uma
+# plaquinha com o que ela faz e quantos rounds faltam.
 func sync_stars(list: Array) -> void:
-	sync_zones("star", list, Color(1.0, 0.74, 0.18, 0.55), Color(1.0, 0.95, 0.7, 0.85))
+	sync_zones("star", list, Color(1.0, 0.55, 0.85, 0.22), Color(1.0, 0.45, 0.82, 0.95))
+	for st in list:
+		var k = "star:" + str(st["k"])
+		if not star_nodes.has(k):
+			continue
+		var root: Node3D = star_nodes[k]
+		if not root.has_meta("placa"):
+			_enfeita_estrela(root, st)
+		var placa: Label3D = root.get_meta("placa")
+		var r = int(st.get("resta", 0))
+		placa.text = "ESTRELA HEXA · %s\n+2 Vida por round  ·  imune a corpo a corpo" % ("último round" if r <= 1 else "%d rounds" % r)
+
+
+func _enfeita_estrela(root: Node3D, st: Dictionary) -> void:
+	var c: Vector2i = st["c"]
+	var cw = Vector3(world_xz(c).x, top_y(c), world_xz(c).y)
+	# estrela de seis pontas girando sobre o centro
+	var est = Node3D.new()
+	root.add_child(est)
+	est.position = cw + Vector3(0, 3.0, 0)
+	for i in range(2):
+		var tri = MeshInstance3D.new()
+		var pm = PrismMesh.new()
+		pm.size = Vector3(0.62, 0.54, 0.06)
+		tri.mesh = pm
+		var m2 = StandardMaterial3D.new()
+		m2.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		m2.albedo_color = Color("#ff91d8") if i == 0 else Color("#ffe2f4")
+		tri.material_override = m2
+		tri.rotation.z = PI * i
+		tri.position.y = 0.06 if i == 0 else -0.06
+		est.add_child(tri)
+	var tw = est.create_tween().set_loops()
+	tw.tween_property(est, "rotation:y", TAU, 4.0).from(0.0)
+	var tw2 = est.create_tween().set_loops()
+	tw2.tween_property(est, "position:y", cw.y + 3.15, 1.1).set_trans(Tween.TRANS_SINE)
+	tw2.tween_property(est, "position:y", cw.y + 2.9, 1.1).set_trans(Tween.TRANS_SINE)
+	# plaquinha: o que faz e quanto falta
+	var lab = Label3D.new()
+	lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lab.no_depth_test = true
+	lab.font_size = 44
+	lab.outline_size = 16
+	lab.pixel_size = 0.0065
+	lab.modulate = Color("#ffe6f6")
+	lab.outline_modulate = Color("#301342")
+	lab.render_priority = 4
+	lab.outline_render_priority = 3
+	lab.position = cw + Vector3(0, 3.8, 0)
+	root.add_child(lab)
+	root.set_meta("placa", lab)
 
 
 # Cortina de Tinta (Inkshadow): rastro de tinta escura com borda roxa
@@ -2248,7 +2320,7 @@ func sync_zones(kind: String, list0: Array, cor: Color, cor_borda: Color) -> voi
 			var hexm = _mesh(root, _disc(0.86, 6), Color.WHITE, at)
 			hexm.rotation.y = PI / 6.0
 			hexm.material_override = mat
-			var anel = _mesh(root, _disc(0.94, 6), Color.WHITE, at - Vector3(0, 0.005, 0))
+			var anel = _mesh(root, _anel(0.78, 0.94, 6), Color.WHITE, at + Vector3(0, 0.01, 0))
 			anel.rotation.y = PI / 6.0
 			anel.material_override = borda
 			anel.scale = Vector3.ONE

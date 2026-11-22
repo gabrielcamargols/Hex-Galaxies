@@ -728,7 +728,7 @@
    "src": "pdf",
    "ab": {
     "name": "Regeneração Estelar",
-    "text": "Ao entrar em campo, restaure 3 de Vida de 1 aliado a até 2 casas, sem superar a Vida inicial. Pode escolher a si mesma."
+    "text": "Ao entrar: cura 3 de Vida de um aliado a até 2 casas (ou dela mesma)."
    },
    "k": {
     "entry": {
@@ -741,7 +741,7 @@
    },
    "ab2": {
     "name": "Estrela Hexa",
-    "text": "1 vez por partida, 1 ação: escolha o centro de uma estrela hexagonal a até 4 casas (o centro, as 6 casas ao redor e as 6 pontas). Por 3 rounds, aliados dentro dela restauram 2 de Vida no início de cada round e não podem ser atacados corpo a corpo.",
+    "text": "1 vez por partida: cria uma estrela de luz a até 4 casas, por 3 rounds. Aliados dentro dela curam 2 de Vida a cada round e não podem ser atacados corpo a corpo.",
     "kind": "ativa"
    }
   },

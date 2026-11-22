@@ -3098,7 +3098,7 @@ func refresh() -> void:
 			marks.append({"uid": mu.uid, "h": mu.pos()})
 	board.sync_ground_marks("amark", marks)
 	board.sync_inks(game.inks.map(func(ik): return {"k": "%d" % int(ik["src"]), "hexes": ik["hexes"]}))
-	board.sync_stars(game.stars.map(func(st): return {"k": "%d_%d_%d" % [int(st["src"]), st["c"].x, st["c"].y], "hexes": st["hexes"]}))
+	board.sync_stars(game.stars.map(func(st): return {"k": "%d_%d_%d" % [int(st["src"]), st["c"].x, st["c"].y], "hexes": st["hexes"], "c": st["c"], "resta": int(st["till"]) - game.round_no + 1}))
 	board.sync_bananas(game.bananas, me)
 	board.sync_core(game.core, game.core_next if game.core == null or game.core_next != game.core else null)
 	if game.core != null:
