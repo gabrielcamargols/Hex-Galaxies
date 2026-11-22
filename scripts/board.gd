@@ -1582,6 +1582,10 @@ const TEXTURED = ["tarhut_fossil", "tarhut_flor"]
 
 
 func _swap_name(mname: String) -> String:
+	# Abnara e Gor'Aida: no lugar do pinheiro de Valak, árvores geradas pelo Cosmo Tree Gen
+	if mname.begins_with("cen_valak_pinheiro") and g != null and (g.map_id == "abnara" or g.map_id == "goraida"):
+		var vi = mname.substr(mname.rfind("_") + 1)
+		return "arvore_%s_%s" % [g.map_id, vi if vi.is_valid_int() else "0"]
 	if MODEL_SWAP.has(mname):
 		return MODEL_SWAP[mname]
 	var cut = mname.rfind("_")
@@ -1594,6 +1598,8 @@ func _scene_of(mname: String) -> Variant:
 	mname = _swap_name(mname)
 	if not model_cache.has(mname):
 		var path = "res://models/%s.glb" % mname
+		if not ResourceLoader.exists(path):
+			path = "res://scenes/entornos/arvores/%s.tscn" % mname   # árvores geradas (tools/gerar_arvores.gd)
 		model_cache[mname] = load(path) if ResourceLoader.exists(path) else null
 	return model_cache[mname]
 
@@ -1605,6 +1611,8 @@ func _model(parent: Node3D, mname: String, pos: Vector3, footprint: float, yaw: 
 		return false
 	var inst: Node3D = sc.instantiate()
 	var meshes = inst.find_children("*", "MeshInstance3D", true, false)
+	if toon and _swap_name(mname).begins_with("arvore_"):
+		toon = false     # as árvores geradas já vêm com as cores chapadas do jogo
 	if toon and TEXTURED.has(_swap_name(mname)):
 		toon = false
 		for mi in meshes:
@@ -5965,7 +5973,10 @@ func _build_wild(kind: String) -> void:
 			var yw = _rnd(h, 4) * TAU
 			if roll < 0.62:
 				var lj = K_PALMA if _rnd(h, 14) < 0.3 else K_SELVA
-				if not _kenney(holder, _kpick(lj, h, 15), Vector3.ZERO, 1.9 * s, yw, "jungle"):
+				# parte das árvores da selva vem do Cosmo Tree Gen (copas frondosas, mais variedade)
+				if lj == K_SELVA and _rnd(h, 44) < 0.45 and _model(holder, "arvore_abnara_%d" % int(_rnd(h, 45) * 3), Vector3.ZERO, 1.7 * s, yw, true):
+					pass
+				elif not _kenney(holder, _kpick(lj, h, 15), Vector3.ZERO, 1.9 * s, yw, "jungle"):
 					_jungle_tree(holder, Vector3.ZERO, s * 1.3, h, int(_rnd(h, 3) * 3))
 				if _rnd(h, 16) > 0.6:
 					_kenney(holder, _kpick(K_FLOR, h, 17), Vector3(0.45 * s, 0, 0.2 * s), 0.3 * s, yw, "jungle")
@@ -5996,6 +6007,8 @@ func _build_wild(kind: String) -> void:
 				var np = 1 + int(_rnd(h, 32) * 3)
 				for i in range(np):
 					var off = Vector3((_rnd(h, i + 33) - 0.5) * 0.9 * s, 0, (_rnd(h, i + 36) - 0.5) * 0.9 * s) if i > 0 else Vector3.ZERO
+					if i == 0 and _rnd(h, 46) < 0.35 and _model(holder, "arvore_goraida_%d" % int(_rnd(h, 47) * 3), off, 1.4 * s, yw2, true):
+						continue     # árvore de copa nevada do Cosmo Tree Gen
 					if not _kenney(holder, _kpick(K_PINHO, h, i + 39), off, (1.5 + _rnd(h, i + 42) * 0.9) * s * (1.0 if i == 0 else 0.7), yw2 + i, "snow"):
 						_mesh(holder, _cyl(0.0, 0.42 * s, 1.2 * s, 8), Color("#2f6a5a"), off + Vector3(0, 0.6 * s, 0))
 			else:

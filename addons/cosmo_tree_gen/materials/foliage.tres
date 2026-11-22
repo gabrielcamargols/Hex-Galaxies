@@ -1,0 +1,8 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://1aem886fag5n"]
+
+[ext_resource type="Texture2D" uid="uid://bxs6plxpy6inu" path="res://addons/cosmo_tree_gen/textures/foliage.png" id="1_dnet8"]
+
+[resource]
+albedo_texture = ExtResource("1_dnet8")
+uv1_triplanar = true
+texture_filter = 0

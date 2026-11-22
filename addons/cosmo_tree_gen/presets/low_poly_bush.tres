@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="CosmoTreePreset" format=3 uid="uid://ckkd0847sg0q0"]
+
+[ext_resource type="Script" uid="uid://ceh6ii6tlpph4" path="res://addons/cosmo_tree_gen/resources/branch_level.gd" id="1_2h2pl"]
+[ext_resource type="Material" uid="uid://1aem886fag5n" path="res://addons/cosmo_tree_gen/materials/foliage.tres" id="2_x34a3"]
+[ext_resource type="Script" uid="uid://1tt4by0vsl04" path="res://addons/cosmo_tree_gen/resources/foliage_params.gd" id="3_p0oq0"]
+[ext_resource type="Script" uid="uid://dlp11kr4f76j3" path="res://addons/cosmo_tree_gen/resources/preset.gd" id="4_v4tum"]
+[ext_resource type="Material" uid="uid://b7l8vw0qq0s25" path="res://addons/cosmo_tree_gen/materials/bark.tres" id="5_83h8x"]
+[ext_resource type="Script" uid="uid://c0ggn4wsaa746" path="res://addons/cosmo_tree_gen/resources/trunk_params.gd" id="6_7iop2"]
+
+[sub_resource type="Resource" id="Resource_febos"]
+script = ExtResource("1_2h2pl")
+count = 2
+start = 0.372
+end = 1.0
+angle = 90.0
+length = 1.0
+radius = 1.0
+segments = 1
+gnarl = 0.419
+up_force = 0.31700000000000017
+metadata/_custom_type_script = "uid://ceh6ii6tlpph4"
+
+[sub_resource type="Resource" id="Resource_usong"]
+script = ExtResource("3_p0oq0")
+icosphere_radius = 0.49
+icosphere_amplitude = 0.6
+
+[sub_resource type="Resource" id="Resource_niwkb"]
+script = ExtResource("6_7iop2")
+height = 0.4
+radius_bottom = 0.01
+radius_top = 0.0
+lean = 0.0
+wobble = 0.0
+
+[resource]
+script = ExtResource("4_v4tum")
+trunk_params = SubResource("Resource_niwkb")
+branch_levels = Array[ExtResource("1_2h2pl")]([SubResource("Resource_febos")])
+foliage_params = SubResource("Resource_usong")
+trunk_material = ExtResource("5_83h8x")
+foliage_material = ExtResource("2_x34a3")
+flat_shading = true
+create_trunk = false

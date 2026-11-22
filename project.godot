@@ -37,4 +37,4 @@ driver/output_latency.web=120
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/cyclops_level_builder/plugin.cfg", "res://addons/proton_scatter/plugin.cfg")
+enabled=PackedStringArray("res://addons/cyclops_level_builder/plugin.cfg", "res://addons/cosmo_tree_gen/plugin.cfg", "res://addons/proton_scatter/plugin.cfg")

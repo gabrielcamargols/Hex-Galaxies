@@ -1,0 +1,92 @@
+[gd_scene format=3 uid="uid://dk4w00j460104"]
+
+[ext_resource type="Script" uid="uid://bareohor40a2f" path="res://addons/cosmo_tree_gen/ui/tree_gen_bar.gd" id="1_psid7"]
+
+[sub_resource type="DPITexture" id="DPITexture_md707"]
+_source = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\"><path fill=\"#e0e0e0\" d=\"M3 2a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h9c1.105 0 1.818-.91 2-2l1-6a1 1 0 0 0-1-1H6c-.552 0-.909.455-1 1l-1 6c-.091.545-.448 1-1 1a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1 1 1 0 0 0 1 1h5a1 1 0 0 0-1-1H7a2 2 0 0 0-2-2H3z\"/></svg>
+"
+base_scale = 1.1
+saturation = 2.0
+color_map = {
+Color(1, 0.37254903, 0.37254903, 1): Color(1, 0.47, 0.42, 1),
+Color(0.37254903, 1, 0.5921569, 1): Color(0.45, 0.95, 0.5, 1),
+Color(1, 0.8666667, 0.39607844, 1): Color(0.83, 0.78, 0.62, 1)
+}
+
+[sub_resource type="DPITexture" id="DPITexture_yfefd"]
+_source = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\"><path fill=\"#fff\" d=\"M8 1C1 1 1 1 1 8s0 7 7 7 7 0 7-7 0-7-7-7zM4.25 2.25a1 1 0 0 1 0 4 1 1 0 0 1 0-4zM8 6a1 1 0 0 1 0 4 1 1 0 0 1 0-4zm3.75 3.75a1 1 0 0 1 0 4 1 1 0 0 1 0-4z\"/></svg>
+"
+base_scale = 1.1
+saturation = 2.0
+color_map = {
+Color(1, 0.37254903, 0.37254903, 1): Color(1, 0.47, 0.42, 1),
+Color(0.37254903, 1, 0.5921569, 1): Color(0.45, 0.95, 0.5, 1),
+Color(1, 0.8666667, 0.39607844, 1): Color(0.83, 0.78, 0.62, 1)
+}
+
+[sub_resource type="DPITexture" id="DPITexture_fcche"]
+_source = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\"><path fill=\"#e0e0e0\" d=\"M3 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4l-3-3h-1v6H3zm1 0v5h3V1zm4 8a1 1 0 0 1 0 4 1 1 0 0 1 0-4z\"/></svg>
+"
+base_scale = 1.1
+saturation = 2.0
+color_map = {
+Color(1, 0.37254903, 0.37254903, 1): Color(1, 0.47, 0.42, 1),
+Color(0.37254903, 1, 0.5921569, 1): Color(0.45, 0.95, 0.5, 1),
+Color(1, 0.8666667, 0.39607844, 1): Color(0.83, 0.78, 0.62, 1)
+}
+
+[node name="TreeGenBar" type="HBoxContainer" unique_id=214483086]
+script = ExtResource("1_psid7")
+
+[node name="PresetMenu" type="MenuButton" parent="." unique_id=759787256]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Load a copy of a CosmoTreePreset preset into this tree."
+theme_type_variation = &"FlatMenuButton"
+text = "Preset"
+icon = SubResource("DPITexture_md707")
+flat = false
+
+[node name="SeedButton" type="Button" parent="." unique_id=315177081]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Pick a new random noise_seed."
+theme_type_variation = &"FlatButton"
+text = "Seed"
+icon = SubResource("DPITexture_yfefd")
+
+[node name="StatsLabel" type="Label" parent="." unique_id=2066327035]
+unique_name_in_owner = true
+self_modulate = Color(1, 1, 1, 0.6)
+layout_mode = 2
+text = "1234 tris - 999 draw calls"
+
+[node name="ExportButton" type="Button" parent="." unique_id=1971317291]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Export this tree to a .gltf or .glb file."
+theme_type_variation = &"FlatButton"
+text = "Export glb/glTF"
+icon = SubResource("DPITexture_fcche")
+
+[node name="ExportDialog" type="EditorFileDialog" parent="." unique_id=1151347104]
+unique_name_in_owner = true
+oversampling_override = 1.0
+title = "Export Tree"
+position = Vector2i(0, 36)
+filters = PackedStringArray("*.gltf ; glTF", "*.glb ; glTF Binary")
+option_count = 4
+option_0/name = "Include Collisions"
+option_0/default = 1
+option_1/name = "Export Images"
+option_2/name = "Use External Material"
+option_2/default = 1
+option_3/name = "Impostor"
+option_3/values = PackedStringArray("None", "Static", "Octahedral")
+option_3/default = 1
+
+[node name="PresetDialog" type="EditorFileDialog" parent="." unique_id=1600897391]
+unique_name_in_owner = true
+oversampling_override = 1.0
+title = "Save Preset"
+filters = PackedStringArray("*.tres ; CosmoTreePreset")

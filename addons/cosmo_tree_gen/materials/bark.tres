@@ -1,0 +1,7 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://b7l8vw0qq0s25"]
+
+[ext_resource type="Texture2D" uid="uid://nf32p1bdtv1w" path="res://addons/cosmo_tree_gen/textures/bark.png" id="1_xwgn2"]
+
+[resource]
+albedo_texture = ExtResource("1_xwgn2")
+texture_filter = 0

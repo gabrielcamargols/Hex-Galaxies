@@ -1,0 +1,87 @@
+[gd_resource type="Resource" script_class="CosmoTreePreset" format=3 uid="uid://dud0uolkbfkt"]
+
+[ext_resource type="Script" uid="uid://ceh6ii6tlpph4" path="res://addons/cosmo_tree_gen/resources/branch_level.gd" id="1_4oi1l"]
+[ext_resource type="Material" uid="uid://deodinjmuohgl" path="res://addons/cosmo_tree_gen/materials/leaves_01.tres" id="2_rc8rs"]
+[ext_resource type="Script" uid="uid://1tt4by0vsl04" path="res://addons/cosmo_tree_gen/resources/foliage_params.gd" id="3_rdbt1"]
+[ext_resource type="Script" uid="uid://dlp11kr4f76j3" path="res://addons/cosmo_tree_gen/resources/preset.gd" id="4_vg5cv"]
+[ext_resource type="Material" uid="uid://b7l8vw0qq0s25" path="res://addons/cosmo_tree_gen/materials/bark.tres" id="5_8lw70"]
+[ext_resource type="Script" uid="uid://c0ggn4wsaa746" path="res://addons/cosmo_tree_gen/resources/trunk_params.gd" id="6_iagn2"]
+
+[sub_resource type="Resource" id="Resource_mj7pe"]
+script = ExtResource("1_4oi1l")
+count = 7
+terminal = true
+start = 0.382
+end = 0.92
+angle = 52.0
+length = 0.5
+radius = 0.65
+gnarl = 0.25
+up_force = 0.2
+metadata/_custom_type_script = "uid://ceh6ii6tlpph4"
+
+[sub_resource type="Resource" id="Resource_t8a6q"]
+script = ExtResource("1_4oi1l")
+count = 4
+terminal = true
+start = 0.048
+end = 1.0
+angle = 45.0
+length = 0.406
+segments = 2
+gnarl = 0.4
+metadata/_custom_type_script = "uid://ceh6ii6tlpph4"
+
+[sub_resource type="Resource" id="Resource_5eeob"]
+script = ExtResource("1_4oi1l")
+count = 3
+terminal = true
+start = 0.121
+end = 0.94
+length = 0.487
+segments = 1
+up_force = 0.4
+metadata/_custom_type_script = "uid://ceh6ii6tlpph4"
+
+[sub_resource type="Resource" id="Resource_qu3ut"]
+script = ExtResource("3_rdbt1")
+type = 2
+leaf_count = 4
+leaf_tip = true
+leaf_size = 0.54
+leaf_size_variance = 0.25
+leaf_start = 0.2
+leaf_angle = 55.0
+metadata/_custom_type_script = "uid://1tt4by0vsl04"
+
+[sub_resource type="Resource" id="Resource_tdg64"]
+script = ExtResource("1_4oi1l")
+start = 0.0
+end = 0.03
+angle = 90.0
+length = 0.271
+segments = 5
+gnarl = 1.2
+up_force = -0.8370000000000002
+metadata/_custom_type_script = "uid://ceh6ii6tlpph4"
+
+[sub_resource type="Resource" id="Resource_fy1p0"]
+script = ExtResource("6_iagn2")
+height = 5.5
+radius_bottom = 0.28
+radius_top = 0.04
+lean = 0.3
+flare = 0.7
+flare_height = 0.32
+flare_lobes = 1.0
+sink_depth = 0.14
+roots = SubResource("Resource_tdg64")
+metadata/_custom_type_script = "uid://c0ggn4wsaa746"
+
+[resource]
+script = ExtResource("4_vg5cv")
+trunk_params = SubResource("Resource_fy1p0")
+branch_levels = Array[ExtResource("1_4oi1l")]([SubResource("Resource_mj7pe"), SubResource("Resource_t8a6q"), SubResource("Resource_5eeob")])
+foliage_params = SubResource("Resource_qu3ut")
+trunk_material = ExtResource("5_8lw70")
+foliage_material = ExtResource("2_rc8rs")

@@ -9,3 +9,8 @@ Ferramentas de cenário instaladas (plugins do editor, já ligados em project.go
 No jogo, a caverna de Valak usa os dois em scripts/board.gd (_cave_cyclops e _cave_scatter).
 As peças espalhadas ficam em scenes/entornos/ (geradas por tools/gerar_itens_scatter.gd).
 Terrain3D ficou de fora por enquanto (só para mundo aberto; o zip era só o código-fonte).
+- cosmo_tree_gen (Cosmo Tree Gen 1.1.1): gera árvores procedurais (tronco, galhos, copa, LOD).
+  A classe interna "Collision" foi renomeada para "TreeCollision" (core/tree_builder.gd), porque
+  o Cyclops já tem uma classe global com esse nome e os dois juntos não compilavam.
+  As árvores de Abnara e Gor'Aida são geradas por tools/gerar_arvores.gd e ficam em
+  scenes/entornos/arvores/ (rodar de novo para trocar sementes e cores).
