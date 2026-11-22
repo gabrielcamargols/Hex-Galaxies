@@ -2715,9 +2715,10 @@ func _build_hud() -> void:
 	w["acoes"] = acoes
 	var ab_p = _panel(acoes)
 	w["abp"] = ab_p
-	var abv = _vbox(ab_p, 4)
+	var abv = _hbox(ab_p, 6)   # um balão só: ações da peça e Passar round
 	w["btns"] = _hbox(abv, 6)
 	w["btns"].alignment = BoxContainer.ALIGNMENT_CENTER
+	w["abv"] = abv
 	w["hand"] = _hbox(botcol, 6)
 	w["hand"].alignment = BoxContainer.ALIGNMENT_CENTER
 	# camada dos balões de fala
@@ -2733,7 +2734,7 @@ func _build_hud() -> void:
 	var ev = _vbox(eb, 4)
 	w["end_hint"] = _label(ev, "", 13, C_DIM)
 	w["end_hint"].horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	w["end"] = _button(acoes, "PASSAR O ROUND", _on_end_pressed)
+	w["end"] = _button(w["abv"], "PASSAR O ROUND", _on_end_pressed)
 	w["end"].custom_minimum_size = Vector2(118, 46)   # mesmo tamanho dos botões Mover/Atacar
 	w["end"].add_theme_font_size_override("font_size", 15 if font_btn != null else 17)
 	w["end"].size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -3778,7 +3779,8 @@ func _refresh_actbar() -> void:
 			aw0.visible = mine
 	w["note"].text = note
 	if w.has("abp"):
-		w["abp"].visible = u != null
+		w["abp"].visible = true   # o Passar round mora aqui: o balão fica sempre
+		w["btns"].visible = u != null or w["btns"].get_child_count() > 0
 	w["why"].text = "  ·  ".join(why)
 	w["legend"].visible = false
 	w["why"].visible = not portrait
