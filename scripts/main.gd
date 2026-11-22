@@ -344,11 +344,24 @@ func _make_theme() -> Theme:
 		ft2.base_font = load("res://ui/fonts/InterDisplay-Bold.otf")
 		ft2.spacing_glyph = 3
 		font_title = ft2
-	th.set_stylebox("panel", "PanelContainer", _tex_box("res://ui/panel.png", 30, C_HUD, 20, 16))
-	th.set_stylebox("normal", "Button", _tex_box("res://ui/btn.png", 14, C_HUD, 16, 9))
-	th.set_stylebox("hover", "Button", _tex_box("res://ui/btn_on.png", 14, C_HUD.darkened(0.25), 16, 9))
-	th.set_stylebox("pressed", "Button", _tex_box("res://ui/btn_on.png", 14, C_HUD, 16, 9))
-	th.set_stylebox("disabled", "Button", _tex_box("res://ui/btn.png", 14, Color(0.2, 0.22, 0.3), 16, 9))
+	# painéis soltos: mesmo corpo escuro inclinado, contorno fino e sombra dura
+	var pf = StyleBoxFlat.new()
+	pf.bg_color = Color(0.07, 0.05, 0.12, 0.94)
+	pf.border_color = Color(1, 1, 1, 0.9)
+	pf.set_border_width_all(2)
+	pf.skew = Vector2(0.12, 0)
+	pf.shadow_color = Color(0, 0, 0, 0.75)
+	pf.shadow_size = 1
+	pf.shadow_offset = Vector2(5, 5)
+	pf.content_margin_left = 22
+	pf.content_margin_right = 22
+	pf.content_margin_top = 12
+	pf.content_margin_bottom = 12
+	th.set_stylebox("panel", "PanelContainer", pf)
+	th.set_stylebox("normal", "Button", _btn_box(C_HUD, Color("#120a1e")))
+	th.set_stylebox("hover", "Button", _btn_box(C_HUD.lightened(0.18), Color.WHITE))
+	th.set_stylebox("pressed", "Button", _btn_box(C_HUD, Color("#fff6a0")))
+	th.set_stylebox("disabled", "Button", _btn_box(Color(0.2, 0.22, 0.3), Color("#120a1e")))
 	th.set_stylebox("focus", "Button", StyleBoxEmpty.new())
 	th.set_color("font_color", "Button", C_TXT)
 	th.set_color("font_outline_color", "Button", Color.BLACK)
@@ -414,7 +427,7 @@ func _tex_box(path: String, margin: int, tint: Color, pad_h: int = 14, pad_v: in
 
 
 func _panel(parent: Control) -> PanelContainer:
-	var p = PanelContainer.new()
+	var p = PainelHQ.new()   # balão inclinado com quinas em degradê
 	parent.add_child(p)
 	return p
 
@@ -470,13 +483,30 @@ func _button(parent: Control, text: String, cb: Callable) -> Button:
 	return b
 
 
+# botão inclinado: cor cheia, contorno de tinta, sombra dura; ativo ganha contorno branco
+func _btn_box(col: Color, borda: Color, bw: int = 3) -> StyleBoxFlat:
+	var s = StyleBoxFlat.new()
+	s.bg_color = col
+	s.border_color = borda
+	s.set_border_width_all(bw)
+	s.skew = Vector2(0.2, 0)
+	s.shadow_color = Color(0, 0, 0, 0.8)
+	s.shadow_size = 1
+	s.shadow_offset = Vector2(4, 4)
+	s.content_margin_left = 18
+	s.content_margin_right = 18
+	s.content_margin_top = 8
+	s.content_margin_bottom = 8
+	return s
+
+
 func _style_btn(b: Button, col: Color, active: bool = false) -> void:
-	# HQ: botão de cor viva, contorno de tinta e letra branca com contorno preto
-	b.add_theme_stylebox_override("normal", _tex_box("res://ui/btn_on.png" if active else "res://ui/btn.png", 14, col.lightened(0.12) if active else col.darkened(0.12), 16, 9))
-	b.add_theme_stylebox_override("hover", _tex_box("res://ui/btn_on.png", 14, col.lightened(0.2), 16, 9))
-	b.add_theme_stylebox_override("pressed", _tex_box("res://ui/btn_on.png", 14, col, 16, 9))
+	var tinta = Color("#120a1e")
+	b.add_theme_stylebox_override("normal", _btn_box(col.lightened(0.08) if active else col.darkened(0.1), Color.WHITE if active else tinta))
+	b.add_theme_stylebox_override("hover", _btn_box(col.lightened(0.18), Color.WHITE))
+	b.add_theme_stylebox_override("pressed", _btn_box(col, Color("#fff6a0")))
 	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
-	b.add_theme_stylebox_override("disabled", _tex_box("res://ui/btn.png", 14, Color(0.2, 0.18, 0.28), 16, 9))
+	b.add_theme_stylebox_override("disabled", _btn_box(Color(0.2, 0.18, 0.28), tinta))
 	b.add_theme_color_override("font_color", Color.WHITE)
 	b.add_theme_color_override("font_hover_color", Color.WHITE)
 	b.add_theme_color_override("font_pressed_color", Color("#fff6a0"))
@@ -488,9 +518,9 @@ func _style_btn(b: Button, col: Color, active: bool = false) -> void:
 # botão neutro do menu: azul-noite com contorno claro; o dourado fica só para a ação principal
 func _menu_btn(b: Button) -> void:
 	var base = Color("#262c86")
-	b.add_theme_stylebox_override("normal", _tex_box("res://ui/btn.png", 14, base, 16, 9))
-	b.add_theme_stylebox_override("hover", _tex_box("res://ui/btn_on.png", 14, base.lightened(0.25), 16, 9))
-	b.add_theme_stylebox_override("pressed", _tex_box("res://ui/btn_on.png", 14, base.lightened(0.1), 16, 9))
+	b.add_theme_stylebox_override("normal", _btn_box(base, Color("#120a1e")))
+	b.add_theme_stylebox_override("hover", _btn_box(base.lightened(0.25), Color.WHITE))
+	b.add_theme_stylebox_override("pressed", _btn_box(base.lightened(0.1), Color("#fff6a0")))
 	b.add_theme_color_override("font_color", C_TXT)
 	b.add_theme_color_override("font_hover_color", Color.WHITE)
 
@@ -2048,10 +2078,10 @@ func _stat_mini(parent: Control, col: Color, v: int) -> void:
 
 # botão principal: dourado cheio, texto escuro
 func _primary(b: Button) -> void:
-	b.add_theme_stylebox_override("normal", _tex_box("res://ui/btn_on.png", 14, Color("#ffd21f"), 18, 10))
-	b.add_theme_stylebox_override("hover", _tex_box("res://ui/btn_on.png", 14, Color("#ffe76a"), 18, 10))
-	b.add_theme_stylebox_override("pressed", _tex_box("res://ui/btn_on.png", 14, Color("#ff9d1f"), 18, 10))
-	b.add_theme_stylebox_override("disabled", _tex_box("res://ui/btn.png", 14, Color(0.2, 0.18, 0.28), 18, 10))
+	b.add_theme_stylebox_override("normal", _btn_box(Color("#ffc21f"), Color("#120a1e")))
+	b.add_theme_stylebox_override("hover", _btn_box(Color("#ffe76a"), Color.WHITE))
+	b.add_theme_stylebox_override("pressed", _btn_box(Color("#ff9d1f"), Color.WHITE))
+	b.add_theme_stylebox_override("disabled", _btn_box(Color(0.2, 0.18, 0.28), Color("#120a1e")))
 	b.add_theme_color_override("font_color", Color.WHITE)
 	b.add_theme_color_override("font_hover_color", Color.WHITE)
 	b.add_theme_color_override("font_pressed_color", Color.WHITE)
@@ -2666,7 +2696,7 @@ func _build_hud() -> void:
 	var top = _panel(topcol)
 	var tv = _hbox(top, 14)   # uma linha só: round e vez, e ao lado só o que está valendo agora
 	tv.alignment = BoxContainer.ALIGNMENT_CENTER
-	_ico(tv, "round", 28)
+	_ico(tv, "round", 32)
 	w["title"] = _label(tv, "", 20, C_GOLD)
 	w["title"].horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	w["events"] = _label(tv, "", 14, Color("#ffcf9a"))
@@ -3382,7 +3412,7 @@ func _refresh_top() -> void:
 	for c in eb.get_children():
 		c.queue_free()
 	for e in ev:
-		_ico_txt(eb, e[0], e[1], Color("#ffcf9a"), 28, 16, e[2])
+		_ico_txt(eb, e[0], e[1], Color("#ffcf9a"), 32, 16, e[2])
 	eb.visible = not ev.is_empty()
 
 
@@ -3606,25 +3636,49 @@ func _field_row(u) -> Button:
 	var hp_frac = float(max(0, u.hp)) / max(1.0, float(u.maxhp))
 	var fc = Color("#7fe08a") if hp_frac > 0.6 else (Color("#ffcf5a") if hp_frac > 0.3 else Color("#ff6a5a"))
 	b.add_theme_color_override("font_color", fc)
-	# barra de vida embaixo do avatar/nome
-	var tr = ColorRect.new()
-	tr.color = Color(0, 0, 0, 0.55)
+	# barra de vida inclinada, em degradê, com a ponta brilhando (estilo das referências)
+	var tr = Panel.new()
+	var sbk = StyleBoxFlat.new()
+	sbk.bg_color = Color(0, 0, 0, 0.7)
+	sbk.skew = Vector2(0.6, 0)
+	tr.add_theme_stylebox_override("panel", sbk)
 	tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	tr.anchor_left = 0.0
 	tr.anchor_right = 1.0
 	tr.anchor_top = 1.0
 	tr.anchor_bottom = 1.0
-	tr.offset_left = 4
-	tr.offset_right = -4
-	tr.offset_top = -8
+	tr.offset_left = 8
+	tr.offset_right = -8
+	tr.offset_top = -9
 	tr.offset_bottom = -3
 	b.add_child(tr)
-	var fl = ColorRect.new()
-	fl.color = fc
+	var fl = TextureRect.new()
+	var gt = GradientTexture2D.new()
+	var gr = Gradient.new()
+	gr.colors = PackedColorArray([fc.darkened(0.35), fc, fc.lightened(0.35)])
+	gr.offsets = PackedFloat32Array([0.0, 0.7, 1.0])
+	gt.gradient = gr
+	gt.width = 64
+	gt.height = 4
+	fl.texture = gt
+	fl.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	fl.stretch_mode = TextureRect.STRETCH_SCALE
 	fl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	fl.anchor_right = hp_frac
 	fl.anchor_bottom = 1.0
+	fl.offset_top = 1
+	fl.offset_bottom = -1
 	tr.add_child(fl)
+	if hp_frac > 0.0:
+		var tip = ColorRect.new()
+		tip.color = Color(1, 1, 1, 0.95)
+		tip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tip.anchor_left = hp_frac
+		tip.anchor_right = hp_frac
+		tip.anchor_bottom = 1.0
+		tip.offset_left = -3
+		tip.offset_right = 0
+		tr.add_child(tip)
 	if used and not (u.uid == sel or u.uid == inspect):
 		b.modulate = Color(0.62, 0.62, 0.66)
 	return b
@@ -3646,7 +3700,7 @@ func _refresh_ucard() -> void:
 			var fcol = DB.factions[c["f"]]["color"]
 			txt = "[color=%s]%s[/color] · %s\n[font_size=16][b]%s[/b][/font_size]\n" % [fcol, DB.factions[c["f"]]["name"].to_upper(), "Você" if u.owner == me else _opp(), c["name"]]
 			# números com ícone: vida, ataque, movimento, alcance
-			var IC = func(n): return "[img=22x22]res://ui/hud/%s.svg[/img]" % n
+			var IC = func(n): return "[img=26x26]res://ui/hud/%s.svg[/img]" % n
 			txt += "[color=#cbbdff]%s[/color]\n%s %d/%d    %s %d    %s %d    %s %d\n" % [c["role"], IC.call("vida"), max(0, u.hp), u.maxhp, IC.call("ataque"), game.atk_of(u, null), IC.call("movimento"), game.mov_of(u), IC.call("alcance"), game.alc_of(u)]
 			if u.st == "reserve":
 				txt += "[i]Na reserva (arraste para a entrada)[/i]\n"
@@ -3762,7 +3816,7 @@ func _refresh_actbar() -> void:
 		pips.tooltip_text = "Ações que sobram (%d de 2)" % left
 		pips.mouse_filter = Control.MOUSE_FILTER_PASS
 		for i in range(2):
-			var ip = _ico(pips, "acao", 26)
+			var ip = _ico(pips, "acao", 30)
 			if i >= left:
 				ip.modulate = Color(0.35, 0.35, 0.45, 0.7)
 		var bm = _cbtn(box, "Mover", C_MOVE, func(): _set_am("mv"), am == "mv")
@@ -6492,31 +6546,30 @@ func _say(uid: int, text: String, delay: float = 0.0, mood: String = "fala") -> 
 		if b["uid"] == uid and is_instance_valid(b["node"]):
 			b["node"].queue_free()
 	var col = _unit_color(uid)
-	var p = PanelContainer.new()
-	var sb = StyleBoxFlat.new()
-	# balão de HQ: branco, contorno de tinta grosso e sombra dura
-	sb.bg_color = Color("#fffdf2")
-	sb.border_color = Color(0.05, 0.0, 0.1)
-	sb.set_border_width_all(3)
-	sb.set_corner_radius_all(16)
-	sb.shadow_color = col.darkened(0.2)
-	sb.shadow_size = 1
-	sb.shadow_offset = Vector2(5, 5)
-	sb.content_margin_left = 10
-	sb.content_margin_right = 10
-	sb.content_margin_top = 5
-	sb.content_margin_bottom = 7
-	p.add_theme_stylebox_override("panel", sb)
+	# balão de diálogo inclinado: corpo escuro, rabicho serrilhado, quinas na cor de quem fala
+	# e o retrato saltando para fora do balão
+	var p = PainelHQ.new()
+	p.cauda = true
+	p.cores(col.lightened(0.35), col.darkened(0.15))
+	p.margens(14, 8)
 	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var v = _vbox(p, 1)
-	var nl = _label(v, DB.cards[u.cid]["name"].to_upper(), 11, col.darkened(0.35))
+	var hb = _hbox(p, 8)
+	if DB.portraits.has(u.cid):
+		var rt = TextureRect.new()
+		rt.texture = DB.portraits[u.cid]
+		rt.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		rt.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		rt.custom_minimum_size = Vector2(38, 38)
+		rt.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		rt.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		hb.add_child(rt)
+	var v = _vbox(hb, 1)
+	var nl = _label(v, DB.cards[u.cid]["name"].to_upper(), 11, col.lightened(0.45))
 	if font_btn != null:
 		nl.add_theme_font_override("font", font_btn)
-	nl.add_theme_constant_override("outline_size", 0)
-	var tl = _label(v, text, 15, Color("#160a26"))
-	tl.add_theme_constant_override("outline_size", 0)
+	var tl = _label(v, text, 15, Color("#f4f0ff"))
 	tl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	tl.custom_minimum_size = Vector2(min(260, 9 * text.length() + 20), 0)
+	tl.custom_minimum_size = Vector2(min(250, 9 * text.length() + 20), 0)
 	w["bubbles"].add_child(p)
 	p.modulate.a = 0.0
 	var tw = create_tween()

@@ -22,7 +22,11 @@ func run() -> void:
 	b.cam_goal = null
 	b.cam_target = Vector3(b.world_xz(c).x, b.top_y(c) + 0.5, b.world_xz(c).y)
 	b.cam_dist = 19.0
-	for i in 90:
+	for i in 30:
+		await get_tree().process_frame
+	var fu = g.unit_at(c + DB.DIRS[0]).uid
+	m._say(fu, "Pode deixar, eu seguro a linha. Ninguém passa por aqui.", 0.0)
+	for i in 12:
 		await get_tree().process_frame
 	if OS.get_environment("POP") != "":
 		m._card_info(g.P[0]["hand"][0])
