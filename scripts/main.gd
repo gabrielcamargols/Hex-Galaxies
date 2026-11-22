@@ -26,7 +26,7 @@ const TDESC = {
 }
 const RULES = "[b]Objetivo:[/b] derrotar o Comandante inimigo (ele entra no round 6). No fim do round 12 vence quem tiver mais Vida no Comandante; empate: soma da Vida dos aliados.\n\n[b]Turno:[/b] os lados se alternam ativando 1 peça por vez. Cada peça ativada tem [b]2 ações[/b], e cada tipo só pode ser usado [b]1 vez por turno[/b]: mover 1 vez, atacar 1 vez, usar habilidade ativa (ex.: mover + atacar). [b]Táticas não gastam ação:[/b] cada peça ativada pode jogar 1 carta de graça. Arraste a carta e solte no personagem (ou na casa) destacado para escolher quem recebe o efeito. Habilidades passivas não gastam ação. Colocar uma reserva em campo gasta 1 ação. [b]A área de entrada cresce:[/b] a cada round (no round 1 vai até 1 casa da sua base, no 2 até 2 casas, e assim por diante), sempre na sua metade do mapa. Em cada round, cada lado pode colocar [b]só 1 peça[/b] da reserva em campo.\n\n[b]Chuva (Abnara):[/b] no round 6 começa a chover e a chuva dura 2 rounds (6 e 7), depois passa. Enquanto chove: todos os ataques causam 3 a menos de dano e o céu escurece. Raios caem em casas aleatórias; se acertarem a mata ela pega fogo, o incêndio se espalha pelas árvores vizinhas e quem estiver numa casa em chamas ou ao lado perde 1 de Vida a cada round. A mata queimada vira clareira. Depois que a chuva passa, o incêndio que já começou continua até se apagar.
 
-[b]Altura:[/b] atacar de cima +1 de dano, de baixo -1. Tiros (alcance 2+) de cima ganham +1 de alcance. Corpo a corpo só com até 1 nível de diferença.\n\n[b][color=#c77dff]Hex Energy[/color]:[/b] nos rounds 2, 4, 6 e 8 surge um hexágono roxo de energia que fica 2 rounds. Leve uma peça até ele para capturar: 2 cartas, +2 ATQ ou +4 Vida com defesa. O local da próxima aparece antes, com um contorno roxo no mapa.\n\n[b]Controle Lithari:[/b] [b]Lento[/b] = -1 de Movimento até o fim do round (mínimo 1). [b]Enraizado[/b] = não anda até o fim do próximo round; depois de se soltar, a peça fica imune a novo enraizamento por 1 round. [b]Zona de Cristal[/b] = casas marcadas (\"CRISTAL\") por 2 rounds: inimigo que entra nelas fica Lento. Lithari não são afetados pelas zonas deles.\n\n[b]Impulso:[/b] derrubar uma tropa dá 1 casa de movimento grátis (1 vez por ativação).\n\n[b]Linha de tiro:[/b] uma casa no caminho bloqueia se o topo dela for mais alto que o atacante e o alvo.\n\n[b]Abrigo:[/b] -2 de dano se uma rocha/ruína/ossada vizinha ao alvo estiver do lado do atacante.\n\n[b]Tarhut (o mapa mais difícil):[/b] as dunas, com até 5 níveis de altura, mudam inteiras a cada 3 rounds (aviso 1 round antes, nos rounds 4, 7 e 10). Elas bloqueiam tiros e dão vantagem de altura; quem estiver no alto quando a duna baixar despenca: 1 de dano, +1 se cair 3 níveis e +1 se cair 5. A cada 3 rounds o [color=#ff6a4a]Verme Gigante[/color] sai da areia (o \"!\" avisa 1 round antes): quem estiver no buraco sofre 4 de dano e quem estiver ao lado, 1. Fuja das casas marcadas! O deserto é enorme.\n\n[b]Valak (caverna de cristais):[/b] um labirinto de cristais que muda a cada partida. Cristais bloqueiam passagem e tiros; um ataque quebra um cristal e o efeito atinge TODOS ao lado: [color=#7dff4a]verde[/color] cura 2, [color=#5ae8ff]azul[/color] dá +1 de Movimento no próximo movimento do round, [color=#ff5ae0]roxo[/color] causa 2 de dano. No centro vive a [color=#ff4ad0]Garra[/color]: andar (+1), atacar ou usar habilidade (+2) a até 3 casas do buraco, ou passar um carrinho por ali (+3), aumenta a VIBRAÇÃO. Em 5, a garra ataca: quem está a 1 casa do buraco é arrastado e morre; a 2 ou 3 casas sofre 2 de dano e é puxado 1 casa. Carrinhos: uma peça ao lado gasta 1 ação para empurrar; ele anda até 3 casas no trilho e o primeiro atingido sofre 3 e é empurrado. [color=#ffb14a]Tempestade de areia:[/color] no round em que o vento muda (3, 6, 9) e no round em que as dunas mudam (4, 7, 10), todos os ataques causam 2 a menos de dano.\n\n[b]Escaravelhos Verdes (Tarhut):[/b] basta passar por cima de um (ou parar nele) para guardá-lo, sem gastar ação. [b]1 escaravelho[/b] restaura 6 de Vida de uma peça; [b]2 escaravelhos[/b] deixam uma peça usar a ativa mais uma vez; os que sobrarem no fim somam +1 de Vida ao seu comandante na contagem do último round. Para gastá-los (curar ou reativar), use os botões do escaravelho no painel de exército.\n\n[b]Online:[/b] na tela do exército, toque em \"⚡ Online\". Um jogador cria a sala e passa o código de 6 letras; o outro digita o código e entra. O mapa é o planeta de quem criou a sala. No app instalado (PC/Android), a sala usa o IP da rede local no lugar do código.\n\n[b]Controles:[/b] clique numa peça sua e depois numa casa verde (mover) ou num inimigo vermelho (atacar), ou arraste a peça e solte. Confirme a prévia. Botão direito gira a câmera, arrastar o fundo move o mapa, a roda aproxima. Q/E giram. Enter confirma, Esc cancela.\n\n[b]Toque (tablet/celular):[/b] toque numa peça e numa casa para agir. 1 dedo arrasta o mapa; pinça com 2 dedos aproxima/afasta; girar os 2 dedos gira a câmera; arrastar os 2 dedos para cima/baixo inclina a visão. \"Tudo\" recentraliza."
+[b]Altura:[/b] atacar de cima +1 de dano, de baixo -1. Tiros (alcance 2+) de cima ganham +1 de alcance. Corpo a corpo só com até 1 nível de diferença.\n\n[b][color=#c77dff]Hex Energy[/color]:[/b] nos rounds 2, 4, 6 e 8 surge um hexágono roxo de energia que fica 2 rounds. Leve uma peça até ele para capturar: 2 cartas, +2 ATQ ou +4 Vida com defesa. O local da próxima aparece antes, com um contorno roxo no mapa.\n\n[b]Controle Lithari:[/b] [b]Lento[/b] = -1 de Movimento até o fim do round (mínimo 1). [b]Enraizado[/b] = não anda até o fim do próximo round; depois de se soltar, a peça fica imune a novo enraizamento por 1 round. [b]Zona de Cristal[/b] = casas marcadas (\"CRISTAL\") por 2 rounds: inimigo que entra nelas fica Lento. Lithari não são afetados pelas zonas deles.\n\n[b]Impulso:[/b] derrubar uma tropa dá 1 casa de movimento grátis (1 vez por ativação).\n\n[b]Linha de tiro:[/b] uma casa no caminho bloqueia se o topo dela for mais alto que o atacante e o alvo.\n\n[b]Abrigo:[/b] -2 de dano se uma rocha/ruína/ossada vizinha ao alvo estiver do lado do atacante.\n\n[b]Tarhut (o mapa mais difícil):[/b] as dunas, com até 5 níveis de altura, mudam inteiras a cada 3 rounds (aviso 1 round antes, nos rounds 4, 7 e 10). Elas bloqueiam tiros e dão vantagem de altura; quem estiver no alto quando a duna baixar despenca: 1 de dano, +1 se cair 3 níveis e +1 se cair 5. A cada 3 rounds o [color=#ff6a4a]Verme Gigante[/color] sai da areia (o \"!\" avisa 1 round antes): quem estiver no buraco sofre 4 de dano e quem estiver ao lado, 1. Fuja das casas marcadas! O deserto é enorme.\n\n[b]Valak (caverna de cristais):[/b] um labirinto de cristais que muda a cada partida. Cristais bloqueiam passagem e tiros; um ataque quebra um cristal e o efeito atinge TODOS ao lado: [color=#7dff4a]verde[/color] cura 2, [color=#5ae8ff]azul[/color] dá +1 de Movimento no próximo movimento do round, [color=#ff5ae0]roxo[/color] causa 2 de dano. No centro vive a [color=#ff4ad0]Garra[/color]: andar (+1), atacar ou usar habilidade (+2) a até 3 casas do buraco, ou passar um carrinho por ali (+3), aumenta a VIBRAÇÃO. Em 5, a garra ataca: quem está a 1 casa do buraco é arrastado e morre; a 2 ou 3 casas sofre 2 de dano e é puxado 1 casa. Carrinhos: uma peça ao lado gasta 1 ação para empurrar; ele anda até 3 casas no trilho e o primeiro atingido sofre 3 e é empurrado. [color=#ffb14a]Tempestade de areia:[/color] no round em que o vento muda (3, 6, 9) e no round em que as dunas mudam (4, 7, 10), todos os ataques causam 2 a menos de dano.\n\n[b][color=#c77dff]Disputa pela Hex Energy[/color] (Valak · Galeria):[/b] modo de 5 rounds com papéis. Os [b]Invasores[/b] precisam extrair a energia do núcleo; os [b]Guardiões[/b] seguram até o fim do round 5. Uma tropa invasora no núcleo gasta 1 ação para começar a extração; ela conclui no início da próxima ativação dessa tropa, se ela continuar no núcleo e os Guardiões já tiverem tido a vez (agir ou passar conta). Sair do núcleo, ser empurrado ou cair cancela; levar dano sem sair não. Comandantes entram no round 4 e cair não decide a partida. Antes de começar, cada lado escolhe 3 das 4 táticas exclusivas da facção (segredo até usar) e os dois disputam 2 pares de genéricas em draft: quem escolhe fica com uma e a outra vai para o rival; a prioridade inverte no segundo par. Mão inicial: 5 cartas. Na revanche os papéis trocam.\n\n[b]Escaravelhos Verdes (Tarhut):[/b] basta passar por cima de um (ou parar nele) para guardá-lo, sem gastar ação. [b]1 escaravelho[/b] restaura 6 de Vida de uma peça; [b]2 escaravelhos[/b] deixam uma peça usar a ativa mais uma vez; os que sobrarem no fim somam +1 de Vida ao seu comandante na contagem do último round. Para gastá-los (curar ou reativar), use os botões do escaravelho no painel de exército.\n\n[b]Online:[/b] na tela do exército, toque em \"⚡ Online\". Um jogador cria a sala e passa o código de 6 letras; o outro digita o código e entra. O mapa é o planeta de quem criou a sala. No app instalado (PC/Android), a sala usa o IP da rede local no lugar do código.\n\n[b]Controles:[/b] clique numa peça sua e depois numa casa verde (mover) ou num inimigo vermelho (atacar), ou arraste a peça e solte. Confirme a prévia. Botão direito gira a câmera, arrastar o fundo move o mapa, a roda aproxima. Q/E giram. Enter confirma, Esc cancela.\n\n[b]Toque (tablet/celular):[/b] toque numa peça e numa casa para agir. 1 dedo arrasta o mapa; pinça com 2 dedos aproxima/afasta; girar os 2 dedos gira a câmera; arrastar os 2 dedos para cima/baixo inclina a visão. \"Tudo\" recentraliza."
 
 var board
 var game: Game = null
@@ -54,7 +54,7 @@ const C_TXT = Color("#F8FAFF")      # texto principal
 const C_DIM = Color("#cbbdff")      # texto secundário
 var font_title: Font = null
 var font_btn: Font = null
-var setup_cfg: Dictionary = {"map": "tarhut", "fac": "ABY", "cpu": "FAU"}
+var setup_cfg: Dictionary = {"map": "tarhut", "fac": "ABY", "cpu": "FAU", "modo": "", "inv": 0}
 var cpu_level: int = 1   # 0 Recruta, 1 Soldado, 2 Veterano (salvo nas preferências)
 var army_picks: Array = []     # 5 ids escolhidos pelo jogador
 var mix: bool = false          # modo Mix: tropas e comandante de qualquer facção
@@ -655,9 +655,42 @@ func _vignette() -> void:
 	ui.add_child(tr)
 
 
+# ---- Disputa pela Hex Energy ----
+func _disputa() -> bool:
+	return setup_cfg.get("modo", "") == "disputa"
+
+
+func _cmd_round() -> int:
+	if game != null:
+		return game.cmd_round
+	return 4 if _disputa() else Game.CMD_ROUND
+
+
+func _last_round() -> int:
+	return game.last_round if game != null else Game.LAST_ROUND
+
+
+# papel do jogador 0 na Disputa: inv = lado dos Invasores; a zona de início acompanha o papel
+func _set_papel(inv: int) -> void:
+	setup_cfg["inv"] = inv
+	DB.troca_padrao = _disputa() and inv == 1
+	if setup_cfg.has("map"):
+		DB.set_map(setup_cfg["map"])
+
+
+func _toggle_papel() -> void:
+	_set_papel(1 - int(setup_cfg.get("inv", 0)))
+	sfx.play("clique", -8.0)
+	_army_refresh()
+
+
+func _papel_txt(p: int) -> String:
+	return "Invasores" if p == int(setup_cfg.get("inv", 0)) else "Guardiões"
+
+
 func _planet_of_map(m: String) -> String:
 	for p in galaxy.PLANETS:
-		if p.get("map", "") == m:
+		if p.get("map", "") == m or p.get("arenas", []).any(func(ar): return ar.get("map", "") == m):
 			return p["id"]
 	return "tarhut"
 
@@ -1412,6 +1445,8 @@ func _choose_planet(id: String, map_id: String = "") -> void:
 	stage = "to_army"
 	planet_id = id
 	setup_cfg["map"] = map_id if map_id != "" else galaxy.data(id)["map"]
+	setup_cfg["modo"] = "disputa" if DB.maps.has(setup_cfg["map"]) and DB.maps[setup_cfg["map"]].get("disputa", false) else ""
+	_set_papel(int(setup_cfg.get("inv", 0)))
 	sfx.play("confirmar", -6.0)
 	sfx.play("vfx_portal", -12.0)
 	_ui_fade(0.0, 0.35)
@@ -1732,6 +1767,14 @@ func _show_army() -> void:
 	b2.custom_minimum_size = Vector2(0, 38)
 	var b3 = _cbtn(br, "Limpar", C_HUD, _army_clear)
 	b3.custom_minimum_size = Vector2(0, 38)
+	if _disputa():
+		# papel na Disputa: linha própria, para não empurrar o BATALHAR para fora da tela
+		var bp = _cbtn(bv, "Seu papel: " + _papel_txt(0) + "  ⇄  trocar", C_ABIL, _toggle_papel)
+		bv.move_child(bp, 0)
+		bp.custom_minimum_size = Vector2(0, 34)
+		bp.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		bp.tooltip_text = "Disputa pela Hex Energy: Invasores extraem a energia do núcleo; Guardiões seguram até o fim do round 5. Na revanche os papéis trocam."
+		w["papel_btn"] = bp
 
 	if compact:
 		for bb in [b2, b3]:
@@ -1943,7 +1986,7 @@ func _army_refresh() -> void:
 	cnv.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_label(cnv, ("COMANDANTE · %s" % DB.factions[fac]["short"].to_upper()) if not mix else ("MIX · COMANDANTE (%s)" % DB.factions[fac]["short"].to_upper()), 11, fc.lightened(0.45)).mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_label(cnv, cc["name"], 24, C_GOLD).mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_label(cnv, "entra em campo no round %d" % Game.CMD_ROUND, 12, C_DIM).mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_label(cnv, "entra em campo no round %d" % _cmd_round(), 12, C_DIM).mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if mix:
 		var sw = _hbox(cnv, 6)
 		var pb = _cbtn(sw, "◀", C_HUD, _mix_cmd_step.bind(-1))
@@ -2596,6 +2639,19 @@ func _start_match(sides) -> void:
 	last_sides = sides
 	game = Game.new()
 	game.tree = get_tree()
+	# Disputa pela Hex Energy: papéis e zonas de início (a zona acompanha o papel)
+	if _disputa() and deus == null and not tut and DB.maps.has(setup_cfg["map"]) and DB.maps[setup_cfg["map"]].get("disputa", false):
+		game.modo = "disputa"
+		game.inv = int(setup_cfg.get("inv", 0))
+		_set_papel(game.inv)
+		for sp in range(2):
+			var spots = DB.entry[sp]
+			var ids = sides[sp].get("start", []).map(func(x): return x["id"])
+			if ids.size() >= 2:
+				sides[sp]["start"] = [{"id": ids[0], "h": spots[0]}, {"id": ids[1], "h": spots[spots.size() - 1]}]
+	else:
+		DB.troca_padrao = false
+		DB.set_map(setup_cfg["map"])
 	game.cpu = [false, false] if deus != null else [autotest, true]
 	game.sandbox = deus != null
 	game.cpu_level = 1 if tut else cpu_level
@@ -3407,7 +3463,9 @@ func _tick_clock(delta: float) -> void:
 func _refresh_top() -> void:
 	var who = "Você" if game.cur == me else _opp()
 	var status = "Fim de jogo" if game.winner != Game.NONE else ("Sua vez" if game.cur == me else ("Vez do " + _opp().to_lower() + (" (jogando...)" if busy or opp_thinking else "")))
-	title_base = "%d/%d  ·  %s" % [game.round_no, Game.LAST_ROUND, status]
+	title_base = "%d/%d  ·  %s" % [game.round_no, game.last_round, status]
+	if game.modo == "disputa" and game.round_no == 0:
+		title_base = "Preparação"
 	_apply_title()
 	var tcol = C_GOLD if game.winner != Game.NONE else (C_YOU if game.cur == me else C_CPU)
 	w["title"].add_theme_color_override("font_color", tcol)
@@ -3427,10 +3485,18 @@ func _refresh_top() -> void:
 		ev.append(["dunas", "!", "As dunas mudam no próximo round"])
 	if def.get("worms", false) and not game.tremors.is_empty():
 		ev.append(["vermes", "!", "Vermes saem no próximo round"])
-	if game.core != null:
+	if game.core != null and game.modo != "disputa":
 		ev.insert(0, ["hex", "até %d" % game.core_until, "Hex Energy ativa até o round %d" % game.core_until])
 	elif game.core_next != null:
 		ev.insert(0, ["hex", "%d" % game.core_next_round, "A Hex Energy aparece no round %d" % game.core_next_round])
+	if game.modo == "disputa":
+		var meu = "Invasores" if me == game.inv else "Guardiões"
+		var obj = "extraia a Hex Energy" if me == game.inv else "segure a Hex Energy"
+		ev.insert(0, ["hex", "%s · prazo R%d" % [meu, game.last_round], "Você joga com os %s: %s até o fim do round %d." % [meu, obj, game.last_round]])
+		if game.extr != null:
+			var xu = game.by_uid(int(game.extr["uid"]))
+			var xs = "conclui na próxima vez dela" if game.extr["resp"] else "Guardiões ainda vão responder"
+			ev.insert(1, ["acao", "Extraindo: %s · %s" % [game.nm(xu) if xu != null else "?", xs], "Extração em andamento. Ela conclui no início da próxima ativação da mesma tropa, se ela continuar no núcleo e os Guardiões já tiverem tido a vez. Sair do núcleo ou cair cancela."])
 	w["events"].visible = false
 	var eb: HBoxContainer = w["events_box"]
 	for c in eb.get_children():
@@ -3618,7 +3684,7 @@ func _unit_btn(u, text: String) -> Button:
 # reserva: retrato grande com o nome embaixo (3 por linha)
 func _res_tile(u, p: int, dep_ok: bool) -> Button:
 	var off = u.st == "off"
-	var b = _unit_btn(u, ("R%d" % Game.CMD_ROUND) if off else _short(u.cid))
+	var b = _unit_btn(u, ("R%d" % _cmd_round()) if off else _short(u.cid))
 	b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	b.vertical_icon_alignment = VERTICAL_ALIGNMENT_TOP
 	b.add_theme_font_size_override("font_size", 11)
@@ -3628,7 +3694,7 @@ func _res_tile(u, p: int, dep_ok: bool) -> Button:
 	var c = DB.cards[u.cid]
 	b.tooltip_text = "%s\nVida %d · Ataque %d · Movimento %d · Alcance %d" % [c["name"], u.maxhp, c.get("atk", 0), c.get("mov", 0), c.get("alc", 1)]
 	if off:
-		b.tooltip_text += "\nComandante: entra no round %d" % Game.CMD_ROUND
+		b.tooltip_text += "\nComandante: entra no round %d" % _cmd_round()
 	var ok = dep_ok and not off
 	if ok:
 		b.add_theme_stylebox_override("normal", _flat(C_DEPLOY.darkened(0.7), C_DEPLOY, 2, 6, 3))
@@ -3729,7 +3795,7 @@ func _refresh_ucard() -> void:
 			if u.st == "reserve":
 				txt += "[i]Na reserva (arraste para a entrada)[/i]\n"
 			elif u.st == "off":
-				txt += "[i]Entra no round %d[/i]\n" % Game.CMD_ROUND
+				txt += "[i]Entra no round %d[/i]\n" % _cmd_round()
 			if u.eq != "":
 				txt += "Equipado: %s\n" % DB.tactics[u.eq]["name"]
 			var abk3 = c["ab"].get("kind", "")
@@ -3797,7 +3863,7 @@ func _ucard_short(u) -> String:
 		if nmx != "" and not est.has(nmx):
 			est.append(nmx)
 	if u.st == "off":
-		est.append("entra no round %d" % Game.CMD_ROUND)
+		est.append("entra no round %d" % _cmd_round())
 	if not est.is_empty():
 		t += "\n[color=#9fdcff]%s[/color]" % "  ·  ".join(est)
 	var habs = [c["ab"]["name"]]
@@ -3859,6 +3925,11 @@ func _refresh_actbar() -> void:
 		_btn_ico(ba, "ataque")
 		ba.disabled = not can_at
 		ba.tooltip_text = "Atacar: 1 ação, no máximo 1 vez por turno. Inimigos em VERMELHO."
+		if game.modo == "disputa" and u.owner == game.inv and game.core != null and u.pos() == game.core and live and (game.extr == null or int(game.extr["uid"]) != u.uid):
+			var bx = _cbtn(box, "Extrair", C_ABIL, _on_extract)
+			_btn_ico(bx, "hex")
+			bx.disabled = not game.can_extract(u)
+			bx.tooltip_text = "1 ação: começa a extrair a Hex Energy. Conclui no início da próxima ativação desta tropa, se ela ficar no núcleo e os Guardiões tiverem tido a vez de responder."
 		var k = game.K(u)
 		if k.has("action"):
 			var bab = _cbtn(box, DB.cards[u.cid]["ab"]["name"], C_ABIL, func(): _toggle_ab(), ab)
@@ -4003,6 +4074,31 @@ func _refresh_prompt() -> void:
 					var ii = i
 					var bt2 = _button(box, q["opts"][i], func(): _answer(ii))
 					bt2.custom_minimum_size = Vector2(0, 40)
+			"excl":
+				# Disputa: escolha privada de 3 das 4 exclusivas da facção
+				text += "\n[color=#8fb8cc]Escolhidas: %d de %d · o rival só vê quando você usar[/color]" % [excl_sel.size(), int(q.get("n", 3))]
+				for id in q["opts"]:
+					var cid3 = id
+					var on = excl_sel.has(id)
+					var bt3 = _cbtn(box, ("✔ " if on else "") + DB.tactics[id]["name"] + " (" + DB.tactics[id]["type"] + ") — " + DB.tactics[id]["text"], _card_col(id) if on else C_HUD, func(): _excl_toggle(cid3, int(q.get("n", 3))), on)
+					bt3.tooltip_text = DB.tactics[id]["text"]
+				var okb = _cbtn(box, "Confirmar as %d táticas" % int(q.get("n", 3)), C_GOLD, func():
+					var r = excl_sel.duplicate()
+					excl_sel = []
+					_answer(r))
+				okb.disabled = excl_sel.size() != int(q.get("n", 3))
+			"draft":
+				# Disputa: par público; quem escolhe fica com uma e a outra vai para o rival
+				var meu = game.P[me].get("excl", [])
+				if not meu.is_empty():
+					text += "\n[color=#8fb8cc]Suas exclusivas: %s[/color]" % ", ".join(meu.map(func(x): return DB.tactics[x]["name"]))
+				for dl in game.draft_log:
+					text += "\n[color=#cbbdff]Par %d: %s recebeu %s[/color]" % [int(dl["par"]) + 1, "você" if int(dl["p"]) == me else _opp(), DB.tactics[dl["id"]]["name"]]
+				for id in q["opts"]:
+					var cid4 = id
+					var outra = q["opts"][1] if id == q["opts"][0] else q["opts"][0]
+					var bt4 = _cbtn(box, "Ficar com %s — %s  (o rival recebe %s)" % [DB.tactics[id]["name"], DB.tactics[id]["text"], DB.tactics[outra]["name"]], _card_col(id), func(): _answer(cid4))
+					bt4.tooltip_text = DB.tactics[id]["text"]
 			"unitlist":
 				for uid in q["opts"]:
 					var u2 = game.by_uid(uid)
@@ -4064,7 +4160,7 @@ func _show_ask(text: String, q: Dictionary) -> void:
 	w["ask_btns"].columns = max(1, bts.size()) if lado else 1
 	var nb = 0
 	for b in bts:
-		if nb == 0 and q["t"] != "hex":
+		if nb == 0 and not q["t"] in ["hex", "excl", "draft"]:
 			_primary(b)
 		nb += 1
 		b.add_theme_font_size_override("font_size", 18)
@@ -4215,7 +4311,8 @@ const CARD_EFEITO = {
 
 
 func _card_col(id: String) -> Color:
-	return {"mov": C_MOVE, "cura": C_HEAL, "alc": C_RANGE, "atk": C_ATK, "def": C_DEF, "ctl": C_ABIL, "entrar": C_DEPLOY}.get(CARD_EFEITO.get(id, ""), C_CARD)
+	var ef = CARD_EFEITO.get(id, DB.tactics[id].get("efeito", "") if DB.tactics.has(id) else "")
+	return {"mov": C_MOVE, "cura": C_HEAL, "alc": C_RANGE, "atk": C_ATK, "def": C_DEF, "ctl": C_ABIL, "entrar": C_DEPLOY}.get(ef, C_CARD)
 
 
 # o que a carta afeta: texto curto + casas para destacar no tabuleiro
@@ -4568,6 +4665,20 @@ func _toggle_ab() -> void:
 	am = ""
 	pend = null
 	refresh()
+
+
+func _on_extract() -> void:
+	var u = sel_or_act()
+	if u == null or not my_turn():
+		return
+	pend = null
+	am = ""
+	ab = false
+	busy = true
+	refresh()
+	await game.act_extract(u)
+	busy = false
+	await after()
 
 
 func _on_cart() -> void:
@@ -5033,6 +5144,18 @@ func _on_question(p: int, q: Dictionary) -> void:
 		refresh()
 		return
 	asking = {"p": p, "q": q}
+	refresh()
+
+
+var excl_sel: Array = []
+
+
+func _excl_toggle(id: String, n: int) -> void:
+	if excl_sel.has(id):
+		excl_sel.erase(id)
+	elif excl_sel.size() < n:
+		excl_sel.append(id)
+	sfx.play("clique", -8.0)
 	refresh()
 
 
@@ -6175,12 +6298,33 @@ func _on_fx_real(e: Dictionary) -> void:
 				vfx.flip("ring", mp2 - Vector3(0, 1.1, 0), 3.0 + 2.2 * game.disc_radius(), 0.9, Color("#ff7ad8"), true)
 				vfx.flip("sonic", mp2, 2.4, 0.8, Color("#ff7ad8"))
 			sfx.play("vfx_aura", -6.0)
+		"extr":
+			var cp3 = _hex_pos(e["h"], 0.1)
+			match e["what"]:
+				"start":
+					vfx.flip("ring", cp3, 3.8, 0.8, Color("#e6b8ff"), true)
+					vfx.flip("sparkle", cp3 + Vector3(0, 1.0, 0), 2.6, 0.8, Color("#c77dff"))
+					sfx.play("hex_energy_surge", -4.0, 1.2, 0.0)
+					banner("EXTRAÇÃO INICIADA", "%s está extraindo a Hex Energy" % game.nm(game.by_uid(int(e["uid"]))))
+				"cancel":
+					vfx.flip("smoke", cp3, 2.2, 0.8)
+					banner("EXTRAÇÃO CANCELADA", "a tropa saiu do núcleo")
+				"done":
+					vfx.flip("ring", cp3, 6.0, 1.0, Color("#ffffff"), true)
+					vfx.flip("sparkle", cp3 + Vector3(0, 1.2, 0), 4.0, 1.0, Color("#c77dff"))
+					sfx.play("hex_energy_take", 0.0, 1.0, 0.0)
+		"draft":
+			if e["what"] == "pick":
+				sfx.play("carta", -4.0)
 		"core":
 			var cp2 = _hex_pos(e["h"], 0.1)
 			match e["what"]:
 				"spawn":
 					sfx.play("hex_energy_surge", -2.0, 1.0, 0.0)
-					_later(1.6, banner.bind("HEX ENERGY", "capture com qualquer peça: cartas ou bônus"))
+					if game.modo == "disputa":
+						_later(1.6, banner.bind("DISPUTA PELA HEX ENERGY", ("Invasores: extraiam a energia do núcleo" if me == game.inv else "Guardiões: segurem a energia até o fim do round %d" % game.last_round)))
+					else:
+						_later(1.6, banner.bind("HEX ENERGY", "capture com qualquer peça: cartas ou bônus"))
 				"take":
 					vfx.flip("sparkle", cp2 + Vector3(0, 0.8, 0), 3.0, 0.8, Color("#c77dff"))
 					vfx.flip("ring", cp2, 3.6, 0.7, Color("#e6b8ff"), true)
@@ -6339,10 +6483,10 @@ func _on_fx_real(e: Dictionary) -> void:
 			var t_n = 0.25
 			if e["round"] == 1:
 				t_n += narrar("inicio", t_n) + 0.3
-			t_n += narrar("round_final" if e["round"] >= Game.LAST_ROUND else "round_%d" % e["round"], t_n) + 0.2
+			t_n += narrar("round_final" if e["round"] >= game.last_round else "round_%d" % e["round"], t_n) + 0.2
 			if e["round"] == 1:
 				narrar("voce_comeca" if game.first == me else "oponente_comeca", t_n)
-			banner("Round final" if e["round"] >= Game.LAST_ROUND else "Round %d" % e["round"], "os comandantes entram" if e["round"] == Game.CMD_ROUND else ("Você começa" if game.first == me else (_opp() + " começa")))
+			banner("Round final" if e["round"] >= game.last_round else "Round %d" % e["round"], "os comandantes entram" if e["round"] == game.cmd_round else ("Você começa" if game.first == me else (_opp() + " começa")))
 	board.sync_units()
 
 
@@ -6910,11 +7054,13 @@ func _net_msg(d: Dictionary) -> void:
 				var spots = DB.entry[p]
 				sides.append({"fac": a["fac"], "cmd": a["cmd"], "mix": a["mix"], "picks": a["picks"], "start": [{"id": a["start"][0], "h": spots[0]}, {"id": a["start"][1], "h": spots[spots.size() - 1]}]})
 			var sd = randi()
-			net.send({"t": "start", "seed": sd, "map": setup_cfg["map"], "sides": sides})
+			net.send({"t": "start", "seed": sd, "map": setup_cfg["map"], "sides": sides, "modo": setup_cfg.get("modo", ""), "inv": int(setup_cfg.get("inv", 0))})
 			_online_begin(sides, sd, setup_cfg["map"], 0)
 		"start":
 			if net.role != "guest":
 				return
+			setup_cfg["modo"] = str(d.get("modo", ""))
+			setup_cfg["inv"] = int(d.get("inv", 0))
 			_online_begin(d["sides"], int(d["seed"]), d["map"], 1)
 		"cmd":
 			net_queue.append(d["c"])
@@ -6999,6 +7145,10 @@ func _game_over() -> void:
 		return
 	if autotest:
 		print("AUTOTESTE FIM: vencedor=%d round=%d eventos=%d" % [game.winner, game.round_no, game.logs.size()])
+		if game.modo == "disputa":
+			print("DISPUTA FIM: invasores=%d causa=%s round=%d" % [game.inv, game.win_cause, game.round_no])
+			for u in game.units.filter(func(x): return not x.barrier and x.owner < 2):
+				print("  POS p%d %s st=%s pos=%s dist_nucleo=%d" % [u.owner, u.cid, u.st, u.pos(), DB.dist(u.pos(), game.core) if game.core != null else -1])
 		var caps = game.logs.filter(func(l): return "capturou a Hex Energy" in l["text"]).size()
 		print("AUDITORIA mapa=%s primeiro_combate=%d ataques=%d capturas_hex=%d rounds=%d" % [game.map_id, at_first_strike, at_strikes, caps, game.round_no])
 		var tudo = OS.get_environment("AUTOTESTE_LOG") != ""
@@ -7021,10 +7171,19 @@ func _game_over() -> void:
 	if win == me:
 		narrar("que_batalha", t_fim)
 	var reason = ""
-	if not game.final_score.is_empty():
+	if game.modo == "disputa":
+		match game.win_cause:
+			"extracao":
+				reason = "Os Invasores extraíram a Hex Energy no round %d." % game.round_no
+			"prazo":
+				reason = "Os Guardiões seguraram a Hex Energy até o fim do round %d." % game.last_round
+			"eliminacao":
+				reason = "Todos os Invasores caíram antes de extrair a energia."
+		reason += "\nVocê jogou com os %s." % ("Invasores" if me == game.inv else "Guardiões")
+	elif not game.final_score.is_empty():
 		var f = game.final_score
 		var tt = f.get("t", [0, 0])
-		reason = "Fim do round %d. Soma da vida dos personagens: %d x %d." % [Game.LAST_ROUND, tt[0], tt[1]]
+		reason = "Fim do round %d. Soma da vida dos personagens: %d x %d." % [game.last_round, tt[0], tt[1]]
 	elif game.flagged != Game.NONE:
 		reason = "Tempo esgotado: %s ficou sem tempo." % ("você" if game.flagged == me else _opp())
 	elif win == Game.DRAW:
@@ -7037,7 +7196,12 @@ func _game_over() -> void:
 	_label(v, title, 56, C_GOLD)
 	_label(v, reason, 18)
 	var hb = _hbox(v, 10)
-	if not online:
+	if not online and game.modo == "disputa":
+		# revanche: mesmo mapa e mesmos exércitos, papéis trocados e preparação de novo
+		_button(hb, "Revanche (papéis trocados)", func():
+			setup_cfg["inv"] = 1 - game.inv
+			_start_match(last_sides))
+	elif not online:
 		_button(hb, "Revanche", func(): _start_match(last_sides))
 		_button(hb, "Novos exércitos", _to_army)
 	_button(hb, "Menu", _show_menu)
@@ -7691,9 +7855,9 @@ func _entrance_side(p: int, layer: Control) -> void:
 	if font_title != null:
 		fn.add_theme_font_override("font", font_title)
 	fn.add_theme_constant_override("outline_size", 10)
-	var sub = _label(v, "Comandante: %s · chega no round %d" % [DB.cards[cid]["name"], Game.CMD_ROUND], 15, C_DIM)
+	var sub = _label(v, "Comandante: %s · chega no round %d" % [DB.cards[cid]["name"], _cmd_round()], 15, C_DIM)
 	if portrait:
-		sub.text = "Comandante: %s\nchega no round %d" % [DB.cards[cid]["name"], Game.CMD_ROUND]
+		sub.text = "Comandante: %s\nchega no round %d" % [DB.cards[cid]["name"], _cmd_round()]
 		sub.add_theme_font_size_override("font_size", 13)
 		var pic = h.get_child(0)
 		if pic is TextureRect:

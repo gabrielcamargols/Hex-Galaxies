@@ -48,6 +48,17 @@ static func crystal_score(g, a, t, fpos = null) -> float:
 	return s
 
 
+static func disputa_bonus(g, a, t) -> float:
+	if g.modo != "disputa" or t.barrier:
+		return 0.0
+	var b = 0.0
+	if g.extr != null and int(g.extr["uid"]) == t.uid:
+		b += 12.0
+	if g.core != null and t.pos() == g.core:
+		b += 6.0
+	return b
+
+
 static func attack_score(g, a, t, fpos = null) -> float:
 	if t.crystal != "":
 		return crystal_score(g, a, t, fpos)
@@ -55,7 +66,7 @@ static func attack_score(g, a, t, fpos = null) -> float:
 	if d <= 0:
 		return 0.1
 	var kill = d >= t.hp
-	var s = d * (3.0 if t.is_cmd else 1.0) + (value(t) if kill else 0.0) + (-3.0 if t.barrier else 0.0)
+	var s = d * (3.0 if t.is_cmd and g.modo != "disputa" else 1.0) + (value(t) if kill else 0.0) + (-3.0 if t.barrier else 0.0) + disputa_bonus(g, a, t)
 	if lv(g) >= 2:
 		# Veterano: termina quem está ferido e prioriza derrubar
 		s += (value(t) * 0.5 if kill else 0.0) + float(d) / max(1.0, float(t.hp)) * 2.0
@@ -110,7 +121,21 @@ static func pos_score(g, u, h: Vector2i) -> float:
 				dsc = min(dsc, DB.dist(h, rh))
 		if dsc < 99:
 			s += max(0.0, 3.0 - 0.3 * dsc)
-	if g.core != null:
+	if g.modo == "disputa" and g.core != null:
+		# Invasores correm para o núcleo; Guardiões fecham o núcleo e as entradas dele
+		var dc = DB.dist(h, g.core)
+		if u.owner == g.inv:
+			s += 16.0 if h == g.core else 0.0
+			s -= dc * 3.0
+		else:
+			if h == g.core:
+				s += 4.0
+			s -= max(0, dc - 1) * 0.7
+			if g.extr != null:
+				var ex = g.by_uid(int(g.extr["uid"]))
+				if ex != null and ex.st == "field":
+					s -= DB.dist(h, ex.pos()) * 1.2
+	elif g.core != null:
 		if h == g.core:
 			s += 6.0
 		else:
@@ -149,8 +174,14 @@ static func unit_plan_score(g, u) -> float:
 			var b = best_attack_from(g, u, m["h"])
 			if b != null:
 				best = max(best, b["s"])
-	if u.is_cmd and g.round_no < 6:
+	if u.is_cmd and g.round_no < g.cmd_round:
 		best -= 1.0
+	if g.modo == "disputa" and g.core != null:
+		# quem está perto do núcleo (ou dentro dele) é quem decide a Disputa
+		var dc = DB.dist(u.pos(), g.core)
+		best += max(0.0, 4.0 - dc) * (1.2 if u.owner == g.inv else 0.6)
+		if g.can_extract(u) or (u.owner == g.inv and dc == 0):
+			best += 6.0
 	return best
 
 
@@ -174,6 +205,14 @@ static func activation(g, p: int) -> void:
 	if g.winner != Game.NONE:
 		return
 	var mine = g.field().filter(func(u): return u.owner == p and not u.barrier and not u.activated)
+	# Disputa: a tropa que já está extraindo e pode concluir age primeiro
+	if g.modo == "disputa" and g.extr != null and p == g.inv and g.extr["resp"]:
+		var ex = g.by_uid(int(g.extr["uid"]))
+		if ex != null and mine.has(ex):
+			g.start_activation(ex)
+			if g.winner == Game.NONE:
+				await run(g, ex)
+			return
 	var rs = g.reserve_of(p)
 	var spots = g.deploy_hexes(p)
 	var best: Variant = null
@@ -222,6 +261,9 @@ static func run(g, u) -> void:
 					continue
 		if A["actions"] <= 0:
 			break
+		if g.can_extract(u):
+			await g.act_extract(u)
+			continue
 		if g.can_ult(u):
 			var need = {"abyss": 7.0, "bombard": 4.0, "prison": 7.0, "stampede": 3.0, "orbital": 5.0, "earth": 3.0, "detonate": 4.0, "grenade": 3.0, "artillery": 3.0, "barricade": 2.0, "mend": 3.0, "plate": 1.2,
 				"burrow": 2.0, "bwall": 2.0, "rootweb": 1.8, "cartcharge": 3.0, "ferram": 3.0, "coat": 1.5, "rupture": 2.0, "quake": 3.0,
@@ -269,7 +311,8 @@ static func run(g, u) -> void:
 					opts.append({"h": h, "c": 1})
 			else:
 				opts = g.move_opts(u, g.mov_of(u))
-			var here = pos_score(g, u, u.pos()) + (4.0 if g.can_attack_any(u) and best_attack_from(g, u) != null else 0.0)
+			var invasor = g.modo == "disputa" and u.owner == g.inv
+			var here = pos_score(g, u, u.pos()) + ((1.0 if invasor else 4.0) if g.can_attack_any(u) and best_attack_from(g, u) != null else 0.0)
 			var bm: Variant = null
 			for m in opts:
 				var s = pos_score(g, u, m["h"])
@@ -301,12 +344,43 @@ static func run(g, u) -> void:
 		await g.end_activation()
 
 
+# exclusivas da Disputa: quando a CPU usa
+static func x_ok(g, u, id: String, A: Dictionary) -> bool:
+	var p = u.owner
+	var inv = p == g.inv
+	var en = g.enemies_of(u).filter(func(x): return not x.barrier)
+	var perto = en.any(func(x): return DB.dist(x.pos(), u.pos()) <= 3)
+	match id:
+		"x_retomar":
+			return not inv
+		"x_fogo_cruzado", "x_marcacao", "x_ritmo", "x_pressao":
+			return g.can_attack_now(u) and best_attack_from(g, u) != null
+		"x_ferramenta":
+			var b = best_attack_from(g, u) if g.can_attack_now(u) else null
+			return b != null and (b["t"].barrier or b["t"].crystal != "")
+		"x_linha_escudos", "x_ocupacao", "x_holo":
+			return perto
+		"x_esporao", "x_semente":
+			return perto and not inv
+		"x_suprimento":
+			return g.allies_of(u, true).any(func(x): return not x.barrier and DB.cards[x.cid]["f"] == "FAU" and x.maxhp - x.hp >= 2)
+		"x_desvio", "x_janela", "x_revezamento", "x_troca_sentinela", "x_caminhos", "x_retirada_ordem":
+			return inv and A["actions"] >= 1 and g.core != null and DB.dist(u.pos(), g.core) > 1 and randf() < 0.5
+		"x_escora", "x_passagem", "x_desvio_trilho":
+			return randf() < 0.25
+	return false
+
+
 # quando vale a pena usar as táticas novas
 static func new_tactic(g, u, hand: Array, A: Dictionary) -> String:
 	var p = u.owner
 	var en = g.enemies_of(u).filter(func(x): return not x.barrier)
 	for id in hand:
 		if not g.tactic_playable(p, id):
+			continue
+		if DB.excl_ids.has(id):
+			if x_ok(g, u, id, A):
+				return id
 			continue
 		match id:
 			"orbital":
@@ -331,6 +405,9 @@ static func new_tactic(g, u, hand: Array, A: Dictionary) -> String:
 					return id
 			"onda":
 				if en.filter(func(x): return DB.dist(x.pos(), u.pos()) == 1).size() >= 2 and g.alc_of(u) >= 2:
+					return id
+				# Disputa: Invasor empurra quem está ocupando o núcleo
+				if g.modo == "disputa" and p == g.inv and g.core != null and en.any(func(x): return x.pos() == g.core and DB.dist(x.pos(), u.pos()) == 1 and g.push_dest(x, u.pos()) != null):
 					return id
 			"sinalizador":
 				if g.can_attack_now(u) and best_attack_from(g, u) != null:
@@ -373,7 +450,70 @@ static func new_tactic(g, u, hand: Array, A: Dictionary) -> String:
 	return ""
 
 
+# Disputa: prioridade das exclusivas (Invasores preferem movimento; Guardiões, defesa e controle)
+static func excl_pick(g, p: int, opts: Array) -> Array:
+	var inv = p == g.inv
+	var sc = {}
+	for id in opts:
+		var t = DB.tactics[id]
+		var e = t.get("efeito", "")
+		var v = 1.0
+		if e == "mov":
+			v += 2.0 if inv else 0.5
+		elif e == "def" or e == "ctl":
+			v += 2.0 if not inv else 0.6
+		elif e == "atk":
+			v += 1.2
+		elif e == "cura":
+			v += 1.0
+		if t["type"] == "Reação":
+			v -= 0.4
+		if id == "x_retomar":
+			v += 0.0 if inv else 2.5
+		sc[id] = v + randf() * 0.3
+	var arr = opts.duplicate()
+	arr.sort_custom(func(a, b): return sc[a] > sc[b])
+	return arr.slice(0, 3)
+
+
+static func draft_pick(g, p: int, opts: Array) -> String:
+	var inv = p == g.inv
+	var pref = ["flanquear", "resgate", "granada", "kit", "onda", "barreira"] if inv else ["onda", "barreira", "kit", "granada", "flanquear", "resgate"]
+	var best = opts[0]
+	for c in opts:
+		if pref.find(c) >= 0 and (pref.find(best) < 0 or pref.find(c) < pref.find(best)):
+			best = c
+	return best
+
+
 static func answer(g, p: int, q: Dictionary) -> Variant:
+	if q["t"] == "excl":
+		return excl_pick(g, p, q["opts"])
+	if q["t"] == "draft":
+		return draft_pick(g, p, q["opts"])
+	if q["t"] == "hex" and q.get("xr", false):
+		# reações exclusivas: usa quando faz sentido (mover para longe do perigo / absorver / puxar)
+		var cid = str(q.get("card", ""))
+		var o = q["opts"]
+		if o.is_empty():
+			return null
+		if cid == "x_interposicao":
+			for h in o:
+				var w = g.unit_at(h)
+				if w != null and w.hp >= 4:
+					return h
+			return null
+		var bh = o[0]
+		var bs = -1e9
+		var ref = g.active_unit()
+		for h in o:
+			var s = -threat(g, ref if ref != null else g.commander(p), h)
+			if g.modo == "disputa" and g.core != null:
+				s -= DB.dist(h, g.core) * (0.8 if p == g.inv else 0.3)
+			if s > bs:
+				bs = s
+				bh = h
+		return bh
 	match q["t"]:
 		"yesno":
 			if q.get("kind", "") == "mulligan":
@@ -475,6 +615,8 @@ static func answer(g, p: int, q: Dictionary) -> Variant:
 						if q.get("optional", false) and au != null and g.alc_of(au) == 1 and au.hp > 4:
 							return null
 						s = -threat(g, au if au != null else g.commander(p), h)
+						if g.modo == "disputa" and g.core != null:
+							s -= DB.dist(h, g.core) * (2.0 if p == g.inv else 0.6)
 				if s > bs:
 					bs = s
 					best_h = h

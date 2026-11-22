@@ -1234,8 +1234,8 @@ func _ribs(parent: Node3D, pos: Vector3, s: float, n: int) -> void:
 
 
 func _add_props(root: Node3D, h: Vector2i, t: Dictionary) -> void:
-	if DB.maps[g.map_id].get("cave", false):
-		return   # caverna: chão de pedra limpo (os cristais são peças)
+	if DB.maps[g.map_id].get("cave", false) and not t["k"] in ["rocha", "ruina", "galpao", "escombros"]:
+		return   # caverna: chão de pedra limpo (os cristais são peças); paredes e entulho aparecem
 	if _cen_tile(root, h, t["k"]):
 		pass
 	else:

@@ -143,6 +143,19 @@ var portal_pick_a: Variant = null   # entrada já escolhida (a IA usa para pontu
 var tunnels: Array = []   # Rei da Mina: [{a, b, owner}] entradas de túnel ligadas
 var inks: Array = []      # Inkshadow: [{owner, hexes, till, src}] rastro da Cortina de Tinta
 var stars: Array = []     # Esterina: [{owner, c, hexes, till}] Estrela Hexa
+# ---- Disputa pela Hex Energy (modo): Invasores extraem, Guardiões seguram até o prazo ----
+var modo: String = ""            # "" = partida normal; "disputa" = Disputa pela Hex Energy
+var inv: int = 0                 # lado dos Invasores (o outro é o dos Guardiões)
+var cmd_round: int = CMD_ROUND   # round em que os comandantes entram (no modo: 4)
+var last_round: int = LAST_ROUND # último round (no modo: 5, o prazo)
+var extr: Variant = null         # extração em andamento: {"uid", "round", "resp"}
+var win_cause: String = ""       # "extracao", "prazo", "eliminacao" (modo) ou "" (normal)
+var draft_log: Array = []        # público: [{"p", "id", "par"}] quem recebeu cada genérica
+var draft_pairs: Array = []      # público: os pares revelados [[a, b], [c, d]] e quem escolheu
+var holos: Array = []            # Projeção Holográfica (Zukunft): [{h, owner, till}]
+var smokes: Array = []           # tinta da Maré de Recuo (Abyssais): [{h, till}] bloqueia tiros
+var escoras: Dictionary = {}     # Escora de Emergência: casa -> round (sobe como se fosse 1 nível menor)
+var passagens: Dictionary = {}   # Passagem Escorada: casa -> round (entrar custa 1 a menos)
 var shells: Array = []    # Rádio: [{h, owner, round, src}] artilharia que cai no início do próximo round
 
 
@@ -160,6 +173,9 @@ func setup(sides: Array, mid: String) -> void:
 			res[Vector2i(-rr[0], -rr[1])] = rr[2]
 	_setup_valak()
 	load_map()
+	if modo == "disputa":
+		cmd_round = 4
+		last_round = 5
 	for p in range(2):
 		var s = sides[p]
 		var deck = DB.tactic_ids.duplicate()
@@ -285,6 +301,8 @@ func can_step(a: Vector2i, b: Vector2i, climber: bool = false, extra: int = 0) -
 	if not tt_of(tb["k"]).get("pass", 0):
 		return false
 	var dh = int(tb["h"]) - int(ta["h"])
+	if dh > 0 and escoras.has(b):
+		dh -= 1   # Escora de Emergência: sobe como se fosse 1 nível mais baixa
 	if dh <= -2 or dh >= 2 + extra:
 		return false
 	if extra > 0 and dh >= 1:
@@ -300,7 +318,10 @@ func step_cost(a: Vector2i, b: Vector2i, climber: bool = false) -> int:
 	if terr(b)["k"] == "duna":
 		# subir a duna: 1 por degrau; os 2 últimos níveis (areia fofa no topo) custam 2
 		return 1 + (1 if h_of(b) >= 4 and h_of(b) > h_of(a) else 0) + (2 if tt_of(terr(a)["k"]).get("sink", 0) else 0)
-	return int(tt_of(terr(b)["k"])["c"]) + max(0, h_of(b) - h_of(a)) + (2 if tt_of(terr(a)["k"]).get("sink", 0) else 0)
+	var cb = int(tt_of(terr(b)["k"])["c"])
+	if passagens.has(b):
+		cb = max(1, cb - 1)   # Passagem Escorada
+	return cb + max(0, h_of(b) - h_of(a) - (1 if escoras.has(b) else 0)) + (2 if tt_of(terr(a)["k"]).get("sink", 0) else 0)
 
 
 func home_half(p: int, h: Vector2i) -> bool:
@@ -688,6 +709,8 @@ func exec_cmd(c: Array) -> void:
 			await act_scarab(int(c[1]), str(c[2]))
 		"cart":
 			await act_cart(u)
+		"extract":
+			await act_extract(u)
 		"flag":
 			if winner == NONE:
 				flagged = int(c[1])
@@ -826,9 +849,11 @@ func reduction_of(t, peek: bool = false, d: int = 1) -> int:
 		red += 4 + item_boost(t)   # Kling: Casco Duro
 	red += fx_sum(t, "red")
 	if has_fx(t, "coat"):
-		red += fx_sum(t, "coat")
+		for cf in t.fx:
+			if cf["k"] == "coat" and (not cf.has("h") or cf["h"] == t.pos()):
+				red += int(cf.get("v", 1))
 		if not peek:
-			t.fx = t.fx.filter(func(f): return f["k"] != "coat")
+			t.fx = t.fx.filter(func(f): return f["k"] != "coat" or (f.has("h") and f["h"] != t.pos()))
 	if k.has("selfRed"):
 		red += int(k["selfRed"])
 		if not peek and t.st == "field":
@@ -898,7 +923,7 @@ func los(a: Vector2i, b: Vector2i) -> bool:
 		var hs = line_hexes(a, b, e)
 		var ok = true
 		for i in range(1, hs.size() - 1):
-			if top_of(hs[i]) > lim:
+			if top_of(hs[i]) > lim or (not smokes.is_empty() and smokes.any(func(sm): return sm["h"] == hs[i])):
 				ok = false
 				break
 		if ok:
@@ -1122,6 +1147,8 @@ func _grab_scarab(u, h: Vector2i) -> void:
 func _eat_banana(u, h: Vector2i) -> void:
 	if not bananas.has(h) or bananas[h]["p"] != u.owner or u.barrier:
 		return
+	if bananas[h]["t"] == "sup" and DB.cards[u.cid]["f"] != "FAU":
+		return   # Suprimento de Campo: só um Fauriano consome
 	var bt = bananas[h]["t"]
 	bananas.erase(h)
 	match bt:
@@ -1134,13 +1161,17 @@ func _eat_banana(u, h: Vector2i) -> void:
 		"alcance":
 			u.fx.append({"k": "alc", "v": 1, "until": "end"})
 			log_msg(u.owner, "%s comeu uma banana de mira: +1 alcance neste round." % nm(u))
+		"sup":
+			heal(u, 2)
+			log_msg(u.owner, "Suprimento de Campo: %s cura 2 de Vida." % nm(u))
 	emitfx({"t": "banana", "h": h, "b": bt, "uid": u.uid})
 
 
 func arrive(u, own: bool = false) -> void:
 	_eat_banana(u, u.pos())
 	_grab_scarab(u, u.pos())
-	if core != null and u.pos() == core and u.st == "field" and not u.barrier:
+	_extr_check()
+	if modo != "disputa" and core != null and u.pos() == core and u.st == "field" and not u.barrier:
 		await _capture_core(u)
 	for i in range(mines.size()):
 		var m = mines[i]
@@ -1204,6 +1235,7 @@ func damage(t, n: int, src, is_attack: bool = false) -> int:
 
 
 func settle() -> void:
+	_extr_check()
 	var blast = false
 	for t in units:
 		if t.dying == null or t.st != "field":
@@ -1495,6 +1527,19 @@ func _setup_valak() -> void:
 		tracks.append(b)
 		track_loop.append(false)
 		track_loop.append(false)
+	# trilhos e carrinhos sem espelho (mapas desenhados casa a casa, ex.: a galeria da Disputa)
+	for tr2 in def.get("tracks_nm", []):
+		var a2 = []
+		for e in tr2:
+			a2.append(Vector2i(int(e[0]), int(e[1])))
+		tracks.append(a2)
+		track_loop.append(false)
+	for e2 in def.get("carts_nm", []):
+		var hc = Vector2i(int(e2[0]), int(e2[1]))
+		for ti2 in range(tracks.size()):
+			if tracks[ti2].has(hc):
+				carts.append({"h": hc, "track": ti2})
+				break
 	if def.has("track_ring"):
 		# trilho circular em volta do mapa todo (anel de casas a uma distância do centro)
 		var rr = int(def["track_ring"])
@@ -1545,6 +1590,27 @@ func on_track(h: Vector2i) -> bool:
 # labirinto de cristais: muda a cada partida (pares espelhados), sem prender ninguém
 func _gen_crystals() -> void:
 	var def = DB.maps[map_id]
+	if def.has("crystals_fixed"):
+		# cristais fixos da planta (cobertura da rota lateral da galeria)
+		for e in def["crystals_fixed"]:
+			var hc = Vector2i(int(e[0]), int(e[1]))
+			if unit_at(hc) != null or blocks.has(hc):
+				continue
+			var bc = Unit.new()
+			bc.uid = next_uid
+			next_uid += 1
+			bc.cid = "barrier"
+			bc.owner = NEUTRAL
+			bc.st = "field"
+			bc.q = hc.x
+			bc.r = hc.y
+			bc.hp = 1
+			bc.maxhp = 1
+			bc.barrier = true
+			bc.activated = true
+			bc.crystal = str(e[2])
+			units.append(bc)
+		return
 	if not def.has("crystals"):
 		return
 	var cfg = def["crystals"]
@@ -1838,6 +1904,12 @@ func _act_cart(u) -> bool:
 	var ti = carts[i]["track"]
 	var tr = tracks[ti]
 	var step = _track_dir(ti, carts[i]["h"], h)
+	if carts[i].get("rev", false):
+		# Desvio de Trilho: este empurrão vai para o outro lado, se o trilho tiver saída
+		carts[i]["rev"] = false
+		if _track_idx(ti, tr.find(carts[i]["h"]) - step) >= 0:
+			step = -step
+			log_msg(-1, "Desvio de Trilho: o carrinho vai para o outro lado.")
 	var shook = in_zone(carts[i]["h"])
 	log_msg(u.owner, "%s empurrou um carrinho." % nm(u))
 	for n in range(int(vrule("cart_steps", 3))):
@@ -1871,6 +1943,13 @@ func _act_cart(u) -> bool:
 
 func check_win() -> void:
 	if winner != NONE:
+		return
+	if modo == "disputa":
+		# no modo, comandante caído não decide: vale a extração ou o prazo.
+		# Se não sobrar nenhum Invasor (campo, reserva ou a entrar), os Guardiões vencem.
+		if not units.any(func(x): return x.owner == inv and not x.barrier and x.st != "dead"):
+			winner = 1 - inv
+			win_cause = "eliminacao"
 		return
 	var d0 = commander(0).st == "dead"
 	var d1 = commander(1).st == "dead"
@@ -1940,6 +2019,17 @@ func begin_game() -> void:
 		draw_cards(1, 3)
 		await start_round()
 		return
+	if modo == "disputa":
+		# núcleo fixo no tabuleiro a partida toda; mão inicial vem da preparação (exclusivas + draft)
+		var cf = DB.maps[map_id].get("core_fixed", [0, 0])
+		core = Vector2i(int(cf[0]), int(cf[1]))
+		core_until = 999
+		core_next = null
+		emitfx({"t": "core", "what": "spawn", "h": core})
+		log_msg(-1, "Disputa pela Hex Energy: os Invasores precisam extrair a energia do núcleo até o fim do round %d." % last_round)
+		await _disputa_preparo()
+		await start_round()
+		return
 	for p in range(2):
 		draw_cards(p, 3)
 		var yes = await ask(p, {"t": "yesno", "text": "Trocar a mão inicial (devolve as 3 cartas e compra 3 novas)? Só dá para fazer uma vez.", "show": P[p]["hand"].duplicate(), "kind": "mulligan"})
@@ -1983,7 +2073,7 @@ func start_round() -> void:
 	await _shell_tick()
 	if winner != NONE:
 		return
-	if round_no == CMD_ROUND:
+	if round_no == cmd_round:
 		# cinemática dos comandantes observando o campo (só na tela; não muda o estado)
 		if cine.is_valid():
 			await cine.call()
@@ -1995,9 +2085,13 @@ func start_round() -> void:
 	if winner != NONE:
 		return
 	for p in range(2):
+		if modo == "disputa" and round_no == 1:
+			continue   # a mão de 5 da preparação já é a do primeiro round
 		draw_cards(p, 1)
 		await hand_limit(p)
 	first = 0 if round_no % 2 == 1 else 1
+	if modo == "disputa":
+		first = inv if round_no % 2 == 1 else 1 - inv   # os Invasores abrem a partida
 	cur = first
 	emitfx({"t": "round", "round": round_no})
 	await pace()
@@ -2138,6 +2232,8 @@ func _core_spot() -> Variant:
 
 
 func _core_events() -> void:
+	if modo == "disputa":
+		return   # no modo o núcleo é fixo e serve só para a extração
 	if core != null and round_no > core_until:
 		log_msg(-1, "A Hex Energy se apagou sem ser capturada.")
 		emitfx({"t": "core", "what": "fade", "h": core})
@@ -2278,7 +2374,21 @@ func end_round() -> void:
 	czones = czones.filter(func(z): return int(z["until"]) > round_no)
 	for pl in P:
 		pl["discount"] = false
-	if round_no >= LAST_ROUND:
+	escoras = _so_futuro(escoras)
+	for bh in bananas.keys():
+		if bananas[bh].has("till") and int(bananas[bh]["till"]) <= round_no:
+			bananas.erase(bh)
+	passagens = _so_futuro(passagens)
+	holos = holos.filter(func(x): return int(x["till"]) > round_no)
+	smokes = smokes.filter(func(x): return int(x["till"]) > round_no)
+	if round_no >= last_round:
+		if modo == "disputa":
+			# prazo: a extração não foi concluída
+			winner = 1 - inv
+			win_cause = "prazo"
+			log_msg(1 - inv, "Fim do round %d: os Guardiões seguraram a Hex Energy." % last_round)
+			changed.emit()
+			return
 		do_final_score()
 		return
 	await start_round()
@@ -2704,6 +2814,7 @@ func auto_pass() -> void:
 		if P[p]["passed"] or not can_activate(p):
 			if not P[p]["passed"]:
 				P[p]["passed"] = true
+				_extr_resp(p)
 				log_msg(p, "Sem peças para ativar: passou.")
 			if P[1 - p]["passed"]:
 				await end_round()
@@ -2719,6 +2830,7 @@ func pass_turn(p: int) -> void:
 
 func _pass_turn(p: int) -> void:
 	P[p]["passed"] = true
+	_extr_resp(p)
 	log_msg(p, "Passou.")
 	if P[1 - p]["passed"]:
 		await end_round()
@@ -2737,6 +2849,9 @@ func start_activation(u) -> void:
 	act = _new_act(u, 2, false)
 	log_msg(u.owner, "Ativa %s." % nm(u))
 	_act_begin(u)
+	if modo == "disputa":
+		_extr_resp(u.owner)
+		_extr_conclui(u)
 	# Maré Alta: quem começa a agir colado na Garra-Funda (com um Abyssal ao lado dela) fica lento
 	if not u.barrier and u.st == "field":
 		for g in units:
@@ -2753,6 +2868,7 @@ func _deploy(u, h: Vector2i, via_obj: bool = false) -> void:
 	var p = u.owner
 	var pl = P[p]
 	pl["deploys"] = int(pl.get("deploys", 0)) + 1
+	_extr_resp(p)
 	u.st = "field"
 	u.q = h.x
 	u.r = h.y
@@ -2839,6 +2955,7 @@ func _act_move(u, h: Vector2i) -> bool:
 	act["moved"] = true
 	var from_h = u.pos()
 	var pth = _path(u, from_h, h)
+	act["passos"] = int(act.get("passos", 0)) + max(DB.dist(from_h, h), pth.size() - 1)
 	await move_unit(u, h, true)
 	_use_blue(u)
 	await _ice_slide(u, pth[pth.size() - 2] if pth.size() >= 2 else from_h)
@@ -4615,9 +4732,20 @@ func resolve_attack(a, t) -> void:
 	var d = 1 - p
 	A["attacked"] = true
 	var ranged = DB.dist(a.pos(), t.pos()) > 1
+	# Projeção Holográfica: o primeiro tiro inimigo que cruza a projeção acerta só ela
+	var hi = _holo_bloqueia(a, t) if ranged else -1
+	if hi >= 0:
+		var hb = holos[hi]
+		holos.remove_at(hi)
+		emitfx({"t": "strike", "from": a.uid, "to": t.uid, "ranged": true})
+		abfx("veil", hb["h"], -1)
+		log_msg(int(hb["owner"]), "Projeção Holográfica: o tiro de %s acerta a projeção e ela se desfaz." % nm(a))
+		changed.emit()
+		return
 	var tm = terrain_mods(a, t)
 	var packet = atk_of(a, t) + int(A["fogo"]) + fx_sum(t, "mark") + int(tm["atk"])
 	A["fogo"] = 0
+	packet += _x_bonus_atk(a, t, ranged)
 	if t.hitters_round != round_no:
 		t.hitters = []
 		t.hitters_round = round_no
@@ -4705,6 +4833,7 @@ func resolve_attack(a, t) -> void:
 		log_msg(p, "Tempestade de areia: -2 de dano.")
 	if (red > 0 or react_red > 0) and not target.barrier:
 		emitfx({"t": "passive", "kind": "shield", "uid": target.uid})
+	dealt = await _x_interposicao(a, target, dealt, ranged)
 	damage(target, dealt, a, true)
 	if dealt > 0 and K(a).has("lifesteal") and a.st == "field":
 		heal(a, int(K(a)["lifesteal"]))
@@ -4917,6 +5046,8 @@ func resolve_attack(a, t) -> void:
 				abfx("hook", target.pos(), a.uid)
 				log_msg(p, "%s foi arrastado." % nm(target))
 				await move_unit(target, h)
+				if winner == NONE:
+					await _x_cerco(p, target)
 				if winner != NONE:
 					return
 	if after == "knock" and dealt > 0 and target.st == "field" and not target.barrier:
@@ -4983,6 +5114,9 @@ func resolve_attack(a, t) -> void:
 		await _hunt(a, target)
 		if winner != NONE or a.st != "field":
 			return
+	await _x_pos_ataque(a, target, dealt)
+	if winner != NONE or a.st != "field":
+		return
 	if not A["tactic"] and P[p]["hand"].has("retirada") and not rooted(a) and not step_free(a.pos()).is_empty():
 		var h = await ask(p, {"t": "hex", "text": "Retirada Calculada: mover o ativo 1 casa livre?", "opts": step_free(a.pos()), "optional": true, "kind": "move", "card": "retirada"})
 		if h != null:
@@ -5406,6 +5540,8 @@ func _tac_here(p: int, id: String) -> bool:
 		return false
 	if int(DB.tactics[id]["cost"]) > A["actions"]:
 		return false
+	if DB.excl_ids.has(id):
+		return DB.tactics[id]["type"] != "Reação" and x_playable(p, id)
 	match id:
 		"flanquear":
 			return not rooted(u) and not step_free(u.pos()).is_empty()
@@ -5473,6 +5609,8 @@ func drop_opts(p: int, id: String) -> Array:
 	if u == null:
 		return []
 	var mine = func(arr): return arr.map(func(x): return x.pos())
+	if DB.excl_ids.has(id):
+		return x_targets(p, id)
 	match id:
 		"propulsor", "placas", "lente", "reparo", "camuflagem":
 			return mine.call(self_targets(p, id))
@@ -5628,6 +5766,8 @@ func _play_tactic_run(p: int, id: String, drop: Variant = null) -> bool:
 			emitfx({"t": "tactic_on", "id": id, "h": x.pos(), "p": p})
 	else:
 		tac_fx = id
+	if DB.excl_ids.has(id):
+		await _x_play(p, id, u, drop)
 	match id:
 		"flanquear":
 			var h = await pick_hex(p, "Flanquear: mova o ativo 1 casa livre.", step_free(u.pos()), "move")
@@ -5914,3 +6054,624 @@ func preview_damage(a, t, fpos = null) -> Dictionary:
 	a.r = save.y
 	var dmg = max(0, total)
 	return {"dmg": dmg, "parts": parts, "kills": dmg >= t.hp, "high": tm["atk"] > 0, "cover": tm["cover"] > 0}
+
+
+# =====================================================================
+# ================= Disputa pela Hex Energy (modo) ===================
+# =====================================================================
+func _so_futuro(d: Dictionary) -> Dictionary:
+	var out = {}
+	for k in d.keys():
+		if int(d[k]) > round_no:
+			out[k] = d[k]
+	return out
+
+
+func guardiao() -> int:
+	return 1 - inv
+
+
+func papel(p: int) -> String:
+	return "Invasores" if p == inv else "Guardiões"
+
+
+# facção das exclusivas de um lado (no Mix, a do comandante)
+func fac_excl(p: int) -> String:
+	return str(P[p]["fac"])
+
+
+func fac_u(u) -> String:
+	return str(DB.cards[u.cid].get("f", "")) if DB.cards.has(u.cid) else ""
+
+
+# ---- extração ----
+func can_extract(u) -> bool:
+	return modo == "disputa" and u != null and is_live(u) and u.owner == inv and u.st == "field" and not u.barrier \
+		and core != null and u.pos() == core and act["actions"] >= 1 and (extr == null or int(extr["uid"]) != u.uid) and winner == NONE
+
+
+func act_extract(u) -> bool:
+	return await _run(["extract", u.uid], func(): return await _act_extract(u))
+
+
+func _act_extract(u) -> bool:
+	if not can_extract(u):
+		return false
+	act["actions"] -= 1
+	extr = {"uid": u.uid, "round": round_no, "resp": false}
+	emitfx({"t": "extr", "what": "start", "uid": u.uid, "h": core})
+	abfx("buff", core, u.uid)
+	log_msg(u.owner, "%s começou a EXTRAÇÃO da Hex Energy! Conclui no início da próxima ativação dele, se ficar no núcleo e os Guardiões tiverem tido a vez de responder." % nm(u))
+	changed.emit()
+	return true
+
+
+# os Guardiões tiveram a vez (ativaram, implantaram ou passaram) desde que a extração começou
+func _extr_resp(p: int) -> void:
+	if extr != null and p == guardiao() and not extr["resp"]:
+		extr["resp"] = true
+		changed.emit()
+
+
+# a mesma tropa começa a agir de novo: conclui se ficou no núcleo e os Guardiões já responderam
+func _extr_conclui(u) -> void:
+	_extr_check()
+	if extr == null or int(extr["uid"]) != u.uid or winner != NONE:
+		return
+	if extr["resp"] and u.st == "field" and u.pos() == core:
+		winner = inv
+		win_cause = "extracao"
+		emitfx({"t": "extr", "what": "done", "uid": u.uid, "h": core})
+		log_msg(inv, "%s concluiu a extração da Hex Energy! Vitória dos Invasores." % nm(u))
+		changed.emit()
+
+
+# sair do núcleo, ser empurrado ou cair cancela; dano sem sair da casa não cancela
+func _extr_check() -> void:
+	if extr == null:
+		return
+	var x = by_uid(int(extr["uid"]))
+	if x == null or x.st != "field" or x.hp <= 0 or x.pos() != core:
+		var quem = nm(x) if x != null else "A tropa"
+		extr = null
+		emitfx({"t": "extr", "what": "cancel", "h": core})
+		log_msg(guardiao(), "Extração cancelada: %s não está mais no núcleo." % quem)
+		changed.emit()
+
+
+# ---- preparação: 3 exclusivas (privado) + draft de 2 pares de genéricas (público) ----
+func _disputa_preparo() -> void:
+	for p in range(2):
+		var opts = DB.excl_of(fac_excl(p))
+		var esc: Array = []
+		if opts.size() >= 3:
+			var r = await ask(p, {"t": "excl", "text": "%s · escolha 3 táticas exclusivas da sua facção (o rival só vê quando você usar)." % papel(p), "opts": opts.duplicate(), "n": 3, "papel": papel(p)})
+			if r is Array:
+				for id in r:
+					if opts.has(id) and not esc.has(id) and esc.size() < 3:
+						esc.append(id)
+			for id in opts:
+				if esc.size() >= 3:
+					break
+				if not esc.has(id):
+					esc.append(id)
+		P[p]["excl"] = esc
+	var pares = DB.disputa_pares.duplicate(true)
+	_shuffle(pares)
+	pares = pares.slice(0, 2)
+	var got = [[], []]
+	draft_pairs = []
+	draft_log = []
+	for i in range(pares.size()):
+		var par = pares[i]
+		var quem = guardiao() if i == 0 else inv   # a prioridade inverte no segundo par
+		draft_pairs.append({"par": par, "quem": quem})
+		emitfx({"t": "draft", "what": "par", "i": i})
+		changed.emit()
+		var c = await ask(quem, {"t": "draft", "text": "Draft (par %d de 2): %s escolhem uma genérica; a outra vai para o rival." % [i + 1, papel(quem)], "opts": par.duplicate(), "par": i, "quem": quem})
+		if not par.has(c):
+			c = par[0]
+		var outra = par[1] if c == par[0] else par[0]
+		got[quem].append(c)
+		got[1 - quem].append(outra)
+		draft_log.append({"p": quem, "id": c, "par": i})
+		draft_log.append({"p": 1 - quem, "id": outra, "par": i})
+		log_msg(quem, "Draft: %s ficam com %s; %s recebem %s." % [papel(quem), DB.tactics[c]["name"], papel(1 - quem), DB.tactics[outra]["name"]])
+		emitfx({"t": "draft", "what": "pick", "i": i, "id": c, "p": quem})
+		changed.emit()
+	for p in range(2):
+		var pl = P[p]
+		pl["hand"] = (pl["excl"] + got[p]).duplicate()
+		for id in got[p]:
+			pl["deck"].erase(id)
+	emitfx({"t": "draft", "what": "fim"})
+	changed.emit()
+
+
+# ---- táticas exclusivas: quem pode receber cada uma ----
+func _fac_units(p: int, fac: String) -> Array:
+	return units.filter(func(x): return x.owner == p and x.st == "field" and not x.barrier and fac_u(x) == fac)
+
+
+func _hits_by(t, p: int, fac: String) -> Array:
+	if t.hitters_round != round_no:
+		return []
+	return t.hitters.filter(func(id): return by_uid(id) != null and by_uid(id).owner == p and fac_u(by_uid(id)) == fac)
+
+
+func x_targets(p: int, id: String) -> Array:
+	var u = active_unit()
+	var out = []
+	match id:
+		"x_fogo_cruzado":
+			for e in units.filter(func(x): return x.owner == 1 - p and x.st == "field" and not x.barrier):
+				if not _hits_by(e, p, "KRI").is_empty():
+					out.append(e.pos())
+		"x_marcacao":
+			for e in units.filter(func(x): return x.owner == 1 - p and x.st == "field" and not x.barrier):
+				if _fac_units(p, "KRI").any(func(k): return DB.dist(k.pos(), e.pos()) <= 3 and los(k.pos(), e.pos())):
+					out.append(e.pos())
+		"x_retirada_ordem":
+			for k in _fac_units(p, "KRI"):
+				if not _x_pares_troca(k).is_empty():
+					out.append(k.pos())
+		"x_retomar":
+			if core != null and is_free(core):
+				for w2 in _fac_units(p, "WAC"):
+					if DB.dist(w2.pos(), core) == 1 and not rooted(w2) and can_step(w2.pos(), core, K(w2).has("climbAll")):
+						out.append(w2.pos())
+		"x_linha_escudos":
+			for w2 in _fac_units(p, "WAC"):
+				if _fac_units(p, "WAC").any(func(o): return o != w2 and DB.dist(o.pos(), w2.pos()) == 1):
+					out.append(w2.pos())
+		"x_troca_sentinela":
+			for w2 in _fac_units(p, "WAC"):
+				if not rooted(w2) and not _x_sentinela_dest(w2).is_empty():
+					out.append(w2.pos())
+		"x_desvio":
+			for z in _fac_units(p, "ZUK"):
+				if not rooted(z) and not imprisoned(z) and not _x_desvio_dest(z).is_empty():
+					out.append(z.pos())
+		"x_holo":
+			var hs = {}
+			for z in _fac_units(p, "ZUK"):
+				for h in adj_free(z.pos()):
+					if tt_of(terr(h)["k"]).get("pass", 0) and not holos.any(func(x): return x["h"] == h):
+						hs[h] = true
+			out = hs.keys()
+		"x_janela":
+			for z in _fac_units(p, "ZUK"):
+				if not rooted(z) and not imprisoned(z) and not _x_janela_dest(z).is_empty():
+					out.append(z.pos())
+		"x_revezamento":
+			for f in _fac_units(p, "FAU"):
+				if not rooted(f) and not _x_passo(f).is_empty():
+					out.append(f.pos())
+		"x_suprimento":
+			var hs2 = {}
+			for f in _fac_units(p, "FAU"):
+				for h in DB.hexes:
+					if DB.dist(h, f.pos()) <= 2 and is_free(h) and valid_ground(h) and not bananas.has(h):
+						hs2[h] = true
+			out = hs2.keys()
+		"x_caminhos":
+			for f in _fac_units(p, "FAU"):
+				if not rooted(f) and _fac_units(p, "FAU").any(func(o): return o != f and DB.dist(o.pos(), f.pos()) == 1 and not rooted(o) and not _x_caminhos_plano(f, o).is_empty()):
+					out.append(f.pos())
+		"x_ritmo":
+			if u != null and fac_u(u) == "FAU" and int(act.get("passos", 0)) >= 2 and not act["attacked"] and not act["cant_attack"]:
+				out.append(u.pos())
+		"x_pressao":
+			if u != null and fac_u(u) == "ABY" and not act["attacked"] and not act["cant_attack"]:
+				out.append(u.pos())
+		"x_esporao":
+			var hs3 = {}
+			for z in czones.filter(func(z0): return int(z0["owner"]) == p and int(z0["until"]) >= round_no):
+				for h in DB.nbrs(z["h"]):
+					if is_free(h) and valid_ground(h) and czone_owner(h) != p:
+						hs3[h] = true
+			out = hs3.keys()
+		"x_semente":
+			var hs4 = {}
+			for l in _fac_units(p, "LIT"):
+				for h in adj_free(l.pos()):
+					if valid_ground(h) and czone_owner(h) != p:
+						hs4[h] = true
+			out = hs4.keys()
+		"x_ocupacao":
+			for l in _fac_units(p, "LIT"):
+				if czone_owner(l.pos()) == p and not l.fx.any(func(f): return f["k"] == "coat" and f.get("h", null) == l.pos()):
+					out.append(l.pos())
+		"x_escora":
+			var hs5 = {}
+			for v in _fac_units(p, "TER"):
+				for h in DB.nbrs(v.pos()):
+					if tt_of(terr(h)["k"]).get("pass", 0) and h_of(h) > h_of(v.pos()) and not escoras.has(h):
+						hs5[h] = true
+			out = hs5.keys()
+		"x_desvio_trilho":
+			for i in range(carts.size()):
+				if not carts[i].get("rev", false) and _fac_units(p, "TER").any(func(v): return DB.dist(v.pos(), carts[i]["h"]) == 1):
+					out.append(carts[i]["h"])
+		"x_passagem":
+			var hs6 = {}
+			for v in _fac_units(p, "TER"):
+				for h in DB.nbrs(v.pos()):
+					if tt_of(terr(h)["k"]).get("pass", 0) and int(tt_of(terr(h)["k"]).get("c", 1)) >= 2 and not passagens.has(h):
+						hs6[h] = true
+			out = hs6.keys()
+		"x_ferramenta":
+			if u != null and fac_u(u) == "TER" and not act["attacked"] and not act["cant_attack"]:
+				out.append(u.pos())
+	return out
+
+
+func _x_pares_troca(k) -> Array:
+	return _fac_units(k.owner, "KRI").filter(func(o): return o != k and DB.dist(o.pos(), k.pos()) == 1 and not rooted(o) and not rooted(k) \
+		and can_step(k.pos(), o.pos(), K(k).has("climbAll")) and can_step(o.pos(), k.pos(), K(o).has("climbAll"))).map(func(o): return o.pos())
+
+
+func _x_passo(u) -> Array:
+	return step_free(u.pos()).filter(func(h): return can_step(u.pos(), h, K(u).has("climbAll")))
+
+
+func _x_sentinela_dest(w2) -> Array:
+	var out = {}
+	for o in _fac_units(w2.owner, "WAC"):
+		if o == w2 or DB.dist(o.pos(), w2.pos()) > 3:
+			continue
+		for h in _x_passo(w2):
+			if DB.dist(h, o.pos()) == 1 and DB.dist(h, o.pos()) < DB.dist(w2.pos(), o.pos()):
+				out[h] = true
+	return out.keys()
+
+
+func _x_desvio_dest(z) -> Array:
+	return DB.hexes.filter(func(h): return DB.dist(h, z.pos()) >= 1 and DB.dist(h, z.pos()) <= 2 and is_free(h) and valid_ground(h) and can_enter(z, h) and not cart_at(h))
+
+
+func _x_janela_dest(z) -> Array:
+	var out = {}
+	for x in allies_of(z).filter(func(y): return not y.barrier and DB.dist(y.pos(), z.pos()) == 1):
+		for h in adj_free(x.pos()):
+			if h != z.pos() and valid_ground(h) and can_enter(z, h) and not cart_at(h):
+				out[h] = true
+	return out.keys()
+
+
+# Caminhos Separados: lista de [destino de f, destino de o] que afastam os dois
+func _x_caminhos_plano(f, o) -> Array:
+	var out = []
+	for d1 in _x_passo(f):
+		if DB.dist(d1, o.pos()) <= DB.dist(f.pos(), o.pos()):
+			continue
+		for d2 in _x_passo(o):
+			if d2 != d1 and DB.dist(d2, d1) > DB.dist(o.pos(), d1):
+				out.append([d1, d2])
+	return out
+
+
+func x_playable(p: int, id: String) -> bool:
+	return not x_targets(p, id).is_empty()
+
+
+# executa uma exclusiva ativa (já validada); u = peça que está agindo
+func _x_play(p: int, id: String, u, drop: Variant) -> void:
+	var opts = x_targets(p, id)
+	var nmc = DB.tactics[id]["name"]
+	var pick = func(texto: String, arr: Array, kind: String):
+		if drop != null and arr.has(drop):
+			var d0 = drop
+			drop = null
+			return d0
+		return await pick_hex(p, "%s: %s" % [nmc, texto], arr, kind)
+	match id:
+		"x_fogo_cruzado":
+			var h = await pick.call("escolha o inimigo já atingido por um Krieg.", opts, "enemy")
+			var t = unit_at(h)
+			t.fx.append({"k": "xfire", "v": 2, "until": "end", "own": p, "ex": _hits_by(t, p, "KRI")})
+			abfx("mark", h, u.uid)
+			log_msg(p, "Fogo Cruzado: o próximo ataque de outro Krieg em %s causa +2." % nm(t))
+		"x_marcacao":
+			var h2 = await pick.call("marque o inimigo.", opts, "enemy")
+			var t2 = unit_at(h2)
+			var ks = _fac_units(p, "KRI").filter(func(k): return DB.dist(k.pos(), h2) <= 3 and los(k.pos(), h2))
+			ks.sort_custom(func(x, y): return DB.dist(x.pos(), h2) < DB.dist(y.pos(), h2))
+			t2.fx.append({"k": "campo", "v": 1, "until": "end", "own": p, "ex": [ks[0].uid] if not ks.is_empty() else []})
+			abfx("mark", h2, u.uid)
+			log_msg(p, "Marcação de Campo: o próximo tiro de outro Krieg em %s causa +1." % nm(t2))
+		"x_retirada_ordem":
+			var h3 = await pick.call("escolha o primeiro Krieg.", opts, "ally")
+			var k1 = unit_at(h3)
+			var h4 = await pick_hex(p, "Retirada em Ordem: com qual Krieg ao lado ele troca?", _x_pares_troca(k1), "ally")
+			var k2 = unit_at(h4)
+			abfx("dash", h3, k1.uid)
+			log_msg(p, "Retirada em Ordem: %s e %s trocam de lugar." % [nm(k1), nm(k2)])
+			await _swap(k1, k2)
+		"x_retomar":
+			var h5 = await pick.call("escolha o Watcher que avança para o núcleo.", opts, "ally")
+			var w5 = unit_at(h5)
+			abfx("dash", h5, w5.uid)
+			log_msg(p, "Retomar o Perímetro: %s ocupa o núcleo." % nm(w5))
+			await move_unit(w5, core)
+		"x_linha_escudos":
+			var h6 = await pick.call("escolha o primeiro Watcher.", opts, "ally")
+			var w6 = unit_at(h6)
+			var par6 = _fac_units(p, "WAC").filter(func(o): return o != w6 and DB.dist(o.pos(), w6.pos()) == 1).map(func(o): return o.pos())
+			var h7 = await pick_hex(p, "Linha de Escudos: e o Watcher ao lado dele?", par6, "ally")
+			for w7 in [w6, unit_at(h7)]:
+				w7.fx.append({"k": "coat", "v": 1, "until": "end"})
+				abfx("buff", w7.pos(), w7.uid)
+			log_msg(p, "Linha de Escudos: os dois Watcher levam 1 a menos no próximo golpe.")
+		"x_troca_sentinela":
+			var h8 = await pick.call("escolha o Watcher que se move.", opts, "ally")
+			var w8 = unit_at(h8)
+			var d8 = await pick_hex(p, "Troca de Sentinela: para qual casa (ao lado do outro Watcher)?", _x_sentinela_dest(w8), "move")
+			await move_unit(w8, d8)
+			if w8.st == "field":
+				w8.fx.append({"k": "coat", "v": 1, "until": "end"})
+				abfx("buff", w8.pos(), w8.uid)
+			log_msg(p, "Troca de Sentinela: %s fecha a linha (-1 no próximo golpe)." % nm(w8))
+		"x_desvio":
+			var h9 = await pick.call("escolha o Zukunft.", opts, "ally")
+			var z9 = unit_at(h9)
+			var d9 = await pick_hex(p, "Desvio Portalis: para onde ele salta (até 2 casas)?", _x_desvio_dest(z9), "move")
+			abfx("portal", h9, z9.uid)
+			abfx("portal", d9, z9.uid)
+			log_msg(p, "Desvio Portalis: %s atravessa o obstáculo." % nm(z9))
+			await move_unit(z9, d9)
+		"x_holo":
+			var h10 = await pick.call("escolha a casa da projeção (ao lado de um Zukunft).", opts, "place")
+			holos.append({"h": h10, "owner": p, "till": round_no})
+			abfx("veil", h10, u.uid)
+			log_msg(p, "Projeção Holográfica: o primeiro tiro inimigo que cruzar a casa será bloqueado.")
+		"x_janela":
+			var h11 = await pick.call("escolha o Zukunft.", opts, "ally")
+			var z11 = unit_at(h11)
+			var d11 = await pick_hex(p, "Janela de Salto: para qual casa ao lado do aliado?", _x_janela_dest(z11), "move")
+			abfx("portal", h11, z11.uid)
+			log_msg(p, "Janela de Salto: %s salta." % nm(z11))
+			await move_unit(z11, d11)
+		"x_revezamento":
+			var h12 = await pick.call("escolha o Fauriano que avança.", opts, "ally")
+			var f12 = unit_at(h12)
+			var d12 = await pick_hex(p, "Revezamento dos Clãs: para onde ele anda?", _x_passo(f12), "move")
+			await move_unit(f12, d12)
+			if winner != NONE:
+				return
+			var seg = _fac_units(p, "FAU").filter(func(o): return o != f12 and DB.dist(o.pos(), h12) == 1 and not rooted(o) and is_free(h12) and can_step(o.pos(), h12, K(o).has("climbAll"))).map(func(o): return o.pos())
+			if not seg.is_empty():
+				var h13 = await pick_hex(p, "Revezamento dos Clãs: outro Fauriano ocupa a casa deixada (ou pule).", seg, "ally", true)
+				if h13 != null:
+					await move_unit(unit_at(h13), h12)
+			log_msg(p, "Revezamento dos Clãs.")
+		"x_suprimento":
+			var h14 = await pick.call("escolha a casa da banana (até 2 casas de um Fauriano).", opts, "place")
+			bananas[h14] = {"t": "sup", "p": p, "till": round_no + 1}
+			emitfx({"t": "bananas"})
+			abfx("buff", h14, u.uid)
+			log_msg(p, "Suprimento de Campo: uma banana espera um Fauriano (cura 2).")
+		"x_caminhos":
+			var h15 = await pick.call("escolha o primeiro Fauriano.", opts, "ally")
+			var f15 = unit_at(h15)
+			var outros = _fac_units(p, "FAU").filter(func(o): return o != f15 and DB.dist(o.pos(), f15.pos()) == 1 and not rooted(o) and not _x_caminhos_plano(f15, o).is_empty())
+			var h16 = await pick_hex(p, "Caminhos Separados: e o Fauriano ao lado?", outros.map(func(o): return o.pos()), "ally")
+			var f16 = unit_at(h16)
+			var plano = _x_caminhos_plano(f15, f16)
+			var d1s = {}
+			for pl in plano:
+				d1s[pl[0]] = true
+			var d15 = await pick_hex(p, "Caminhos Separados: para onde vai %s?" % nm(f15), d1s.keys(), "move")
+			var d2s = plano.filter(func(pl): return pl[0] == d15).map(func(pl): return pl[1])
+			var d16 = await pick_hex(p, "Caminhos Separados: e %s?" % nm(f16), d2s, "move")
+			await move_unit(f15, d15)
+			if winner == NONE and f16.st == "field" and is_free(d16):
+				await move_unit(f16, d16)
+			log_msg(p, "Caminhos Separados: os dois se espalham.")
+		"x_ritmo":
+			act["fogo"] = int(act["fogo"]) + 1
+			abfx("buff", u.pos(), u.uid)
+			log_msg(p, "Ritmo de Caça: o próximo ataque de %s causa +1." % nm(u))
+		"x_pressao":
+			act["pressao"] = true
+			abfx("buff", u.pos(), u.uid)
+			log_msg(p, "Pressão da Maré: +1 no próximo ataque de %s se o alvo tiver outro Abyssal ao lado." % nm(u))
+		"x_esporao", "x_semente":
+			var h17 = await pick.call("escolha a casa que vira Zona de Cristal.", opts, "place")
+			add_czone(p, h17, 1)
+			log_msg(p, "%s: nova Zona de Cristal até o fim do round." % nmc)
+		"x_ocupacao":
+			var h18 = await pick.call("escolha o Lithari sobre a Zona de Cristal.", opts, "ally")
+			var l18 = unit_at(h18)
+			l18.fx.append({"k": "coat", "v": 1, "until": "end", "h": h18})
+			abfx("buff", h18, l18.uid)
+			log_msg(p, "Ocupação Cristalina: %s leva 1 a menos no próximo golpe, se ficar na casa." % nm(l18))
+		"x_escora":
+			var h19 = await pick.call("escolha a subida ao lado de um Valakiano.", opts, "place")
+			escoras[h19] = round_no + 1
+			abfx("barrier", h19, u.uid)
+			log_msg(p, "Escora de Emergência: a subida fica 1 nível mais fácil até o fim do round (para os dois lados).")
+		"x_desvio_trilho":
+			var h20 = await pick.call("escolha o carrinho.", opts, "place")
+			for c in carts:
+				if c["h"] == h20:
+					c["rev"] = true
+			log_msg(p, "Desvio de Trilho: o próximo empurrão desse carrinho vai para o outro lado.")
+		"x_passagem":
+			var h21 = await pick.call("escolha a casa de terreno difícil.", opts, "place")
+			passagens[h21] = round_no + 1
+			abfx("barrier", h21, u.uid)
+			log_msg(p, "Passagem Escorada: entrar nessa casa custa 1 a menos até o fim do round (para os dois lados).")
+		"x_ferramenta":
+			act["ferramenta"] = true
+			abfx("buff", u.pos(), u.uid)
+			log_msg(p, "Ferramenta de Reserva: +2 no próximo ataque de %s contra barreira, cristal ou estrutura." % nm(u))
+
+
+# ---- bônus no ataque (Fogo Cruzado, Marcação, Pressão da Maré, Ferramenta) ----
+func _x_bonus_atk(a, t, ranged: bool) -> int:
+	var b = 0
+	var p = a.owner
+	if fac_u(a) == "KRI":
+		for f in t.fx:
+			if f["k"] == "xfire" and int(f["own"]) == p and not f["ex"].has(a.uid):
+				b += int(f["v"])
+				t.fx.erase(f)
+				log_msg(p, "Fogo Cruzado: +%d." % int(f["v"]))
+				break
+		if ranged:
+			for f2 in t.fx:
+				if f2["k"] == "campo" and int(f2["own"]) == p and not f2["ex"].has(a.uid):
+					b += int(f2["v"])
+					t.fx.erase(f2)
+					log_msg(p, "Marcação de Campo: +1.")
+					break
+	if act != null and act["uid"] == a.uid:
+		if act.get("pressao", false):
+			act["pressao"] = false
+			if allies_of(a).any(func(x): return x != a and fac_u(x) == "ABY" and DB.dist(x.pos(), t.pos()) == 1):
+				b += 1
+				log_msg(p, "Pressão da Maré: +1.")
+		if act.get("ferramenta", false):
+			act["ferramenta"] = false
+			if t.barrier or t.crystal != "" or t.block:
+				b += 2
+				log_msg(p, "Ferramenta de Reserva: +2 contra a estrutura.")
+	return b
+
+
+# Projeção Holográfica no caminho do tiro? (índice em holos ou -1)
+func _holo_bloqueia(a, t) -> int:
+	if holos.is_empty():
+		return -1
+	var hs = line_hexes(a.pos(), t.pos(), 1e-6)
+	for i in range(holos.size()):
+		var ho = holos[i]
+		if int(ho["owner"]) == a.owner or int(ho["till"]) < round_no:
+			continue
+		for k in range(1, hs.size() - 1):
+			if hs[k] == ho["h"]:
+				return i
+	return -1
+
+
+# Interposição: outro Watcher ao lado absorve até 2 do golpe corpo a corpo
+func _x_interposicao(a, target, dealt: int, ranged: bool) -> int:
+	var d = target.owner
+	if ranged or dealt <= 0 or target.barrier or d > 1 or fac_u(target) != "WAC" or act == null or act["reacted"] or not P[d]["hand"].has("x_interposicao"):
+		return dealt
+	var ws = _fac_units(d, "WAC").filter(func(o): return o != target and DB.dist(o.pos(), target.pos()) == 1)
+	if ws.is_empty():
+		return dealt
+	var h = await ask(d, {"t": "hex", "text": "Interposição: um Watcher ao lado de %s absorve até 2 dos %d de dano?" % [nm(target), dealt], "opts": ws.map(func(o): return o.pos()), "optional": true, "kind": "ally", "card": "x_interposicao", "xr": true})
+	if h == null or unit_at(h) == null:
+		return dealt
+	var w = unit_at(h)
+	take_card(d, "x_interposicao")
+	act["reacted"] = true
+	var ab = min(2, dealt)
+	abfx("guarda", h, w.uid)
+	log_msg(d, "Interposição: %s absorve %d do golpe." % [nm(w), ab])
+	damage(w, ab, a)
+	return dealt - ab
+
+
+# Fechar o Cerco: depois de um puxão Abyssal, outro Abyssal a até 2 casas se aproxima do puxado
+func _x_cerco(p: int, t) -> void:
+	if p > 1 or not P[p]["hand"].has("x_cerco") or t.st != "field":
+		return
+	var movs = {}
+	for x in _fac_units(p, "ABY"):
+		if DB.dist(x.pos(), t.pos()) > 2 or rooted(x):
+			continue
+		for h in _x_passo(x):
+			if DB.dist(h, t.pos()) < DB.dist(x.pos(), t.pos()):
+				movs[x.pos()] = true
+	if movs.is_empty():
+		return
+	var hx = await ask(p, {"t": "hex", "text": "Fechar o Cerco: um Abyssal a até 2 casas de %s se aproxima 1 casa (ou pule)." % nm(t), "opts": movs.keys(), "optional": true, "kind": "ally", "card": "x_cerco", "xr": true})
+	if hx == null or unit_at(hx) == null:
+		return
+	var x2 = unit_at(hx)
+	var ds = _x_passo(x2).filter(func(h): return DB.dist(h, t.pos()) < DB.dist(x2.pos(), t.pos()))
+	if ds.is_empty():
+		return
+	var dh = await pick_hex(p, "Fechar o Cerco: para onde %s anda?" % nm(x2), ds, "move")
+	take_card(p, "x_cerco")
+	log_msg(p, "Fechar o Cerco: %s aperta o cerco." % nm(x2))
+	await move_unit(x2, dh)
+
+
+# reações depois do ataque: Corrente de Arrasto, Reação em Cadeia, Cobrir a Retirada, Relé, Maré de Recuo
+func _x_pos_ataque(a, target, dealt: int) -> void:
+	var p = a.owner
+	var d = 1 - p
+	var A = act
+	if A == null:
+		return
+	# Reação em Cadeia (Lithari): o inimigo quebrou um cristal
+	if target.crystal != "" and target.st == "dead" and P[d]["hand"].has("x_reacao_cadeia"):
+		var zc = adj_free(target.pos()).filter(func(h): return valid_ground(h) and czone_owner(h) != d)
+		if not zc.is_empty():
+			var hz = await ask(d, {"t": "hex", "text": "Reação em Cadeia: uma casa ao lado do cristal vira Zona de Cristal até o fim do round?", "opts": zc, "optional": true, "kind": "place", "card": "x_reacao_cadeia", "xr": true})
+			if hz != null:
+				take_card(d, "x_reacao_cadeia")
+				add_czone(d, hz, 1)
+				log_msg(d, "Reação em Cadeia: o cristal quebrado espalha uma Zona de Cristal.")
+	if a.st != "field" or winner != NONE:
+		return
+	# Corrente de Arrasto (Abyssais): acertou -> puxa 1 casa
+	if fac_u(a) == "ABY" and dealt > 0 and target.st == "field" and not target.barrier and not A["tactic"] and P[p]["hand"].has("x_corrente"):
+		var ops = step_free(target.pos()).filter(func(h): return DB.dist(h, a.pos()) < DB.dist(target.pos(), a.pos()))
+		if not ops.is_empty():
+			var hc = await ask(p, {"t": "hex", "text": "Corrente de Arrasto: puxar %s 1 casa em direção a %s?" % [nm(target), nm(a)], "opts": ops, "optional": true, "kind": "move", "card": "x_corrente", "xr": true})
+			if hc != null:
+				take_card(p, "x_corrente")
+				A["tactic"] = true
+				abfx("hook", target.pos(), a.uid)
+				log_msg(p, "Corrente de Arrasto: %s é puxado." % nm(target))
+				await move_unit(target, hc)
+				if winner == NONE:
+					await _x_cerco(p, target)
+				return
+	if A["tactic"] or winner != NONE or a.st != "field":
+		return
+	# Cobrir a Retirada (Krieg): outro Krieg ao lado anda 1
+	if fac_u(a) == "KRI" and P[p]["hand"].has("x_cobrir"):
+		var ks = _fac_units(p, "KRI").filter(func(o): return o != a and DB.dist(o.pos(), a.pos()) == 1 and not rooted(o) and not _x_passo(o).is_empty())
+		if not ks.is_empty():
+			var hk = await ask(p, {"t": "hex", "text": "Cobrir a Retirada: outro Krieg ao lado de %s anda 1 casa?" % nm(a), "opts": ks.map(func(o): return o.pos()), "optional": true, "kind": "ally", "card": "x_cobrir", "xr": true})
+			if hk != null and unit_at(hk) != null:
+				var k2 = unit_at(hk)
+				var dk = await pick_hex(p, "Cobrir a Retirada: para onde %s anda?" % nm(k2), _x_passo(k2), "move")
+				take_card(p, "x_cobrir")
+				A["tactic"] = true
+				log_msg(p, "Cobrir a Retirada: %s se reposiciona." % nm(k2))
+				await move_unit(k2, dk)
+				return
+	# Relé de Extração (Zukunft): anda 1 para perto de outro Zukunft a até 3
+	if fac_u(a) == "ZUK" and not rooted(a) and P[p]["hand"].has("x_rele"):
+		var zs = _fac_units(p, "ZUK").filter(func(o): return o != a and DB.dist(o.pos(), a.pos()) <= 3)
+		var dz = _x_passo(a).filter(func(h): return zs.any(func(o): return DB.dist(h, o.pos()) < DB.dist(a.pos(), o.pos())))
+		if not dz.is_empty():
+			var hz2 = await ask(p, {"t": "hex", "text": "Relé de Extração: %s anda 1 casa para perto de outro Zukunft?" % nm(a), "opts": dz, "optional": true, "kind": "move", "card": "x_rele", "xr": true})
+			if hz2 != null:
+				take_card(p, "x_rele")
+				A["tactic"] = true
+				log_msg(p, "Relé de Extração: %s se reposiciona." % nm(a))
+				await move_unit(a, hz2)
+				return
+	# Maré de Recuo (Abyssais): recua 1 para longe do alvo e deixa tinta
+	if fac_u(a) == "ABY" and not rooted(a) and P[p]["hand"].has("x_mare_recuo"):
+		var tp = target.pos()
+		var dr = _x_passo(a).filter(func(h): return DB.dist(h, tp) > DB.dist(a.pos(), tp))
+		if not dr.is_empty():
+			var hr = await ask(p, {"t": "hex", "text": "Maré de Recuo: %s recua 1 casa e deixa tinta (bloqueia tiros até o fim do round)?" % nm(a), "opts": dr, "optional": true, "kind": "move", "card": "x_mare_recuo", "xr": true})
+			if hr != null:
+				var orig = a.pos()
+				take_card(p, "x_mare_recuo")
+				A["tactic"] = true
+				smokes.append({"h": orig, "till": round_no})
+				abfx("ink", orig, a.uid)
+				log_msg(p, "Maré de Recuo: %s recua e deixa tinta." % nm(a))
+				await move_unit(a, hr)

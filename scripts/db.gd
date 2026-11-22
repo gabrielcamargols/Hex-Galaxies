@@ -8,6 +8,8 @@ var cards: Dictionary = {}        # id -> carta
 var card_list: Array = []
 var tactics: Dictionary = {}      # id -> tática
 var tactic_ids: Array = []
+var excl_ids: Array = []          # exclusivas de facção (modo Disputa)
+var disputa_pares: Array = []     # pares públicos de genéricas do draft
 var maps: Dictionary = {}
 var tt: Dictionary = {}           # tipos de terreno
 var res: Dictionary = {}          # recursos
@@ -47,6 +49,11 @@ func _ready() -> void:
 	for t in c["tactics"]:
 		tactics[t["id"]] = t
 		tactic_ids.append(t["id"])
+	# táticas exclusivas de facção (Disputa pela Hex Energy): entram no catálogo, mas não no baralho comum
+	for t in c.get("tactics_ex", []):
+		tactics[t["id"]] = t
+		excl_ids.append(t["id"])
+	disputa_pares = c.get("disputa_pares", [])
 	var m = _ints(JSON.parse_string(FileAccess.get_file_as_string("res://data/maps.json")))
 	R = int(m["radius"])
 	maps = m["maps"]
@@ -84,10 +91,17 @@ func _ints(v) -> Variant:
 var cur_map: String = ""
 
 
-func set_map(id: String) -> void:
-	if id == cur_map or not maps.has(id):
+var cur_troca: bool = false
+var troca_padrao: bool = false   # Disputa com os Invasores no lado 1: as entradas trocam de lado
+
+
+# troca = true: as entradas trocam de lado (Disputa: a zona de início acompanha o papel)
+func set_map(id: String, troca_v: Variant = null) -> void:
+	var troca: bool = troca_padrao if troca_v == null else bool(troca_v)
+	if (id == cur_map and troca == cur_troca) or not maps.has(id):
 		return
 	cur_map = id
+	cur_troca = troca
 	var d = maps[id]
 	var sh = d.get("shape", {"q": 6, "r": 6, "s": 6})
 	SQ = int(sh["q"])
@@ -96,6 +110,8 @@ func set_map(id: String) -> void:
 	entry_c = []
 	for ec in d.get("entry_centers", [{"q": 3, "r": -6}, {"q": -3, "r": 6}]):
 		entry_c.append(Vector2i(int(ec["q"]), int(ec["r"])))
+	if troca:
+		entry_c.reverse()
 	hexes = []
 	for q in range(-R, R + 1):
 		for r in range(-R, R + 1):
@@ -171,6 +187,11 @@ func _lado_a_lado(e: Array, c: Vector2i) -> Array:
 			out.append(e[k])
 	out.append(e[best[1]])
 	return out
+
+
+# exclusivas de uma facção
+func excl_of(fac: String) -> Array:
+	return excl_ids.filter(func(i): return tactics[i].get("fac", "") == fac)
 
 
 func in_entry(p: int, h: Vector2i) -> bool:
