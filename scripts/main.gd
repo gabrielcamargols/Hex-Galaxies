@@ -2621,8 +2621,9 @@ func _build_hud() -> void:
 	_place(topcol, Control.PRESET_CENTER_TOP, 6)
 	topcol.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var top = _panel(topcol)
-	var tv = _vbox(top, 2)
-	w["title"] = _label(tv, "", 22, C_GOLD)
+	var tv = _hbox(top, 14)   # uma linha só: round e vez, e ao lado só o que está valendo agora
+	tv.alignment = BoxContainer.ALIGNMENT_CENTER
+	w["title"] = _label(tv, "", 20, C_GOLD)
 	w["title"].horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	w["events"] = _label(tv, "", 14, Color("#ffcf9a"))
 	w["events"].horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -2679,8 +2680,7 @@ func _build_hud() -> void:
 	_chip(lg, C_DEPLOY, "Entrar em campo")
 	_chip(lg, Color(0.12, 0.1, 0.08), "Fora de alcance (clique: por quê?)")
 	w["legend"] = lg
-	if compact:
-		lg.visible = false
+	lg.visible = false   # legenda fixa poluía: as cores falam por si e o aviso diz o que fazer
 	# perguntas e prévias (logo abaixo dos avisos)
 	var pr = _panel(topcol)
 	pr.custom_minimum_size = Vector2(min(560.0, vw.x * 0.48), 0)
@@ -2826,6 +2826,7 @@ func _portrait_hud() -> void:
 	# em telas estreitas o título e os avisos quebram linha em vez de alargar a barra
 	for k in ["title", "events", "note"]:
 		w[k].autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		w[k].size_flags_horizontal = Control.SIZE_EXPAND_FILL   # dentro da linha do topo não pode encolher a zero
 		w[k].custom_minimum_size = Vector2(vw.x - 48.0, 0)
 	w["events"].add_theme_font_size_override("font_size", 12)
 	# ficha da peça mais enxuta (não cobre o tabuleiro)
@@ -3297,7 +3298,7 @@ func _tick_clock(delta: float) -> void:
 func _refresh_top() -> void:
 	var who = "Você" if game.cur == me else _opp()
 	var status = "Fim de jogo" if game.winner != Game.NONE else ("Sua vez" if game.cur == me else ("Vez do " + _opp().to_lower() + (" (jogando...)" if busy or opp_thinking else "")))
-	title_base = "%s  ·  Round %d/%d  ·  %s" % [game.map_name, game.round_no, Game.LAST_ROUND, status]
+	title_base = "Round %d/%d  ·  %s" % [game.round_no, Game.LAST_ROUND, status]
 	if portrait:
 		title_base = "Round %d/%d  ·  %s" % [game.round_no, Game.LAST_ROUND, status]
 	_apply_title()
@@ -3308,35 +3309,23 @@ func _refresh_top() -> void:
 		var vm = int(game.vrule("vib_max", 5))
 		ev.append("VIBRAÇÃO %s %d/%d%s" % ["●".repeat(game.vib) + "○".repeat(max(0, vm - game.vib)), game.vib, vm, "  ⚠ A GARRA VAI ATACAR" if game.vib >= vm - 1 else ""])
 	if game.storm_on():
-		ev.append("TEMPESTADE DE AREIA: ATAQUES -2")
+		ev.append("Tempestade: ataques -2")
 	if game.rain_on():
-		ev.append("CHUVA: ATAQUES -3" + (" · INCÊNDIO: PERTO = -1 VIDA/ROUND" if not game.fire.is_empty() else ""))
-	elif not game.fire.is_empty():
-		ev.append("INCÊNDIO: PERTO = -1 VIDA/ROUND")
+		ev.append("Chuva: ataques -3")
+	if not game.fire.is_empty():
+		ev.append("Fogo: -1 Vida perto dele")
 	var def = DB.maps[game.map_id]
 	if def.has("dunes"):
 		if game.dune_next >= 0:
-			ev.append("DUNAS MUDAM NO PRÓXIMO ROUND")
-		else:
-			var nd = game.round_no + 1
-			while (nd - 1) % Game.DUNE_EVERY != 0:
-				nd += 1
-			if nd <= 10:
-				ev.append("Dunas mudam no round %d" % nd)
+			ev.append("Dunas mudam no próximo round")
 	if def.get("worms", false):
 		if not game.tremors.is_empty():
-			ev.append("TREMOR: VERMES NO PRÓXIMO ROUND")
-		else:
-			var wr = game.round_no + 1
-			while not game.worm_round(wr):
-				wr += 1
-			if wr <= 10:
-				ev.append("Vermes no round %d" % wr)
+			ev.append("Vermes no próximo round")
 	if game.core != null:
-		ev.insert(0, "HEX ENERGY ativa até o round %d" % game.core_until)
+		ev.insert(0, "Hex Energy até o round %d" % game.core_until)
 	elif game.core_next != null:
-		ev.insert(0, "Hex Energy surge no round %d" % game.core_next_round)
-	w["events"].text = "   ·   ".join(ev)
+		ev.insert(0, "Hex Energy no round %d" % game.core_next_round)
+	w["events"].text = ("|   " if not ev.is_empty() else "") + "   ·   ".join(ev)
 	w["events"].visible = not ev.is_empty()
 
 
@@ -3784,7 +3773,7 @@ func _refresh_actbar() -> void:
 	if w.has("abp"):
 		w["abp"].visible = u != null
 	w["why"].text = "  ·  ".join(why)
-	w["legend"].visible = mine and (u != null or dsel >= 0) and not portrait
+	w["legend"].visible = false
 	w["why"].visible = not portrait
 	var e = w["end"]
 	var acting = game.act != null and mine

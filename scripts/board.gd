@@ -3915,13 +3915,13 @@ func _apply_overlay(h: Vector2i) -> void:
 		"pk":
 			col = Color(0.80, 0.58, 1.0, 0.92)
 		"sel":
-			col = Color(0.31, 0.82, 1.0, 0.6)
+			col = Color(1.0, 1.0, 1.0, 0.5)    # selecionado: branco (azul-claro é entrar em campo)
 		"prev":
 			col = Color(0.49, 0.55, 0.95, 0.3)
 		"no":
 			col = Color(1.0, 0.25, 0.2, 0.45)
 		"tgt":
-			col = Color(1.0, 0.48, 0.24, 0.7)
+			col = Color(1.0, 0.2, 0.28, 0.85)  # alvo do ataque: vermelho forte (vermelho = atacar)
 		"trem":
 			col = Color(1.0, 0.48, 0.24, 0.45)
 		"danger":
