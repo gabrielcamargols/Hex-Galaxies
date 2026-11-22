@@ -2439,7 +2439,7 @@
     "name": "Barreira de Valak",
     "kind": "ativa",
     "per": "partida",
-    "text": "1x por partida: ergue um muro de 2 a 5 cristais a até 6 casas dele. Clique onde nasce o primeiro e desenhe o resto casa a casa, em reta ou em curva, em qualquer altura; escolha a cor de cada cristal no próprio mapa. O muro bloqueia passagem e tiros até ser quebrado."
+    "text": "1x por partida: ergue um muro de 2 a 5 cristais a até 6 casas dele, casa a casa, em reta ou curva, em qualquer altura. Cada cristal tem a cor que você escolher: vermelho (força/dano), preto (puxa e atordoa), azul-escuro (armadura e confusão) ou ciano (cura em corrente). O efeito muda se quem quebra é aliado ou inimigo do Rei."
    }
   },
   {

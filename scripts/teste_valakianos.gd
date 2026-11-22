@@ -70,6 +70,7 @@ func run() -> void:
 	await _engenheiro()
 	await _rei_barreira()
 	await _rei_cristais()
+	_rei_cores()
 	await _rei_manip()
 	print("TESTE FIM falhas=%d" % falhas)
 
@@ -462,6 +463,80 @@ func _quebra(g: Game, c: Game.Unit) -> void:
 	g.settle()
 
 
+# quebra feita por uma peça (by = uid dela)
+func _quebra_por(g: Game, c: Game.Unit, quem: Game.Unit) -> void:
+	c.hp = 0
+	c.dying = quem.uid
+	g.settle()
+
+
+func _rei_cores() -> void:
+	print("-- Rei da Mina: as 4 cores e o combo")
+	# vermelho
+	var gr = _rei()
+	var g: Game = gr[0]
+	var al = put(g, "t_basalto", 0, 0, 0)
+	var en = put(g, "t_basalto", 1, 2, 0)
+	var atk0 = g.atk_of(al, null)
+	_quebra_por(g, g._make_crystal(0, H(1, 0), "vermelho"), al)
+	ok(g.atk_of(al, null) == atk0 + 2, "vermelho quebrado por aliado: +2 de ATQ (%d -> %d)" % [atk0, g.atk_of(al, null)])
+	var hp0 = en.hp
+	_quebra_por(g, g._make_crystal(0, H(1, 0), "vermelho"), en)
+	ok(en.hp == hp0 - 2, "vermelho quebrado por inimigo: ele perde 2 (%d -> %d)" % [hp0, en.hp])
+	# preto
+	gr = _rei()
+	g = gr[0]
+	g.units = g.units.filter(func(x): return not x.barrier)
+	g.tracks = []
+	g.carts = []
+	var cpos = H(-3, 3)
+	var e2 = put(g, "t_basalto", 1, -3, 5)
+	var a2 = put(g, "t_basalto", 0, -4, 3)
+	var cp = g._make_crystal(0, cpos, "preto")
+	_quebra_por(g, cp, e2)
+	ok(DB.dist(e2.pos(), cpos) == 1 and g.stunned(e2), "preto: inimigo a 2 casas é puxado e não ataca neste round (%s)" % str(e2.pos()))
+	ok(DB.dist(a2.pos(), cpos) == 3 and g.has_fx(a2, "golpe_stun"), "preto: aliado ao lado é lançado 2 casas e ganha golpe que atordoa (%s)" % str(a2.pos()))
+	# azul-escuro
+	gr = _rei()
+	g = gr[0]
+	var a3 = put(g, "t_basalto", 0, 0, 0)
+	_quebra_por(g, g._make_crystal(0, H(1, 0), "anil"), a3)
+	ok(g.has_fx(a3, "armadura"), "azul-escuro quebrado por aliado: armadura de 2")
+	var e3 = put(g, "w_urso", 1, 3, -2)
+	var e3b = put(g, "t_basalto", 1, 3, -1)
+	var hb = e3b.hp
+	_quebra_por(g, g._make_crystal(0, H(2, -2), "anil"), e3)
+	ok(e3b.hp < hb, "azul-escuro quebrado por inimigo: ele bate no próprio aliado mais perto (%d -> %d)" % [hb, e3b.hp])
+	# ciano
+	gr = _rei()
+	g = gr[0]
+	var c1 = put(g, "t_basalto", 0, 0, 0)
+	var c2 = put(g, "t_basalto", 0, 0, 1)
+	var c3 = put(g, "t_basalto", 0, 0, 2)
+	for x in [c1, c2, c3]:
+		x.hp = 1
+	_quebra_por(g, g._make_crystal(0, H(-1, 0), "ciano"), c1)
+	ok(c1.hp == 5 and c2.hp == 4 and c3.hp == 3, "ciano: cura 4 e passa em corrente com 1 a menos (%d/%d/%d)" % [c1.hp, c2.hp, c3.hp])
+	var e4 = put(g, "t_basalto", 1, 3, 0)
+	e4.hp = 2
+	_quebra_por(g, g._make_crystal(0, H(3, 1), "ciano"), e4)
+	ok(g.heal(e4, 3) == 0, "ciano quebrado por inimigo: sem cura neste round")
+	# combo de cores
+	gr = _rei()
+	g = gr[0]
+	var k1 = g._make_crystal(0, H(0, 0), "vermelho")
+	var k2 = g._make_crystal(0, H(1, 0), "vermelho")
+	var k3 = g._make_crystal(0, H(2, 0), "vermelho")
+	var k4 = g._make_crystal(0, H(3, 0), "preto")
+	_quebra(g, k1)
+	ok(k2.st == "dead" and k3.st == "dead" and k4.st == "field", "combo: cristais da mesma cor encostados quebram juntos (o preto fica)")
+	var n1 = g._make_barrier(Game.NEUTRAL, H(0, 3), 1)
+	n1.crystal = "azul"
+	var n2 = g._make_crystal(0, H(1, 3), "ciano")
+	_quebra(g, n1)
+	ok(n2.st == "dead", "combo: azul natural e ciano do Rei são parecidos e quebram juntos")
+
+
 func _rei_barreira() -> void:
 	print("-- Rei da Mina: Barreira de Valak")
 	var gr = _rei()
@@ -507,7 +582,7 @@ func _rei_barreira() -> void:
 	for k in range(cells.size()):
 		var c = g.unit_at(cells[k])
 		cols.append(c.crystal if c != null else "?")
-	ok(cols == ["verde", "azul", "roxo", "azul", "verde"].slice(0, cells.size()), "cores escolhidas uma a uma: %s" % str(cols))
+	ok(cols == ["vermelho", "preto", "anil", "preto", "vermelho"].slice(0, cells.size()), "cores do Rei escolhidas uma a uma: %s" % str(cols))
 	# o Rei pode parar depois do 2º cristal
 	var gr3 = _rei()
 	var g3: Game = gr3[0]
@@ -593,7 +668,7 @@ func _rei_manip() -> void:
 	modes = g.manip_modes(rei)
 	fila = [modes.find("color"), c.pos(), 1]
 	r = await g.act_manip(rei)
-	ok(r and c.crystal == "roxo" and c.sp_owner == 0, "cor trocada (verde -> roxo, 2ª opção)")
+	ok(r and c.crystal == "preto" and c.sp_owner == 0, "cor trocada para uma cor do Rei (2ª opção: preto)")
 	ok(g.act["actions"] == acts0 - 2, "cada manipulação gasta 1 ação")
 	# rebaixar terreno alto
 	var g2: Game = _rei()[0]

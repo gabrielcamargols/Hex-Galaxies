@@ -569,7 +569,7 @@ static func answer(g, p: int, q: Dictionary) -> Variant:
 			if q.get("kind", "") == "val_color":
 				# alterna verde e roxo (cura/ATQ), com azul no meio
 				var vh = q["h"]
-				return posmod(vh.x - vh.y, 3)
+				return posmod(vh.x - vh.y, 4)
 			if q.get("kind", "") == "manip_color":
 				return 0
 			if q.get("kind", "") == "core":

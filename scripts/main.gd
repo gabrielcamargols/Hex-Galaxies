@@ -26,7 +26,7 @@ const TDESC = {
 }
 const RULES = "[b]Objetivo:[/b] derrotar o Comandante inimigo (ele entra no round 6). No fim do round 12 vence quem tiver mais Vida no Comandante; empate: soma da Vida dos aliados.\n\n[b]Turno:[/b] os lados se alternam ativando 1 peça por vez. Cada peça ativada tem [b]2 ações[/b], e cada tipo só pode ser usado [b]1 vez por turno[/b]: mover 1 vez, atacar 1 vez, usar habilidade ativa (ex.: mover + atacar). [b]Táticas não gastam ação:[/b] cada peça ativada pode jogar 1 carta de graça. Arraste a carta e solte no personagem (ou na casa) destacado para escolher quem recebe o efeito. Habilidades passivas não gastam ação. Colocar uma reserva em campo gasta 1 ação. [b]A área de entrada cresce:[/b] a cada round (no round 1 vai até 1 casa da sua base, no 2 até 2 casas, e assim por diante), sempre na sua metade do mapa. Em cada round, cada lado pode colocar [b]só 1 peça[/b] da reserva em campo.\n\n[b]Chuva (Abnara):[/b] no round 6 começa a chover e a chuva dura 2 rounds (6 e 7), depois passa. Enquanto chove: todos os ataques causam 3 a menos de dano e o céu escurece. Raios caem em casas aleatórias; se acertarem a mata ela pega fogo, o incêndio se espalha pelas árvores vizinhas e quem estiver numa casa em chamas ou ao lado perde 1 de Vida a cada round. A mata queimada vira clareira. Depois que a chuva passa, o incêndio que já começou continua até se apagar.
 
-[b]Altura:[/b] atacar de cima +1 de dano, de baixo -1. Tiros (alcance 2+) de cima ganham +1 de alcance. Corpo a corpo só com até 1 nível de diferença.\n\n[b][color=#c77dff]Hex Energy[/color]:[/b] nos rounds 2, 4, 6 e 8 surge um hexágono roxo de energia que fica 2 rounds. Leve uma peça até ele para capturar: 2 cartas, +2 ATQ ou +4 Vida com defesa. O local da próxima aparece antes, com um contorno roxo no mapa.\n\n[b]Controle Lithari:[/b] [b]Lento[/b] = -1 de Movimento até o fim do round (mínimo 1). [b]Enraizado[/b] = não anda até o fim do próximo round; depois de se soltar, a peça fica imune a novo enraizamento por 1 round. [b]Zona de Cristal[/b] = casas marcadas (\"CRISTAL\") por 2 rounds: inimigo que entra nelas fica Lento. Lithari não são afetados pelas zonas deles.\n\n[b]Impulso:[/b] derrubar uma tropa dá 1 casa de movimento grátis (1 vez por ativação).\n\n[b]Linha de tiro:[/b] uma casa no caminho bloqueia se o topo dela for mais alto que o atacante e o alvo.\n\n[b]Abrigo:[/b] -2 de dano se uma rocha/ruína/ossada ou um carrinho vizinho ao alvo estiver do lado do atacante.\n\n[b]Tarhut (o mapa mais difícil):[/b] as dunas, com até 5 níveis de altura, mudam inteiras a cada 3 rounds (aviso 1 round antes, nos rounds 4, 7 e 10). Elas bloqueiam tiros e dão vantagem de altura; quem estiver no alto quando a duna baixar despenca: 1 de dano, +1 se cair 3 níveis e +1 se cair 5. A cada 3 rounds o [color=#ff6a4a]Verme Gigante[/color] sai da areia (o \"!\" avisa 1 round antes): quem estiver no buraco sofre 4 de dano e quem estiver ao lado, 1. Fuja das casas marcadas! O deserto é enorme.\n\n[b]Valak (caverna de cristais):[/b] um labirinto de cristais que muda a cada partida. Cristais bloqueiam passagem e tiros; um ataque quebra um cristal e o efeito atinge TODOS ao lado: [color=#7dff4a]verde[/color] cura 2, [color=#5ae8ff]azul[/color] dá +1 de Movimento no próximo movimento do round, [color=#ff5ae0]roxo[/color] causa 2 de dano. No centro vive a [color=#ff4ad0]Garra[/color]: andar (+1), atacar ou usar habilidade (+2) a até 3 casas do buraco, ou passar um carrinho por ali (+3), aumenta a VIBRAÇÃO. Em 5, a garra ataca: quem está a 1 casa do buraco é arrastado e morre; a 2 ou 3 casas sofre 2 de dano e é puxado 1 casa. Carrinhos são [b]cobertura móvel[/b]: parados, bloqueiam tiros e dão abrigo (-2 de dano) a quem está ao lado, como uma rocha. Uma peça ao lado gasta 1 ação para empurrar; ele anda até 3 casas no trilho e o primeiro atingido sofre 3 e é empurrado. Leve o carrinho para onde precisa de proteção. [color=#ffb14a]Tempestade de areia:[/color] no round em que o vento muda (3, 6, 9) e no round em que as dunas mudam (4, 7, 10), todos os ataques causam 2 a menos de dano.\n\n[b][color=#c77dff]Disputa pela Hex Energy[/color] (Valak · Mina de Cristais):[/b] modo de 5 rounds com papéis. O mapa é a Mina de Cristais, com o núcleo na base dos Guardiões e os Invasores começando do outro lado. Os [b]Invasores[/b] precisam extrair a energia do núcleo; os [b]Guardiões[/b] seguram até o fim do round 5. Uma tropa invasora no núcleo gasta 1 ação para começar a extração; ela conclui no início da próxima ativação dessa tropa, se ela continuar no núcleo e os Guardiões já tiverem tido a vez (agir ou passar conta). Sair do núcleo, ser empurrado ou cair cancela; levar dano sem sair não. Comandantes entram no round 4 e cair não decide a partida. Antes de começar, cada lado escolhe 3 das 4 táticas exclusivas da facção (segredo até usar) e os dois disputam 2 pares de genéricas em draft: quem escolhe fica com uma e a outra vai para o rival; a prioridade inverte no segundo par. Mão inicial: 5 cartas. Na revanche os papéis trocam.\n\n[b]Escaravelhos Verdes (Tarhut):[/b] basta passar por cima de um (ou parar nele) para guardá-lo, sem gastar ação. [b]1 escaravelho[/b] restaura 6 de Vida de uma peça; [b]2 escaravelhos[/b] deixam uma peça usar a ativa mais uma vez; os que sobrarem no fim somam +1 de Vida ao seu comandante na contagem do último round. Para gastá-los (curar ou reativar), use os botões do escaravelho no painel de exército.\n\n[b]Online:[/b] na tela do exército, toque em \"⚡ Online\". Um jogador cria a sala e passa o código de 6 letras; o outro digita o código e entra. O mapa é o planeta de quem criou a sala. No app instalado (PC/Android), a sala usa o IP da rede local no lugar do código.\n\n[b]Controles:[/b] clique numa peça sua e depois numa casa verde (mover) ou num inimigo vermelho (atacar), ou arraste a peça e solte. Confirme a prévia. Botão direito gira a câmera, arrastar o fundo move o mapa, a roda aproxima. Q/E giram. Enter confirma, Esc cancela.\n\n[b]Toque (tablet/celular):[/b] toque numa peça e numa casa para agir. 1 dedo arrasta o mapa; pinça com 2 dedos aproxima/afasta; girar os 2 dedos gira a câmera; arrastar os 2 dedos para cima/baixo inclina a visão. \"Tudo\" recentraliza."
+[b]Altura:[/b] atacar de cima +1 de dano, de baixo -1. Tiros (alcance 2+) de cima ganham +1 de alcance. Corpo a corpo só com até 1 nível de diferença.\n\n[b][color=#c77dff]Hex Energy[/color]:[/b] nos rounds 2, 4, 6 e 8 surge um hexágono roxo de energia que fica 2 rounds. Leve uma peça até ele para capturar: 2 cartas, +2 ATQ ou +4 Vida com defesa. O local da próxima aparece antes, com um contorno roxo no mapa.\n\n[b]Controle Lithari:[/b] [b]Lento[/b] = -1 de Movimento até o fim do round (mínimo 1). [b]Enraizado[/b] = não anda até o fim do próximo round; depois de se soltar, a peça fica imune a novo enraizamento por 1 round. [b]Zona de Cristal[/b] = casas marcadas (\"CRISTAL\") por 2 rounds: inimigo que entra nelas fica Lento. Lithari não são afetados pelas zonas deles.\n\n[b]Impulso:[/b] derrubar uma tropa dá 1 casa de movimento grátis (1 vez por ativação).\n\n[b]Linha de tiro:[/b] uma casa no caminho bloqueia se o topo dela for mais alto que o atacante e o alvo.\n\n[b]Abrigo:[/b] -2 de dano se uma rocha/ruína/ossada ou um carrinho vizinho ao alvo estiver do lado do atacante.\n\n[b]Tarhut (o mapa mais difícil):[/b] as dunas, com até 5 níveis de altura, mudam inteiras a cada 3 rounds (aviso 1 round antes, nos rounds 4, 7 e 10). Elas bloqueiam tiros e dão vantagem de altura; quem estiver no alto quando a duna baixar despenca: 1 de dano, +1 se cair 3 níveis e +1 se cair 5. A cada 3 rounds o [color=#ff6a4a]Verme Gigante[/color] sai da areia (o \"!\" avisa 1 round antes): quem estiver no buraco sofre 4 de dano e quem estiver ao lado, 1. Fuja das casas marcadas! O deserto é enorme.\n\n[b]Valak (caverna de cristais):[/b] um labirinto de cristais que muda a cada partida. Cristais bloqueiam passagem e tiros; um ataque quebra um cristal e o efeito atinge TODOS ao lado: [color=#7dff4a]verde[/color] cura 2, [color=#5ae8ff]azul[/color] dá +1 de Movimento no próximo movimento do round, [color=#ff5ae0]roxo[/color] causa 2 de dano. No centro vive a [color=#ff4ad0]Garra[/color]: andar (+1), atacar ou usar habilidade (+2) a até 3 casas do buraco, ou passar um carrinho por ali (+3), aumenta a VIBRAÇÃO. Em 5, a garra ataca: quem está a 1 casa do buraco é arrastado e morre; a 2 ou 3 casas sofre 2 de dano e é puxado 1 casa. [b]Combo de cores:[/b] cristais da mesma cor (ou parecida, como azul e ciano) encostados quebram todos juntos, cada um com seu efeito. [b]Cristais do Rei da Mina:[/b] [color=#ff3a3a]vermelho[/color] = aliado que quebra ganha +2 de ATQ, inimigo que quebra perde 2 de Vida, arremessado num inimigo causa +2; [color=#8a7aa8]preto[/color] = puxa os inimigos perto e eles não atacam no round, aliados ao lado são lançados 2 casas e o próximo ataque deles atordoa; [color=#3a5cff]azul-escuro[/color] = aliado que quebra ganha armadura de 2 e quem bater nele fica cristalizado (não anda), inimigo que quebra ataca o próprio aliado mais perto (-2); [color=#3ffff0]ciano[/color] = aliado que quebra (ou atingido) cura 4 e a cura passa pelos aliados encostados com 1 a menos, inimigo que quebra não se cura no round. Carrinhos são [b]cobertura móvel[/b]: parados, bloqueiam tiros e dão abrigo (-2 de dano) a quem está ao lado, como uma rocha. Uma peça ao lado gasta 1 ação para empurrar; ele anda até 3 casas no trilho e o primeiro atingido sofre 3 e é empurrado. Leve o carrinho para onde precisa de proteção. [color=#ffb14a]Tempestade de areia:[/color] no round em que o vento muda (3, 6, 9) e no round em que as dunas mudam (4, 7, 10), todos os ataques causam 2 a menos de dano.\n\n[b][color=#c77dff]Disputa pela Hex Energy[/color] (Valak · Mina de Cristais):[/b] modo de 5 rounds com papéis. O mapa é a Mina de Cristais, com o núcleo na base dos Guardiões e os Invasores começando do outro lado. Os [b]Invasores[/b] precisam extrair a energia do núcleo; os [b]Guardiões[/b] seguram até o fim do round 5. Uma tropa invasora no núcleo gasta 1 ação para começar a extração; ela conclui no início da próxima ativação dessa tropa, se ela continuar no núcleo e os Guardiões já tiverem tido a vez (agir ou passar conta). Sair do núcleo, ser empurrado ou cair cancela; levar dano sem sair não. Comandantes entram no round 4 e cair não decide a partida. Antes de começar, cada lado escolhe 3 das 4 táticas exclusivas da facção (segredo até usar) e os dois disputam 2 pares de genéricas em draft: quem escolhe fica com uma e a outra vai para o rival; a prioridade inverte no segundo par. Mão inicial: 5 cartas. Na revanche os papéis trocam.\n\n[b]Escaravelhos Verdes (Tarhut):[/b] basta passar por cima de um (ou parar nele) para guardá-lo, sem gastar ação. [b]1 escaravelho[/b] restaura 6 de Vida de uma peça; [b]2 escaravelhos[/b] deixam uma peça usar a ativa mais uma vez; os que sobrarem no fim somam +1 de Vida ao seu comandante na contagem do último round. Para gastá-los (curar ou reativar), use os botões do escaravelho no painel de exército.\n\n[b]Online:[/b] na tela do exército, toque em \"⚡ Online\". Um jogador cria a sala e passa o código de 6 letras; o outro digita o código e entra. O mapa é o planeta de quem criou a sala. No app instalado (PC/Android), a sala usa o IP da rede local no lugar do código.\n\n[b]Controles:[/b] clique numa peça sua e depois numa casa verde (mover) ou num inimigo vermelho (atacar), ou arraste a peça e solte. Confirme a prévia. Botão direito gira a câmera, arrastar o fundo move o mapa, a roda aproxima. Q/E giram. Enter confirma, Esc cancela.\n\n[b]Toque (tablet/celular):[/b] toque numa peça e numa casa para agir. 1 dedo arrasta o mapa; pinça com 2 dedos aproxima/afasta; girar os 2 dedos gira a câmera; arrastar os 2 dedos para cima/baixo inclina a visão. \"Tudo\" recentraliza."
 
 var board
 var game: Game = null
@@ -4185,7 +4185,19 @@ func _refresh_prompt() -> void:
 
 
 # ---- Barreira de Valak: escolher a cor do cristal em cima dele, no mapa ----
-const VALCOR = [["verde", "#7dff4a", "Cura"], ["azul", "#5ae8ff", "+Mov"], ["roxo", "#ff5ae0", "Dano"]]
+# 4 hexágonos pequenos só com a cor (sem moldura e sem texto), ligados por uma linha ao cristal fantasma
+const VALCOR = [["vermelho", "#ff3a3a", "Vermelho: aliado que quebra ganha +2 de ATQ; inimigo que quebra perde 2 de Vida; arremessado num inimigo, +2 de dano"],
+	["preto", "#3a2c52", "Preto: puxa os inimigos perto e eles não atacam neste round; aliados ao lado são lançados 2 casas e o próximo ataque deles atordoa"],
+	["anil", "#3a5cff", "Azul-escuro: aliado que quebra ganha armadura de 2 e quem bater nele fica cristalizado; inimigo que quebra ataca o próprio aliado mais perto (-2)"],
+	["ciano", "#3ffff0", "Ciano: aliado que quebra (ou atingido) cura 4, e a cura passa pelos aliados encostados com 1 a menos; inimigo que quebra não se cura neste round"]]
+
+
+func _hex_pts(c: Vector2, r: float) -> PackedVector2Array:
+	var pts = PackedVector2Array()
+	for i in 6:
+		var an = PI / 6.0 + TAU * i / 6.0
+		pts.append(c + Vector2(cos(an), sin(an)) * r)
+	return pts
 
 
 func _valcor_show(q: Dictionary) -> void:
@@ -4193,56 +4205,69 @@ func _valcor_show(q: Dictionary) -> void:
 		return
 	_valcor_hide()
 	board.ghost_crystal(q["h"])
-	var hb = HBoxContainer.new()
-	hb.add_theme_constant_override("separation", 10)
-	hb.z_index = 25
-	ui.add_child(hb)
-	var dicas = ["Verde: aliados do Rei +2 de Vida, inimigos -2 ao quebrar", "Azul: aliados +1 de Movimento, inimigos -1 ao quebrar", "Roxo: dano nos inimigos ao lado ao quebrar"]
-	for i in range(3):
+	# camada que desenha a linha (não pega clique) + os 4 hexágonos clicáveis
+	var cam_l = Control.new()
+	cam_l.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	cam_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	cam_l.z_index = 25
+	ui.add_child(cam_l)
+	var r = 22.0 if not compact else 27.0
+	var grupo = Control.new()
+	grupo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	cam_l.add_child(grupo)
+	for i in range(4):
 		var col = Color(VALCOR[i][1])
 		var b = Button.new()
-		b.text = VALCOR[i][2]
-		b.custom_minimum_size = Vector2(66, 66) if not compact else Vector2(76, 76)
-		b.add_theme_font_size_override("font_size", 14)
-		b.add_theme_color_override("font_color", Color("#10081e"))
-		b.add_theme_color_override("font_hover_color", Color("#10081e"))
-		var sb = StyleBoxFlat.new()
-		sb.bg_color = col
-		sb.set_corner_radius_all(40)
-		sb.set_border_width_all(4)
-		sb.border_color = Color("#10081e")
-		sb.shadow_color = Color(col, 0.6)
-		sb.shadow_size = 10
-		b.add_theme_stylebox_override("normal", sb)
-		var sbh = sb.duplicate()
-		sbh.bg_color = col.lightened(0.3)
-		sbh.border_color = Color.WHITE
-		b.add_theme_stylebox_override("hover", sbh)
-		b.add_theme_stylebox_override("pressed", sbh)
-		b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
-		b.tooltip_text = dicas[i]
+		b.flat = true
+		for st in ["normal", "hover", "pressed", "focus", "disabled"]:
+			b.add_theme_stylebox_override(st, StyleBoxEmpty.new())
+		b.size = Vector2(r * 2.0, r * 2.0)
+		b.custom_minimum_size = b.size
+		# favo: dois em cima, dois embaixo deslocados
+		b.position = Vector2(i % 2 * r * 1.8 + (r * 0.9 if i >= 2 else 0.0), float(i / 2) * r * 1.58)
+		b.tooltip_text = VALCOR[i][2]
+		b.draw.connect(func():
+			var cc = col.lightened(0.25) if b.is_hovered() else col
+			b.draw_colored_polygon(_hex_pts(b.size / 2.0, r * (1.0 if b.is_hovered() else 0.9)), cc))
+		b.mouse_entered.connect(b.queue_redraw)
+		b.mouse_exited.connect(b.queue_redraw)
 		var ii = i
 		b.pressed.connect(func():
 			sfx.play("clique", -6.0)
 			_valcor_hide()
 			_answer(ii))
-		hb.add_child(b)
-	w["valcor"] = {"node": hb, "q": q}
+		grupo.add_child(b)
+	grupo.size = Vector2(r * 1.8 + r * 0.9 + r * 2.0, r * 1.58 + r * 2.0)
+	cam_l.draw.connect(func():
+		if w.has("valcor"):
+			var a: Vector2 = w["valcor"]["ponto"]
+			var gc: Vector2 = grupo.position + grupo.size / 2.0
+			var alvo = gc + (a - gc).normalized() * (grupo.size.length() * 0.42)
+			cam_l.draw_line(a, alvo, Color(1, 1, 1, 0.85), 3.0, true)
+			cam_l.draw_circle(a, 5.0, Color.WHITE))
+	w["valcor"] = {"node": cam_l, "grupo": grupo, "q": q, "ponto": Vector2.ZERO}
 	_valcor_place()
-	hb.modulate.a = 0.0
-	create_tween().tween_property(hb, "modulate:a", 1.0, 0.15)
+	cam_l.modulate.a = 0.0
+	create_tween().tween_property(cam_l, "modulate:a", 1.0, 0.15)
 
 
 func _valcor_place() -> void:
 	if not w.has("valcor") or not is_instance_valid(w["valcor"]["node"]) or board == null or board.cam == null:
 		return
-	var hb: Control = w["valcor"]["node"]
-	var wp = _hex_pos(w["valcor"]["q"]["h"], 2.6)
+	var wp = _hex_pos(w["valcor"]["q"]["h"], 1.6)
 	if board.cam.is_position_behind(wp):
 		return
 	var sp = board.cam.unproject_position(wp)
-	hb.reset_size()
-	hb.position = sp - Vector2(hb.size.x / 2.0, hb.size.y + 6.0)
+	var grupo: Control = w["valcor"]["grupo"]
+	# o favo fica ao lado e acima do cristal; a linha liga os dois
+	var vs = get_viewport().get_visible_rect().size
+	var lado = 1.0 if sp.x < vs.x * 0.75 else -1.0
+	var pos = sp + Vector2(70.0 * lado, -110.0)
+	if lado < 0:
+		pos.x -= grupo.size.x
+	grupo.position = pos
+	w["valcor"]["ponto"] = sp
+	w["valcor"]["node"].queue_redraw()
 
 
 func _valcor_hide() -> void:

@@ -4755,7 +4755,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 # ================= Valak: caverna de cristais =================
-const CRYSTAL_COL = {"verde": ["#7dff4a", "#2fbf3a"], "azul": ["#5ae8ff", "#2a86e8"], "roxo": ["#ff5ae0", "#a83ae0"]}
+const CRYSTAL_COL = {"verde": ["#7dff4a", "#2fbf3a"], "azul": ["#5ae8ff", "#2a86e8"], "roxo": ["#ff5ae0", "#a83ae0"],
+	# cores do Rei da Mina
+	"vermelho": ["#ff3a3a", "#b0141e"], "preto": ["#241c30", "#0a0710"], "anil": ["#3a5cff", "#1a2a9a"], "ciano": ["#3ffff0", "#12b4c8"]}
 var cart_nodes: Array = []
 var claw: Node3D = null
 var claw_fingers: Array = []
@@ -4811,15 +4813,16 @@ func _rei_crystal(parent: Node3D, kind: String, seed_v: int) -> void:
 	parent.add_child(ouro)
 	# bloco central: prisma largo e alto (parede, não cacho)
 	var col = Color(cc[0])
+	var em = 0.12 if kind == "preto" else 1.0     # o preto é escuro de verdade: quase não brilha
 	var pil = MeshInstance3D.new()
 	pil.mesh = _cyl(0.4, 0.5, 1.9, 6)
-	pil.material_override = _glow_mat(col.lerp(Color(cc[1]), 0.3), 0.75)
+	pil.material_override = _glow_mat(col.lerp(Color(cc[1]), 0.3), 0.75 * em)
 	pil.material_overlay = _ink()
 	pil.position = Vector3(0, 1.15, 0)
 	parent.add_child(pil)
 	var topo = MeshInstance3D.new()
 	topo.mesh = _cyl(0.0, 0.4, 0.55, 6)
-	topo.material_override = _glow_mat(col.lightened(0.3), 1.0)
+	topo.material_override = _glow_mat(col.lightened(0.3), 1.0 * em)
 	topo.material_overlay = _ink()
 	topo.position = Vector3(0, 2.37, 0)
 	parent.add_child(topo)
@@ -4829,7 +4832,7 @@ func _rei_crystal(parent: Node3D, kind: String, seed_v: int) -> void:
 		var hg = rng.randf_range(0.8, 1.2)
 		var sh = MeshInstance3D.new()
 		sh.mesh = _cyl(0.0, 0.17, hg, 5)
-		sh.material_override = _glow_mat(Color(cc[1]).lightened(0.1), 0.9)
+		sh.material_override = _glow_mat(Color(cc[1]).lightened(0.1), 0.9 * em)
 		sh.material_overlay = _ink()
 		sh.position = Vector3(cos(a) * 0.42, 0.2 + hg * 0.5, sin(a) * 0.42)
 		sh.rotation = Vector3(sin(a) * 0.35, 0, -cos(a) * 0.35)

@@ -440,7 +440,7 @@ func rooted(u) -> bool:
 # Klang: atordoado não ataca nem se move; Medusa: eletrocutado não ataca
 func stunned(u) -> bool:
 	for f in u.fx:
-		if f["k"] == "stun" and int(f["end"]) >= round_no:
+		if (f["k"] == "stun" or f["k"] == "semataque") and int(f["end"]) >= round_no:
 			return true
 	return has_fx(u, "shock")
 
@@ -530,7 +530,7 @@ func match_who(u, who) -> bool:
 
 func nm(u) -> String:
 	if u.crystal != "":
-		return ("Cristal especial " if u.sp_owner >= 0 else "Cristal ") + u.crystal
+		return ("Cristal do Rei " if u.sp_owner >= 0 else "Cristal ") + REI_CORES_NOME.get(u.crystal, u.crystal).to_lower()
 	if u.block:
 		return "Bloco de pedra"
 	return "Barreira" if u.barrier else DB.cards[u.cid]["name"]
@@ -1239,6 +1239,7 @@ func damage(t, n: int, src, is_attack: bool = false) -> int:
 func settle() -> void:
 	_extr_check()
 	var blast = false
+	var combo = false
 	for t in units:
 		if t.dying == null or t.st != "field":
 			continue
@@ -1274,8 +1275,16 @@ func settle() -> void:
 			fallen.append(t.uid)
 		if t.crystal != "":
 			emitfx({"t": "die", "uid": t.uid, "h": t.pos(), "by": by})
-			if _crystal_burst(t):
+			if _crystal_burst(t, by):
 				blast = true
+			# combo de cores: cristais da mesma cor (ou parecida) encostados quebram juntos
+			for cn in DB.nbrs(t.pos()):
+				var cc = unit_at(cn)
+				if cc != null and cc.crystal != "" and cc.st == "field" and cc.dying == null and cristal_familia(cc.crystal) == cristal_familia(t.crystal):
+					cc.hp = 0
+					cc.dying = by
+					combo = true
+					log_msg(-1, "Combo de cores! %s quebra junto." % nm(cc))
 			continue
 		emitfx({"t": "die", "uid": t.uid, "h": t.pos(), "by": by})
 		log_msg(1 - t.owner, "%s foi derrotado." % nm(t))
@@ -1332,7 +1341,7 @@ func settle() -> void:
 			for o in units.duplicate():
 				if o != t and o.st == "field" and DB.dist(o.pos(), t.pos()) == 1:
 					damage(o, nb, t)
-	if blast:
+	if blast or combo:
 		settle()
 		return
 	check_win()
@@ -1750,12 +1759,26 @@ func _maze_path(open: Dictionary, ban: Dictionary, a: Vector2i, b: Vector2i) -> 
 	return path
 
 
+# cores dos cristais do Rei da Mina (Barreira de Valak e Manipulação)
+const REI_CORES = ["vermelho", "preto", "anil", "ciano"]
+const REI_CORES_NOME = {"vermelho": "Vermelho", "preto": "Preto", "anil": "Azul-escuro", "ciano": "Ciano"}
+
+
+# combo de cores: cores iguais ou parecidas quebram juntas quando encostadas
+func cristal_familia(c: String) -> String:
+	return {"ciano": "azul"}.get(c, c)
+
+
 # cristal quebrado: efeito em todos os personagens ao lado (aliados e inimigos)
-func _crystal_burst(t) -> bool:
+func _crystal_burst(t, by = -1) -> bool:
 	var hit = false
 	var ctr = t.pos() if _burst_at == null else Vector2i(_burst_at)
-	var who = units.filter(func(x): return x.st == "field" and not x.barrier and (DB.dist(x.pos(), ctr) == 1 or (_burst_at != null and DB.dist(x.pos(), ctr) == 0)))
+	var jogado = _burst_at != null
+	_burst_at = null    # só o cristal arremessado estoura no alvo; os do combo estouram onde estão
+	var who = units.filter(func(x): return x.st == "field" and not x.barrier and (DB.dist(x.pos(), ctr) == 1 or (jogado and DB.dist(x.pos(), ctr) == 0)))
 	abfx("crystal", ctr, t.uid)
+	if REI_CORES.has(t.crystal):
+		return _rei_effect(t, ctr, by, jogado)
 	if t.sp_owner >= 0:
 		return _sp_effect(t, who)
 	match t.crystal:
@@ -1975,6 +1998,8 @@ func check_win() -> void:
 
 
 func heal(u, n: int) -> int:
+	if has_fx(u, "semcura"):
+		return 0   # cristal ciano do Rei quebrado por ele: sem cura neste round
 	var h = max(0, min(n, u.maxhp - u.hp))
 	u.hp += h
 	if h > 0:
@@ -3611,6 +3636,113 @@ func val_next_opts(u, cells: Array) -> Array:
 
 
 # unidades de campo que sofrem o efeito de um cristal especial (aliados/inimigos do dono)
+# efeito dos cristais do Rei: depende de quem quebrou (aliado ou inimigo do Rei) ou de quem foi atingido
+func _rei_effect(t, ctr: Vector2i, by, jogado: bool) -> bool:
+	var sp = t.sp_owner
+	var quem = null
+	if jogado:
+		quem = unit_at(ctr)                     # arremessado pelo Rei: vale para quem levou o cristal
+	elif by != null and int(by) > 0:
+		quem = by_uid(int(by))
+	if quem != null and (quem.barrier or quem.st != "field"):
+		quem = null
+	var aliado = quem != null and quem.owner == sp
+	var inimigo = quem != null and quem.owner != sp and quem.owner != NEUTRAL
+	var hit = false
+	match t.crystal:
+		"vermelho":
+			if aliado:
+				quem.fx = quem.fx.filter(func(f): return f.get("src", -1) != -78)
+				quem.fx.append({"k": "atk", "v": 2, "till": round_no + 1, "src": -78})
+				emitfx({"t": "passive", "kind": "power", "uid": quem.uid})
+				log_msg(sp, "Cristal vermelho: %s ganha +2 de ATQ até o fim do próximo round." % nm(quem))
+			elif inimigo:
+				damage(quem, 2, commander(sp))
+				hit = true
+				log_msg(sp, "Cristal vermelho: %s perde 2 de Vida." % nm(quem))
+		"preto":
+			# inimigos perto são puxados e ficam sem atacar neste round; aliados ao lado são lançados 2 casas
+			for x in units.duplicate():
+				if x.st != "field" or x.barrier:
+					continue
+				var d = DB.dist(x.pos(), ctr)
+				if x.owner != sp and x.owner != NEUTRAL and d <= 2:
+					if d == 2:
+						var perto = DB.nbrs(x.pos()).filter(func(n): return DB.dist(n, ctr) == 1 and valid_ground(n))
+						if not perto.is_empty():
+							_salta(x, perto[0])
+					x.fx = x.fx.filter(func(f): return f["k"] != "semataque")
+					x.fx.append({"k": "semataque", "end": round_no})
+					abfx("stun", x.pos(), t.uid)
+					log_msg(sp, "Cristal preto: %s é puxado e não ataca neste round." % nm(x))
+				elif x.owner == sp and d <= 1:
+					var dir = x.pos() - ctr if d == 1 else DB.DIRS[0]
+					var dest = x.pos()
+					for k in range(2):
+						var nx = dest + dir
+						if DB.in_board(nx) and valid_ground(nx):
+							dest = nx
+					if dest != x.pos():
+						_salta(x, dest)
+					x.fx = x.fx.filter(func(f): return f["k"] != "golpe_stun")
+					x.fx.append({"k": "golpe_stun", "till": round_no + 1})
+					emitfx({"t": "passive", "kind": "power", "uid": x.uid})
+					log_msg(sp, "Cristal preto: %s é lançado e o próximo ataque dele atordoa." % nm(x))
+		"anil":
+			if aliado:
+				quem.fx = quem.fx.filter(func(f): return f["k"] != "armadura")
+				quem.fx.append({"k": "armadura", "v": 2, "till": round_no + 1})
+				emitfx({"t": "passive", "kind": "shield", "uid": quem.uid})
+				log_msg(sp, "Cristal azul-escuro: %s ganha armadura de 2; quem bater nela fica cristalizado." % nm(quem))
+			elif inimigo:
+				var amigos = units.filter(func(x): return x.st == "field" and not x.barrier and x.owner == quem.owner and x != quem)
+				amigos.sort_custom(func(a, b): return DB.dist(a.pos(), quem.pos()) < DB.dist(b.pos(), quem.pos()))
+				if not amigos.is_empty():
+					var alvo = amigos[0]
+					var dano = max(0, atk_of(quem, alvo) - 2)
+					abfx("crystal", alvo.pos(), t.uid)
+					log_msg(sp, "Cristal azul-escuro: %s, confuso, ataca %s (%d de dano)." % [nm(quem), nm(alvo), dano])
+					damage(alvo, dano, quem)
+					hit = true
+		"ciano":
+			if aliado:
+				_cura_corrente(quem, 4)
+			elif inimigo:
+				for x in units:
+					if x.st == "field" and not x.barrier and x.owner == quem.owner and (x == quem or DB.dist(x.pos(), ctr) <= 1):
+						x.fx = x.fx.filter(func(f): return f["k"] != "semcura")
+						x.fx.append({"k": "semcura", "until": "end"})
+						emitfx({"t": "passive", "kind": "curse", "uid": x.uid})
+						log_msg(sp, "Cristal ciano: %s não pode se curar neste round." % nm(x))
+	return hit
+
+
+# cura em corrente: 4 em quem recebeu, e vai passando pelos aliados encostados com 1 a menos a cada passo
+func _cura_corrente(u, n: int) -> void:
+	var vistos = {u.uid: true}
+	var fila = [[u, n]]
+	while not fila.is_empty():
+		var it = fila.pop_front()
+		var x = it[0]
+		var v: int = it[1]
+		var got = heal(x, v)
+		log_msg(x.owner, "Cristal ciano: %s recupera %d de Vida." % [nm(x), got])
+		if v - 1 <= 0:
+			continue
+		for y in units:
+			if y.st == "field" and not y.barrier and y.owner == u.owner and not vistos.has(y.uid) and DB.dist(y.pos(), x.pos()) == 1:
+				vistos[y.uid] = true
+				fila.append([y, v - 1])
+
+
+# deslocamento instantâneo provocado por cristal (sem gastar movimento)
+func _salta(x, h: Vector2i) -> void:
+	var de = x.pos()
+	x.q = h.x
+	x.r = h.y
+	emitfx({"t": "move", "uid": x.uid, "from": de, "to": h})
+
+
 func _sp_effect(t, who: Array) -> bool:
 	var hit = false
 	var sp = t.sp_owner
@@ -3681,14 +3813,14 @@ func _act_manip(u) -> bool:
 			if ch == null:
 				return false
 			var c = unit_at(ch)
-			var others = ["verde", "azul", "roxo"].filter(func(k): return k != c.crystal)
-			var ci = await ask(p, {"t": "choice", "text": "Nova cor do cristal:", "opts": others.map(func(k): return k.capitalize()), "kind": "manip_color", "uid": u.uid})
+			var others = REI_CORES.filter(func(k): return k != c.crystal)
+			var ci = await ask(p, {"t": "choice", "text": "Nova cor do cristal:", "opts": others.map(func(k): return REI_CORES_NOME[k]), "kind": "manip_color", "uid": u.uid})
 			var ni = int(ci) if ci != null else 0
 			c.crystal = others[clampi(ni, 0, others.size() - 1)]
 			c.sp_owner = p
 			act["actions"] -= 1
 			abfx("crystal", c.pos(), u.uid)
-			log_msg(p, "%s muda o cristal para %s (agora é especial)." % [nm_u, c.crystal])
+			log_msg(p, "%s muda o cristal para %s (agora é do Rei)." % [nm_u, REI_CORES_NOME[c.crystal]])
 		"lower":
 			var lh = await pick_hex(p, "Manipulação: escolha o terreno alto a rebaixar (até 6 casas).", manip_lower_opts(u), "manip_s", true)
 			if lh == null:
@@ -4283,12 +4415,12 @@ func _act_ult_run(u) -> bool:
 			log_msg(p, "%s traça uma rota: %s ganha +1 de Movimento e sobe 1 nível a mais." % [nm(u), nm(rt_t)])
 		"valbarrier":
 			# o Rei desenha a barreira casa a casa: cada cristal encosta no anterior (reta ou curva, 2 a 5)
-			var vb_cols = ["verde", "azul", "roxo"]
+			var vb_cols = REI_CORES
 			var vb_cells = [h]
 			while true:
 				var vb_c: Vector2i = vb_cells[-1]
-				var vb_ci = await ask(p, {"t": "choice", "text": "Cristal %d: escolha a cor" % vb_cells.size(), "opts": ["Verde", "Azul", "Roxo"], "kind": "val_color", "uid": u.uid, "h": vb_c, "n": vb_cells.size()})
-				var vb_k = _make_crystal(p, vb_c, vb_cols[clampi(int(vb_ci) if vb_ci != null else 0, 0, 2)])
+				var vb_ci = await ask(p, {"t": "choice", "text": "Cristal %d: escolha a cor" % vb_cells.size(), "opts": REI_CORES.map(func(k): return REI_CORES_NOME[k]), "kind": "val_color", "uid": u.uid, "h": vb_c, "n": vb_cells.size()})
+				var vb_k = _make_crystal(p, vb_c, vb_cols[clampi(int(vb_ci) if vb_ci != null else 0, 0, 3)])
 				vb_k.muro = u.uid
 				abfx("crystal", vb_c, u.uid)
 				changed.emit()
@@ -4862,7 +4994,28 @@ func resolve_attack(a, t) -> void:
 	if (red > 0 or react_red > 0) and not target.barrier:
 		emitfx({"t": "passive", "kind": "shield", "uid": target.uid})
 	dealt = await _x_interposicao(a, target, dealt, ranged)
+	# armadura do cristal azul-escuro: segura até 2 de dano e cristaliza quem bateu
+	if has_fx(target, "armadura") and a.owner != target.owner and not target.barrier:
+		var absorve = 0
+		for f in target.fx:
+			if f["k"] == "armadura":
+				absorve = min(int(f["v"]), dealt)
+				f["v"] = int(f["v"]) - absorve
+		target.fx = target.fx.filter(func(f): return f["k"] != "armadura" or int(f["v"]) > 0)
+		dealt -= absorve
+		a.fx = a.fx.filter(func(f): return f["k"] != "root" or int(f["end"]) > round_no + 1)
+		a.fx.append({"k": "root", "end": round_no + 1})
+		emitfx({"t": "passive", "kind": "shield", "uid": target.uid})
+		abfx("crystal", a.pos(), target.uid)
+		log_msg(target.owner, "Armadura de cristal segura %d de dano; %s fica cristalizado e não anda até o fim do próximo round." % [absorve, nm(a)])
 	damage(target, dealt, a, true)
+	# cristal preto: o próximo ataque de quem foi lançado atordoa o alvo
+	if has_fx(a, "golpe_stun") and target.st == "field" and not target.barrier and target.owner != a.owner:
+		a.fx = a.fx.filter(func(f): return f["k"] != "golpe_stun")
+		target.fx = target.fx.filter(func(f): return f["k"] != "stun")
+		target.fx.append({"k": "stun", "end": round_no + 1})
+		abfx("stun", target.pos(), a.uid)
+		log_msg(a.owner, "Golpe do cristal preto: %s fica atordoado até o fim do próximo round." % nm(target))
 	if dealt > 0 and K(a).has("lifesteal") and a.st == "field":
 		heal(a, int(K(a)["lifesteal"]))
 		abfx("lifesteal", a.pos(), a.uid)
