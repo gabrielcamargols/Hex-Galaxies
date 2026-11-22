@@ -166,7 +166,7 @@
   {"a": "l_general", "b": "rhazur", "fala": ["Rhazur. Seu abismo será nosso próximo ninho.", "Venha buscá-lo, cristal. O fundo do mar devora tudo."]},
   {"a": "w_mamute", "b": "z_dragao", "fala": ["Máquina com asas. Não confio em você.", "Fera com presas. O sentimento é mútuo."]}
  ],
- "femininas": ["vexa", "rayak", "sterina", "a_lumina", "a_medusa", "a_vespertina", "a_garra", "k_batedor", "k_sapador", "w_raposa", "w_lince", "w_morcego", "z_escudo", "t_fendas", "t_lanterna", "t_enfermeira"],
+ "femininas": ["vexa", "rayak", "sterina", "a_lumina", "a_medusa", "a_vespertina", "k_batedor", "k_sapador", "w_raposa", "w_lince", "w_morcego", "z_escudo", "t_fendas", "t_lanterna", "t_enfermeira"],
  "condicoes": {
   "Minha filha, seus escudos são uma obra-prima. Motterlich se orgulha de você.": "cid:z_escudo",
   "Ora, ora... o rapaz das naves ficou vermelho de novo? Eu vi para onde você estava olhando.": "cid:z_naves",
