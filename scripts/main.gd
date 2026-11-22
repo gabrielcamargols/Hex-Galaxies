@@ -506,6 +506,46 @@ func _cbtn(parent: Control, text: String, col: Color, cb: Callable, active: bool
 	return b
 
 
+# ícone da HUD (ui/hud/<nome>.svg)
+func _ico(parent: Control, nome: String, sz: float = 22.0) -> TextureRect:
+	var t = TextureRect.new()
+	var path = "res://ui/hud/%s.svg" % nome
+	if ResourceLoader.exists(path):
+		t.texture = load(path)
+	t.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	t.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	t.custom_minimum_size = Vector2(sz, sz)
+	t.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	t.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(t)
+	return t
+
+
+# põe um ícone da HUD num botão, com cor cheia (o tema escurecia os ícones)
+func _btn_ico(b: Button, nome: String, sz: int = 26) -> void:
+	var path = "res://ui/hud/%s.svg" % nome
+	if not ResourceLoader.exists(path):
+		return
+	b.icon = load(path)
+	b.expand_icon = false
+	b.add_theme_constant_override("icon_max_width", sz)
+	for k in ["icon_normal_color", "icon_hover_color", "icon_pressed_color", "icon_focus_color", "icon_hover_pressed_color"]:
+		b.add_theme_color_override(k, Color.WHITE)
+	b.add_theme_color_override("icon_disabled_color", Color(1, 1, 1, 0.35))
+
+
+# ícone + número/texto curto (ex.: coração 9/9); a dica explica por extenso
+func _ico_txt(parent: Control, nome: String, txt: String, col: Color = C_TXT, sz: float = 20.0, fs: int = 14, dica: String = "") -> HBoxContainer:
+	var hb = _hbox(parent, 3)
+	hb.mouse_filter = Control.MOUSE_FILTER_PASS if dica != "" else Control.MOUSE_FILTER_IGNORE
+	hb.tooltip_text = dica
+	_ico(hb, nome, sz)
+	if txt != "":
+		var l = _label(hb, txt, fs, col)
+		l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return hb
+
+
 func _chip(parent: Control, col: Color, text: String) -> void:
 	var hb = _hbox(parent, 5)
 	var sw = Panel.new()
@@ -2626,10 +2666,12 @@ func _build_hud() -> void:
 	var top = _panel(topcol)
 	var tv = _hbox(top, 14)   # uma linha só: round e vez, e ao lado só o que está valendo agora
 	tv.alignment = BoxContainer.ALIGNMENT_CENTER
+	_ico(tv, "round", 28)
 	w["title"] = _label(tv, "", 20, C_GOLD)
 	w["title"].horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	w["events"] = _label(tv, "", 14, Color("#ffcf9a"))
 	w["events"].horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	w["events_box"] = _hbox(tv, 12)   # avisos do mapa em ícones
 	# botões do canto
 	w["topcol"] = topcol
 	var topr = _hbox(ui, 6)
@@ -2642,9 +2684,11 @@ func _build_hud() -> void:
 	else:
 		if compact and not online:
 			_button(topr, "CPU", _toggle_cpu)
-		_button(topr, "Cartas", func(): _toggle_panel("cards"))
-		_button(topr, "Regras", func(): _toggle_panel("rules"))
-		_button(topr, "Opções", _settings_panel)   # Registro e Sair para o menu ficam dentro de Opções
+		for bt in [["cartas", "Cartas", func(): _toggle_panel("cards")], ["regras", "Regras", func(): _toggle_panel("rules")], ["opcoes", "Opções (registro e sair)", _settings_panel]]:
+			var bi = _button(topr, "", bt[2])
+			_btn_ico(bi, bt[0], 30)
+			bi.custom_minimum_size = Vector2(52, 46)
+			bi.tooltip_text = bt[1]
 	# câmera: linha compacta acima do painel de fim de turno
 	var camv = _hbox(ui, 4)
 	_place(camv, Control.PRESET_BOTTOM_RIGHT, 8)
@@ -2835,8 +2879,11 @@ func _portrait_hud() -> void:
 	# em telas estreitas o título e os avisos quebram linha em vez de alargar a barra
 	for k in ["title", "events", "note"]:
 		w[k].autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		w[k].size_flags_horizontal = Control.SIZE_EXPAND_FILL   # dentro da linha do topo não pode encolher a zero
-		w[k].custom_minimum_size = Vector2(vw.x - 48.0, 0)
+		if k == "note":
+			w[k].size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			w[k].custom_minimum_size = Vector2(vw.x - 48.0, 0)
+		else:
+			w[k].autowrap_mode = TextServer.AUTOWRAP_OFF   # na linha do topo: texto curto, sem quebrar
 	w["events"].add_theme_font_size_override("font_size", 12)
 	# ficha da peça mais enxuta (não cobre o tabuleiro)
 	w["ucard_text"].custom_minimum_size.x = vw.x - 44.0
@@ -3306,35 +3353,37 @@ func _tick_clock(delta: float) -> void:
 func _refresh_top() -> void:
 	var who = "Você" if game.cur == me else _opp()
 	var status = "Fim de jogo" if game.winner != Game.NONE else ("Sua vez" if game.cur == me else ("Vez do " + _opp().to_lower() + (" (jogando...)" if busy or opp_thinking else "")))
-	title_base = "Round %d/%d  ·  %s" % [game.round_no, Game.LAST_ROUND, status]
-	if portrait:
-		title_base = "Round %d/%d  ·  %s" % [game.round_no, Game.LAST_ROUND, status]
+	title_base = "%d/%d  ·  %s" % [game.round_no, Game.LAST_ROUND, status]
 	_apply_title()
 	var tcol = C_GOLD if game.winner != Game.NONE else (C_YOU if game.cur == me else C_CPU)
 	w["title"].add_theme_color_override("font_color", tcol)
-	var ev = []
+	# avisos do mapa: ícone + número curto; a explicação fica na dica (passar o mouse / segurar)
+	var ev = []   # [ícone, texto curto, explicação]
 	if not game.hole.is_empty():
 		var vm = int(game.vrule("vib_max", 5))
-		ev.append("VIBRAÇÃO %s %d/%d%s" % ["●".repeat(game.vib) + "○".repeat(max(0, vm - game.vib)), game.vib, vm, "  ⚠ A GARRA VAI ATACAR" if game.vib >= vm - 1 else ""])
+		ev.append(["vermes", "%d/%d" % [game.vib, vm], "Vibração: com %d a garra ataca" % vm])
 	if game.storm_on():
-		ev.append("Tempestade: ataques -2")
+		ev.append(["tempestade", "-2", "Tempestade de areia: ataques causam 2 a menos"])
 	if game.rain_on():
-		ev.append("Chuva: ataques -3")
+		ev.append(["chuva", "-3", "Chuva: ataques causam 3 a menos"])
 	if not game.fire.is_empty():
-		ev.append("Fogo: -1 Vida perto dele")
+		ev.append(["fogo", "", "Fogo: quem estiver perto perde 1 de Vida por round"])
 	var def = DB.maps[game.map_id]
-	if def.has("dunes"):
-		if game.dune_next >= 0:
-			ev.append("Dunas mudam no próximo round")
-	if def.get("worms", false):
-		if not game.tremors.is_empty():
-			ev.append("Vermes no próximo round")
+	if def.has("dunes") and game.dune_next >= 0:
+		ev.append(["dunas", "!", "As dunas mudam no próximo round"])
+	if def.get("worms", false) and not game.tremors.is_empty():
+		ev.append(["vermes", "!", "Vermes saem no próximo round"])
 	if game.core != null:
-		ev.insert(0, "Hex Energy até o round %d" % game.core_until)
+		ev.insert(0, ["hex", "até %d" % game.core_until, "Hex Energy ativa até o round %d" % game.core_until])
 	elif game.core_next != null:
-		ev.insert(0, "Hex Energy no round %d" % game.core_next_round)
-	w["events"].text = ("|   " if not ev.is_empty() else "") + "   ·   ".join(ev)
-	w["events"].visible = not ev.is_empty()
+		ev.insert(0, ["hex", "%d" % game.core_next_round, "A Hex Energy aparece no round %d" % game.core_next_round])
+	w["events"].visible = false
+	var eb: HBoxContainer = w["events_box"]
+	for c in eb.get_children():
+		c.queue_free()
+	for e in ev:
+		_ico_txt(eb, e[0], e[1], Color("#ffcf9a"), 28, 16, e[2])
+	eb.visible = not ev.is_empty()
 
 
 var party_sig: String = ""
@@ -3394,17 +3443,17 @@ func _refresh_party() -> void:
 			sp.add_theme_stylebox_override("panel", ssb)
 			box.add_child(sp)
 			var sv = _vbox(sp, 4)
-			var sh = _label(sv, "ESCARAVELHOS · %d" % nsc, 15, Color("#8dff9f"))
-			if font_btn != null:
-				sh.add_theme_font_override("font", font_btn)
+			var sh = _ico_txt(sv, "escaravelho", "× %d" % nsc, Color("#8dff9f"), 26, 16, "Escaravelhos: gaste para curar ou recarregar a habilidade. Os que sobrarem no fim dão +1 de Vida ao líder cada.")
 			if p == me:
 				var shb = _hbox(sv, 4)
-				var b1 = _cbtn(shb, "CURAR +6 ·1", Color("#2fb85a"), func(): _on_scarab("heal"))
+				var b1 = _cbtn(shb, "+6  (1)", Color("#2fb85a"), func(): _on_scarab("heal"))
+				_btn_ico(b1, "vida")
 				b1.custom_minimum_size = Vector2((_roster_w() - 20) / 2.0, 36)
 				b1.add_theme_font_size_override("font_size", 12)
 				b1.disabled = not game.can_scarab(p, "heal") or busy or not my_turn()
 				b1.tooltip_text = "Gasta 1 escaravelho: uma peça sua restaura 6 de Vida."
-				var b2 = _cbtn(shb, "ATIVA +1 ·2", Color("#2fb85a"), func(): _on_scarab("ult"))
+				var b2 = _cbtn(shb, "+1  (2)", Color("#2fb85a"), func(): _on_scarab("ult"))
+				_btn_ico(b2, "habilidade")
 				b2.custom_minimum_size = Vector2((_roster_w() - 20) / 2.0, 36)
 				b2.add_theme_font_size_override("font_size", 12)
 				b2.disabled = not game.can_scarab(p, "ult") or busy or not my_turn()
@@ -3415,9 +3464,6 @@ func _refresh_party() -> void:
 					b3.add_theme_font_size_override("font_size", 12)
 					b3.disabled = not game.can_scarab(p, "stun") or busy or not my_turn()
 					b3.tooltip_text = "Gasta 1 escaravelho: uma peça sua atordoada pelo Tiro Sônico volta a agir."
-				var tl = _label(sv, "Sobrando no fim: +1 de Vida\nno comandante por escaravelho", 10, Color("#a8d8b4"))
-				tl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-				tl.custom_minimum_size = Vector2(_roster_w() - 12, 0)
 		# reservas primeiro: é o que o jogador procura para colocar em campo
 		if not res.is_empty():
 			var hd = PanelContainer.new()
@@ -3425,16 +3471,9 @@ func _refresh_party() -> void:
 			hd.add_theme_stylebox_override("panel", _flat(C_DEPLOY.darkened(0.15) if dep_ok else Color(0.1, 0.14, 0.2, 0.9), C_DEPLOY if dep_ok else Color(0.25, 0.32, 0.4), 1, 6, 5))
 			box.add_child(hd)
 			var hv = _vbox(hd, 0)
-			var t1 = _label(hv, ("PARA ENTRAR · %d" % ready_n) if dep_ok else ("RESERVA · %d" % res.size()), 13, Color("#06201e") if dep_ok else Color("#9fd8e8"))
-			if dep_ok:
-				_label(hv, "Arraste até \"+ ENTRAR\" (1 ação)", 11, Color("#06201e"))
-			elif p == me:
-				var why = deploy_block_reason()
-				if why != "" and ready_n > 0:
-					var wl = _label(hv, why, 11, Color("#8fb8cc"))
-					wl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-					wl.custom_minimum_size = Vector2(_roster_w() - 12, 0)
-			t1.add_theme_constant_override("outline_size", 0)
+			var dica_r = "Arraste até uma casa dourada para entrar (1 ação)" if dep_ok else (deploy_block_reason() if p == me else "Reserva do oponente")
+			var t1h = _ico_txt(hv, "reserva", "%d" % (ready_n if dep_ok else res.size()), Color("#3a2a00") if dep_ok else Color("#9fd8e8"), 22, 15, dica_r)
+			hd.tooltip_text = dica_r
 			var grid = GridContainer.new()
 			grid.columns = 3
 			grid.add_theme_constant_override("h_separation", 3)
@@ -3443,14 +3482,22 @@ func _refresh_party() -> void:
 			for u in res:
 				grid.add_child(_res_tile(u, p, dep_ok))
 		if not fld.is_empty():
-			_label(box, "EM CAMPO · %d" % fld.size(), 11, C_DIM)
 			for u in fld:
 				box.add_child(_field_row(u))
 		if not dead.is_empty():
-			var names = dead.map(func(x): return _short(x.cid))
-			var dl = _label(box, "Caídos: " + ", ".join(names), 11, Color(0.55, 0.58, 0.62))
-			dl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			dl.custom_minimum_size = Vector2(_roster_w(), 0)
+			# caídos: retratinhos apagados, sem texto
+			var dg = GridContainer.new()
+			dg.columns = 6
+			box.add_child(dg)
+			for x in dead:
+				var tr2 = TextureRect.new()
+				tr2.texture = DB.portraits.get(x.cid, null)
+				tr2.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+				tr2.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+				tr2.custom_minimum_size = Vector2(28, 28)
+				tr2.modulate = Color(0.45, 0.45, 0.5, 0.8)
+				tr2.tooltip_text = "Caído: " + DB.cards[x.cid]["name"]
+				dg.add_child(tr2)
 
 
 func _roster_w() -> float:
@@ -3548,7 +3595,7 @@ func _res_tile(u, p: int, dep_ok: bool) -> Button:
 # em campo: uma linha só (retrato, nome, vida e se ainda pode agir)
 func _field_row(u) -> Button:
 	var used = u.activated
-	var b = _unit_btn(u, "%s  %d/%d%s" % [_short(u.cid), max(0, u.hp), u.maxhp, "  · usado" if used else ""])
+	var b = _unit_btn(u, "%s  %d/%d" % [_short(u.cid), max(0, u.hp), u.maxhp])
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	b.add_theme_font_size_override("font_size", 13)
 	b.add_theme_constant_override("icon_max_width", 30)
@@ -3598,24 +3645,24 @@ func _refresh_ucard() -> void:
 			var c = DB.cards[u.cid]
 			var fcol = DB.factions[c["f"]]["color"]
 			txt = "[color=%s]%s[/color] · %s\n[font_size=16][b]%s[/b][/font_size]\n" % [fcol, DB.factions[c["f"]]["name"].to_upper(), "Você" if u.owner == me else _opp(), c["name"]]
-			txt += "%s\n[b]Vida[/b] %d/%d   [b]Ataque[/b] %d   [b]Movimento[/b] %d   [b]Alcance[/b] %d\n" % [c["role"], max(0, u.hp), u.maxhp, game.atk_of(u, null), game.mov_of(u), game.alc_of(u)]
-			if u.st == "field":
-				txt += "[i]%s[/i]\n" % game.t_name(u.pos())
-			elif u.st == "reserve":
+			# números com ícone: vida, ataque, movimento, alcance
+			var IC = func(n): return "[img=22x22]res://ui/hud/%s.svg[/img]" % n
+			txt += "[color=#cbbdff]%s[/color]\n%s %d/%d    %s %d    %s %d    %s %d\n" % [c["role"], IC.call("vida"), max(0, u.hp), u.maxhp, IC.call("ataque"), game.atk_of(u, null), IC.call("movimento"), game.mov_of(u), IC.call("alcance"), game.alc_of(u)]
+			if u.st == "reserve":
 				txt += "[i]Na reserva (arraste para a entrada)[/i]\n"
 			elif u.st == "off":
 				txt += "[i]Entra no round %d[/i]\n" % Game.CMD_ROUND
 			if u.eq != "":
 				txt += "Equipado: %s\n" % DB.tactics[u.eq]["name"]
 			var abk3 = c["ab"].get("kind", "")
-			var passive = "usa 1 ação" if (c["k"].has("action") or abk3 == "ativa") else ("usa 1 ação" if abk3 == "especial" else "passiva")
+			var passive = IC.call("acao") if (c["k"].has("action") or abk3 == "ativa" or abk3 == "especial") else "passiva"
 			if abk3 == "ativa" and c["ab"].get("per", "partida") == "round":
-				passive = "usa 1 ação · recarrega em %d round(s)" % Game.ABIL_RECHARGE + (" · [color=#ff8a6a]JÁ USADA[/color]" if game.ult_spent(u) else "")
-			txt += "[color=#ffab40][b]%s[/b][/color] [color=#8fb8cc](%s)[/color]\n%s" % [c["ab"]["name"], passive, c["ab"]["text"]]
+				passive = IC.call("acao") + " %s %d" % [IC.call("round"), Game.ABIL_RECHARGE] + (" · [color=#ff8a6a]JÁ USADA[/color]" if game.ult_spent(u) else "")
+			txt += "[color=#ffab40][b]%s[/b][/color] [color=#8fb8cc]%s[/color]\n%s" % [c["ab"]["name"], passive, c["ab"]["text"]]
 			if c.has("ab2"):
 				var a2 = c["ab2"]
-				var kind2 = "passiva" if a2.get("kind", "") == "passiva" else ("especial" + (" · [color=#ff8a6a]JÁ USADA[/color]" if game.ult_spent(u) else ""))
-				txt += "\n[color=#ffab40][b]★ %s[/b][/color] [color=#8fb8cc](%s)[/color]\n%s" % [a2["name"], kind2, a2["text"]]
+				var kind2 = "passiva" if a2.get("kind", "") == "passiva" else (IC.call("habilidade") + (" [color=#ff8a6a]JÁ USADA[/color]" if game.ult_spent(u) else ""))
+				txt += "\n[color=#ffab40][b]%s[/b][/color] [color=#8fb8cc]%s[/color]\n%s" % [a2["name"], kind2, a2["text"]]
 			if game.imprisoned(u):
 				txt += "\n[color=#9fdcff]Preso na Prisão de Cristal até o fim do próximo round.[/color]"
 			elif game.rooted(u):
@@ -3710,14 +3757,23 @@ func _refresh_actbar() -> void:
 		var moved = live and game.act["moved"]
 		var can_mv = left > 0 and not moved and not game.rooted(u) and not game.move_opts(u, game.mov_of(u)).is_empty()
 		var can_at = left > 0 and not attacked and not cant and n_t > 0
-		note = "%s  ·  Ações: %s  ·  2) escolha o que fazer" % [DB.cards[u.cid]["name"], "●".repeat(left) + "○".repeat(max(0, 2 - left))]
-		var bm = _cbtn(box, "Mover" + (" (feito)" if moved else ""), C_MOVE, func(): _set_am("mv"), am == "mv")
+		note = ""   # o nome já está na ficha; as ações viram raios no balão
+		var pips = _hbox(box, 0)
+		pips.tooltip_text = "Ações que sobram (%d de 2)" % left
+		pips.mouse_filter = Control.MOUSE_FILTER_PASS
+		for i in range(2):
+			var ip = _ico(pips, "acao", 26)
+			if i >= left:
+				ip.modulate = Color(0.35, 0.35, 0.45, 0.7)
+		var bm = _cbtn(box, "Mover", C_MOVE, func(): _set_am("mv"), am == "mv")
+		_btn_ico(bm, "movimento")
 		bm.disabled = not can_mv
 		bm.tooltip_text = "Mover: 1 ação, no máximo 1 vez por turno. Casas AZUIS."
 		if game.can_undo() and my_turn():
 			var bu = _cbtn(box, "↶ Desfazer", C_HUD, _undo_move)
 			bu.tooltip_text = "Volta a peça para onde estava e devolve a ação (Ctrl+Z). Só vale se nada aconteceu no caminho e ela ainda não atacou."
-		var ba = _cbtn(box, "Atacar" + (" (feito)" if attacked else ""), C_ATK, func(): _set_am("at"), am == "at")
+		var ba = _cbtn(box, "Atacar", C_ATK, func(): _set_am("at"), am == "at")
+		_btn_ico(ba, "ataque")
 		ba.disabled = not can_at
 		ba.tooltip_text = "Atacar: 1 ação, no máximo 1 vez por turno. Inimigos em VERMELHO."
 		var k = game.K(u)
@@ -3777,7 +3833,14 @@ func _refresh_actbar() -> void:
 		var aw0 = w["note"].get_parent().get_parent()
 		if aw0 is Control:
 			aw0.visible = mine
+	# dicas de começo só nos primeiros rounds; depois a barra só aparece quando há algo a dizer
+	if mine and u == null and game.act == null and dsel < 0 and game.round_no > 2:
+		note = ""
 	w["note"].text = note
+	w["note"].visible = note != ""
+	var aw1 = w["note"].get_parent().get_parent()
+	if aw1 is Control and not portrait:
+		aw1.visible = note != "" or not why.is_empty()
 	if w.has("abp"):
 		w["abp"].visible = true   # o Passar round mora aqui: o balão fica sempre
 		w["btns"].visible = u != null or w["btns"].get_child_count() > 0
@@ -3786,7 +3849,8 @@ func _refresh_actbar() -> void:
 	w["why"].visible = not portrait
 	var e = w["end"]
 	var acting = game.act != null and mine
-	e.text = "Encerrar vez" if acting else "Passar round ▶"
+	e.text = "Encerrar vez" if acting else "Passar round"
+	_btn_ico(e, "passar")
 	e.disabled = not mine
 	var hint = ""
 	var pulse = false
@@ -4268,8 +4332,8 @@ func _refresh_hand() -> void:
 		c.queue_free()
 	for id in pl["hand"]:
 		box.add_child(_make_card(id))
-	var info = _label(box, "  Baralho\n  %d" % pl["deck"].size(), 13, C_TXT)
-	info.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var info = _ico_txt(box, "cartas", "%d" % pl["deck"].size(), C_TXT, 28, 15, "Cartas no baralho")
+	info.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 
 
 func _make_card(id: String) -> Control:

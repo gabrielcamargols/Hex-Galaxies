@@ -2016,7 +2016,7 @@ func sync_bananas(b: Dictionary, viewer: int) -> void:
 	for h in b.keys():
 		if banana_nodes.has(h) or not tiles.has(h):
 			continue
-		var col = {"cura": Color("#5bd46a"), "dano": Color("#ff6a4a"), "alcance": Color("#5ec8f0")}.get(b[h]["t"], Color.WHITE)
+		var col = {"cura": Color("#4cff6a"), "dano": Color("#ff3b4d"), "alcance": Color("#ffab40")}.get(b[h]["t"], Color.WHITE)
 		var n = Node3D.new()
 		n.position = Vector3(world_xz(h).x, top_y(h) + 0.05, world_xz(h).y)
 		scenery_root.add_child(n)
@@ -2031,14 +2031,9 @@ func sync_bananas(b: Dictionary, viewer: int) -> void:
 			seg.material_overlay = null  # cores chapadas, sem contorno
 		var tip = _mesh(n, _cyl(0.02, 0.03, 0.08, 6), Color("#5a3a18"), Vector3(-0.26, 0.28, 0))
 		tip.rotation = Vector3(0, 0, 0.9)
-		var lab = Label3D.new()
-		lab.text = {"cura": "CURA", "dano": "FORÇA", "alcance": "MIRA"}.get(b[h]["t"], "")
-		lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		lab.font_size = 34
-		lab.outline_size = 10
-		lab.pixel_size = 0.006
-		lab.modulate = col.lightened(0.3)
-		lab.position = Vector3(0, 0.62, 0)
+		# ícone em vez de palavra: coração (cura), espada (força), mira (alcance)
+		var lab = icone3d({"cura": "vida", "dano": "ataque", "alcance": "alcance"}.get(b[h]["t"], "vida"), 0.42)
+		lab.position = Vector3(0, 0.66, 0)
 		n.add_child(lab)
 		banana_nodes[h] = n
 		if banana_origem != null:
@@ -2219,8 +2214,23 @@ func bleed_pop(h: Vector2i, kind: String = "bleed") -> void:
 			tw.tween_property(spin, "scale", Vector3.ONE, 0.32).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
+# ícone da HUD (ui/hud/*.svg) flutuando no tabuleiro, sempre de frente para a câmera
+func icone3d(nome: String, tam: float = 0.5) -> Sprite3D:
+	var sp = Sprite3D.new()
+	var path = "res://ui/hud/%s.svg" % nome
+	if ResourceLoader.exists(path):
+		sp.texture = load(path)
+	sp.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	sp.no_depth_test = true
+	sp.render_priority = 3
+	sp.pixel_size = tam / 64.0
+	sp.alpha_cut = SpriteBase3D.ALPHA_CUT_DISABLED
+	return sp
+
+
 # ---- Estrela Hexa (Esterina): casas da estrela brilhando em dourado ----
 var star_nodes: Dictionary = {}
+var badges: Array = []   # fileiras de ícones que giram para a câmera
 
 
 # A estrela tem que se explicar sozinha: casas em rosa-estelar (não amarelo, que é a cor de
@@ -2237,7 +2247,7 @@ func sync_stars(list: Array) -> void:
 			_enfeita_estrela(root, st)
 		var placa: Label3D = root.get_meta("placa")
 		var r = int(st.get("resta", 0))
-		placa.text = "ESTRELA HEXA · %s\n+2 Vida por round  ·  imune a corpo a corpo" % ("último round" if r <= 1 else "%d rounds" % r)
+		placa.text = "%d" % max(1, r)   # rounds que faltam, ao lado dos ícones de cura e defesa
 
 
 func _enfeita_estrela(root: Node3D, st: Dictionary) -> void:
@@ -2268,15 +2278,27 @@ func _enfeita_estrela(root: Node3D, st: Dictionary) -> void:
 	var lab = Label3D.new()
 	lab.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	lab.no_depth_test = true
-	lab.font_size = 44
-	lab.outline_size = 16
+	lab.font_size = 64
+	lab.outline_size = 18
 	lab.pixel_size = 0.0065
 	lab.modulate = Color("#ffe6f6")
 	lab.outline_modulate = Color("#301342")
 	lab.render_priority = 4
 	lab.outline_render_priority = 3
-	lab.position = cw + Vector3(0, 3.8, 0)
-	root.add_child(lab)
+	# plaquinha em ícones: cura (+2 por round), defesa (sem corpo a corpo) e os rounds que faltam;
+	# a fileira gira junto com a câmera para ficar sempre de frente
+	var badge = Node3D.new()
+	badge.position = cw + Vector3(0, 3.75, 0)
+	root.add_child(badge)
+	badges.append(badge)
+	var ic_v = icone3d("vida", 0.5)
+	ic_v.position = Vector3(-0.62, 0, 0)
+	badge.add_child(ic_v)
+	var ic_d = icone3d("defesa", 0.5)
+	badge.add_child(ic_d)
+	lab.position = Vector3(0.62, 0, 0)
+	lab.billboard = BaseMaterial3D.BILLBOARD_DISABLED
+	badge.add_child(lab)
 	root.set_meta("placa", lab)
 
 
@@ -3571,6 +3593,11 @@ func _unit_goal(u) -> Vector2i:
 
 
 func _process(delta: float) -> void:
+	if not badges.is_empty() and cam != null:
+		badges = badges.filter(func(bg): return is_instance_valid(bg))
+		for bg in badges:
+			var to = cam.global_position - bg.global_position
+			bg.rotation = Vector3(0, atan2(to.x, to.z), 0)
 	for sh in ship_nodes:
 		if is_instance_valid(sh):
 			_orient_ship(sh)
