@@ -38,6 +38,8 @@ jobs:
           echo "{\"n\": \"${{ github.run_number }}\", \"sha\": \"${GITHUB_SHA::7}\", \"date\": \"$(TZ=America/Sao_Paulo date '+%d/%m %H:%M')\"}" > data/version.json
           cat data/version.json
           ./godot --headless --path . --import || true
+          # se alguma regra quebrar, o jogo não é publicado (a versão anterior continua no ar)
+          bash tools/testes.sh ./godot
           mkdir -p build/web
           ./godot --headless --path . --export-release "Web" build/web/index.html
           ls -la build/web

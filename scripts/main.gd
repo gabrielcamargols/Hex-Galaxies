@@ -815,7 +815,9 @@ func _show_menu() -> void:
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	var play = _cbtn(row, "JOGAR", C_GOLD, _on_play, true)
 	_primary(play)
-	play.custom_minimum_size = Vector2(320, 70)
+	# no celular/tablet os botões crescem para o dedo (alvo de toque ~ 48 dp)
+	var toque = DisplayServer.is_touchscreen_available()
+	play.custom_minimum_size = Vector2(320, 84 if toque else 70)
 	play.add_theme_font_size_override("font_size", 28)
 	var sp2 = Control.new()
 	sp2.custom_minimum_size = Vector2(0, 6)
@@ -829,7 +831,7 @@ func _show_menu() -> void:
 	var deb = _cbtn(row2, "MODO DEUS", C_ABIL, _start_deus)
 	for mb in [tb, rb, cfgb, deb]:
 		_menu_btn(mb)
-		mb.custom_minimum_size = Vector2(196, 52)
+		mb.custom_minimum_size = Vector2(196, 72 if toque else 52)
 		mb.add_theme_font_size_override("font_size", 17)
 	_ui_fade(1.0, 0.9)
 	if fader.color.a > 0.0:

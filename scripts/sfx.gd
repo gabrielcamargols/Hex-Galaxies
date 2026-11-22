@@ -55,6 +55,21 @@ func _ready() -> void:
 	var ni = AudioServer.get_bus_index("Narrador")
 	if AudioServer.get_bus_effect_count(ni) == 0:
 		AudioServer.add_bus_effect(ni, AudioEffectAmplify.new())
+	# a música também abaixa um pouco enquanto alguém fala, para a fala ficar clara
+	var mi = AudioServer.get_bus_index("Musica")
+	if mi >= 0 and _amp_of(mi) == null:
+		AudioServer.add_bus_effect(mi, AudioEffectAmplify.new())
+	# limitador no fim do Master: muitos sons juntos (explosão + fala + música) não estouram nem distorcem
+	var lim_ok = false
+	for k in AudioServer.get_bus_effect_count(0):
+		if AudioServer.get_bus_effect(0, k) is AudioEffectHardLimiter:
+			lim_ok = true
+	if not lim_ok:
+		var lim = AudioEffectHardLimiter.new()
+		lim.ceiling_db = -0.5
+		lim.pre_gain_db = 0.0
+		lim.release = 0.1
+		AudioServer.add_bus_effect(0, lim)
 	_radio_bus()
 	_celeste_bus()
 	_cristal_bus()
@@ -427,9 +442,23 @@ func warm() -> void:
 
 
 # enquanto um personagem fala, o narrador fica bem mais baixo (volta devagar depois)
+func _amp_of(bi: int) -> AudioEffectAmplify:
+	for k in AudioServer.get_bus_effect_count(bi):
+		var e = AudioServer.get_bus_effect(bi, k)
+		if e is AudioEffectAmplify:
+			return e
+	return null
+
+
 func _process(dt: float) -> void:
-	var alvo = -16.0 if Time.get_ticks_msec() < voz_ate_ms else 0.0
+	var falando = Time.get_ticks_msec() < voz_ate_ms
+	var alvo = -16.0 if falando else 0.0
 	_duck_db = move_toward(_duck_db, alvo, dt * (80.0 if alvo < _duck_db else 20.0))
+	var mi = AudioServer.get_bus_index("Musica")
+	if mi >= 0:
+		var ma = _amp_of(mi)
+		if ma != null:
+			ma.volume_db = move_toward(ma.volume_db, -6.0 if falando else 0.0, dt * (40.0 if falando else 8.0))
 	var ni = AudioServer.get_bus_index("Narrador")
 	if ni >= 0 and AudioServer.get_bus_effect_count(ni) > 0:
 		var a = AudioServer.get_bus_effect(ni, 0)
