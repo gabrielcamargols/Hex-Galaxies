@@ -1,0 +1,11 @@
+Ferramentas de cenário instaladas (plugins do editor, já ligados em project.godot):
+
+- cyclops_level_builder (Cyclops Level Builder 1.5): montar blocos de rocha/paredes no editor,
+  clicando e arrastando. 15 ícones/texturas do pacote original vinham "vazios" (Git LFS);
+  foram recriados como substitutos simples (só aparecem no editor).
+- proton_scatter (ProtonScatter 4.2): espalhar objetos (cristais, pedras, plantas) numa área.
+  A pasta de demonstração foi removida (tinha um .blend que travava a importação).
+
+No jogo, a caverna de Valak usa os dois em scripts/board.gd (_cave_cyclops e _cave_scatter).
+As peças espalhadas ficam em scenes/entornos/ (geradas por tools/gerar_itens_scatter.gd).
+Terrain3D ficou de fora por enquanto (só para mundo aberto; o zip era só o código-fonte).

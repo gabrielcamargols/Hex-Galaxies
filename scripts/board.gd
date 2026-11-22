@@ -5038,17 +5038,13 @@ func _build_cave() -> void:
 	rng.seed = 4242
 	var far = PLAT + 0.3
 	var wall_cols = [Color("#3d2280"), Color("#4a2a96"), Color("#2e1a66"), Color("#5a34b0")]
-	# paredes da caverna: anel de rochas altas em volta da arena
-	for i in range(64):
-		var a = TAU * i / 64.0 + rng.randf_range(-0.03, 0.03)
-		var d = far + rng.randf_range(0.3, 2.5)
-		var pos = Vector3(cos(a) * d, BASE_Y, sin(a) * d)
-		# anel de dentro baixo (não esconde o tabuleiro); o de fora, alto, fecha a caverna
-		_rockwall(pos, rng.randf_range(1.2, 3.2), rng.randf_range(1.2, 2.2), wall_cols[rng.randi() % 4], rng)
-	for i in range(40):
-		var a2 = rng.randf() * TAU
-		var d2 = far + 4.5 + rng.randf_range(0.0, 4.0)
-		_rockwall(Vector3(cos(a2) * d2, BASE_Y, sin(a2) * d2), rng.randf_range(8.0, 16.0), rng.randf_range(2.2, 3.6), wall_cols[rng.randi() % 4].darkened(0.25), rng)
+	# paredes da caverna: terraços e paredões feitos com o Cyclops (blocos de rocha) e
+	# cristais/estalagmites espalhados por cima com o ProtonScatter (desenhados em lote)
+	if CAVE_ADDONS and ClassDB.class_exists("Node3D") and ResourceLoader.exists("res://addons/cyclops_level_builder/nodes/cyclops_block.gd"):
+		_cave_cyclops(far, rng, wall_cols)
+		_cave_scatter(far)
+	else:
+		_cave_rochas_antigas(far, rng, wall_cols)
 	# cenário organizado: só duas entradas de mina, de lados opostos; cada uma ladeada por
 	# um andaime; os cristais de enfeite ficam em dois grupos, nos lados livres entre elas
 	var cands = []
@@ -5096,6 +5092,96 @@ func _build_cave() -> void:
 			scenery_root.add_child(holder)
 			_crystal_cluster(holder, kinds[i % 3], 900 + i + (0 if grp == mid else 50), true)
 	_build_pit()
+
+
+const CAVE_ADDONS := true    # false volta às rochas antigas (cilindros soltos)
+
+
+func _cave_rochas_antigas(far: float, rng: RandomNumberGenerator, wall_cols: Array) -> void:
+	# paredes da caverna: anel de rochas altas em volta da arena
+	for i in range(64):
+		var a = TAU * i / 64.0 + rng.randf_range(-0.03, 0.03)
+		var d = far + rng.randf_range(0.3, 2.5)
+		var pos = Vector3(cos(a) * d, BASE_Y, sin(a) * d)
+		# anel de dentro baixo (não esconde o tabuleiro); o de fora, alto, fecha a caverna
+		_rockwall(pos, rng.randf_range(1.2, 3.2), rng.randf_range(1.2, 2.2), wall_cols[rng.randi() % 4], rng)
+	for i in range(40):
+		var a2 = rng.randf() * TAU
+		var d2 = far + 4.5 + rng.randf_range(0.0, 4.0)
+		_rockwall(Vector3(cos(a2) * d2, BASE_Y, sin(a2) * d2), rng.randf_range(8.0, 16.0), rng.randf_range(2.2, 3.6), wall_cols[rng.randi() % 4].darkened(0.25), rng)
+
+
+# Cyclops: anel de terraços baixos (não escondem o tabuleiro) e paredões altos atrás, em blocos facetados
+func _cave_cyclops(far: float, rng: RandomNumberGenerator, wall_cols: Array) -> void:
+	var raiz = Node3D.new()
+	raiz.name = "cyclops_caverna"
+	scenery_root.add_child(raiz)
+	var aneis = [[18, far + 0.4, far + 3.2, 0.5, 1.6, 0.0], [14, far + 3.0, far + 7.5, 3.0, 7.0, 0.25], [12, far + 7.0, far + 12.0, 9.0, 16.0, 0.4]]
+	for an in aneis:
+		var n: int = an[0]
+		for i in range(n):
+			var a0 = TAU * i / n + rng.randf_range(-0.04, 0.04)
+			var a1 = TAU * (i + 1) / n + rng.randf_range(-0.04, 0.04) + 0.03
+			var r0 = rng.randf_range(an[1], an[1] + 0.8)
+			var r1 = rng.randf_range(an[2] - 0.8, an[2])
+			# polígono irregular entre dois raios e dois ângulos (base no chão da caverna)
+			var pts: Array[Vector3] = []
+			for k in range(4):
+				var t = k / 3.0
+				var aa = lerp(a0, a1, t)
+				pts.append(Vector3(cos(aa) * (r0 + rng.randf_range(-0.3, 0.3)), 0.0, sin(aa) * (r0 + rng.randf_range(-0.3, 0.3))))
+			for k in range(3, -1, -1):
+				var t2 = k / 3.0
+				var ab = lerp(a0, a1, t2)
+				pts.append(Vector3(cos(ab) * (r1 + rng.randf_range(-0.6, 0.6)), 0.0, sin(ab) * (r1 + rng.randf_range(-0.6, 0.6))))
+			var alt = rng.randf_range(an[3], an[4])
+			var vol = ConvexVolume.new()
+			vol.init_from_points(PackedVector3Array(pts + pts.map(func(p): return p + Vector3(rng.randf_range(-0.4, 0.4), alt * rng.randf_range(0.8, 1.0), rng.randf_range(-0.4, 0.4)))), Transform2D.IDENTITY, 0)
+			var bl = CyclopsBlock.new()
+			bl.mesh_vector_data = vol.to_mesh_vector_data()
+			bl.materials.append(_mat(Color(wall_cols[rng.randi() % 4]).darkened(an[5])))
+			bl.position = Vector3(0, BASE_Y, 0)
+			raiz.add_child(bl)
+
+
+# ProtonScatter: cristais apagados e estalagmites por cima dos terraços (anel em volta do tabuleiro)
+func _cave_scatter(far: float) -> void:
+	var sc = ProtonScatter.new()
+	sc.name = "scatter_caverna"
+	sc.global_seed = 4242
+	sc.dbg_disable_thread = true          # monta na hora (no navegador não há linhas paralelas)
+	sc.position = Vector3(0, BASE_Y + 12.0, 0)
+	var st = ProtonScatterModifierStack.new()
+	var cria = load("res://addons/proton_scatter/src/modifiers/create_inside_random.gd").new()
+	cria.amount = 260
+	st.add(cria)
+	var gira = load("res://addons/proton_scatter/src/modifiers/randomize_transforms.gd").new()
+	gira.rotation = Vector3(10, 360, 10)
+	gira.scale = Vector3(0.6, 0.6, 0.6)
+	st.add(gira)
+	var proj = load("res://addons/proton_scatter/src/modifiers/project_on_geometry.gd").new()
+	proj.ray_length = 40.0
+	proj.remove_points_on_miss = true
+	proj.max_slope = 35.0
+	st.add(proj)
+	sc.modifier_stack = st
+	for it in [["cristal_verde", 25], ["cristal_azul", 25], ["cristal_roxo", 25], ["estalagmite", 40]]:
+		var item = ProtonScatterItem.new()
+		item.source = 1
+		item.path = "res://scenes/entornos/%s.tscn" % it[0]
+		item.proportion = it[1]
+		item.override_cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		sc.add_child(item)
+	var fora = ProtonScatterShape.new()
+	fora.shape = ProtonScatterSphereShape.new()
+	fora.shape.radius = far + 9.0
+	sc.add_child(fora)
+	var dentro = ProtonScatterShape.new()
+	dentro.shape = ProtonScatterSphereShape.new()
+	dentro.shape.radius = far + 0.6
+	dentro.negative = true                # o tabuleiro fica livre
+	sc.add_child(dentro)
+	scenery_root.add_child(sc)
 
 
 func _mine_entrance(pos: Vector3, yaw: float) -> void:
