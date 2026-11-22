@@ -5944,7 +5944,7 @@ func _on_fx_real(e: Dictionary) -> void:
 				if big:
 					_later(d + 1.7, func(): banner("COMANDANTE DERROTADO", game.nm(du2)))
 			low_warned.erase(e["uid"])
-			_banter_death(e["uid"])
+			_banter_death(e["uid"], int(e.get("by", -1)))
 			var hp = _hex_pos(e["h"], 0.2)
 			var dc = _unit_color(e["uid"])
 			_voice(e["uid"], "dor", 0.0, d + 0.1, 0.82)
@@ -6196,6 +6196,29 @@ func _pick(arr) -> String:
 	return str(arr[randi() % arr.size()])
 
 
+# a fala combina com o outro personagem? (data/dialogos.json: "condicoes" e "femininas")
+#   F / M: o outro é feminina / masculino;  cid:<id>: o outro é aquele personagem;
+#   campo:<id>: aquele personagem está em campo do lado de quem fala
+func _cond_ok(text: String, u, other) -> bool:
+	var c: String = str(dlg.get("condicoes", {}).get(text, ""))
+	if c == "":
+		return true
+	if c == "F" or c == "M":
+		if other == null:
+			return false
+		var fem = dlg.get("femininas", []).has(other.cid)
+		return fem if c == "F" else not fem
+	if c.begins_with("cid:"):
+		return other != null and other.cid == c.substr(4)
+	if c.begins_with("campo:"):
+		var alvo = c.substr(6)
+		return game != null and game.field().any(func(x): return x.cid == alvo and x.owner == u.owner and x != u)
+	return true
+
+
+# escolhe a fala de um tipo para u; "target" é o outro lado da conversa (o alvo, quem falou antes,
+# ou quem caiu). Devolve "" quando nada combina: quem tem voz gravada fica quieto em vez de dizer
+# uma fala fora de contexto.
 func _line(kind: String, u, target = null) -> String:
 	var txt = ""
 	var pc = dlg.get("personagem", {}).get(u.cid, {})
@@ -6203,12 +6226,20 @@ func _line(kind: String, u, target = null) -> String:
 	if target != null and pc.has(kind + "_" + _fac_of(target)):
 		txt = _pick(pc[kind + "_" + _fac_of(target)])
 		return txt.replace("{nome}", _short(target.cid))
-	# falas próprias gravadas: o personagem usa sempre uma delas
-	var grav_k = pc.get(kind, []).filter(func(t): return fala_gravada(u.cid, t) != "")
-	if not grav_k.is_empty():
-		txt = _pick(grav_k)
-	elif pc.has(kind) and randf() < 0.65:
-		txt = _pick(pc[kind])
+	var cabe = func(t): return _cond_ok(str(t), u, target)
+	var proprias: Array = pc.get(kind, []).filter(cabe)
+	# falas dedicadas a este outro personagem vêm primeiro (pai e filha, irmãos, a paixão do piloto...)
+	var dedic = proprias.filter(func(t): return str(dlg.get("condicoes", {}).get(t, "")).begins_with("cid:"))
+	if not dedic.is_empty():
+		txt = _pick(dedic)
+	else:
+		var grav_k = proprias.filter(func(t): return fala_gravada(u.cid, t) != "")
+		if not grav_k.is_empty():
+			txt = _pick(grav_k)
+		elif falas_voz.has(u.cid):
+			return ""   # tem voz, mas nenhuma fala gravada serve aqui: silêncio
+		elif not proprias.is_empty() and randf() < 0.65:
+			txt = _pick(proprias)
 	if txt == "":
 		txt = _pick(dlg.get(kind, {}).get(_fac_of(u), []))
 	if target != null:
@@ -6248,26 +6279,46 @@ func _fila_entrada(u, texto: String) -> void:
 		_say(e["uid"], e["txt"], max(0.05, (ini - agora) / 1000.0), "fala")
 
 
+# Conversas com contexto:
+#  - quem entra apresenta-se com uma fala de entrada;
+#  - só puxa conversa com um aliado que está perto (até 3 casas) ou provoca um inimigo que está
+#    perto (até 4 casas), e quem responde é exatamente esse personagem, respondendo a quem falou;
+#  - uma conversa por vez: ninguém começa outra enquanto a anterior não terminou.
+var conv_livre_ms: int = 0
+const CONV_ALIADO = 3
+const CONV_INIMIGO = 4
+
+
+func _conversa_livre() -> bool:
+	var now = Time.get_ticks_msec()
+	return now >= conv_livre_ms and now >= cmd_voz_livre_ms and entradas_pend.is_empty() and now >= sfx.voz_ate_ms
+
+
+# agenda uma fala e devolve quando ela termina (segundos a partir de agora)
+func _fala_em(x, texto: String, t0: float, mood: String) -> float:
+	_say(x.uid, texto, t0, mood)
+	var fim = t0 + max(1.8, _dur_fala(x.cid, texto) + 0.4)
+	conv_livre_ms = maxi(conv_livre_ms, Time.get_ticks_msec() + int(fim * 1000.0))
+	return fim
+
+
 func _banter(uid: int) -> void:
 	if dlg.is_empty() or game == null:
 		return
 	var u: Variant = game.by_uid(uid)
 	if u == null or u.barrier:
 		return
-	var now = Time.get_ticks_msec()
-	if not u.is_cmd and (now < cmd_voz_livre_ms or not entradas_pend.is_empty()):
-		return   # os líderes estão se apresentando: os outros ficam quietos
-	if now - last_banter_ms < 3500 and not u.is_cmd:
-		return
-	last_banter_ms = now
-	var others = game.field().filter(func(x): return x != u and not x.barrier)
 	# comandante com falas de entrada gravadas: entra sempre falando uma delas (sorteada)
 	if u.is_cmd:
 		var grav = dlg.get("personagem", {}).get(u.cid, {}).get("entrada", []).filter(func(t): return fala_gravada(u.cid, t) != "")
 		if not grav.is_empty():
 			_fila_entrada(u, grav[randi() % grav.size()])
 			return
-	# duplas com conversa própria
+	if not _conversa_livre():
+		return   # já tem alguém falando: não atropela
+	last_banter_ms = Time.get_ticks_msec()
+	var others = game.field().filter(func(x): return x != u and not x.barrier)
+	# duplas com conversa própria (só se o par estiver em campo)
 	for pr in dlg.get("pares", []):
 		var other_id = ""
 		if pr["a"] == u.cid:
@@ -6286,49 +6337,72 @@ func _banter(uid: int) -> void:
 		for i in range(pr["fala"].size()):
 			var who = (u if pr["a"] == u.cid else o) if i % 2 == 0 else (o if pr["a"] == u.cid else u)
 			var other = o if who == u else u
-			_say(who.uid, pr["fala"][i], t0, "prov" if other.owner != who.owner else "fala")
-			t0 += max(2.2, _dur_fala(who.cid, pr["fala"][i]) + 0.4)   # quem responde espera a gravação acabar
+			t0 = _fala_em(who, pr["fala"][i], t0, "prov" if other.owner != who.owner else "fala")
 		return
-	var enemies = others.filter(func(x): return x.owner != u.owner)
-	var allies = others.filter(func(x): return x.owner == u.owner)
-	var near = func(arr):
+	var perto = func(arr, r):
 		var best = null
 		for x in arr:
-			if best == null or DB.dist(x.pos(), u.pos()) < DB.dist(best.pos(), u.pos()):
+			var dd = DB.dist(x.pos(), u.pos())
+			if dd <= r and (best == null or dd < DB.dist(best.pos(), u.pos())):
 				best = x
 		return best
+	var allies = others.filter(func(x): return x.owner == u.owner)
+	var enemies = others.filter(func(x): return x.owner != u.owner)
+	# aliado com resposta dedicada a quem chegou (pai e filha, irmãos...) tem preferência
+	var dedicado = null
+	for x in allies:
+		if DB.dist(x.pos(), u.pos()) <= CONV_ALIADO + 2 and dlg.get("personagem", {}).get(x.cid, {}).get("resp_aliado", []).any(
+				func(t): return str(dlg.get("condicoes", {}).get(t, "")) == "cid:" + u.cid):
+			dedicado = x
+	var amigo = dedicado if dedicado != null else perto.call(allies, CONV_ALIADO)
+	var rival = perto.call(enemies, CONV_INIMIGO)
 	var tgt = null
 	var mode = "entrada"
-	if not enemies.is_empty() and (allies.is_empty() or randf() < 0.55):
-		tgt = near.call(enemies)
-		mode = "provoca"
-	elif not allies.is_empty() and randf() < 0.8:
-		tgt = near.call(allies)
+	if dedicado != null:
+		tgt = dedicado
 		mode = "aliado"
-	var l1 = _line(mode if tgt != null else "entrada", u, tgt)
+	elif rival != null and (amigo == null or randf() < 0.5) and randf() < 0.7:
+		tgt = rival
+		mode = "provoca"
+	elif amigo != null and randf() < 0.6:
+		tgt = amigo
+		mode = "aliado"
+	var l1 = _line(mode, u, tgt) if tgt != null else ""
+	if l1 == "":
+		tgt = null
+		mode = "entrada"
+		l1 = _line("entrada", u)
 	if l1 == "":
 		return
-	_say(u.uid, l1, 0.6, "prov" if mode == "provoca" else "fala")
+	var fim = _fala_em(u, l1, 0.6, "prov" if mode == "provoca" else "fala")
 	if tgt != null:
-		var l2 = _line("resp_inimigo" if mode == "provoca" else "resp_aliado", tgt)
+		var l2 = _line("resp_inimigo" if mode == "provoca" else "resp_aliado", tgt, u)
 		if l2 != "":
-			_say(tgt.uid, l2, max(2.6, 0.6 + _dur_fala(u.cid, l1) + 0.4), "prov" if mode == "provoca" else "fala")
+			_fala_em(tgt, l2, fim, "prov" if mode == "provoca" else "fala")
 
 
-func _banter_death(uid: int) -> void:
+# quando alguém cai: quem derrubou comemora; se ninguém derrubou (veneno, terreno), um aliado
+# que estava perto lamenta. Ninguém comemora uma queda que não causou.
+func _banter_death(uid: int, by: int = -1) -> void:
 	if dlg.is_empty() or game == null:
 		return
 	var dead: Variant = game.by_uid(uid)
 	if dead == null or dead.barrier:
 		return
-	var foes = game.field().filter(func(x): return x.owner != dead.owner and not x.barrier and x.st == "field")
-	var friends = game.field().filter(func(x): return x.owner == dead.owner and not x.barrier and x.st == "field" and x != dead)
-	if not foes.is_empty() and randf() < 0.5:
-		var f = foes[randi() % foes.size()]
-		_say(f.uid, _line("vitoria", f, dead), 0.9, "prov")
-	elif not friends.is_empty() and randf() < 0.45:
-		var a = friends[randi() % friends.size()]
-		_say(a.uid, _line("lamento", a), 0.9, "triste")
+	var killer: Variant = game.by_uid(by) if by > 0 else null
+	var vivo = func(x): return x != null and not x.barrier and x.st == "field" and x.hp > 0
+	if vivo.call(killer) and killer.owner != dead.owner and randf() < 0.75:
+		var lv = _line("vitoria", killer, dead)
+		if lv != "":
+			_fala_em(killer, lv, 0.9, "prov")
+			return
+	var friends = game.field().filter(func(x): return vivo.call(x) and x.owner == dead.owner and x != dead and DB.dist(x.pos(), dead.pos()) <= 4)
+	friends.sort_custom(func(a, b): return DB.dist(a.pos(), dead.pos()) < DB.dist(b.pos(), dead.pos()))
+	for a in friends:
+		var ll = _line("lamento", a, dead)
+		if ll != "":
+			_fala_em(a, ll, 0.9, "triste")
+			return
 
 
 func _say(uid: int, text: String, delay: float = 0.0, mood: String = "fala") -> void:
@@ -6908,7 +6982,8 @@ func _fala_habilidade(uid: int, k: String) -> void:
 	if not hl.is_empty():
 		# efeitos que se repetem no mesmo golpe (choque em 2 alvos, puxão de 2 casas) falam uma vez só
 		var agora = Time.get_ticks_msec()
-		if agora - int(hab_falou.get(uid, -100000)) < 4000:
+		# e o mesmo personagem não repete o grito a cada uso: só depois de um tempo
+		if agora - int(hab_falou.get(uid, -100000)) < 15000:
 			return
 		hab_falou[uid] = agora
 		_say(uid, hl[randi() % hl.size()], 0.2, "prov")

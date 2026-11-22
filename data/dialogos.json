@@ -165,5 +165,37 @@
   {"a": "z_hacker", "b": "k_cmd", "fala": ["Ei, Krieg! Seu rádio tá aberto. Câmbio, haha.", "...Mudar frequência. Agora!"]},
   {"a": "l_general", "b": "rhazur", "fala": ["Rhazur. Seu abismo será nosso próximo ninho.", "Venha buscá-lo, cristal. O fundo do mar devora tudo."]},
   {"a": "w_mamute", "b": "z_dragao", "fala": ["Máquina com asas. Não confio em você.", "Fera com presas. O sentimento é mútuo."]}
- ]
+ ],
+ "femininas": ["vexa", "rayak", "sterina", "a_lumina", "a_medusa", "a_vespertina", "a_garra", "k_batedor", "k_sapador", "w_raposa", "w_lince", "w_morcego", "z_escudo", "t_fendas", "t_lanterna", "t_enfermeira"],
+ "condicoes": {
+  "Minha filha, seus escudos são uma obra-prima. Motterlich se orgulha de você.": "cid:z_escudo",
+  "Ora, ora... o rapaz das naves ficou vermelho de novo? Eu vi para onde você estava olhando.": "cid:z_naves",
+  "O garoto das naves de novo? Ele sempre fica gaguejando perto de mim... estranho.": "cid:z_naves",
+  "E-ela falou comigo! Quer dizer... entendido, entendido!": "cid:z_escudo",
+  "Será que ela viu essa manobra? Hehe...": "campo:z_escudo",
+  "Kling, conserta o que sobrar, que eu quebro o resto.": "cid:kling",
+  "Mano, você é demais! Quando eu crescer, quero ser igual a você.": "cid:klang",
+  "Fica atrás do tio, filhão, que eu vou sacudir tudo!": "M",
+  "Esse é o meu garoto!": "M",
+  "Minha dama, fique atrás de mim. Nenhum arranhão vai chegar até você.": "F",
+  "Senhorita, perdão pelo que vou fazer... é que eu não perco nem para um rostinho bonito.": "F",
+  "Para você, meu anjo? Qualquer coisa!": "F",
+  "Tá, tá, entendi. Agora sai do caminho, que tem uma dama precisando de ajuda.": "M",
+  "Para a senhorita, um sorriso. Para você... a ponta da minha lâmina.": "M",
+  "Vem me abraçar, querido. Você vai sentir o choque.": "M",
+  "Não... a luz dele apagou.": "M",
+  "Não... eu devia estar na frente dele.": "M",
+  "Não... ele ficou sozinho no fim.": "M",
+  "Sinal perdido... não. Não ele.": "M",
+  "Não... nenhum portal alcança onde ele foi.": "M",
+  "Não... os sinais vitais dele... zeraram.": "M",
+  "Perdemos um irmão... o Dragão ouvirá o nome dele.": "M",
+  "Falhei... estava ao meu alcance e eu não o protegi.": "M",
+  "Por ele, eu ardo em dobro! Queimem!": "M",
+  "Nããão... ele cuidava de mim...": "M",
+  "Vocês machucaram o meu amigo... agora eu fiquei tristinha.": "M",
+  "Amigo... caiu. Basalto... triste.": "M",
+  "Alguém derrubou meu sócio? Agora a dívida é sua.": "M"
+ },
+ "_condicoes_doc": "condicoes: a fala só toca se o outro personagem (alvo, quem falou antes, ou quem caiu) cumprir: F = feminina, M = masculino, cid:<id> = aquele personagem, campo:<id> = aquele personagem em campo do mesmo lado. femininas: lista de personagens femininas."
 }

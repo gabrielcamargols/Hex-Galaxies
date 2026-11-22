@@ -1239,11 +1239,11 @@ func settle() -> void:
 		if not t.barrier:
 			fallen.append(t.uid)
 		if t.crystal != "":
-			emitfx({"t": "die", "uid": t.uid, "h": t.pos()})
+			emitfx({"t": "die", "uid": t.uid, "h": t.pos(), "by": by})
 			if _crystal_burst(t):
 				blast = true
 			continue
-		emitfx({"t": "die", "uid": t.uid, "h": t.pos()})
+		emitfx({"t": "die", "uid": t.uid, "h": t.pos(), "by": by})
 		log_msg(1 - t.owner, "%s foi derrotado." % nm(t))
 		var killer = by_uid(by) if by > 0 else null
 		if killer != null and killer.owner != t.owner and K(killer).has("killGrow") and not t.barrier:
