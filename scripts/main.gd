@@ -1985,7 +1985,7 @@ func _ab_chip(parent: Control, kind: String, col: Color, nm: String) -> void:
 # quatro atributos: número grande com a legenda embaixo
 func _stat_cells(parent: Control, c: Dictionary) -> void:
 	var vals = [int(c["int"]), int(c["atk"]), int(c["mov"]), int(c["alc"])]
-	var caps = ["VIDA", "ATQ", "MOV", "ALC"]
+	var caps = ["Vida", "Ataque", "Movimento", "Alcance"]
 	for i in range(4):
 		var pc = PanelContainer.new()
 		pc.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -1994,12 +1994,14 @@ func _stat_cells(parent: Control, c: Dictionary) -> void:
 		parent.add_child(pc)
 		var v = _vbox(pc, 0)
 		v.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		var n = _label(v, str(vals[i]), 17, ST_COL[i].lightened(0.35))
-		n.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		# selo da função + número (sem a palavra)
+		var hh = _hbox(v, 2)
+		hh.alignment = BoxContainer.ALIGNMENT_CENTER
+		hh.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_ico(hh, ST_ICO[i], 20)
+		var n = _label(hh, str(vals[i]), 16, ST_COL[i].lightened(0.35))
 		n.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		var cp = _label(v, caps[i], 9, C_DIM)
-		cp.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		cp.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		pc.tooltip_text = caps[i]
 
 
 func _army_refresh_rest() -> void:
@@ -2090,7 +2092,8 @@ func _primary(b: Button) -> void:
 	b.add_theme_constant_override("outline_size", 8)
 
 
-const ST_COL = [Color("#ff5a6a"), Color("#ffab40"), Color("#4cd964"), Color("#4da3ff")]
+const ST_COL = [Color("#4cff6a"), Color("#ff3b4d"), Color("#3d8bff"), Color("#ffab40")]   # vida, ataque, movimento, alcance (cores das funções)
+const ST_ICO = ["vida", "ataque", "movimento", "alcance"]
 
 
 func _army_card(c: Dictionary) -> Control:
@@ -2101,9 +2104,9 @@ func _army_card(c: Dictionary) -> Control:
 	b.custom_minimum_size = Vector2(0, 176 if compact else 212)
 	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var tint = C_GOLD if chosen else (C_HUD if id == army_detail else fc)
-	b.add_theme_stylebox_override("normal", _tex_box("res://ui/card.png", 20, tint, 9, 7))
-	b.add_theme_stylebox_override("hover", _tex_box("res://ui/card.png", 20, tint.lightened(0.25) if not chosen else C_GOLD.lightened(0.3), 9, 7))
-	b.add_theme_stylebox_override("pressed", _tex_box("res://ui/card.png", 20, C_GOLD, 9, 7))
+	b.add_theme_stylebox_override("normal", _card_box(tint, 3))
+	b.add_theme_stylebox_override("hover", _card_box(tint.lightened(0.25) if not chosen else C_GOLD.lightened(0.3), 4))
+	b.add_theme_stylebox_override("pressed", _card_box(C_GOLD, 4))
 	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	b.pressed.connect(func():
 		if not _lp_eat(b):
@@ -2361,8 +2364,7 @@ func _detail_fill(det: PanelContainer, id: String, acoes: bool, dw_override: int
 	var maxs = [14.0, 6.0, 4.0, 6.0]
 	for i in range(4):
 		var h = _hbox(v, 8)
-		var nl = _label(h, names[i], 11, C_DIM)
-		nl.custom_minimum_size = Vector2(88, 0)
+		_ico(h, ST_ICO[i], 24).tooltip_text = names[i]
 		var bar = Control.new()
 		bar.custom_minimum_size = Vector2(0, 10)
 		bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -2372,11 +2374,27 @@ func _detail_fill(det: PanelContainer, id: String, acoes: bool, dw_override: int
 		bg.color = Color(1, 1, 1, 0.08)
 		bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 		bar.add_child(bg)
-		var fill = ColorRect.new()
-		fill.color = ST_COL[i]
+		var fill = TextureRect.new()
+		var gtx = GradientTexture2D.new()
+		var grd = Gradient.new()
+		grd.colors = PackedColorArray([ST_COL[i].darkened(0.4), ST_COL[i], ST_COL[i].lightened(0.4)])
+		grd.offsets = PackedFloat32Array([0.0, 0.75, 1.0])
+		gtx.gradient = grd
+		gtx.width = 64
+		gtx.height = 4
+		fill.texture = gtx
+		fill.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		fill.stretch_mode = TextureRect.STRETCH_SCALE
 		fill.anchor_bottom = 1.0
 		fill.anchor_right = clamp(vals[i] / maxs[i], 0.05, 1.0)
 		bar.add_child(fill)
+		var tip2 = ColorRect.new()
+		tip2.color = Color.WHITE
+		tip2.anchor_left = fill.anchor_right
+		tip2.anchor_right = fill.anchor_right
+		tip2.anchor_bottom = 1.0
+		tip2.offset_left = -3
+		bar.add_child(tip2)
 		var vl = _label(h, str(vals[i]), 14, ST_COL[i].lightened(0.2))
 		vl.custom_minimum_size = Vector2(24, 0)
 	# habilidades
@@ -2740,7 +2758,6 @@ func _build_hud() -> void:
 	w["party0"] = _vbox(w["party0_sc"], 3)
 	# avisos de ação (no alto)
 	var aw = _panel(topcol)
-	aw.add_theme_stylebox_override("panel", _tex_box("res://ui/panel_soft.png", 22, C_HUD, 16, 8))
 	var av = _vbox(aw, 4)
 	w["note"] = _label(av, "", 16)
 	w["note"].horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -2769,7 +2786,11 @@ func _build_hud() -> void:
 	# ficha da peça
 	var uc = _panel(ui)
 	_place(uc, Control.PRESET_BOTTOM_LEFT, 8)
-	w["ucard_text"] = _rich(uc, 200 if compact else 232)
+	var uch = _hbox(uc, 8)
+	w["ucard_anel"] = AnelVida.new()   # retrato com o medidor redondo de vida
+	w["ucard_anel"].size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	uch.add_child(w["ucard_anel"])
+	w["ucard_text"] = _rich(uch, 200 if compact else 232)
 	w["ucard_text"].add_theme_font_size_override("normal_font_size", 12)
 	w["ucard_text"].add_theme_font_size_override("bold_font_size", 12)
 	w["ucard_text"].add_theme_font_size_override("italics_font_size", 12)
@@ -2916,7 +2937,7 @@ func _portrait_hud() -> void:
 			w[k].autowrap_mode = TextServer.AUTOWRAP_OFF   # na linha do topo: texto curto, sem quebrar
 	w["events"].add_theme_font_size_override("font_size", 12)
 	# ficha da peça mais enxuta (não cobre o tabuleiro)
-	w["ucard_text"].custom_minimum_size.x = vw.x - 44.0
+	w["ucard_text"].custom_minimum_size.x = vw.x - 44.0 - 92.0
 	w["ucard_text"].mouse_filter = Control.MOUSE_FILTER_IGNORE
 	w["ucard"].mouse_filter = Control.MOUSE_FILTER_STOP
 	w["ucard"].gui_input.connect(func(ev):
@@ -3701,7 +3722,7 @@ func _refresh_ucard() -> void:
 			txt = "[color=%s]%s[/color] · %s\n[font_size=16][b]%s[/b][/font_size]\n" % [fcol, DB.factions[c["f"]]["name"].to_upper(), "Você" if u.owner == me else _opp(), c["name"]]
 			# números com ícone: vida, ataque, movimento, alcance
 			var IC = func(n): return "[img=26x26]res://ui/hud/%s.svg[/img]" % n
-			txt += "[color=#cbbdff]%s[/color]\n%s %d/%d    %s %d    %s %d    %s %d\n" % [c["role"], IC.call("vida"), max(0, u.hp), u.maxhp, IC.call("ataque"), game.atk_of(u, null), IC.call("movimento"), game.mov_of(u), IC.call("alcance"), game.alc_of(u)]
+			txt += "[color=#cbbdff]%s[/color]\n%s %d    %s %d    %s %d\n" % [c["role"], IC.call("ataque"), game.atk_of(u, null), IC.call("movimento"), game.mov_of(u), IC.call("alcance"), game.alc_of(u)]
 			if u.st == "reserve":
 				txt += "[i]Na reserva (arraste para a entrada)[/i]\n"
 			elif u.st == "off":
@@ -3746,6 +3767,10 @@ func _refresh_ucard() -> void:
 		txt = _ucard_short(u)
 	w["ucard"].visible = txt != ""
 	w["ucard_text"].text = txt
+	var anel: AnelVida = w["ucard_anel"]
+	anel.visible = u != null and not u.barrier and u.crystal == ""
+	if anel.visible:
+		anel.mostra(DB.portraits.get(u.cid, null), u.hp, u.maxhp, C_YOU if u.owner == me else C_CPU)
 
 
 # em pé: só o que o mapa não mostra (atributos atuais, efeitos, item e o nome das habilidades)
@@ -3753,7 +3778,8 @@ func _ucard_short(u) -> String:
 	var c = DB.cards[u.cid]
 	var col = "#7fc8ff" if u.owner == me else "#ff8a7a"
 	var t = "[color=%s][b]%s[/b][/color]  [color=#8fb8cc]%s[/color]\n" % [col, c["name"], "seu" if u.owner == me else "rival"]
-	t += "[color=#ff5a6a]♥ %d/%d[/color]   [color=#ffab40]ATQ %d[/color]   [color=#4cd964]MOV %d[/color]   [color=#4da3ff]ALC %d[/color]" % [max(0, u.hp), u.maxhp, game.atk_of(u, null), game.mov_of(u), game.alc_of(u)]
+	var IC = func(n): return "[img=24x24]res://ui/hud/%s.svg[/img]" % n
+	t += "%s %d   %s %d   %s %d" % [IC.call("ataque"), game.atk_of(u, null), IC.call("movimento"), game.mov_of(u), IC.call("alcance"), game.alc_of(u)]
 	var est = []
 	if u.eq != "":
 		est.append("Item: " + DB.tactics[u.eq]["name"])
@@ -4398,7 +4424,7 @@ func _make_card(id: String) -> Control:
 	var react = t["type"] == "Reação" or id == "retirada" or id == "reforco"
 	var card = PanelContainer.new()
 	card.custom_minimum_size = Vector2(70, 82) if compact else Vector2(78, 92)
-	card.add_theme_stylebox_override("panel", _tex_box("res://ui/card.png", 20, col if (ok or react) else col.darkened(0.55), 6, 6))
+	card.add_theme_stylebox_override("panel", _card_box(col if (ok or react) else col.darkened(0.55)))
 	var iw = Control.new()
 	iw.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	iw.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -4426,6 +4452,22 @@ func _make_card(id: String) -> Control:
 	card.mouse_exited.connect(_card_hover_set.bind(id, card, false))
 	card.gui_input.connect(_card_input.bind(id))
 	return card
+
+
+# moldura de carta: corpo escuro inclinado, borda grossa na cor do efeito, sombra dura
+# e uma faixa de cor embaixo (como as caixas da referência)
+func _card_box(col: Color, borda: int = 4) -> StyleBoxFlat:
+	var s = StyleBoxFlat.new()
+	s.bg_color = Color(0.07, 0.05, 0.12, 0.96)
+	s.border_color = col
+	s.set_border_width_all(borda)
+	s.border_width_bottom = borda + 5
+	s.skew = Vector2(0.1, 0)
+	s.shadow_color = Color(0, 0, 0, 0.8)
+	s.shadow_size = 1
+	s.shadow_offset = Vector2(5, 5)
+	s.set_content_margin_all(7)
+	return s
 
 
 # janela da carta: o que ela faz, se dá para usar agora e o botão de usar
