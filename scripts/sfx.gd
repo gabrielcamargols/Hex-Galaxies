@@ -46,6 +46,7 @@ func set_volume(bus: String, pct: float) -> void:
 
 
 func _ready() -> void:
+	_vozes_web()
 	for b in ["Musica", "Efeitos", "Vozes", "Narrador"]:
 		if AudioServer.get_bus_index(b) < 0:
 			AudioServer.add_bus()
@@ -95,8 +96,65 @@ func _ready() -> void:
 		pool.append(p)
 
 
+# ---- falas dos personagens na web: vêm num pacote separado (vozes.pck), baixado depois que o jogo abre ----
+# assim a primeira abertura baixa ~50 MB a menos; até o pacote chegar, os personagens só não falam
+var vozes_ok: bool = true
+var _vozes_http: HTTPRequest = null
+
+
+func _vozes_web() -> void:
+	if not OS.has_feature("web"):
+		return
+	vozes_ok = false
+	var ver = "local"
+	if FileAccess.file_exists("res://data/version.json"):
+		var vj = JSON.parse_string(FileAccess.get_file_as_string("res://data/version.json"))
+		if vj is Dictionary:
+			ver = String(vj.get("sha", "local"))
+	var local = "user://vozes_%s.pck" % ver
+	# limpa pacotes de versões antigas guardados no navegador
+	var dir = DirAccess.open("user://")
+	if dir != null:
+		for f in dir.get_files():
+			if f.begins_with("vozes_") and f.ends_with(".pck") and "user://" + f != local:
+				dir.remove(f)
+	if FileAccess.file_exists(local) and ProjectSettings.load_resource_pack(local):
+		_vozes_prontas()
+		return
+	var base = str(JavaScriptBridge.eval("location.href.split('?')[0].split('#')[0]", true))
+	base = base.substr(0, base.rfind("/") + 1)
+	_vozes_http = HTTPRequest.new()
+	_vozes_http.body_size_limit = -1
+	add_child(_vozes_http)
+	# no navegador o HTTPRequest não grava direto em arquivo: recebe na memória e guarda depois
+	_vozes_http.request_completed.connect(func(res, code, _h, body: PackedByteArray):
+		_vozes_http.queue_free()
+		if res != HTTPRequest.RESULT_SUCCESS or code != 200 or body.size() < 1024:
+			push_warning("vozes.pck não baixou (%d/%d): o jogo segue sem falas" % [res, code])
+			return
+		var fw = FileAccess.open(local, FileAccess.WRITE)
+		if fw != null:
+			fw.store_buffer(body)
+			fw.close()
+		if ProjectSettings.load_resource_pack(local):
+			_vozes_prontas()
+		else:
+			push_warning("vozes.pck não carregou: o jogo segue sem falas"))
+	_vozes_http.request(base + "vozes.pck?v=" + ver)
+
+
+func _vozes_prontas() -> void:
+	vozes_ok = true
+	print("VOZES OK ", ResourceLoader.exists("res://sounds/v_k_cmd_l01.wav") or ResourceLoader.exists("res://sounds/v_k_cmd_l01.ogg"))
+	for k in streams.keys():
+		if streams[k] == null and String(k).begins_with("v_"):
+			streams.erase(k)     # tenta de novo as falas que faltavam
+
+
 # carrega um som pelo nome quando ele ainda não foi usado (vozes v_*, efeitos vfx_*)
 func has_sound(n: String) -> bool:
+	if not vozes_ok and n.begins_with("v_"):
+		return false     # pacote de falas ainda baixando (web)
 	if streams.has(n):
 		return streams[n] != null
 	var s = null

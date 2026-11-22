@@ -41,7 +41,10 @@ jobs:
           # se alguma regra quebrar, o jogo não é publicado (a versão anterior continua no ar)
           bash tools/testes.sh ./godot
           mkdir -p build/web
+          # as falas dos personagens vão num pacote à parte (vozes.pck), baixado depois que o jogo abre
+          python3 tools/preset_vozes.py
           ./godot --headless --path . --export-release "Web" build/web/index.html
+          ./godot --headless --path . --export-pack "Vozes" build/web/vozes.pck
           ls -la build/web
       - uses: actions/upload-pages-artifact@v3
         with:
