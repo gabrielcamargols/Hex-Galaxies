@@ -103,6 +103,7 @@ var plain: Dictionary = {"k": "plano", "h": 0}
 var terr_ver: int = 0
 var earth: Dictionary = {}  # Vector2i -> ajuste de altura (Erguer a Terra)
 var tree: SceneTree = null
+var manip_previa = null   # estrutura que o Rei está movendo (prévia do arremesso)
 var pace_time: float = 0.28
 # ---- online: os dois aparelhos rodam a mesma partida e trocam as jogadas ----
 signal remote_ans          # chegou a resposta de uma pergunta feita ao outro jogador
@@ -1849,6 +1850,19 @@ func combo_cadeia(c) -> Array:
 			if y != null and y.crystal != "" and y.st == "field" and not out.has(y) and cristal_familia(y.crystal) == cristal_familia(x.crystal):
 				out.append(y)
 	return out
+
+
+# prévia do arremesso da Manipulação: dano do impacto + efeito do cristal no alvo (uid -> texto)
+func arremesso_previa(rei, s, t) -> Dictionary:
+	var tm = terrain_mods(rei, t)
+	var dealt = max(0, 4 + int(tm["atk"]) - reduction_of(t, true, DB.dist(rei.pos(), t.pos())) - int(tm["cover"]) - int(tm["forest"]))
+	var tags = {t.uid: "-%d" % dealt}
+	if s.crystal == "":
+		return tags
+	var extra = cristal_previa(s, t)
+	for uid in extra:
+		tags[uid] = (tags[uid] + " · " + extra[uid]) if tags.has(uid) else extra[uid]
+	return tags
 
 
 # o que cada peça sofre se a cadeia de c quebrar pelas mãos de quem (uid -> texto curto)
@@ -3939,7 +3953,9 @@ func _act_manip(u) -> bool:
 			if st == null:
 				return false
 			var s = unit_at(st)
+			manip_previa = s     # a tela mostra o que o arremesso faz em cada inimigo alcançável
 			var dh = await pick_hex(p, "Manipulação: escolha o destino (até 2 casas) — um inimigo ali é atingido e a estrutura se destrói.", manip_dests(s, u), "manip_d", true)
+			manip_previa = null
 			if dh == null:
 				return false
 			act["actions"] -= 1

@@ -59,6 +59,14 @@ I = {
  "st_golpe": ("#ffe76a", "#c46a00", '<rect x="16" y="22" width="32" height="26" rx="8" fill="#fff" %s/><path d="M20 22 L20 14 M28 22 L28 12 M36 22 L36 12 M44 22 L44 14" stroke="%s" stroke-width="10" stroke-linecap="round"/><path d="M20 22 L20 14 M28 22 L28 12 M36 22 L36 12 M44 22 L44 14" stroke="#fff" stroke-width="4" stroke-linecap="round"/>' % (W, O)),
  "st_furia": ("#ff8a5a", "#c4200c", '<path d="M32 58 C16 58 10 46 14 34 C18 24 26 22 24 8 C36 14 40 24 38 32 C42 28 44 24 44 20 C54 30 56 44 48 52 C44 56 38 58 32 58 Z" fill="#fff" %s/>' % W),
  "st_oculto": ("#d9ccff", "#4a3a8a", '<path d="M4 32 C16 14 48 14 60 32 C48 50 16 50 4 32 Z" fill="#fff" %s/><circle cx="32" cy="32" r="8" fill="%s"/>' % (W, O)),
+ # ---- símbolo de cada cor de cristal (para não depender só da cor) ----
+ "cr_verde": ("#7dff4a", "#1f8f2a", '<path d="M32 54 C10 38 6 26 12 17 C18 9 28 11 32 19 C36 11 46 9 52 17 C58 26 54 38 32 54 Z" fill="#fff" %s/>' % W),
+ "cr_azul": ("#5ae8ff", "#1d6fd8", '<path d="M8 14 L28 32 L8 50 L8 40 L18 32 L8 24 Z" fill="#fff" %s/><path d="M30 14 L50 32 L30 50 L30 40 L40 32 L30 24 Z" fill="#fff" %s/>' % (W, W)),
+ "cr_roxo": ("#ff5ae0", "#8a1fb8", '<path d="%s" fill="#fff" %s/>' % (star(8, 26, 12), W)),
+ "cr_vermelho": ("#ff5a5a", "#a8101c", '<path d="M46 8 L56 8 L56 18 L28 46 L18 36 Z" fill="#fff" %s/><path d="M14 34 L30 50" %s/><path d="M12 46 L18 52 L10 58 L6 54 Z" fill="#fff" %s/>' % (W, W, W)),
+ "cr_preto": ("#6a5a88", "#1a1226", '<path d="M32 32 m0 -4 C40 -4 52 14 44 30 C38 42 20 42 18 30 C16 20 26 16 32 22 C36 26 32 32 28 30" fill="none" stroke="%s" stroke-width="12" stroke-linecap="round"/><path d="M32 32 m0 -4 C40 -4 52 14 44 30 C38 42 20 42 18 30 C16 20 26 16 32 22 C36 26 32 32 28 30" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/>' % O),
+ "cr_anil": ("#5a7cff", "#1a2a9a", '<path d="M32 6 L54 14 L52 34 C50 46 42 54 32 58 C22 54 14 46 12 34 L10 14 Z" fill="#fff" %s/>' % W),
+ "cr_ciano": ("#3ffff0", "#0f8fa0", '<path d="M24 8 L40 8 L40 24 L56 24 L56 40 L40 40 L40 56 L24 56 L24 40 L8 40 L8 24 L24 24 Z" fill="#fff" %s/>' % W),
 }
 HEX = "M50 4 L93 28 L93 72 L50 96 L7 72 L7 28 Z"   # selo em 100x100
 for nome, (c1, c2, corpo) in I.items():

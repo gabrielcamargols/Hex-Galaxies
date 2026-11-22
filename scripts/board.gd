@@ -2580,6 +2580,11 @@ func _make_unit(u) -> void:
 			_rei_crystal(node, u.crystal, u.uid)   # Barreira de Valak: pilar do muro do Rei
 		else:
 			_crystal_cluster(node, u.crystal, u.uid)
+		# símbolo da cor (coração, setas, explosão, espada, espiral, escudo, cruz): lê-se sem depender da cor
+		if ResourceLoader.exists("res://ui/hud/cr_%s.svg" % u.crystal):
+			var simb = icone3d("cr_" + u.crystal, 0.62)
+			simb.position = Vector3(0, 0.62, 0)
+			node.add_child(simb)
 		body_h = 1.6
 	elif u.barrier:
 		_mesh(node, _cyl(0.4, 0.5, 0.7, 6), Color("#6d6250"), Vector3(0, 0.35, 0))

@@ -545,6 +545,11 @@ func _rei_cores() -> void:
 	var ali = put(g, "t_basalto", 0, -4, 3)
 	ok(g.combo_cadeia(p1).size() == 2 and g.combo_cadeia(p1).has(p2), "prévia: o combo mostra os 2 cristais pretos")
 	var pv = g.cristal_previa(p1, ini)
+	var rei_p = gr[1]
+	var vm = g._make_crystal(0, H(-1, 4), "vermelho")
+	var alvo_p = put(g, "w_urso", 1, -1, 5)
+	var ap = g.arremesso_previa(rei_p, vm, alvo_p)
+	ok(String(ap.get(alvo_p.uid, "")).begins_with("-") and String(ap.get(alvo_p.uid, "")).contains("-2"), "prévia do arremesso: dano do impacto + vermelho (%s)" % str(ap.get(alvo_p.uid, "")))
 	ok(String(pv.get(ini.uid, "")).contains("PUXADO") and String(pv.get(ali.uid, "")).contains("LANÇADO"), "prévia: quem é puxado e quem é lançado (%s)" % str(pv))
 
 

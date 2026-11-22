@@ -3327,6 +3327,15 @@ func refresh() -> void:
 	if H["ghost"] != null:
 		st["hl"][H["ghost"]] = "sel"
 		st["ghost"] = H["ghost"]
+	# Manipulação Mineral: escolhendo onde jogar a estrutura, cada inimigo alcançável mostra o resultado
+	if asking != null and asking["q"].get("kind", "") == "manip_d" and game.manip_previa != null:
+		var rei_u = game.active_unit()
+		if rei_u != null:
+			for oh in asking["q"]["opts"]:
+				var ot = game.unit_at(oh)
+				if ot != null and not ot.barrier and ot.owner != rei_u.owner:
+					var apv = game.arremesso_previa(rei_u, game.manip_previa, ot)
+					st["tags"][ot.uid] = {"text": apv.get(ot.uid, ""), "color": Color("#ff8a8a")}
 	if pend != null and pend.has("tuid"):
 		var tt = game.by_uid(pend["tuid"])
 		if tt != null:
