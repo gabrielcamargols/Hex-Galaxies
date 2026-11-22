@@ -600,6 +600,11 @@ static func answer(g, p: int, q: Dictionary) -> Variant:
 								if DB.dist(al.pos(), h) <= 1:
 									ally_adj += 1
 							s = (5.0 if t3.block else 2.0) - ally_adj
+					"valwall":
+						# o muro cresce para o lado dos inimigos (fecha o caminho até o Rei)
+						for e in g.enemies_of(g.commander(p)):
+							if not e.barrier:
+								s += max(0.0, 5.0 - DB.dist(e.pos(), h))
 					"enemy":
 						s = ((50.0 if t3.is_cmd else 0.0) + 20.0 - t3.hp - (30.0 if t3.barrier else 0.0)) if t3 != null else 0.0
 					"cart":

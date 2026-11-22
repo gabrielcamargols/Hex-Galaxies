@@ -62,6 +62,7 @@ class Unit:
 	var packed: bool = false          # Brazucão: já ganhou o +2 de Vida da Matilha
 	var soft: bool = false            # barreira de raízes: bloqueia movimento, mas não tiros e não dá abrigo
 	var sp_owner: int = -1            # cristal especial do Rei da Mina: time dele (-1 = cristal natural)
+	var muro: int = -1                # Barreira de Valak: cristais do mesmo muro (uid do Rei) se ligam numa parede só
 	var block: bool = false           # bloco móvel nascido de um terreno rebaixado pelo Rei
 
 	func pos() -> Vector2i:
@@ -3600,7 +3601,13 @@ func val_end_opts(u, a: Vector2i) -> Array:
 
 
 func val_start_opts(u) -> Array:
-	return DB.hexes.filter(func(h): return DB.dist(h, u.pos()) <= MANIP_R and val_hex_ok(h) and not val_end_opts(u, h).is_empty())
+	return DB.hexes.filter(func(h): return DB.dist(h, u.pos()) <= MANIP_R and val_hex_ok(h) and not val_next_opts(u, [h]).is_empty())
+
+
+# Barreira de Valak: o próximo cristal encosta no último (reta ou curva, qualquer altura), até 6 casas do Rei
+func val_next_opts(u, cells: Array) -> Array:
+	var last: Vector2i = cells[-1]
+	return DB.nbrs(last).filter(func(h): return DB.in_board(h) and not cells.has(h) and DB.dist(h, u.pos()) <= MANIP_R and val_hex_ok(h))
 
 
 # unidades de campo que sofrem o efeito de um cristal especial (aliados/inimigos do dono)
@@ -4134,7 +4141,7 @@ func _act_ult_run(u) -> bool:
 		"coat": "escolha o aliado adjacente a revestir", "rupture": "escolha a barreira adjacente a romper", "timedcharge": "escolha a casa da carga (até 2)",
 		"lumen": "escolha o aliado a curar (até 2 casas)", "nursing": "escolha o aliado a tratar (até 2 casas)", "route": "escolha o aliado que ganha a rota (até 2 casas)",
 		"bridge": "escolha a 1ª casa baixa a elevar (até 2 casas dele; até 3 casas ligadas)",
-		"valbarrier": "escolha onde a barreira começa (até 6 casas); depois, onde termina",
+		"valbarrier": "escolha onde nasce o primeiro cristal (até 6 casas); depois desenhe o muro casa a casa",
 		"portalis": "escolha a ENTRADA do portal (até 6 casas): por onde aliados e ataques entram",
 		"minelay": "escolha a casa da mina (até 8 casas)",
 		"hexstar": "escolha o centro da Estrela Hexa (até 4 casas)", "workshop": "escolha o aliado que recebe o item (até 6 casas)",
@@ -4275,18 +4282,28 @@ func _act_ult_run(u) -> bool:
 			emitfx({"t": "passive", "kind": "power", "uid": rt_t.uid})
 			log_msg(p, "%s traça uma rota: %s ganha +1 de Movimento e sobe 1 nível a mais." % [nm(u), nm(rt_t)])
 		"valbarrier":
-			var vb_o = await pick_hex(p, "%s: escolha onde a barreira termina (até 4 casas da 1ª ponta)." % uname, val_end_opts(u, h), "ult", false)
-			if vb_o == null:
-				return false
-			var vb_cells = val_line_cells(u, h, vb_o)
+			# o Rei desenha a barreira casa a casa: cada cristal encosta no anterior (reta ou curva, 2 a 5)
 			var vb_cols = ["verde", "azul", "roxo"]
-			for k in range(vb_cells.size()):
-				var vb_c = vb_cells[k]
-				var vb_ci = await ask(p, {"t": "choice", "text": "Cor do cristal %d de %d:" % [k + 1, vb_cells.size()], "opts": ["Verde", "Azul", "Roxo"], "kind": "val_color", "uid": u.uid, "h": vb_c})
-				_make_crystal(p, vb_c, vb_cols[clampi(int(vb_ci) if vb_ci != null else 0, 0, 2)])
+			var vb_cells = [h]
+			while true:
+				var vb_c: Vector2i = vb_cells[-1]
+				var vb_ci = await ask(p, {"t": "choice", "text": "Cristal %d: escolha a cor" % vb_cells.size(), "opts": ["Verde", "Azul", "Roxo"], "kind": "val_color", "uid": u.uid, "h": vb_c, "n": vb_cells.size()})
+				var vb_k = _make_crystal(p, vb_c, vb_cols[clampi(int(vb_ci) if vb_ci != null else 0, 0, 2)])
+				vb_k.muro = u.uid
 				abfx("crystal", vb_c, u.uid)
-			emitfx({"t": "rumble", "hexes": [h, vb_o]})
-			log_msg(p, "%s ergue a Barreira de Valak: %d cristais especiais em linha." % [nm(u), vb_cells.size()])
+				changed.emit()
+				if vb_cells.size() >= 5:
+					break
+				var vb_nx = val_next_opts(u, vb_cells)
+				if vb_nx.is_empty():
+					break
+				var vb_txt = "%s: próximo cristal (%d de 5), encostado no último" % [uname, vb_cells.size() + 1]
+				var vb_h = await pick_hex(p, vb_txt + (" · ou Pular para terminar" if vb_cells.size() >= 2 else ""), vb_nx, "valwall", vb_cells.size() >= 2)
+				if vb_h == null:
+					break
+				vb_cells.append(vb_h)
+			emitfx({"t": "rumble", "hexes": vb_cells})
+			log_msg(p, "%s ergue a Barreira de Valak: um muro de %d cristais." % [nm(u), vb_cells.size()])
 		"portalis":
 			portal_pick_a = h
 			var po_b = ult_opts(u).filter(func(x): return x != h)

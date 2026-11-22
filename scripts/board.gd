@@ -2474,6 +2474,7 @@ func sync_units() -> void:
 		if not unit_nodes.has(u.uid):
 			_make_unit(u)
 	_sync_tunnels()
+	_sync_muros()
 	for uid in unit_nodes.keys():
 		if not seen.has(uid):
 			var n = unit_nodes[uid]
@@ -2546,7 +2547,10 @@ func _make_unit(u) -> void:
 			ring.visible = true
 			ring.material_override = _mat(Color("#ffe08a"), true)
 			ring.material_override.vertex_color_use_as_albedo = true
-		_crystal_cluster(node, u.crystal, u.uid)
+		if u.muro >= 0:
+			_rei_crystal(node, u.crystal, u.uid)   # Barreira de Valak: pilar do muro do Rei
+		else:
+			_crystal_cluster(node, u.crystal, u.uid)
 		body_h = 1.6
 	elif u.barrier:
 		_mesh(node, _cyl(0.4, 0.5, 0.7, 6), Color("#6d6250"), Vector3(0, 0.35, 0))
@@ -4785,6 +4789,150 @@ func _setup_cave_env() -> void:
 	ground.mesh = _disc(PLAT + 9.0, 48)
 	ground.position = Vector3(0, BASE_Y + 0.01, 0)
 	ground.material_override = _mat(Color("#2a1650"))
+
+
+# ---- Barreira de Valak: os cristais do Rei viram um muro contínuo ----
+var muro_root: Node3D = null
+var muro_key: String = ""
+var ghost_node: Node3D = null
+
+
+# pilar do muro: um cristal largo e alto, com veios dourados do Rei na base
+func _rei_crystal(parent: Node3D, kind: String, seed_v: int) -> void:
+	var cc = CRYSTAL_COL.get(kind, ["#ffffff", "#999999"])
+	var rng = RandomNumberGenerator.new()
+	rng.seed = seed_v * 17 + 3
+	var base = _mesh(parent, _cyl(0.62, 0.7, 0.2, 6), Color("#4a3410"), Vector3(0, 0.1, 0))
+	base.material_overlay = _ink()
+	var ouro = MeshInstance3D.new()
+	ouro.mesh = _hex_ring(0.72, 0.6)
+	ouro.material_override = _neon(Color("#ffd23a"), 0.9, 1.2)
+	ouro.position = Vector3(0, 0.21, 0)
+	parent.add_child(ouro)
+	# bloco central: prisma largo e alto (parede, não cacho)
+	var col = Color(cc[0])
+	var pil = MeshInstance3D.new()
+	pil.mesh = _cyl(0.4, 0.5, 1.9, 6)
+	pil.material_override = _glow_mat(col.lerp(Color(cc[1]), 0.3), 0.75)
+	pil.material_overlay = _ink()
+	pil.position = Vector3(0, 1.15, 0)
+	parent.add_child(pil)
+	var topo = MeshInstance3D.new()
+	topo.mesh = _cyl(0.0, 0.4, 0.55, 6)
+	topo.material_override = _glow_mat(col.lightened(0.3), 1.0)
+	topo.material_overlay = _ink()
+	topo.position = Vector3(0, 2.37, 0)
+	parent.add_child(topo)
+	# lascas laterais, mais baixas
+	for i in range(3):
+		var a = TAU * i / 3.0 + rng.randf_range(-0.3, 0.3)
+		var hg = rng.randf_range(0.8, 1.2)
+		var sh = MeshInstance3D.new()
+		sh.mesh = _cyl(0.0, 0.17, hg, 5)
+		sh.material_override = _glow_mat(Color(cc[1]).lightened(0.1), 0.9)
+		sh.material_overlay = _ink()
+		sh.position = Vector3(cos(a) * 0.42, 0.2 + hg * 0.5, sin(a) * 0.42)
+		sh.rotation = Vector3(sin(a) * 0.35, 0, -cos(a) * 0.35)
+		parent.add_child(sh)
+	var lt = OmniLight3D.new()
+	lt.light_color = col
+	lt.light_energy = 0.8
+	lt.omni_range = 2.8
+	lt.position = Vector3(0, 1.2, 0)
+	parent.add_child(lt)
+
+
+# placas de cristal ligando cada par de pilares vizinhos do mesmo muro (sobem e descem com o terreno)
+func _sync_muros() -> void:
+	var pares: Array = []
+	var por_casa: Dictionary = {}
+	for u in g.units:
+		if u.st == "field" and u.crystal != "" and u.muro >= 0:
+			por_casa[u.pos()] = u
+	for h in por_casa:
+		for n in DB.nbrs(h):
+			if por_casa.has(n) and por_casa[n].muro == por_casa[h].muro and (h.x < n.x or (h.x == n.x and h.y < n.y)):
+				pares.append([h, n])
+	var key = str(pares) + str(por_casa.keys().map(func(x): return por_casa[x].crystal))
+	if key == muro_key:
+		return
+	muro_key = key
+	if muro_root != null and is_instance_valid(muro_root):
+		muro_root.queue_free()
+	muro_root = Node3D.new()
+	add_child(muro_root)
+	for pr in pares:
+		var a: Vector2i = pr[0]
+		var b: Vector2i = pr[1]
+		var wa = world_xz(a)
+		var wb = world_xz(b)
+		var pa = Vector3(wa.x, top_y(a), wa.y)
+		var pb = Vector3(wb.x, top_y(b), wb.y)
+		var ca = Color(CRYSTAL_COL.get(por_casa[a].crystal, ["#ffffff"])[0])
+		var cb = Color(CRYSTAL_COL.get(por_casa[b].crystal, ["#ffffff"])[0])
+		var seg = pb - pa
+		var flat = Vector3(seg.x, 0, seg.z)
+		var comp = flat.length()
+		var holder = Node3D.new()
+		holder.position = (pa + pb) * 0.5
+		holder.rotation.y = atan2(-seg.z, seg.x)
+		holder.rotation.z = atan2(seg.y, comp)        # inclina junto com o desnível entre as casas
+		var sc_c = 0.75 * (HX * 1.15 if HX > 1.0 else 1.0)   # mesma escala dos pilares (peças de barreira)
+		holder.scale = Vector3(1.0, sc_c, sc_c)
+		muro_root.add_child(holder)
+		var placa = MeshInstance3D.new()
+		var bm = BoxMesh.new()
+		bm.size = Vector3(sqrt(comp * comp + seg.y * seg.y) * 0.98, 1.45, 0.3)
+		placa.mesh = bm
+		placa.material_override = _glow_mat(ca.lerp(cb, 0.5).darkened(0.35), 0.35)
+		placa.material_overlay = _ink()
+		placa.position = Vector3(0, 0.95, 0)
+		holder.add_child(placa)
+		# pontas de cristal no alto da placa, para ler como muro de cristal e não como parede lisa
+		for k in range(3):
+			var t = (k + 1) / 4.0 - 0.5
+			var sp = MeshInstance3D.new()
+			var hg = 0.45 + 0.2 * float(k % 2)
+			sp.mesh = _cyl(0.0, 0.16, hg, 5)
+			sp.material_override = _glow_mat((ca if t < 0 else cb).lightened(0.25), 0.95)
+			sp.material_overlay = _ink()
+			sp.position = Vector3(t * comp, 1.67 + hg * 0.5, 0)
+			holder.add_child(sp)
+
+
+# cristal fantasma: mostra onde o próximo cristal do muro vai nascer enquanto o Rei escolhe a cor
+func ghost_crystal(h: Variant) -> void:
+	if ghost_node != null and is_instance_valid(ghost_node):
+		ghost_node.queue_free()
+	ghost_node = null
+	if h == null:
+		return
+	ghost_node = Node3D.new()
+	var wp = world_xz(h)
+	ghost_node.position = Vector3(wp.x, top_y(h), wp.y)
+	add_child(ghost_node)
+	var m = StandardMaterial3D.new()
+	m.albedo_color = Color(0.85, 0.95, 1.0, 0.35)
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.emission_enabled = true
+	m.emission = Color(0.7, 0.85, 1.0)
+	m.emission_energy_multiplier = 0.4
+	var pil = MeshInstance3D.new()
+	pil.mesh = _cyl(0.4, 0.5, 1.9, 6)
+	pil.material_override = m
+	pil.position = Vector3(0, 1.15, 0)
+	ghost_node.add_child(pil)
+	var topo = MeshInstance3D.new()
+	topo.mesh = _cyl(0.0, 0.4, 0.55, 6)
+	topo.material_override = m
+	topo.position = Vector3(0, 2.37, 0)
+	ghost_node.add_child(topo)
+	var sc_g = 0.75 * (HX * 1.15 if HX > 1.0 else 1.0)
+	ghost_node.scale = Vector3.ONE * sc_g
+	var tw = ghost_node.create_tween().set_loops()
+	tw.tween_property(ghost_node, "scale", Vector3.ONE * sc_g * 1.07, 0.5)
+	tw.tween_property(ghost_node, "scale", Vector3.ONE * sc_g, 0.5)
 
 
 func _crystal_cluster(parent: Node3D, kind: String, seed_v: int, enfeite: bool = false) -> void:

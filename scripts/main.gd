@@ -4075,6 +4075,8 @@ func _refresh_prompt() -> void:
 		for c in bx.get_children():
 			c.queue_free()
 	var text = ""
+	if asking == null or asking["q"].get("kind", "") != "val_color":
+		_valcor_hide()
 	var is_mull = asking != null and asking["q"].get("kind", "") == "mulligan"
 	var big = asking != null and not is_mull
 	var box: Container = w["ask_btns"] if big else w["prompt_btns"]
@@ -4111,6 +4113,9 @@ func _refresh_prompt() -> void:
 			"show":
 				text += "\n" + (_cards_text(q["cards"]) if not q["cards"].is_empty() else "A mão está vazia.")
 				_button(box, "Fechar", func(): _answer(true))
+			"choice" when q.get("kind", "") == "val_color":
+				# Barreira de Valak: cristal transparente na casa e as cores em cima dele, no próprio mapa
+				_valcor_show(q)
 			"choice":
 				for i in range(q["opts"].size()):
 					var ii = i
@@ -4179,12 +4184,82 @@ func _refresh_prompt() -> void:
 		w["prompt_text"].text = text
 
 
+# ---- Barreira de Valak: escolher a cor do cristal em cima dele, no mapa ----
+const VALCOR = [["verde", "#7dff4a", "Cura"], ["azul", "#5ae8ff", "+Mov"], ["roxo", "#ff5ae0", "Dano"]]
+
+
+func _valcor_show(q: Dictionary) -> void:
+	if w.has("valcor") and is_instance_valid(w["valcor"]["node"]) and w["valcor"]["q"] == q:
+		return
+	_valcor_hide()
+	board.ghost_crystal(q["h"])
+	var hb = HBoxContainer.new()
+	hb.add_theme_constant_override("separation", 10)
+	hb.z_index = 25
+	ui.add_child(hb)
+	var dicas = ["Verde: aliados do Rei +2 de Vida, inimigos -2 ao quebrar", "Azul: aliados +1 de Movimento, inimigos -1 ao quebrar", "Roxo: dano nos inimigos ao lado ao quebrar"]
+	for i in range(3):
+		var col = Color(VALCOR[i][1])
+		var b = Button.new()
+		b.text = VALCOR[i][2]
+		b.custom_minimum_size = Vector2(66, 66) if not compact else Vector2(76, 76)
+		b.add_theme_font_size_override("font_size", 14)
+		b.add_theme_color_override("font_color", Color("#10081e"))
+		b.add_theme_color_override("font_hover_color", Color("#10081e"))
+		var sb = StyleBoxFlat.new()
+		sb.bg_color = col
+		sb.set_corner_radius_all(40)
+		sb.set_border_width_all(4)
+		sb.border_color = Color("#10081e")
+		sb.shadow_color = Color(col, 0.6)
+		sb.shadow_size = 10
+		b.add_theme_stylebox_override("normal", sb)
+		var sbh = sb.duplicate()
+		sbh.bg_color = col.lightened(0.3)
+		sbh.border_color = Color.WHITE
+		b.add_theme_stylebox_override("hover", sbh)
+		b.add_theme_stylebox_override("pressed", sbh)
+		b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+		b.tooltip_text = dicas[i]
+		var ii = i
+		b.pressed.connect(func():
+			sfx.play("clique", -6.0)
+			_valcor_hide()
+			_answer(ii))
+		hb.add_child(b)
+	w["valcor"] = {"node": hb, "q": q}
+	_valcor_place()
+	hb.modulate.a = 0.0
+	create_tween().tween_property(hb, "modulate:a", 1.0, 0.15)
+
+
+func _valcor_place() -> void:
+	if not w.has("valcor") or not is_instance_valid(w["valcor"]["node"]) or board == null or board.cam == null:
+		return
+	var hb: Control = w["valcor"]["node"]
+	var wp = _hex_pos(w["valcor"]["q"]["h"], 2.6)
+	if board.cam.is_position_behind(wp):
+		return
+	var sp = board.cam.unproject_position(wp)
+	hb.reset_size()
+	hb.position = sp - Vector2(hb.size.x / 2.0, hb.size.y + 6.0)
+
+
+func _valcor_hide() -> void:
+	if w.has("valcor"):
+		if is_instance_valid(w["valcor"]["node"]):
+			w["valcor"]["node"].queue_free()
+		w.erase("valcor")
+		if board != null:
+			board.ghost_crystal(null)
+
+
 # mostra a pergunta no centro; se for para clicar numa casa, sobe para não cobrir o tabuleiro
 func _show_ask(text: String, q: Dictionary) -> void:
 	w["prompt"].visible = false
 	w["note"].get_parent().get_parent().visible = false
 	var ask: PanelContainer = w["ask"]
-	var on_board = q["t"] == "hex"
+	var on_board = q["t"] == "hex" or q.get("kind", "") == "val_color"
 	# escolha no tabuleiro: só uma faixa fina no alto, para o campo ficar livre
 	if w.has("card_pop") and is_instance_valid(w["card_pop"]):
 		w["card_pop"].queue_free()
@@ -6963,6 +7038,7 @@ func _perf_guard(delta: float) -> void:
 
 
 func _process(_delta: float) -> void:
+	_valcor_place()
 	# a câmera da máscara acompanha a câmera do jogo
 	if rgb_mask != null:
 		var on = rgb_on and rgb_rect != null and rgb_rect.visible and board != null and board.cam != null

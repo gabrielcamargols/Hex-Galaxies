@@ -471,23 +471,51 @@ func _rei_barreira() -> void:
 	var starts = g.val_start_opts(rei)
 	ok(not starts.is_empty(), "há casas livres para começar a barreira a até 6 do Rei")
 	var st: Vector2i = starts[0]
-	var ends = g.val_end_opts(rei, st)
-	ok(not ends.is_empty() and ends.all(func(e): return DB.dist(e, st) <= 4), "o fim da barreira é livre, a até 4 casas do começo")
-	var en5 = ends.filter(func(e): return DB.dist(e, st) == 4)
-	var fim: Vector2i = en5[0] if not en5.is_empty() else ends[0]
-	var cells = g.val_line_cells(rei, st, fim)
-	var ans = [st, fim]
+	# desenha um muro em curva: a cada passo vira para um vizinho fora da reta, se houver
+	var cells = [st]
+	while cells.size() < 5:
+		var nx = g.val_next_opts(rei, cells)
+		if nx.is_empty():
+			break
+		var esc = nx[0]
+		if cells.size() >= 2:
+			var dir0 = cells[-1] - cells[-2]
+			for c in nx:
+				if c - cells[-1] != dir0:
+					esc = c
+					break
+		cells.append(esc)
+	ok(cells.size() == 5, "dá para desenhar 5 cristais encostados (%d)" % cells.size())
+	ok(cells.slice(1).all(func(c): return DB.dist(c, cells[cells.find(c) - 1]) == 1), "cada cristal encosta no anterior")
+	var reto = true
+	for k in range(2, cells.size()):
+		if cells[k] - cells[k - 1] != cells[1] - cells[0]:
+			reto = false
+	ok(not reto, "o muro pode fazer curva")
+	var cores = [0, 1, 2, 1, 0]
+	var ans = [st]
 	for k in range(cells.size()):
-		ans.append([0, 1, 2, 1, 0][k])
+		ans.append(cores[k])
+		if k + 1 < cells.size():
+			ans.append(cells[k + 1])
 	var r = await ativa(g, rei, ans)
 	ok(r, "Barreira de Valak usada")
 	var crs = g.units.filter(func(x): return x.crystal != "" and x.sp_owner == 0 and x.st == "field")
 	ok(crs.size() == cells.size(), "criou %d cristais especiais (%d)" % [cells.size(), crs.size()])
+	ok(crs.all(func(x): return x.muro == rei.uid), "os cristais formam um muro só (mesmo Rei)")
 	var cols = []
 	for k in range(cells.size()):
 		var c = g.unit_at(cells[k])
 		cols.append(c.crystal if c != null else "?")
 	ok(cols == ["verde", "azul", "roxo", "azul", "verde"].slice(0, cells.size()), "cores escolhidas uma a uma: %s" % str(cols))
+	# o Rei pode parar depois do 2º cristal
+	var gr3 = _rei()
+	var g3: Game = gr3[0]
+	var rei3: Game.Unit = gr3[1]
+	var s3: Vector2i = g3.val_start_opts(rei3)[0]
+	var n3: Vector2i = g3.val_next_opts(rei3, [s3])[0]
+	var r3 = await ativa(g3, rei3, [s3, 0, n3, 2, null])
+	ok(r3 and g3.units.filter(func(x): return x.crystal != "" and x.sp_owner == 0 and x.st == "field").size() == 2, "muro curto: parar depois de 2 cristais")
 	ok(g.units.filter(func(x): return x.crystal != "" and x.sp_owner == 0 and x.exp == 0).size() == cells.size(), "cristais não expiram sozinhos")
 	ok(rei.ult_used and not g.can_ult(rei), "uma vez por partida")
 	# sem 5 casas válidas: não pode usar e não gasta nada
