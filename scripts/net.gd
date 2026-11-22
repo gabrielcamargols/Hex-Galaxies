@@ -8,7 +8,8 @@ extends Node
 
 signal connected           # o outro jogador entrou
 signal message(d)          # chegou uma mensagem
-signal closed(reason)      # conexão caiu ou não deu certo
+signal closed(reason)      # conexão encerrada de vez (ou não deu certo)
+signal dropped(reason)     # caiu no meio da partida: dá para reconectar (o jogo espera)
 signal status(text)        # andamento ("Sala criada", "Conectando"...)
 
 const PORT = 47120
@@ -16,6 +17,11 @@ const PEERJS = "https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"
 const LETTERS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 
 var role := ""             # "host" ou "guest"
+# reconexão: toda mensagem leva um número (_s); quem volta pede o que perdeu e o outro reenvia
+var seq_out := 0
+var seq_in := 0
+var historico: Array = []
+var sessao := false        # já houve conexão nesta partida (uma nova conexão é uma volta)
 var code := ""
 var is_open := false
 var web := false
@@ -70,8 +76,19 @@ func join(c: String) -> void:
 
 
 func send(d: Dictionary) -> void:
-	if not is_open:
+	if role == "":
 		return
+	seq_out += 1
+	var dd = d.duplicate()
+	dd["_s"] = seq_out
+	historico.append(dd)
+	if historico.size() > 4000:
+		historico = historico.slice(historico.size() - 4000)
+	if is_open:
+		_envia(dd)      # fora do ar: fica guardada e vai quando reconectar
+
+
+func _envia(d: Dictionary) -> void:
 	var s = var_to_str(d)
 	if web:
 		JavaScriptBridge.eval("window.hexNet.send(%s)" % JSON.stringify(s), true)
@@ -96,6 +113,10 @@ func copy_text(t: String) -> void:
 func close() -> void:
 	is_open = false
 	role = ""
+	seq_out = 0
+	seq_in = 0
+	historico = []
+	sessao = false
 	if web:
 		JavaScriptBridge.eval("window.hexNet && window.hexNet.close()", true)
 	if tcp != null:
@@ -116,8 +137,60 @@ func _local_ip() -> String:
 
 func _got(s: String) -> void:
 	var v = str_to_var(s)
-	if v is Dictionary:
-		message.emit(v)
+	if not (v is Dictionary):
+		return
+	if v.get("t", "") == "_resume":
+		# o outro voltou e diz até onde recebeu: reenvia o resto, na ordem
+		for h in historico:
+			if int(h["_s"]) > int(v["got"]):
+				_envia(h)
+		return
+	if v.has("_s"):
+		if int(v["_s"]) <= seq_in:
+			return       # repetida (reenvio depois de reconectar)
+		seq_in = int(v["_s"])
+		v.erase("_s")
+	message.emit(v)
+
+
+# conexão (re)aberta: na volta, pede ao outro o que se perdeu enquanto estava fora
+func _abriu() -> void:
+	is_open = true
+	if sessao:
+		print("NET VOLTOU ", role, " pedindo depois de ", seq_in)
+		_envia({"t": "_resume", "got": seq_in})
+		status.emit("Reconectado!")
+	sessao = true
+	connected.emit()
+
+
+# caiu no meio: guarda a sala e o histórico; o anfitrião continua esperando, o convidado tenta voltar
+func _cair(reason: String) -> void:
+	print("NET CAIU ", role, " (", reason, ")")
+	is_open = false
+	if tcp != null:
+		tcp.disconnect_from_host()
+	tcp = null
+	pps = null
+	if web:
+		JavaScriptBridge.eval("window.hexNet && window.hexNet.drop()", true)
+	dropped.emit(reason)
+
+
+# convidado: tenta entrar de novo na mesma sala
+func reconectar() -> void:
+	if role != "guest" or is_open:
+		return
+	if web:
+		JavaScriptBridge.eval("window.hexNet.rejoin(%s)" % JSON.stringify(code), true)
+	else:
+		tcp = StreamPeerTCP.new()
+		tcp.connect_to_host(code, PORT)
+
+
+# teste: derruba a conexão deste lado de propósito
+func simular_queda() -> void:
+	_cair("queda simulada")
 
 
 func _process(_dt: float) -> void:
@@ -133,12 +206,14 @@ func _process(_dt: float) -> void:
 				"status":
 					status.emit(e["v"])
 				"open":
-					is_open = true
-					connected.emit()
+					_abriu()
 				"msg":
 					_got(e["v"])
 				"close":
-					if is_open or role != "":
+					if sessao and role != "":
+						if is_open:
+							_cair(e["v"])
+					elif is_open or role != "":
 						is_open = false
 						closed.emit(e["v"])
 		return
@@ -147,8 +222,7 @@ func _process(_dt: float) -> void:
 		tcp = server.take_connection()
 		pps = PacketPeerStream.new()
 		pps.stream_peer = tcp
-		is_open = true
-		connected.emit()
+		_abriu()
 	if tcp == null:
 		return
 	tcp.poll()
@@ -156,10 +230,15 @@ func _process(_dt: float) -> void:
 	if st == StreamPeerTCP.STATUS_CONNECTED and pps == null:
 		pps = PacketPeerStream.new()
 		pps.stream_peer = tcp
-		is_open = true
-		connected.emit()
-	elif st == StreamPeerTCP.STATUS_ERROR or (st == StreamPeerTCP.STATUS_NONE and is_open):
+		_abriu()
+	elif st == StreamPeerTCP.STATUS_ERROR or (st == StreamPeerTCP.STATUS_NONE and (is_open or pps == null)):
 		var was = is_open
+		if sessao:
+			if was:
+				_cair("O outro jogador caiu.")
+			else:
+				tcp = null     # tentativa de volta falhou; o jogo tenta de novo
+			return
 		close()
 		closed.emit("O outro jogador saiu." if was else "Não foi possível conectar.")
 		return
@@ -214,7 +293,7 @@ function wire(c){
   N.conn = c;
   c.on('open', function(){ clearTimeout(N.timer); push('open', ''); });
   c.on('data', function(d){ push('msg', String(d)); });
-  c.on('close', function(){ push('close', 'O outro jogador saiu.'); });
+  c.on('close', function(){ if (N.conn === c) N.conn = null; push('close', 'O outro jogador saiu.'); });
   c.on('error', function(e){ push('close', erro(e && e.type ? e.type : String(e))); });
   if (c.peerConnection) {
     c.peerConnection.addEventListener('iceconnectionstatechange', function(){
@@ -258,6 +337,13 @@ N.join = function(code){
   });
 };
 N.send = function(s){ if (N.conn) N.conn.send(s); };
+// caiu: solta a conexão mas mantém a sala (o anfitrião aceita a volta do convidado)
+N.drop = function(){ try { if (N.conn) N.conn.close(); } catch(e) {} N.conn = null; };
+N.rejoin = function(code){
+  if (local) { if (N.bc) N.bc.postMessage({k: 'hello'}); return; }
+  if (N.peer && !N.peer.destroyed && N.peer.open) { armTimeout(); wire(N.peer.connect('hexgal-' + code.toLowerCase(), {reliable: true})); }
+  else { try { if (N.peer) N.peer.destroy(); } catch(e) {} N.peer = null; N.join(code); }
+};
 N.ask = function(t){ var v = window.prompt(t, ''); return v === null ? '' : String(v); };
 N.copy = function(t){ try { navigator.clipboard.writeText(t); return true; } catch(e) { return false; } };
 N.close = function(){

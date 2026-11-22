@@ -136,6 +136,7 @@ func _ready() -> void:
 	net.connected.connect(_net_connected)
 	net.message.connect(_net_msg)
 	net.closed.connect(_net_closed)
+	net.dropped.connect(_net_dropped)
 	net.status.connect(_net_status)
 	board = Node3D.new()
 	board.set_script(load("res://scripts/board.gd"))
@@ -7339,9 +7340,54 @@ func _net_status(text: String) -> void:
 
 
 func _net_connected() -> void:
+	if online and stage == "battle":
+		# voltou depois de uma queda: as jogadas perdidas chegam sozinhas
+		_reconex_fim(true)
+		return
 	_online_set("Conectado! Preparando a partida...", C_DEPLOY.lightened(0.3))
 	if net.role == "guest":
 		net.send({"t": "hello", "army": _my_army()})
+
+
+# ---- queda no meio da partida: o jogo espera até 90 s; o convidado tenta voltar sozinho ----
+var reconex_ate_ms: int = 0
+
+
+func _net_dropped(reason: String) -> void:
+	if not online or stage != "battle" or game == null or game.winner != Game.NONE:
+		_net_closed(reason)
+		return
+	if reconex_ate_ms > 0:
+		return
+	reconex_ate_ms = Time.get_ticks_msec() + 90000
+	var p = _panel(ui)
+	_place(p, Control.PRESET_CENTER_TOP, 120)
+	p.z_index = 40
+	var v = _vbox(p, 6)
+	_label(v, "Conexão caiu", 26, C_GOLD)
+	var lb = _label(v, "Tentando reconectar... a partida continua de onde parou.", 16)
+	w["reconex"] = {"panel": p, "label": lb}
+	while reconex_ate_ms > 0 and online:
+		var falta = int((reconex_ate_ms - Time.get_ticks_msec()) / 1000)
+		if falta <= 0:
+			_reconex_fim(false)
+			_net_closed("Não foi possível reconectar em 90 segundos.")
+			return
+		if is_instance_valid(lb):
+			lb.text = "Tentando reconectar... (%d s) A partida continua de onde parou." % falta
+		net.reconectar()
+		await get_tree().create_timer(3.0, true, false, true).timeout
+
+
+func _reconex_fim(ok: bool) -> void:
+	reconex_ate_ms = 0
+	if w.has("reconex"):
+		if is_instance_valid(w["reconex"]["panel"]):
+			w["reconex"]["panel"].queue_free()
+		w.erase("reconex")
+	if ok:
+		banner("RECONECTADO", "")
+		refresh()
 
 
 func _net_msg(d: Dictionary) -> void:

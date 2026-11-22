@@ -23,4 +23,18 @@ if echo "$out" | grep -q 'AUTOTESTE FIM' && ! echo "$out" | grep -q 'SCRIPT ERRO
 else
   echo "FALHOU  partida CPU x CPU"; echo "$out" | grep -E 'SCRIPT ERROR|at: ' | head -10; ruim=1
 fi
+# online de verdade: dois processos pela rede local, com uma queda no meio; o estado final tem que bater
+L1=$(mktemp); L2=$(mktemp)
+PAPEL=host QUEDA=guest_r3 timeout 900 "$G" --headless --path . -- --teste=online > "$L1" 2>&1 &
+sleep 2
+PAPEL=guest QUEDA=guest_r3 timeout 900 "$G" --headless --path . -- --teste=online > "$L2" 2>&1
+wait
+f1=$(grep -o 'ONLINE FIM host .*' "$L1" | awk '{print $4}')
+f2=$(grep -o 'ONLINE FIM guest .*' "$L2" | awk '{print $4}')
+if [ -n "$f1" ] && [ "$f1" = "$f2" ] && grep -q 'NET VOLTOU' "$L2" && ! grep -q 'SCRIPT ERROR' "$L1" "$L2"; then
+  echo "ok      online (queda e volta, estado igual nos dois: $f1)"
+else
+  echo "FALHOU  online (host=$f1 guest=$f2)"; grep -hE 'SCRIPT ERROR|at: |NET ' "$L1" "$L2" | head -10; ruim=1
+fi
+rm -f "$L1" "$L2"
 exit $ruim
