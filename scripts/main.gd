@@ -3605,8 +3605,14 @@ func _refresh_party() -> void:
 			for u in res:
 				grid.add_child(_res_tile(u, p, dep_ok))
 		if not fld.is_empty():
+			# em campo: retrato redondo com o medidor de vida (3 por linha)
+			var fg = GridContainer.new()
+			fg.columns = 3
+			fg.add_theme_constant_override("h_separation", 3)
+			fg.add_theme_constant_override("v_separation", 2)
+			box.add_child(fg)
 			for u in fld:
-				box.add_child(_field_row(u))
+				fg.add_child(_field_ring(u, p))
 		if not dead.is_empty():
 			# caídos: retratinhos apagados, sem texto
 			var dg = GridContainer.new()
@@ -3712,6 +3718,37 @@ func _res_tile(u, p: int, dep_ok: bool) -> Button:
 			b.modulate = Color(0.75, 0.75, 0.75) if off or p != me else Color(0.9, 0.9, 0.9)
 		if p == me and not off:
 			b.tooltip_text += "\n" + deploy_block_reason()
+	return b
+
+
+# em campo: retrato redondo com o arco de vida e o número embaixo (ocupa pouco espaço)
+func _field_ring(u, p: int) -> Button:
+	var used = u.activated
+	var cw = (_roster_w() - 6.0) / 3.0
+	var k = min(1.0, cw / 86.0)
+	var b = Button.new()
+	b.custom_minimum_size = Vector2(cw, 92.0 * k + 2.0)
+	for st in ["normal", "hover", "pressed", "focus", "disabled"]:
+		b.add_theme_stylebox_override(st, StyleBoxEmpty.new())
+	var uid = u.uid
+	b.pressed.connect(func():
+		if not _lp_eat(b):
+			_on_roster(uid))
+	_long_press(b, _char_popup.bind(u.cid))
+	b.tooltip_text = "%s · Vida %d/%d · %s" % [DB.cards[u.cid]["name"], max(0, u.hp), u.maxhp, "já agiu neste round" if used else "pronto para agir"]
+	var an = AnelVida.new()
+	an.scale = Vector2(k, k)
+	an.position = Vector2((cw - 84.0 * k) / 2.0, 0)
+	an.mostra(DB.portraits.get(u.cid, null), u.hp, u.maxhp, C_YOU if p == me else C_CPU)
+	b.add_child(an)
+	if u.is_cmd:
+		var st2 = _label(b, "★", 15, C_GOLD)
+		st2.position = Vector2(2, -2)
+		st2.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if u.uid == sel or u.uid == dsel or u.uid == inspect:
+		b.modulate = Color(1.3, 1.2, 0.75)
+	elif used:
+		b.modulate = Color(0.6, 0.6, 0.65)
 	return b
 
 
