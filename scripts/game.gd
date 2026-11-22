@@ -363,7 +363,8 @@ func solid_barrier_at(h: Vector2i) -> bool:
 
 
 func top_of(h: Vector2i) -> int:
-	return h_of(h) + max(int(tt_of(terr(h)["k"]).get("top", 0)), 2 if solid_barrier_at(h) else 0)
+	# barreira e carrinho parado contam como obstáculo de 2 de altura (bloqueiam tiros e dão abrigo)
+	return h_of(h) + max(int(tt_of(terr(h)["k"]).get("top", 0)), 2 if (solid_barrier_at(h) or cart_at(h)) else 0)
 
 
 func is_free(h: Vector2i) -> bool:
@@ -958,7 +959,7 @@ func terrain_mods(a, t, fpos = null) -> Dictionary:
 		for c in DB.nbrs(t.pos()):
 			if no_cover:
 				break
-			var is_cov = tt_of(terr(c)["k"]).get("cover", 0) or solid_barrier_at(c)
+			var is_cov = tt_of(terr(c)["k"]).get("cover", 0) or solid_barrier_at(c) or cart_at(c)
 			if not is_cov:
 				continue
 			var top = top_of(c)
