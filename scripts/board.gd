@@ -3980,6 +3980,19 @@ func _apply_overlay(h: Vector2i) -> void:
 			warn_tiles.erase(h)
 	# casa de escolha: hexágono roxo com um X preto no meio (fácil de achar)
 	var is_pick = hl == "pk" and lab_txt == "" and hover != h
+	# etiqueta em ícone ("@nome" = ui/hud/nome.svg), ex.: seta de duna subindo/descendo
+	var ic_nome = lab_txt.substr(1) if lab_txt.begins_with("@") else ""
+	if ic_nome != "" and not tile.has("ico"):
+		var sp = icone3d(ic_nome, 0.5)
+		sp.position = tile["label"].position
+		tile["label"].get_parent().add_child(sp)
+		tile["ico"] = sp
+	if tile.has("ico"):
+		tile["ico"].visible = ic_nome != ""
+		if ic_nome != "":
+			tile["ico"].texture = load("res://ui/hud/%s.svg" % ic_nome)
+	if ic_nome != "":
+		lab_txt = ""
 	var lb = tile["label"]
 	lb.visible = (lab_txt != "" and not show_warn) or is_pick
 	lb.font_size = 64

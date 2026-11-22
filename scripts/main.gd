@@ -3228,11 +3228,14 @@ func refresh() -> void:
 		st["labels"][h] = "!"
 		st["label_colors"][h] = Color("#ffe39a")
 	if game.dune_next >= 0:
+		# só uma seta: sobe (amarela) ou desce (azul); casa que não muda fica sem nada
 		var nd = game.dune_heights(game.dune_next)
 		for h in nd.keys():
+			var agora = int(game.terr(h)["h"])
+			if int(nd[h]) == agora:
+				continue
 			st["hl"][h] = "dnext"
-			st["labels"][h] = "vai p/ %d" % nd[h]
-			st["label_colors"][h] = Color("#9ff0ff")
+			st["labels"][h] = "@seta_sobe" if int(nd[h]) > agora else "@seta_desce"
 	var su = sel_unit()
 	var focus = my_turn() and ((su != null and su.owner == game.cur and su.st == "field" and (game.can_start(su) or game.is_live(su))) or dsel >= 0)
 	if focus:
