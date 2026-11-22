@@ -628,7 +628,7 @@ func _leave_battle() -> void:
 	board.visible = false
 	bubbles.clear()
 	_stop_battle_loops()
-	sfx.loop("musica_tema", -10.0, 0.8)
+	# menu sem música (pedido do Gabriel): só os sons da galáxia
 	galaxy.activate()
 
 
@@ -2378,7 +2378,6 @@ func _army_back() -> void:
 	stage = "to_select"
 	sfx.play("clique", -8.0)
 	_fac_music("")
-	sfx.loop("musica_tema", -10.0, 2.0)
 	await _ui_fade(0.0, 0.35)
 	_show_select()
 
