@@ -200,6 +200,13 @@ static func use_scarabs(g, p: int) -> void:
 		await g.act_scarab(p, "ult")
 
 
+# deixa a tela desenhar um quadro entre contas pesadas da CPU (no navegador tudo roda numa linha só:
+# sem isso, pensar várias peças de uma vez congela a animação por um instante)
+static func folego(g) -> void:
+	if g.tree != null:
+		await g.tree.process_frame
+
+
 static func activation(g, p: int) -> void:
 	await use_scarabs(g, p)
 	if g.winner != Game.NONE:
@@ -217,6 +224,7 @@ static func activation(g, p: int) -> void:
 	var spots = g.deploy_hexes(p)
 	var best: Variant = null
 	for u in mine:
+		await folego(g)
 		var s = unit_plan_score(g, u)
 		if best == null or s > best["s"]:
 			best = {"s": s, "u": u}
@@ -243,6 +251,7 @@ static func run(g, u) -> void:
 	for guard in range(8):
 		if g.act == null or g.winner != Game.NONE or u.st != "field":
 			break
+		await folego(g)
 		var A = g.act
 		if not A["tactic"]:
 			var hand = g.P[p]["hand"]

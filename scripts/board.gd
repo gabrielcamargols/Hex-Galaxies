@@ -160,6 +160,10 @@ func _ready() -> void:
 	sun.rotation_degrees = Vector3(-52, -35, 0)
 	sun.light_energy = 0.55
 	sun.shadow_enabled = true
+	# sombra em 2 faixas em vez de 4: cada peça é desenhada 2x a menos no mapa de sombra
+	# (o tabuleiro cabe todo na câmera; godot-performance-export: orçamento de sombras)
+	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
+	sun.directional_shadow_max_distance = 160.0
 	add_child(sun)
 	cam = Camera3D.new()
 	cam.fov = 38.0
@@ -175,8 +179,39 @@ func _ready() -> void:
 
 
 # ================= construção =================
+var fig_res: Dictionary = {}     # caminho -> PackedScene já carregada (modelos 3D dos personagens da partida)
+var fig_pend: Dictionary = {}    # caminho -> true enquanto carrega em segundo plano
+
+
+# pede em segundo plano os modelos de TODAS as peças da partida (reserva e comandante inclusos):
+# assim quem entra no round 4 ou 6 não trava o jogo carregando o boneco na hora
+func _prefetch_figs() -> void:
+	for u in g.units:
+		if u.barrier or not FIG3D.has(u.cid):
+			continue
+		var pth: String = FIG3D[u.cid]["path"]
+		if fig_res.has(pth) or fig_pend.has(pth) or not ResourceLoader.exists(pth):
+			continue
+		if ResourceLoader.load_threaded_request(pth) == OK:
+			fig_pend[pth] = true
+
+
+func _fig_scene(pth: String) -> PackedScene:
+	if fig_res.has(pth):
+		return fig_res[pth]
+	var r: PackedScene = null
+	if fig_pend.has(pth):
+		fig_pend.erase(pth)
+		r = ResourceLoader.load_threaded_get(pth)
+	if r == null:
+		r = load(pth)
+	fig_res[pth] = r
+	return r
+
+
 func build(game: Game) -> void:
 	g = game
+	_prefetch_figs()
 	for n in tiles.values():
 		n["node"].queue_free()
 	tiles.clear()
@@ -2716,7 +2751,7 @@ func _figure3d(cid: String, body_h: float) -> Node3D:
 	giro.name = "giro"
 	root.add_child(giro)
 	var cfg: Dictionary = FIG3D[cid]
-	var inst: Node3D = load(cfg["path"]).instantiate()
+	var inst: Node3D = _fig_scene(cfg["path"]).instantiate()
 	giro.add_child(inst)
 	inst.rotation.y = float(cfg.get("giro", -PI / 2.0))   # o Tripo entrega o boneco olhando para +X; o Meshy/Mixamo já olha para +Z
 	var mats: Array = []
