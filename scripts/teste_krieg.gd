@@ -72,4 +72,28 @@ func run() -> void:
 	ok(en.hp == hp0 - 2 and not g.has_fx(en, "bleed"), "2º round: perde 1 de Vida e o corte fecha")
 	await g._bleed_tick()
 	ok(en.hp == hp0 - 2, "depois não perde mais")
+	# Nave Krieg: escolhe o início e a direção; 2 de dano em cada peça da linha (inclusive aliados)
+	en.st = "dead"
+	var g2 = novo()
+	for u in g2.units:
+		u.st = "dead"
+	var cc = DB.hexes.filter(func(h): return DB.DIRS.any(func(d): return g2.nave_linha(h + d, d).size() >= 6))[0]
+	var cm2 = put(g2, "k_cmd", 0, cc.x, cc.y)
+	var dd: Vector2i = DB.DIRS.filter(func(d): return g2.nave_linha(cc + d, d).size() >= 6)[0]
+	var ini: Vector2i = cc + dd
+	var lin = g2.nave_linha(ini, dd)
+	ok(g2.ult_kind(cm2) == "nave", "a ativa do Comandante agora é a Nave Krieg")
+	ok(g2.ult_opts(cm2).has(ini), "pode começar a até 8 casas")
+	var e1 = put(g2, "z_vang", 1, lin[2].x, lin[2].y)
+	var e2 = put(g2, "z_vang", 1, lin[lin.size() - 1].x, lin[lin.size() - 1].y)
+	var al = put(g2, "k_tank", 0, lin[4].x, lin[4].y)
+	var fora = put(g2, "z_vang", 1, (lin[3] + DB.DIRS[(DB.DIRS.find(dd) + 2) % 6]).x, (lin[3] + DB.DIRS[(DB.DIRS.find(dd) + 2) % 6]).y)
+	var v = [e1.hp, e2.hp, al.hp, fora.hp]
+	fila = [ini, ini + dd]
+	g2.start_activation(cm2)
+	await g2.act_ult(cm2)
+	ok(e1.hp == v[0] - 2 and e2.hp == v[1] - 2, "inimigos na linha perdem 2 (inclusive o da última casa)")
+	ok(al.hp == v[2] - 2, "aliado na linha também é atingido")
+	ok(fora.hp == v[3] or not g2.nave_linha(ini, dd).has(fora.pos()), "quem está fora da linha não sofre nada")
+	ok(lin.size() <= 16, "a linha tem no máximo 16 casas (%d neste mapa)" % lin.size())
 	print("TESTE FIM falhas=%d" % falhas)

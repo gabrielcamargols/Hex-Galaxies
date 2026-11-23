@@ -955,15 +955,15 @@
      "r": 2,
      "who": "KRI"
     },
-    "ult": "bombard",
+    "ult": "nave",
     "atkRanged": -2,
     "after": "bleedMelee",
     "bleedRounds": 2,
     "gloria": 3
    },
    "ab2": {
-    "name": "Bombardeio",
-    "text": "1x por partida: bombardeia uma casa a até 6. 3 de dano nela e 1 em tudo ao redor, inclusive aliados.",
+    "name": "Nave Krieg",
+    "text": "1x por partida: chama a Nave Krieg pelo rádio. Escolha onde começam os disparos (até 8 casas) e a direção: ela bombardeia uma linha reta de 16 casas, 2 de dano em cada peça, inclusive aliados.",
     "kind": "ativa"
    }
   },

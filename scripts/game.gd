@@ -3322,7 +3322,7 @@ func can_ult(u) -> bool:
 
 
 # habilidades que movem a própria peça não passam pelo portal (seria teletransporte)
-const ULT_NO_PORTAL = ["burrow", "cartcharge", "ferram", "stampede", "orbital", "portalis", "berserk", "minelay", "rodapunk", "hexstar", "inkveil", "hack"]
+const ULT_NO_PORTAL = ["nave", "burrow", "cartcharge", "ferram", "stampede", "orbital", "portalis", "berserk", "minelay", "rodapunk", "hexstar", "inkveil", "hack"]
 
 
 func ult_portal_ok(u) -> bool:
@@ -3394,6 +3394,44 @@ func stampede_path(u, end: Vector2i) -> Array:
 # ================= Valakianos: ajudantes =================
 # ativas sem alvo: não pedem escolha, valem para a própria peça
 const SELF_ULTS = ["berserk", "rodapunk", "quake", "guardfirm"]
+
+# ---- Nave Krieg (Comandante Krieg): bombardeio em linha reta de 16 casas ----
+const NAVE_LEN = 16
+const NAVE_T0 = 2.17       # da ordem no rádio até a 1ª bomba cair (a cena na main usa os mesmos tempos)
+const NAVE_DT = 0.12       # entre uma casa e a seguinte (velocidade da nave)
+const NAVE_DANO = 2
+var nave_ini: Variant = null
+
+
+func nave_linha(h: Vector2i, d: Vector2i) -> Array:
+	var out = []
+	for k in NAVE_LEN:
+		var c = h + d * k
+		if DB.in_board(c):
+			out.append(c)
+	return out
+
+
+# direções possíveis a partir da casa de início (a casa vizinha em cada direção)
+func nave_dirs(h: Vector2i) -> Array:
+	var out = []
+	for d in DB.DIRS:
+		if DB.in_board(h + d):
+			out.append(h + d)
+	return out
+
+
+func nave_score(u, h: Vector2i, d: Vector2i) -> float:
+	var s = 0.0
+	for c in nave_linha(h, d):
+		var t = unit_at(c)
+		if t == null or t.barrier:
+			continue
+		if t.owner != u.owner:
+			s += 3.0 + (4.0 if t.is_cmd else 0.0) + (2.0 if t.hp <= NAVE_DANO else 0.0)
+		else:
+			s -= 3.5 + (6.0 if t.is_cmd else 0.0)
+	return s
 
 
 # casa onde alguém pode emergir, ser empurrado ou ser posto: livre, pisável, fora de buracos
@@ -4156,6 +4194,8 @@ func ult_opts(u) -> Array:
 			if adj_free(p).is_empty():
 				return []
 			return enemies_of(u).filter(func(t): return not t.barrier and DB.dist(t.pos(), p) >= 2 and DB.dist(t.pos(), p) <= 8).map(func(t): return t.pos())
+		"nave":
+			return DB.hexes.filter(func(h): return DB.dist(h, p) >= 1 and DB.dist(h, p) <= 8)
 		"bombard":
 			var out = []
 			for h in DB.hexes:
@@ -4318,6 +4358,12 @@ func ult_score(u, h: Vector2i) -> float:
 			if t == null:
 				return 0.0
 			return int(DB.cards[t.cid]["atk"]) + (6.0 if t.is_cmd else 0.0) + (3.0 if t.hp <= 6 else 0.0)
+		"nave":
+			var sb = -1e9
+			for d in DB.DIRS:
+				if DB.in_board(h + d):
+					sb = max(sb, nave_score(u, h, d))
+			return sb
 		"bombard":
 			var s = 0.0
 			if t != null:
@@ -4431,7 +4477,7 @@ func _act_ult_run(u) -> bool:
 	var kind = ult_kind(u)
 	var ab2 = DB.active_of(ult_cid(u))
 	var uname = ab2.get("name", "Ativa")
-	var texts = {"mend": "escolha o Abyssal a restaurar (até 3 casas)", "plate": "escolha o aliado adjacente a reforçar", "detonate": "escolha a mina a detonar", "barricade": "escolha a casa adjacente da Barricada", "grenade": "escolha o alvo da granada (até 3, passa por cima de obstáculos)", "artillery": "escolha a casa que a artilharia vai atingir no início do próximo round (até 5)", "abyss": "escolha o inimigo a puxar (até 8 casas)", "bombard": "escolha a casa do bombardeio (até 6)", "prison": "escolha o inimigo a prender (até 4)", "earth": "escolha a 1ª casa a mudar de altura (até 4)", "stampede": "escolha até onde avançar em linha reta", "orbital": "escolha onde pousar (até 5)",
+	var texts = {"mend": "escolha o Abyssal a restaurar (até 3 casas)", "plate": "escolha o aliado adjacente a reforçar", "detonate": "escolha a mina a detonar", "barricade": "escolha a casa adjacente da Barricada", "grenade": "escolha o alvo da granada (até 3, passa por cima de obstáculos)", "artillery": "escolha a casa que a artilharia vai atingir no início do próximo round (até 5)", "abyss": "escolha o inimigo a puxar (até 8 casas)", "bombard": "escolha a casa do bombardeio (até 6)", "nave": "escolha onde a Nave Krieg começa a bombardear (até 8 casas)", "prison": "escolha o inimigo a prender (até 4)", "earth": "escolha a 1ª casa a mudar de altura (até 4)", "stampede": "escolha até onde avançar em linha reta", "orbital": "escolha onde pousar (até 5)",
 		"burrow": "escolha onde emergir (até 2 casas)", "bwall": "escolha a casa adjacente da muralha", "rootweb": "escolha a casa adjacente das raízes",
 		"cartcharge": "escolha até onde avançar (até 2 casas, qualquer direção) ou o alvo do impacto", "ferram": "escolha até onde avançar em linha reta (até 2) ou o alvo da investida",
 		"coat": "escolha o aliado adjacente a revestir", "rupture": "escolha a barreira adjacente a romper", "timedcharge": "escolha a casa da carga (até 2)",
@@ -4638,6 +4684,23 @@ func _act_ult_run(u) -> bool:
 				emitfx({"t": "passive", "kind": "curse", "uid": t.uid})
 				log_msg(p, "%s foi puxado para o abismo." % nm(t))
 				await move_unit(t, spots[0])
+		"nave":
+			# 2º toque: a direção da passagem (16 casas em linha reta a partir do início)
+			nave_ini = h
+			var dh: Vector2i = await pick_hex(p, "Nave Krieg: escolha a direção da passagem (16 casas em linha reta).", nave_dirs(h), "nave_dir", false)
+			var dn: Vector2i = dh - h
+			var lin = nave_linha(h, dn)
+			emitfx({"t": "abfx", "k": "nave", "h": h, "uid": u.uid, "d": dn})
+			log_msg(p, "A Nave Krieg bombardeia %d casas em linha reta." % lin.size())
+			await _espera_cena(NAVE_T0)
+			for k in lin.size():
+				var tn = unit_at(lin[k])
+				if tn != null:
+					damage(tn, NAVE_DANO, u)
+				if k < lin.size() - 1:
+					await _espera_cena(NAVE_DT)
+			nave_ini = null
+			settle()
 		"bombard":
 			abfx("bombard", h, u.uid)
 			if u.cid == "k_cmd":

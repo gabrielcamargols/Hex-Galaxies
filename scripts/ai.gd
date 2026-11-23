@@ -274,7 +274,7 @@ static func run(g, u) -> void:
 			await g.act_extract(u)
 			continue
 		if g.can_ult(u):
-			var need = {"abyss": 7.0, "bombard": 4.0, "prison": 7.0, "stampede": 3.0, "orbital": 5.0, "earth": 3.0, "detonate": 4.0, "grenade": 3.0, "artillery": 3.0, "barricade": 2.0, "mend": 3.0, "plate": 1.2,
+			var need = {"abyss": 7.0, "bombard": 4.0, "nave": 5.0, "prison": 7.0, "stampede": 3.0, "orbital": 5.0, "earth": 3.0, "detonate": 4.0, "grenade": 3.0, "artillery": 3.0, "barricade": 2.0, "mend": 3.0, "plate": 1.2,
 				"burrow": 2.0, "bwall": 2.0, "rootweb": 1.8, "cartcharge": 3.0, "ferram": 3.0, "coat": 1.5, "rupture": 2.0, "quake": 3.0,
 				"timedcharge": 3.0, "guardfirm": 1.5, "lumen": 2.0, "nursing": 2.0, "route": 1.0, "valbarrier": 1.5, "portalis": 2.0, "berserk": 4.0, "minelay": 1.5, "rodapunk": 3.0, "hexstar": 2.5, "workshop": 2.0, "shock": 2.0, "inkveil": 2.0, "animal": 3.0, "hack": 3.0}
 			var kind_u = g.ult_kind(u)
@@ -593,6 +593,10 @@ static func answer(g, p: int, q: Dictionary) -> Variant:
 					"ult":
 						var cu = g.active_unit()
 						s = g.ult_score(cu if cu != null else g.commander(p), h)
+					"nave_dir":
+						var cu3 = g.active_unit()
+						if cu3 != null and g.nave_ini != null:
+							s = g.nave_score(cu3, g.nave_ini, h - g.nave_ini)
 					"manip_s":
 						if t3 != null:
 							var ally_adj = 0

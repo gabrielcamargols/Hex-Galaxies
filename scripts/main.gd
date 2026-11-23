@@ -1140,7 +1140,16 @@ func _check_tension() -> void:
 
 
 # modo rápido: apontar um inimigo mostra a prévia do dano (o clique ataca direto)
+var nave_hover: Variant = null     # Nave Krieg: direção com o mouse em cima (mostra a linha inteira)
+
+
 func _on_hex_hover(h) -> void:
+	if asking != null and asking["q"].get("kind", "") == "nave_dir":
+		var nh = h if (h != null and asking["q"]["opts"].has(h)) else null
+		if nh != nave_hover:
+			nave_hover = nh
+			refresh()
+		return
 	if not fast_mode or game == null or not my_turn() or ab or dsel >= 0 or card_drag != null:
 		return
 	var u = sel_unit()
@@ -3328,6 +3337,25 @@ func refresh() -> void:
 	if H["ghost"] != null:
 		st["hl"][H["ghost"]] = "sel"
 		st["ghost"] = H["ghost"]
+	# Nave Krieg: escolhendo a direção, as 6 linhas possíveis aparecem e a apontada fica forte
+	if asking != null and asking["q"].get("kind", "") == "nave_dir" and game.nave_ini != null:
+		var ini: Vector2i = game.nave_ini
+		for oh in asking["q"]["opts"]:
+			var linha = game.nave_linha(ini, oh - ini)
+			var forte = nave_hover != null and oh == nave_hover
+			for lh in linha:
+				if lh == ini:
+					continue
+				if forte or not st["hl"].has(lh):
+					st["hl"][lh] = "tgt" if forte else "prev"
+			st["labels"][oh] = "➜"
+			st["label_colors"][oh] = Color("#ff8a6a")
+			if forte:
+				for lh in linha:
+					var lt = game.unit_at(lh)
+					if lt != null:
+						st["tags"][lt.uid] = {"text": "-%d" % game.NAVE_DANO, "color": Color("#ff8a8a")}
+		st["hl"][ini] = "sel"
 	# Manipulação Mineral: escolhendo onde jogar a estrutura, cada inimigo alcançável mostra o resultado
 	if asking != null and asking["q"].get("kind", "") == "manip_d" and game.manip_previa != null:
 		var rei_u = game.active_unit()
@@ -6082,6 +6110,9 @@ func _especial_lider(e: Dictionary) -> bool:
 		["k_cmd", "bombard"]:
 			_cena_bombardeio(u, e["h"])
 			return true
+		["k_cmd", "nave"]:
+			_cena_nave(u, e["h"], e.get("d", Vector2i(1, 0)))
+			return true
 		["rhazur", "abyss"]:
 			# o motor manda dois avisos (alvo e casa de chegada): a cena usa só o primeiro
 			if agora - _abraco_ms < 400:
@@ -6178,6 +6209,96 @@ func _cena_bombardeio(u, h: Vector2i) -> void:
 	for i in range(min(4, viz.size())):
 		var p = _hex_pos(viz[i], 0.0) + Vector3(randf_range(-0.3, 0.3), 0, randf_range(-0.3, 0.3))
 		_cai_projetil(p, 1.82 + 0.12 * i, false)
+
+
+# Nave Krieg: o Comandante chama no rádio e aponta; a nave passa rasante em linha reta soltando
+# bombas casa a casa (os tempos batem com game.NAVE_T0 / NAVE_DT, quando o dano cai)
+func _cena_nave(u, h: Vector2i, d: Vector2i) -> void:
+	var lin: Array = game.nave_linha(h, d)
+	if lin.is_empty():
+		return
+	var ate = _hex_pos(h, 0.0)
+	var de = _hex_pos(u.pos(), 0.0)
+	board.gesto(u.uid, "radio", ate)
+	sfx.play("radio_on", -3.0)
+	_later(0.12, func(): sfx.play("esp_krieg_radio", -4.0, 1.0, 0.0))
+	vfx.play_fx("kri_cmd_radio", de, null, Color.WHITE)
+	# a linha é marcada casa a casa (o jogador vê por onde a nave vai passar)
+	for k in lin.size():
+		var pk = _hex_pos(lin[k], 0.05)
+		_later(0.55 + 0.03 * k, func(): vfx.flip("ring", pk, 1.5, 0.55, Color("#ff4a3a"), true))
+	_later(0.55, func():
+		vfx.play_fx("kri_cmd_marca", ate, null, Color.WHITE)
+		sfx.play("radio_off", -6.0))
+	# trajetória: entra 6 casas antes do início e sai 5 depois do fim, a ~5 de altura
+	var p0 = _hex_pos(h, 0.0)
+	var p1 = _hex_pos(h + d, 0.0)
+	var passo = p0.distance_to(p1)
+	var wd = (p1 - p0).normalized()
+	var alt = 6.2
+	var queda = 0.35
+	var t_ini = game.NAVE_T0 - queda - 6.0 * game.NAVE_DT
+	var vel = passo / game.NAVE_DT
+	var a0 = p0 - wd * passo * 6.0 + Vector3(0, alt, 0)
+	var voo = (6.0 + lin.size() + 5.0) * game.NAVE_DT
+	_later(t_ini, func(): _nave_voa(a0, wd, vel, voo))
+	_later(t_ini - 0.3, func(): sfx.play("esp_krieg_nave", 0.0, 1.0, 0.0))
+	for k in lin.size():
+		var alvo = _hex_pos(lin[k], 0.0)
+		var tem = game.unit_at(lin[k]) != null
+		var t_solta = game.NAVE_T0 + k * game.NAVE_DT - queda
+		var solta = a0 + wd * vel * (t_solta - t_ini)
+		_later(t_solta, func(): _nave_bomba(solta, alvo, queda, tem))
+
+
+func _nave_voa(a0: Vector3, wd: Vector3, vel: float, voo: float) -> void:
+	if vfx == null or not is_instance_valid(vfx) or not ResourceLoader.exists("res://models/nave_kri.glb"):
+		return
+	var nave: Node3D = load("res://models/nave_kri.glb").instantiate()
+	var caixa = AABB()
+	var primeiro = true
+	for mi in nave.find_children("*", "MeshInstance3D", true, false):
+		var bb = (mi as MeshInstance3D).get_aabb()
+		caixa = bb if primeiro else caixa.merge(bb)
+		primeiro = false
+		(mi as MeshInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	var esc = 8.0 / max(0.001, max(caixa.size.x, caixa.size.z))     # nave com ~8 de comprimento (4 a 5 casas)
+	var holder = Node3D.new()
+	vfx.add_child(holder)
+	holder.add_child(nave)
+	nave.scale = Vector3.ONE * esc
+	nave.position = -caixa.get_center() * esc
+	# o nariz do modelo aponta para -X: -X local vai na direção do voo; leve inclinação de mergulho
+	var x = -wd
+	var b = Basis(x, Vector3.UP, x.cross(Vector3.UP).normalized())
+	holder.global_transform = Transform3D(b.rotated(wd.cross(Vector3.UP).normalized(), -0.06), a0)
+	var tw = holder.create_tween()
+	tw.tween_property(holder, "global_position", a0 + wd * vel * voo, voo)
+	tw.tween_callback(holder.queue_free)
+	# balanço leve das asas durante a passagem
+	var tb = nave.create_tween()
+	tb.tween_property(nave, "rotation:x", 0.08, voo * 0.5).set_trans(Tween.TRANS_SINE)
+	tb.tween_property(nave, "rotation:x", -0.05, voo * 0.5).set_trans(Tween.TRANS_SINE)
+	board.shake = max(board.shake, 0.15)
+
+
+func _nave_bomba(de: Vector3, alvo: Vector3, queda: float, grande: bool) -> void:
+	if vfx == null or not is_instance_valid(vfx):
+		return
+	var pr = _modelo_projetil()
+	pr.scale = Vector3.ONE * (1.8 if grande else 1.3)
+	vfx.add_child(pr)
+	var ini = de + Vector3(0, -0.6, 0)
+	var fim = alvo + Vector3(0, 0.2, 0)
+	pr.global_position = ini
+	pr.global_transform.basis = Basis(Quaternion(Vector3.DOWN, (fim - ini).normalized())).scaled(pr.scale)
+	var tw = pr.create_tween()
+	tw.tween_property(pr, "global_position", fim, queda).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tw.tween_callback(func():
+		pr.queue_free()
+		vfx.play_fx("kri_cmd_explosao" if grande else "kri_cmd_explosao_p", alvo, null, Color.WHITE)
+		sfx.play("esp_krieg_explosao" if grande else "esp_krieg_explosao_p", -1.0 if grande else -9.0, randf_range(0.92, 1.08), 0.0)
+		board.shake = max(board.shake, 0.35 if grande else 0.12))
 
 
 func _modelo_projetil() -> Node3D:
