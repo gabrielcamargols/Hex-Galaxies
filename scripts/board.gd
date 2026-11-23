@@ -56,6 +56,8 @@ const FIG3D = {
 		"dedos": {"Left": 1.0, "Right": 0.22}, "pose_arte": {
 			"Right": [[0.05, -0.7, -0.7], [0.25, -0.55, 0.8], [0.25, -0.45, 0.85]],
 			"Left": [[0.0, 0.5, -0.85], [0.1, 0.45, -0.88], [0.05, 0.35, -0.93]]}},
+	# Sniper Valakiano: o mais sério do grupo, meticuloso; anda medido e atento (passada natural, sem deslize)
+	"t_sniper": {"path": "res://models/personagens/t_sniper.glb", "visor": false, "punho": false, "jeito": "comandante", "giro": 0.0},
 	"karo": {"path": "res://models/personagens/karo.glb", "visor": false, "punho": true, "jeito": "malandro", "bracos": "bolso", "cauda": [-0.05, 0.45, 0.0]},
 }
 # padrão de tinta de cada facção (data/vfx_paletas.json "pattern") -> pat do hq_personagem
