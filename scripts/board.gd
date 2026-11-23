@@ -46,7 +46,7 @@ const ZOOM_MAX = 140.0
 const FOLGA_BRACOS = preload("res://scripts/folga_bracos.gd")
 const FIG3D = {
 	"k_cmd": {"path": "res://models/personagens/k_cmd.glb", "visor": true, "punho": true, "jeito": "militar"},
-	"rhazur": {"path": "res://models/personagens/rhazur.glb", "visor": false, "punho": false, "jeito": "bruto", "giro": 0.0, "cauda": [0.09, 0.32, -0.02]},
+	"rhazur": {"path": "res://models/personagens/rhazur.glb", "visor": false, "punho": false, "jeito": "bruto", "manopla": "Left", "giro": 0.0, "cauda": [0.09, 0.32, -0.02]},
 	"rei_mina": {"path": "res://models/personagens/rei_mina.glb", "visor": false, "punho": false, "jeito": "rei", "brilho": "rachaduras", "cintila": true, "pegadas": "LeftFoot", "conjura": [0.07, 0.035, 0.032]},
 	"z_dragao": {"path": "res://models/personagens/z_dragao.glb", "corpo": "dragao", "escala": 1.35, "brilho": "gemas"},
 	"w_mamute": {"path": "res://models/personagens/w_mamute.glb", "visor": false, "punho": false, "jeito": "mamute", "escala": 1.12, "giro": 0.0, "brilho": "gemas_laranja", "anims": {"correr": "run"}},
@@ -3691,7 +3691,11 @@ func _unit_goal(u) -> Vector2i:
 	return u.pos()
 
 
+var relogio: float = 0.0       # tempo de jogo (gestos andam junto com o jogo, mesmo se o quadro atrasar)
+
+
 func _process(delta: float) -> void:
+	relogio += delta
 	if not badges.is_empty() and cam != null:
 		badges = badges.filter(func(bg): return is_instance_valid(bg))
 		for bg in badges:
@@ -4362,6 +4366,15 @@ const GESTOS = {
 		{"t": 0.6, "Right": [[0.97, -0.1, 0.18], [0.98, -0.05, 0.15], [0.9, 0.0, 0.42]], "Spine1": 0.08},
 		{"t": 1.25, "Right": [[0.97, -0.1, 0.18], [0.98, -0.05, 0.15], [0.9, 0.0, 0.42]], "Spine1": 0.08},
 		{"t": 1.6}]},
+	# Rhazur: puxa a manopla dourada para trás, lança as correntes, segura e dá o tranco puxando o alvo
+	"corrente": {"dur": 1.9, "keys": [
+		{"t": 0.0},
+		{"t": 0.3, "Left": [[-0.55, 0.45, 0.7], [-0.15, 0.3, 0.94], [0.1, 0.2, 0.97]], "Right": [[0.45, -0.45, -0.3], [0.7, -0.3, -0.2], [0.7, -0.2, -0.3]], "Spine1": -0.16, "Head": -0.12},
+		{"t": 0.46, "Left": [[0.95, 0.18, 0.22], [0.98, 0.06, 0.16], [0.98, 0.0, 0.12]], "Right": [[-0.45, -0.5, -0.5], [-0.2, -0.4, -0.85], [0.0, -0.3, -0.95]], "Spine1": 0.22, "Head": 0.1},
+		{"t": 1.0, "Left": [[0.93, 0.2, 0.12], [0.97, 0.08, 0.1], [0.97, 0.0, 0.1]], "Right": [[-0.4, -0.5, -0.55], [-0.2, -0.4, -0.85], [0.0, -0.3, -0.95]], "Spine1": 0.16},
+		{"t": 1.3, "Left": [[-0.15, 0.55, -0.25], [0.55, -0.55, 0.45], [0.45, -0.65, 0.35]], "Right": [[0.2, -0.6, -0.4], [0.5, -0.4, -0.5], [0.5, -0.3, -0.6]], "Spine1": -0.2, "Head": -0.15, "y": -0.04},
+		{"t": 1.55, "Left": [[-0.15, 0.55, -0.25], [0.55, -0.55, 0.45], [0.45, -0.65, 0.35]], "Spine1": -0.12},
+		{"t": 1.9}]},
 	# Karo: arremessa bananas para todo lado, um braço de cada vez
 	"arremesso": {"dur": 1.7, "keys": [
 		{"t": 0.0},
@@ -4375,6 +4388,21 @@ const GESTOS = {
 }
 
 
+# posição no mundo da mão de um personagem 3D (de onde sai a corrente, o tiro...); "lado" Left/Right
+func mao_global(uid: int, lado: String) -> Vector3:
+	if not unit_nodes.has(uid):
+		return Vector3.ZERO
+	var d = unit_nodes[uid]
+	var fig = d.get("sprite")
+	if fig != null and is_instance_valid(fig) and fig.has_meta("skel") and fig.has_meta("bones"):
+		var sk: Skeleton3D = fig.get_meta("skel")
+		var bn: Dictionary = fig.get_meta("bones")
+		var i = int(bn.get(lado + "Hand", -1))
+		if i >= 0 and is_instance_valid(sk):
+			return sk.global_transform * sk.get_bone_global_pose(i).origin
+	return d["node"].global_position + Vector3(0, 1.1, 0)
+
+
 func gesto(uid: int, tipo: String, alvo: Variant = null) -> void:
 	if not unit_nodes.has(uid) or not GESTOS.has(tipo):
 		return
@@ -4382,7 +4410,7 @@ func gesto(uid: int, tipo: String, alvo: Variant = null) -> void:
 	if fig == null or not fig.has_meta("fig3d"):
 		return
 	fig.set_meta("gesto", tipo)
-	fig.set_meta("gesto_t0", Time.get_ticks_msec())
+	fig.set_meta("gesto_t0", relogio)
 	if alvo != null:
 		fig.set_meta("gesto_alvo", alvo)
 	elif fig.has_meta("gesto_alvo"):
@@ -4393,7 +4421,7 @@ func _gesto_w(fig: Node3D) -> float:
 	if not fig.has_meta("gesto"):
 		return 0.0
 	var g: Dictionary = GESTOS[str(fig.get_meta("gesto"))]
-	var tt = (Time.get_ticks_msec() - int(fig.get_meta("gesto_t0"))) / 1000.0
+	var tt = relogio - float(fig.get_meta("gesto_t0"))
 	if tt > float(g["dur"]):
 		fig.remove_meta("gesto")
 		return 0.0
@@ -4405,7 +4433,7 @@ func _gesto_quadro(fig: Node3D) -> Dictionary:
 	if _gesto_w(fig) <= 0.0:
 		return {}
 	var g: Dictionary = GESTOS[str(fig.get_meta("gesto"))]
-	var tt = (Time.get_ticks_msec() - int(fig.get_meta("gesto_t0"))) / 1000.0
+	var tt = relogio - float(fig.get_meta("gesto_t0"))
 	var ks: Array = g["keys"]
 	var a: Dictionary = ks[0]
 	var b: Dictionary = ks[ks.size() - 1]

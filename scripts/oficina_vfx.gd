@@ -199,6 +199,8 @@ func tocar(id: String) -> void:
 				_build_figs()
 	var atk = LADOS[lado_i][0]
 	var ctx = {"extras": extras.map(func(e): return e.position)}
+	# mão de quem lança (corrente/orbe saem dela): no palco, na altura do peito, à frente do atacante
+	ctx["de_f"] = func() -> Vector3: return _pa() + Vector3(0, 1.1, 0) + (_pb() - _pa()).normalized() * 0.45
 	if pers.has(atk) and pers[atk].has("nucleo"):
 		ctx["nucleo"] = Color(str(pers[atk]["nucleo"]))
 	if alvo == "self":

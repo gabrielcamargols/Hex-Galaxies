@@ -632,7 +632,11 @@ func play_fx(id: String, at: Vector3, from: Variant = null, tint: Color = Color.
 		elif L.has("modelo"):
 			_fx_after(dl, _fx_modelo.bind(L, at2))
 		elif L.has("malha"):
-			_fx_after(dl, _fx_malha.bind(L, at2, from, tint, follow))
+			var LM = L
+			if ctx.has("de_f"):
+				LM = L.duplicate()
+				LM["_de_f"] = ctx["de_f"]     # posição da mão de quem lança (corrente sai da manopla)
+			_fx_after(dl, _fx_malha.bind(LM, at2, from, tint, follow))
 		elif L.has("p"):
 			_fx_after(dl, _fx_part.bind(L, at2, from, tint, follow))
 		else:
@@ -890,7 +894,7 @@ func _malha_mat(L: Dictionary, tint: Color) -> ShaderMaterial:
 	mat.set_shader_parameter("ramp", _ramp_tex(_suaviza(rp) if blend != "add" else rp))
 	mat.set_shader_parameter("ruido", _ruido())
 	var tipo = str(L["malha"])
-	mat.set_shader_parameter("perfil", 3 if bool(L.get("casca", false)) else (2 if tipo in ["esfera", "tubo"] else (1 if tipo == "estrela" else 0)))
+	mat.set_shader_parameter("perfil", 3 if bool(L.get("casca", false)) else (2 if tipo in ["esfera", "tubo", "corrente"] else (1 if tipo == "estrela" else 0)))
 	mat.set_shader_parameter("frente", 1 if tipo == "estrela" else 0)
 	mat.set_shader_parameter("varre", float(L.get("varre", 0.0)))
 	mat.set_shader_parameter("cauda", float(L.get("cauda", 0.55)))
@@ -903,11 +907,99 @@ func _malha_mat(L: Dictionary, tint: Color) -> ShaderMaterial:
 	mat.set_shader_parameter("boost", float(L.get("boost", 1.0)))
 	mat.set_shader_parameter("fresnel_pow", float(L.get("fresnel", 1.4)))
 	mat.set_shader_parameter("tint", tint * Color(str(L.get("tint", "#ffffff"))))
+	mat.set_shader_parameter("nucleo_a", float(L.get("nucleo_a", 0.0)))
+	mat.set_shader_parameter("degraus", float(L.get("degraus", 0.0)))
+	mat.set_shader_parameter("redemoinho", float(L.get("espiral", 0.0)))
+	mat.set_shader_parameter("suave", float(L.get("suave", 0.07)))
 	return mat
 
 
+
+# CORRENTE: elos 3D lançados da mão de quem ataca até o alvo; chicoteiam na ida, prendem e seguem quem
+# é puxado. "de_f" no contexto (Callable -> Vector3) dá a posição da mão a cada quadro.
+func _fx_corrente(L: Dictionary, at: Vector3, from: Variant, tint: Color, follow: Node3D) -> void:
+	var de_f: Callable = L.get("_de_f", Callable())
+	var y_de = float(L.get("y_de", 1.1))
+	var y = _rnd(L.get("y", 0.95))
+	var mat = _malha_mat(L, tint)
+	var elo_r = float(L.get("elo", 0.085)) * cam_k
+	var passo = elo_r * 1.55
+	var tm = TorusMesh.new()
+	tm.inner_radius = elo_r * 0.55
+	tm.outer_radius = elo_r
+	tm.rings = 10
+	tm.ring_segments = 6
+	var hold = Node3D.new()
+	add_child(hold)
+	var elos = []
+	for i in int(L.get("max", 48)):
+		var mi = MeshInstance3D.new()
+		mi.mesh = tm
+		mi.material_override = mat
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mi.visible = false
+		hold.add_child(mi)
+		elos.append(mi)
+	var dur = _rnd(L.get("dur", 1.2), 1.2) * TEMPO
+	var t_ida = float(L.get("ida", 0.22)) * TEMPO
+	var fase = randf() * TAU
+	var passo_f = func(v = 0.0):
+		var t = v * dur
+		var src: Vector3 = de_f.call() if de_f.is_valid() else ((from if from != null else at) + Vector3(0, y_de, 0))
+		var dst = at + Vector3(0, y, 0)
+		if follow != null and is_instance_valid(follow):
+			dst = follow.global_position + Vector3(0, y, 0)
+		var d = dst - src
+		var ln = d.length()
+		if ln < 0.05:
+			return
+		var dirv = d / ln
+		var lado = dirv.cross(Vector3.UP).normalized()
+		if lado.length() < 0.1:
+			lado = Vector3.RIGHT
+		var ext = clamp(t / t_ida, 0.0, 1.0)
+		ext = 1.0 - pow(1.0 - ext, 2.5)
+		var vis = ln * ext
+		# chicote: onda que corre pela corrente na ida e assenta quando ela prende
+		var amp = 0.18 * cam_k * (1.0 - ext) + 0.03 * cam_k
+		for i in elos.size():
+			var mi: MeshInstance3D = elos[i]
+			var s = i * passo
+			if s > vis:
+				mi.visible = false
+				continue
+			mi.visible = true
+			var u = s / max(vis, 0.01)
+			var onda = sin(u * 9.0 - t * 22.0 + fase) * amp * sin(u * PI)
+			var p = src + dirv * s + lado * onda + Vector3(0, sin(u * PI) * -0.06 * cam_k * ext, 0)
+			# elos alternados: um deitado, o seguinte em pé (corrente de verdade)
+			var b = Basis.looking_at(dirv, Vector3.UP)
+			b = b * Basis(Vector3(1, 0, 0), PI * 0.5)
+			if i % 2 == 1:
+				b = Basis(dirv, PI * 0.5) * b
+			mi.global_transform = Transform3D(b.scaled(Vector3(1.0, 1.0, 1.35)), p)
+	var tw = hold.create_tween()
+	tw.set_parallel(true)
+	tw.tween_method(passo_f, 0.0, 1.0, dur)
+	tw.tween_method(func(v): mat.set_shader_parameter("idade", v), 0.0, 1.0, dur).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_IN)
+	tw.chain().tween_callback(hold.queue_free)
+
 func _fx_malha(L: Dictionary, at: Vector3, from: Variant, tint: Color, follow: Node3D = null) -> void:
 	var tipo = str(L["malha"])
+	if L.has("volta"):
+		# n cópias em volta de um círculo (nós do círculo de runas)
+		var n = int(L["volta"])
+		var rv = float(L.get("volta_r", 1.2)) * cam_k
+		for i in n:
+			var M = L.duplicate()
+			M.erase("volta")
+			var a = TAU * i / n + deg_to_rad(float(L.get("volta_giro", 0.0)))
+			var dl = float(L.get("volta_passo", 0.0)) * i * TEMPO
+			_fx_after(dl, _fx_malha.bind(M, at + Vector3(cos(a), 0, sin(a)) * rv, from, tint, null))
+		return
+	if tipo == "corrente":
+		_fx_corrente(L, at, from, tint, follow)
+		return
 	var mesh = malhas.malha(L)
 	if mesh == null:
 		return
@@ -991,6 +1083,14 @@ func _fx_malha(L: Dictionary, at: Vector3, from: Variant, tint: Color, follow: N
 			return
 	piv.position = pos
 	add_child(piv)
+	if bool(L.get("na_mao", false)) and L.has("_de_f"):
+		# preso à mão de quem lança (orbe carregando na manopla)
+		var de_f: Callable = L["_de_f"]
+		var siga = func(_v = 0.0):
+			if is_instance_valid(piv) and de_f.is_valid():
+				piv.global_position = de_f.call()
+		siga.call()
+		tw.tween_method(siga, 0.0, 1.0, dur)
 	tw.chain().tween_callback(piv.queue_free)
 
 

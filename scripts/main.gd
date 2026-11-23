@@ -6088,19 +6088,23 @@ func _especial_lider(e: Dictionary) -> bool:
 				return true
 			_abraco_ms = agora
 			var alvo: Variant = game.unit_at(e["h"])
-			board.gesto(u.uid, "rugido", ate)
-			vfx.play_fx("aby_rhazur_rugido", de, null, Color.WHITE)
-			sfx.play("esp_rhazur_rugido", -2.0, 1.0, 0.0)
-			_later(0.3, func():
-				vfx.play_fx("aby_rhazur_redemoinho", ate, null, Color.WHITE)
-				sfx.play("esp_rhazur_redemoinho", -6.0, 1.0, 0.0))
-			_later(0.72, func(): sfx.play("esp_rhazur_corrente", -3.0, 1.0, 0.0))
+			# Rhazur puxa a manopla dourada para trás e lança as correntes do abismo; o portal abre sob o
+			# alvo, as correntes prendem e ele dá o tranco puxando o inimigo até a pancada da manopla
+			board.gesto(u.uid, "corrente", ate)
+			vfx.play_fx("aby_rhazur_redemoinho", ate, null, Color.WHITE, null, {"de_f": func() -> Vector3: return board.mao_global(u.uid, "Left")})
+			sfx.play("esp_rhazur_redemoinho", -6.0, 1.0, 0.0)
+			_later(0.15, func(): sfx.play("esp_rhazur_rugido", -4.0, 1.0, 0.0))
+			_later(0.42, func(): sfx.play("esp_rhazur_corrente", -3.0, 1.0, 0.0))
+			var uid_r = u.uid
+			var mao = func() -> Vector3: return board.mao_global(uid_r, "Left")
 			if alvo != null and board.unit_nodes.has(alvo.uid):
 				var nd: Node3D = board.unit_nodes[alvo.uid]["node"]
-				_later(0.72, func():
+				var ctx = _ter_ctx(u.cid)
+				ctx["de_f"] = mao
+				_later(0.42, func():
 					if is_instance_valid(nd):
-						vfx.play_fx("aby_rhazur_abraco", ate, de, Color.WHITE, nd, _ter_ctx(u.cid)))
-				_later(0.95, func(): board.arrasto(alvo.uid))
+						vfx.play_fx("aby_rhazur_abraco", ate, de, Color.WHITE, nd, ctx))
+				_later(1.05, func(): board.arrasto(alvo.uid))
 			return true
 		["rei_mina", "crystal"]:
 			if agora - _rei_ult_ms > 1500:

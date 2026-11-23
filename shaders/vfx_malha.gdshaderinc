@@ -17,6 +17,9 @@ uniform float rolagem = 1.5;     // o ruído corre pelo UV.x (energia andando)
 uniform float boost = 1.0;
 uniform float fresnel_pow = 1.4;
 uniform vec4 tint : source_color = vec4(1.0);
+uniform float nucleo_a = 0.0;    // casca: miolo escuro e opaco (orbe do abismo: centro escuro, borda acesa)
+uniform float degraus = 0.0;     // > 0: cor em faixas chapadas (visual de anime), ex. 4
+uniform float redemoinho = 0.0;  // espiral: o ruído gira em volta (anel, esfera, cilindro) — orbe e portal
 
 void vertex() {
 	if (frente == 1) {
@@ -37,17 +40,28 @@ void fragment() {
 	} else {
 		prof = pow(1.0 - clamp(abs(dot(NORMAL, VIEW)), 0.0, 1.0), fresnel_pow);
 	}
-	vec2 ru = UV * ruido_esc + vec2(-idade * rolagem, idade * 0.3);
+	vec2 uvr = UV;
+	if (redemoinho != 0.0) {
+		// UV.x já dá a volta (anel, esfera, cilindro): desloca a volta conforme UV.y = espiral girando
+		uvr.x += redemoinho * UV.y + idade * rolagem * 0.6;
+	}
+	vec2 ru = uvr * ruido_esc + vec2(-idade * rolagem, idade * 0.3);
 	float n = texture(ruido, ru).r;
 	float v = clamp(prof * (1.0 - ruido_k * 0.5 + ruido_k * n), 0.0, 1.0);
 	float thr = pow(idade, erode_pow) * erode;
 	float a = smoothstep(thr, thr + suave, v);
+	if (nucleo_a > 0.0 && perfil == 3) {
+		a = max(a, nucleo_a * (1.0 - smoothstep(0.85, 1.0, pow(idade, 3.0) * 1.15)));
+	}
 	if (varre > 0.0) {
 		float cab = idade * varre * (1.0 + cauda);       // cabeça passa do fim para a cauda também sair
 		float dentro = step(UV.x, cab);
 		float k = clamp((UV.x - (cab - cauda)) / cauda, 0.0, 1.0);
 		a *= dentro * smoothstep(0.0, 0.35, k);
 		v = clamp(v + (k - 0.6) * 0.5, 0.0, 1.0);       // a cabeça fica mais clara
+	}
+	if (degraus > 0.0) {
+		v = floor(v * degraus + 0.5) / degraus;
 	}
 	vec3 c = texture(ramp, vec2(v, 0.5)).rgb;
 	ALBEDO = c * tint.rgb * boost;
