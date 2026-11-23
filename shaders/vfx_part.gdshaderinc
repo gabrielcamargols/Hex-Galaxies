@@ -12,11 +12,15 @@ uniform float cut = 0.0;          // intensidade mínima (evita o quadrado das m
 uniform float halftone = 0.0;    // 0 liso .. 1 borda vira pontos de retícula
 uniform float dot_px = 7.0;
 uniform float stretch = 1.0;     // modo 1: alonga no sentido da velocidade
+uniform int forma = 0;            // 0 textura PNG; formas desenhadas no shader: 1 ponto, 2 faísca, 3 fumaça, 4 lasca, 5 gota
+uniform sampler2D ruido : filter_linear_mipmap, repeat_enable;
 varying float age;
+varying float giro_v;
 varying vec4 pcol;
 
 void vertex() {
 	age = INSTANCE_CUSTOM.y;
+	giro_v = INSTANCE_CUSTOM.x;
 	pcol = COLOR;
 	vec3 sc = vec3(length(MODEL_MATRIX[0].xyz), length(MODEL_MATRIX[1].xyz), length(MODEL_MATRIX[2].xyz));
 	if (mode == 0) {
@@ -31,8 +35,26 @@ void vertex() {
 	}
 }
 
+float forma_v(vec2 uv) {
+	vec2 p = uv * 2.0 - 1.0;
+	if (forma == 1) {                    // ponto: disco macio
+		return clamp(1.0 - length(p), 0.0, 1.0) * 1.4;
+	} else if (forma == 2) {             // faísca: losango comprido (esticado na velocidade)
+		return clamp(1.0 - (abs(p.x) * 2.6 + abs(p.y)), 0.0, 1.0) * 1.5;
+	} else if (forma == 3) {             // fumaça: bola com borda comida por ruído
+		float n = texture(ruido, uv * 0.8 + giro_v * 0.37).r;
+		return clamp((1.0 - length(p)) * (0.7 + 0.8 * n), 0.0, 1.0) * 1.3;
+	} else if (forma == 4) {             // lasca: triângulo afiado
+		float t = max(abs(p.x) * 1.8 + p.y * 0.9, -p.y * 1.1);
+		return clamp(1.0 - t, 0.0, 1.0) * 1.6;
+	} else {                             // gota: bola com ponta para cima
+		vec2 q = vec2(p.x * (1.0 + max(p.y, 0.0) * 1.2), p.y);
+		return clamp(1.0 - length(q), 0.0, 1.0) * 1.4;
+	}
+}
+
 void fragment() {
-	float v = texture(tex, UV).r;
+	float v = forma == 0 ? texture(tex, UV).r : clamp(forma_v(UV), 0.0, 1.0);
 	float thr = max(pow(age, erode_pow) * erode, cut);
 	float a = smoothstep(thr, thr + soft, v);
 	if (halftone > 0.0) {

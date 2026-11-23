@@ -631,6 +631,8 @@ func play_fx(id: String, at: Vector3, from: Variant = null, tint: Color = Color.
 			_fx_after(dl, _fx_drops.bind(L, at2, from))
 		elif L.has("modelo"):
 			_fx_after(dl, _fx_modelo.bind(L, at2))
+		elif L.has("malha"):
+			_fx_after(dl, _fx_malha.bind(L, at2, from, tint, follow))
 		elif L.has("p"):
 			_fx_after(dl, _fx_part.bind(L, at2, from, tint, follow))
 		else:
@@ -863,6 +865,135 @@ func _fx_proj(P: Dictionary, from: Vector3, to: Vector3) -> float:
 	return t
 
 
+
+# =====================================================================
+# MALHAS DE VFX (formas 3D + shader, sem PNG): construção em scripts/vfx_malhas.gd
+# =====================================================================
+const MALHAS = preload("res://scripts/vfx_malhas.gd")
+const FORMAS = ["ponto", "faisca", "fumaca", "lasca", "gota"]
+var malhas = MALHAS.new()
+
+
+func _ruido() -> Texture2D:
+	return malhas.ruido()
+
+
+func _malha_mat(L: Dictionary, tint: Color) -> ShaderMaterial:
+	var mat = ShaderMaterial.new()
+	var blend = str(L.get("blend", "mix"))
+	var tipo0 = str(L["malha"])
+	# no chão (anel, cilindro) a malha respeita a profundidade (passa por trás dos bonecos); o resto fica por cima
+	var var_sh = "add" if blend == "add" else ("chao" if bool(L.get("chao", tipo0 in ["anel", "cilindro"])) else "mix")
+	mat.shader = load("res://shaders/vfx_malha_%s.gdshader" % var_sh)
+	mat.render_priority = int(L.get("prio", 22 if blend == "add" else 21))
+	var rp = L.get("ramp", ["#301342", "#a957ec", "#f438a9", "#ffd56a"])
+	mat.set_shader_parameter("ramp", _ramp_tex(_suaviza(rp) if blend != "add" else rp))
+	mat.set_shader_parameter("ruido", _ruido())
+	var tipo = str(L["malha"])
+	mat.set_shader_parameter("perfil", 3 if bool(L.get("casca", false)) else (2 if tipo in ["esfera", "tubo"] else (1 if tipo == "estrela" else 0)))
+	mat.set_shader_parameter("frente", 1 if tipo == "estrela" else 0)
+	mat.set_shader_parameter("varre", float(L.get("varre", 0.0)))
+	mat.set_shader_parameter("cauda", float(L.get("cauda", 0.55)))
+	mat.set_shader_parameter("erode", float(L.get("erode", 1.0)))
+	mat.set_shader_parameter("erode_pow", float(L.get("erode_pow", 1.6)))
+	mat.set_shader_parameter("ruido_k", float(L.get("ruido", 0.45)))
+	var re = L.get("ruido_esc", [3.0, 1.0])
+	mat.set_shader_parameter("ruido_esc", Vector2(float(re[0]), float(re[1])))
+	mat.set_shader_parameter("rolagem", float(L.get("rolagem", 1.5)))
+	mat.set_shader_parameter("boost", float(L.get("boost", 1.0)))
+	mat.set_shader_parameter("fresnel_pow", float(L.get("fresnel", 1.4)))
+	mat.set_shader_parameter("tint", tint * Color(str(L.get("tint", "#ffffff"))))
+	return mat
+
+
+func _fx_malha(L: Dictionary, at: Vector3, from: Variant, tint: Color, follow: Node3D = null) -> void:
+	var tipo = str(L["malha"])
+	var mesh = malhas.malha(L)
+	if mesh == null:
+		return
+	var mat = _malha_mat(L, tint)
+	var mi = MeshInstance3D.new()
+	mi.mesh = mesh
+	mi.material_override = mat
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.extra_cull_margin = 8.0
+	var piv = Node3D.new()           # pivô: posição e orientação; a malha anima escala/giro dentro dele
+	piv.add_child(mi)
+	var y = _rnd(L.get("y", 0.0))
+	var pos = at + Vector3(0, y, 0)
+	var away = Vector3.ZERO
+	if from != null:
+		away = (at - from) * Vector3(1, 0, 1)
+		away = away.normalized() if away.length() > 0.01 else Vector3.ZERO
+	if away == Vector3.ZERO:
+		var cam = get_viewport().get_camera_3d()
+		away = (cam.global_transform.basis.x * Vector3(1, 0, 1)).normalized() if cam != null else Vector3.RIGHT
+	if L.has("toward") and from != null:
+		pos -= away * float(L["toward"]) * cam_k
+	var dur = _rnd(L.get("dur", 0.4), 0.4) * TEMPO
+	var esc = L.get("escala", [1.0, 1.0])
+	var k0 = float(esc[0]) * cam_k
+	var k1 = float(esc[1]) * cam_k
+	var tw = mi.create_tween()
+	tw.set_parallel(true)
+	tw.tween_method(func(v): mat.set_shader_parameter("idade", v), 0.0, 1.0, dur)
+	match tipo:
+		"arco":
+			# plano do golpe contém a direção do ataque; "inclina" deita o arco na diagonal
+			var x = away.rotated(Vector3.UP, deg_to_rad(_rnd(L.get("yaw", 0.0))))
+			var b = Basis(x, Vector3.UP, x.cross(Vector3.UP))
+			piv.basis = b.rotated(x, deg_to_rad(float(L.get("inclina", 0.0))))
+			var r0 = deg_to_rad(float(L.get("roll", 0.0)))
+			var giro = deg_to_rad(float(L.get("giro", 0.0)))
+			if bool(L.get("espelho", false)):
+				# espelho: o mesmo golpe refletido de cima para baixo (a outra metade da pinça)
+				r0 = -r0
+				giro = -giro
+			mi.rotation.z = r0
+			mi.scale = Vector3.ONE * k0
+			tw.tween_property(mi, "rotation:z", r0 + giro, dur).set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_OUT)
+			tw.tween_property(mi, "scale", Vector3.ONE * k1, dur).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		"anel":
+			var rr = L.get("r", [0.3, 1.6])
+			pos.y = at.y + 0.05 + y
+			mi.scale = Vector3.ONE * float(rr[0]) * cam_k
+			tw.tween_property(mi, "scale", Vector3.ONE * float(rr[1]) * cam_k, dur).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		"cilindro":
+			var r = float(L.get("r", 0.6)) * cam_k
+			var h = float(L.get("altura", 1.6)) * cam_k
+			mi.scale = Vector3(r * k0, h * float(L.get("altura0", 0.2)), r * k0)
+			tw.tween_property(mi, "scale", Vector3(r * k1, h, r * k1), dur * 0.6).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+			tw.tween_property(mi, "rotation:y", deg_to_rad(float(L.get("giro", 180.0))), dur)
+		"estrela", "esfera":
+			var r = float(L.get("r", 0.8)) * cam_k
+			mi.scale = Vector3.ONE * r * k0
+			tw.tween_property(mi, "scale", Vector3.ONE * r * k1, dur * 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+			if tipo == "estrela":
+				mi.rotation.z = randf() * TAU
+		"tubo":
+			# laço de energia de quem ataca até o alvo (ou até quem está sendo puxado)
+			var r = float(L.get("r", 0.12)) * cam_k
+			var src: Vector3 = (from if from != null else at) + Vector3(0, float(L.get("y_de", 1.0)), 0)
+			var alvo_y = y
+			var arma = func(_v = 0.0):
+				var dst: Vector3 = at + Vector3(0, alvo_y, 0)
+				if follow != null and is_instance_valid(follow):
+					dst = follow.global_position + Vector3(0, alvo_y, 0)
+				var d = dst - src
+				if d.length() < 0.01:
+					return
+				piv.global_transform = Transform3D(Basis.looking_at(-d.normalized(), Vector3.UP), src)
+				mi.scale = Vector3(r, r, d.length())
+			add_child(piv)
+			arma.call()
+			tw.tween_method(arma, 0.0, 1.0, dur)
+			tw.chain().tween_callback(piv.queue_free)
+			return
+	piv.position = pos
+	add_child(piv)
+	tw.chain().tween_callback(piv.queue_free)
+
+
 # ---------------------------------------------------------------------
 # PARTÍCULAS DA FORJA (estilo "Hits & Impacts" em tempo real)
 # camada: {"p": textura em vfx/tex, "blend": add|mix|chao, "mode": bill|vel|chao, "amount", "life",
@@ -931,7 +1062,8 @@ func _part_shader(blend: String) -> Shader:
 
 func _fx_part_node(L: Dictionary, tint: Color) -> CPUParticles3D:
 	var path = "res://vfx/tex/%s.png" % str(L["p"])
-	if not L.has("caco") and not ResourceLoader.exists(path):
+	var proc = str(L["p"]).begins_with("@")       # forma desenhada no shader (sem PNG)
+	if not L.has("caco") and not proc and not ResourceLoader.exists(path):
 		return null
 	var mode = {"bill": 0, "vel": 1, "chao": 2}.get(str(L.get("mode", "bill")), 0)
 	var blend = str(L.get("blend", "add"))
@@ -966,7 +1098,11 @@ func _part_mat(L: Dictionary, blend: String, mode: int, path: String) -> ShaderM
 	var m = ShaderMaterial.new()
 	m.shader = _part_shader(blend)
 	m.render_priority = 22 if blend == "add" else (21 if blend == "mix" else 3)
-	m.set_shader_parameter("tex", load(path))
+	var forma = FORMAS.find(str(L["p"]).trim_prefix("@")) + 1 if str(L["p"]).begins_with("@") else 0
+	m.set_shader_parameter("forma", forma)
+	if forma == 0:
+		m.set_shader_parameter("tex", load(path))
+	m.set_shader_parameter("ruido", _ruido())
 	var rp = L.get("ramp", ["#ffffff", "#ffffff"])
 	m.set_shader_parameter("ramp", _ramp_tex(_suaviza(rp) if blend == "mix" else rp))
 	m.set_shader_parameter("mode", mode)
