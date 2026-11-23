@@ -65,7 +65,7 @@ func run() -> void:
 	var dt = 1.0 / 30.0
 	var feito = {}
 	var dest = pa.lerp(pr, (pr.distance_to(pa) - 1.73) / pr.distance_to(pa))
-	for k in 120:
+	for k in 150:
 		if k == 15 and not feito.has("ini"):
 			feito["ini"] = true
 			fr.set_meta("gesto", "corrente")

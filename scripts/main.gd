@@ -6105,6 +6105,10 @@ func _especial_lider(e: Dictionary) -> bool:
 					if is_instance_valid(nd):
 						vfx.play_fx("aby_rhazur_abraco", ate, de, Color.WHITE, nd, ctx))
 				_later(1.05, func(): board.arrasto(alvo.uid, uid_r))
+				# depois de puxar: golpe da garra de caranguejo e a mordida de tubarão
+				_later(1.66, func(): sfx.play("garra_ataque", -3.0, 0.9, 0.05))
+				_later(2.08, func(): sfx.play("golpe", -2.0, 0.7, 0.05))
+				_later(2.1, func(): sfx.play("impacto", -5.0, 0.6, 0.05))
 			return true
 		["rei_mina", "crystal"]:
 			if agora - _rei_ult_ms > 1500:

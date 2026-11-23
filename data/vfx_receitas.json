@@ -2502,9 +2502,14 @@
     "blend": "mix"
    },
    {
-    "sub": "aby_rhazur_esmaga",
+    "sub": "aby_rhazur_garra",
     "em": "dest",
-    "delay": 0.84
+    "delay": 0.98
+   },
+   {
+    "sub": "aby_rhazur_mordida",
+    "em": "dest",
+    "delay": 1.18
    }
   ]
  },
@@ -67810,6 +67815,312 @@
      ]
     ],
     "y": 0.1
+   }
+  ]
+ },
+ "aby_rhazur_garra": {
+  "nome": "RHAZUR · golpe da garra de caranguejo (depois de puxar)",
+  "personagem": "rhazur",
+  "hit_t": 0.06,
+  "shake": 0.3,
+  "shake_delay": 0.06,
+  "layers": [
+   {
+    "malha": "arco",
+    "r": 0.62,
+    "largura": 0.5,
+    "angulo": 110,
+    "y": 1.0,
+    "inclina": -25,
+    "roll": 110,
+    "giro": 140,
+    "dur": 0.26,
+    "varre": 1.8,
+    "cauda": 0.6,
+    "ramp": [
+     "#4a0f3a",
+     "#a81a6a",
+     "#f438a9",
+     "#ff8ad0",
+     "#ffe6f4"
+    ]
+   },
+   {
+    "malha": "arco",
+    "r": 0.5,
+    "largura": 0.3,
+    "angulo": 100,
+    "y": 1.0,
+    "inclina": -25,
+    "roll": 105,
+    "giro": 140,
+    "dur": 0.26,
+    "varre": 1.8,
+    "cauda": 0.6,
+    "ramp": [
+     "#ffffff",
+     "#ffe6f4",
+     "#ff8ad0"
+    ],
+    "delay": 0.02,
+    "blend": "add"
+   },
+   {
+    "malha": "estrela",
+    "pontas": 6,
+    "interno": 0.28,
+    "r": 0.65,
+    "escala": [
+     0.3,
+     1.1
+    ],
+    "y": 0.9,
+    "dur": 0.2,
+    "ramp": [
+     "#4a0f3a",
+     "#a81a6a",
+     "#f438a9",
+     "#ff8ad0",
+     "#ffe6f4"
+    ],
+    "delay": 0.06
+   },
+   {
+    "p": "@faisca",
+    "mode": "vel",
+    "amount": 12,
+    "size": [
+     0.05,
+     0.55
+    ],
+    "speed": [
+     6,
+     11
+    ],
+    "life": 0.2,
+    "ramp": [
+     "#f438a9",
+     "#ffffff"
+    ],
+    "y": 0.9,
+    "delay": 0.06,
+    "blend": "add"
+   },
+   {
+    "p": "@gota",
+    "mode": "vel",
+    "amount": 8,
+    "size": 0.16,
+    "speed": [
+     2.5,
+     5
+    ],
+    "dir": [
+     0,
+     1,
+     0
+    ],
+    "grav": -14,
+    "life": 0.5,
+    "ramp": [
+     "#3a0508",
+     "#7a0c16",
+     "#c41a2a",
+     "#ff4a4a",
+     "#ffb0a0"
+    ],
+    "y": 0.9,
+    "delay": 0.07,
+    "blend": "mix"
+   }
+  ]
+ },
+ "aby_rhazur_mordida": {
+  "nome": "RHAZUR · mordida de tubarão (arranca sangue)",
+  "personagem": "rhazur",
+  "hit_t": 0.12,
+  "shake": 0.45,
+  "shake_delay": 0.12,
+  "layers": [
+   {
+    "malha": "arco",
+    "r": 0.5,
+    "largura": 0.4,
+    "angulo": 110,
+    "y": 1.1,
+    "toward": 0.0,
+    "roll": 125,
+    "giro": 40,
+    "dur": 0.24,
+    "varre": 2.2,
+    "cauda": 0.8,
+    "ramp": [
+     "#5a4a6a",
+     "#c8c0d8",
+     "#ffffff"
+    ],
+    "degraus": 3,
+    "erode_pow": 3.0
+   },
+   {
+    "malha": "arco",
+    "r": 0.5,
+    "largura": 0.4,
+    "angulo": 110,
+    "y": 1.1,
+    "toward": 0.0,
+    "roll": 125,
+    "giro": 40,
+    "dur": 0.24,
+    "varre": 2.2,
+    "cauda": 0.8,
+    "ramp": [
+     "#5a4a6a",
+     "#c8c0d8",
+     "#ffffff"
+    ],
+    "degraus": 3,
+    "erode_pow": 3.0,
+    "espelho": true
+   },
+   {
+    "luz": "#ff2a3a",
+    "energia": 3.5,
+    "alcance": 3.0,
+    "dur": 0.35,
+    "y": 1.1,
+    "delay": 0.12
+   },
+   {
+    "malha": "estrela",
+    "pontas": 9,
+    "interno": 0.22,
+    "r": 0.8,
+    "escala": [
+     0.3,
+     1.2
+    ],
+    "y": 1.1,
+    "dur": 0.22,
+    "ramp": [
+     "#3a0508",
+     "#7a0c16",
+     "#c41a2a",
+     "#ff4a4a",
+     "#ffb0a0"
+    ],
+    "delay": 0.12
+   },
+   {
+    "p": "@gota",
+    "mode": "vel",
+    "amount": 22,
+    "size": [
+     0.12,
+     0.26
+    ],
+    "speed": [
+     3,
+     7
+    ],
+    "dir": [
+     0,
+     1,
+     0
+    ],
+    "grav": -16,
+    "life": 0.7,
+    "ramp": [
+     "#3a0508",
+     "#7a0c16",
+     "#c41a2a",
+     "#ff4a4a",
+     "#ffb0a0"
+    ],
+    "y": 1.1,
+    "delay": 0.12,
+    "blend": "mix"
+   },
+   {
+    "p": "@faisca",
+    "mode": "vel",
+    "amount": 14,
+    "size": [
+     0.06,
+     0.6
+    ],
+    "speed": [
+     5,
+     9
+    ],
+    "life": 0.22,
+    "ramp": [
+     "#3a0508",
+     "#7a0c16",
+     "#c41a2a",
+     "#ff4a4a",
+     "#ffb0a0"
+    ],
+    "y": 1.1,
+    "delay": 0.12,
+    "blend": "mix"
+   },
+   {
+    "p": "@fumaca",
+    "amount": 6,
+    "size": 0.5,
+    "speed": [
+     0.3,
+     0.9
+    ],
+    "life": 0.5,
+    "ramp": [
+     "#3a0508",
+     "#7a0c16",
+     "#c41a2a",
+     "#ff4a4a"
+    ],
+    "y": 1.05,
+    "delay": 0.13,
+    "blend": "mix",
+    "alpha": [
+     [
+      0,
+      0.8
+     ],
+     [
+      0.5,
+      0.5
+     ],
+     [
+      1,
+      0
+     ]
+    ]
+   },
+   {
+    "malha": "anel",
+    "r": [
+     0.2,
+     0.75
+    ],
+    "largura": 1.0,
+    "ruido": 1.0,
+    "ruido_esc": [
+     5,
+     2
+    ],
+    "dur": 1.6,
+    "ramp": [
+     "#3a0508",
+     "#7a0c16",
+     "#c41a2a",
+     "#ff4a4a"
+    ],
+    "degraus": 3,
+    "erode_pow": 4.0,
+    "delay": 0.3,
+    "tint": "#ffffffd0"
    }
   ]
  }
