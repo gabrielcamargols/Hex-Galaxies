@@ -70,6 +70,7 @@ func run() -> void:
 			feito["ini"] = true
 			fr.set_meta("gesto", "corrente")
 			fr.set_meta("gesto_t0", b.relogio)
+			fr.set_meta("gesto_alvo", pa)
 			vfx.play_fx("aby_rhazur_redemoinho", pa, null, Color.WHITE, null, {"de_f": mao})
 		if k == 15 + int(0.42 * 30):
 			vfx.play_fx("aby_rhazur_abraco", pa, pr, Color.WHITE, ha, {"de_f": mao})
@@ -78,8 +79,13 @@ func run() -> void:
 			tw.tween_method(func(u):
 				var e = u * u * (3.0 - 2.0 * u)
 				ha.position = pa.lerp(dest, e) + Vector3(0, sin(u * PI) * 0.35, 0), 0.0, 1.0, 0.5)
-		b._fig3d_tick(fr, dt, t, false, Color.WHITE, false, 0.0, 0.0, false, Vector3.RIGHT)
-		b._fig3d_tick(fa, dt, t, true, Color.WHITE, false, 0.0, 0.0, false, Vector3.LEFT)
+		# como no tabuleiro: a posição do boneco volta a zero a cada quadro e cada um olha para o outro
+		fr.position = Vector3.ZERO
+		fa.position = Vector3.ZERO
+		fr.set_meta("olha", ha.global_position - hr.global_position)
+		fa.set_meta("olha", hr.global_position - ha.global_position)
+		b._fig3d_tick(fr, dt, t, false, Color.WHITE, false, 0.0, 0.0, false, Vector3.ZERO)
+		b._fig3d_tick(fa, dt, t, false, Color.WHITE, false, 0.0, 0.0, false, Vector3.ZERO)
 		t += dt
 		await RenderingServer.frame_post_draw
 		sv.get_texture().get_image().save_png("%s/f%03d.png" % [o, k])

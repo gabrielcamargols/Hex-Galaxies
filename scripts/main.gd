@@ -6104,7 +6104,7 @@ func _especial_lider(e: Dictionary) -> bool:
 				_later(0.42, func():
 					if is_instance_valid(nd):
 						vfx.play_fx("aby_rhazur_abraco", ate, de, Color.WHITE, nd, ctx))
-				_later(1.05, func(): board.arrasto(alvo.uid))
+				_later(1.05, func(): board.arrasto(alvo.uid, uid_r))
 			return true
 		["rei_mina", "crystal"]:
 			if agora - _rei_ult_ms > 1500:

@@ -4164,9 +4164,11 @@ var _brota_ult_ms: int = 0
 
 
 # ---- puxado/arremessado: a peça é arrastada pelo chão até a casa ----
-func arrasto(uid: int) -> void:
+func arrasto(uid: int, por_uid: int = -1) -> void:
 	if unit_nodes.has(uid):
 		unit_nodes[uid]["arrasto_pend"] = true
+		if por_uid >= 0:
+			foco_par(uid, por_uid)     # quem é puxado fica de frente para quem puxou (e vice-versa)
 
 
 func _arrasto_passo(d: Dictionary, node: Node3D, delta: float) -> void:
