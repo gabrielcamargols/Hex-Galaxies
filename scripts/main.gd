@@ -5744,7 +5744,8 @@ func _open_oficina(auto: bool, fac: String = "aby") -> void:
 	add_child(of)
 	if auto:
 		await get_tree().create_timer(0.8).timeout
-		await of.auto(1, 2.0)
+		var pausa = float(OS.get_environment("OFICINA_PAUSA")) if OS.get_environment("OFICINA_PAUSA") != "" else 2.0
+		await of.auto(1, pausa)
 		get_tree().quit()
 
 
