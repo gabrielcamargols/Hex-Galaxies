@@ -77,25 +77,25 @@ func run() -> void:
 	var g2 = novo()
 	for u in g2.units:
 		u.st = "dead"
-	var cc = DB.hexes.filter(func(h): return DB.DIRS.any(func(d): return g2.nave_linha(h + d, d).size() >= 3))[0]
+	var cc = DB.hexes.filter(func(h): return DB.DIRS.any(func(d): return g2.nave_fileiras(h + d, d).filter(func(f): return f.size() == 3).size() >= 5))[0]
 	var cm2 = put(g2, "k_cmd", 0, cc.x, cc.y)
-	var dd: Vector2i = DB.DIRS.filter(func(d): return g2.nave_linha(cc + d, d).size() >= 3)[0]
+	var dd: Vector2i = DB.DIRS.filter(func(d): return g2.nave_fileiras(cc + d, d).filter(func(f): return f.size() == 3).size() >= 5)[0]
 	var ini: Vector2i = cc + dd
-	var lin = g2.nave_linha(ini, dd)
+	var fil = g2.nave_fileiras(ini, dd)
 	ok(g2.ult_kind(cm2) == "nave", "a ativa do Comandante agora é a Nave Krieg")
 	ok(g2.ult_opts(cm2).has(ini), "pode começar a até 8 casas")
-	var e1 = put(g2, "z_vang", 1, lin[0].x, lin[0].y)
-	var e2 = put(g2, "z_vang", 1, lin[2].x, lin[2].y)
-	var al = put(g2, "k_tank", 0, lin[1].x, lin[1].y)
-	var fh: Vector2i = lin[2] + dd
-	var fora = put(g2, "z_vang", 1, fh.x, fh.y) if DB.in_board(fh) else null
+	ok(fil.size() == 16 and fil[0].size() == 3, "faixa de 3 casas de largura por 16 de comprimento")
+	var e1 = put(g2, "z_vang", 1, fil[0][0].x, fil[0][0].y)
+	var e2 = put(g2, "z_vang", 1, fil[3][2].x, fil[3][2].y)
+	var al = put(g2, "k_tank", 0, fil[2][1].x, fil[2][1].y)
+	var fh: Vector2i = fil[2][0] + (fil[2][0] - fil[2][1])
+	var fora = put(g2, "z_vang", 1, fh.x, fh.y) if DB.in_board(fh) and g2.unit_at(fh) == null and not g2.nave_linha(ini, dd).has(fh) else null
 	for x in [e1, e2, al]:
 		x.hp = 9
 	fila = [ini, ini + dd]
 	g2.start_activation(cm2)
 	await g2.act_ult(cm2)
-	ok(lin.size() == 3, "pega 3 casas em linha reta")
-	ok(e1.hp == 4 and e2.hp == 4, "inimigos nas 3 casas perdem 5")
-	ok(al.hp == 4, "aliado na linha também é atingido")
-	ok(fora == null or fora.hp == fora.maxhp, "a 4ª casa da linha não é atingida")
+	ok(e1.hp == 4 and e2.hp == 4, "inimigos nos lados da faixa perdem 5")
+	ok(al.hp == 4, "aliado no meio da faixa também é atingido")
+	ok(fora == null or fora.hp == fora.maxhp, "fora da faixa não sofre nada")
 	print("TESTE FIM falhas=%d" % falhas)

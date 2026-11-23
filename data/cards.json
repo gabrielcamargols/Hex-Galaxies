@@ -963,7 +963,7 @@
    },
    "ab2": {
     "name": "Nave Krieg",
-    "text": "1x por partida: chama a nave-mãe Krieg pelo rádio. Escolha onde começam os disparos (até 8 casas) e a direção: ela bombardeia 3 casas em linha reta, 5 de dano em cada peça, inclusive aliados.",
+    "text": "1x por partida: chama a nave-mãe Krieg pelo rádio. Escolha onde começam os disparos (até 8 casas) e a direção: ela bombardeia uma faixa de 3 casas de largura por 16 de comprimento em linha reta, 5 de dano em cada peça, inclusive aliados.",
     "kind": "ativa"
    }
   },

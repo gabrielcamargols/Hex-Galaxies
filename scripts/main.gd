@@ -6223,30 +6223,45 @@ func _cena_nave(u, h: Vector2i, d: Vector2i) -> void:
 	sfx.play("radio_on", -3.0)
 	_later(0.12, func(): sfx.play("esp_krieg_radio", -4.0, 1.0, 0.0))
 	vfx.play_fx("kri_cmd_radio", de, null, Color.WHITE)
-	# a linha é marcada casa a casa (o jogador vê por onde a nave vai passar)
-	for k in lin.size():
-		var pk = _hex_pos(lin[k], 0.05)
-		_later(0.55 + 0.03 * k, func(): vfx.flip("ring", pk, 1.5, 0.55, Color("#ff4a3a"), true))
+	# a faixa é marcada fileira a fileira (o jogador vê por onde a nave vai passar)
+	var fil: Array = game.nave_fileiras(h, d)
+	for k in fil.size():
+		for c in fil[k]:
+			var pk = _hex_pos(c, 0.05)
+			_later(0.55 + 0.035 * k, func(): vfx.flip("ring", pk, 1.5, 0.55, Color("#ff4a3a"), true))
 	_later(0.55, func():
 		vfx.play_fx("kri_cmd_marca", ate, null, Color.WHITE)
 		sfx.play("radio_off", -6.0))
-	# a nave-mãe sai do lugar no céu; só a sombra dela passa cobrindo a área; as bombas caem do alto
-	# casa a casa e, no fim, ela volta para o lugar
+	# a nave-mãe sai do lugar no céu; só a sombra dela passa cobrindo a faixa (na velocidade das
+	# bombas); as bombas caem do alto fileira a fileira e, no fim, ela volta para o lugar
 	var mae: Node3D = board.nave_ceu("KRI")
-	var meio = (_hex_pos(lin[0], 0.0) + _hex_pos(lin[lin.size() - 1], 0.0)) * 0.5
 	var p0 = _hex_pos(h, 0.0)
+	var passo = p0.distance_to(_hex_pos(h + d, 0.0))
 	var wd = (_hex_pos(h + d, 0.0) - p0).normalized()
-	var t_meio = game.NAVE_T0 + game.NAVE_DT * (lin.size() - 1) * 0.5 - 0.15
+	var vel = passo / game.NAVE_DT
+	var t_fim = game.NAVE_T0 + game.NAVE_DT * (fil.size() - 1)
 	if mae != null:
 		_later(0.95, func(): _nave_sai(mae))
-		_later(t_meio + 2.2, func(): _nave_volta(mae))
-	_later(t_meio - 1.3, func(): _nave_sombra(meio, wd, t_meio, mae))
-	_later(t_meio - 1.1, func(): sfx.play("esp_krieg_nave", 2.0, 0.65, 0.0))
-	for k in lin.size():
-		_cai_projetil(_hex_pos(lin[k], 0.0), game.NAVE_T0 + k * game.NAVE_DT, true)
-		_later(game.NAVE_T0 + k * game.NAVE_DT, func():
-			sfx.play("impacto", -2.0, 0.55, 0.05)
-			board.shake = max(board.shake, 0.7))
+		_later(t_fim + 1.6, func(): _nave_volta(mae))
+	# a sombra chega na 1ª fileira um pouco antes da 1ª bomba e segue junto
+	_later(game.NAVE_T0 - 2.2, func(): _nave_sombra(p0, wd, vel, 2.0, t_fim - game.NAVE_T0 + 4.5, mae))
+	_later(game.NAVE_T0 - 1.2, func(): sfx.play("esp_krieg_nave", 2.0, 0.65, 0.0))
+	for k in fil.size():
+		var linha_k: Array = fil[k]
+		if linha_k.is_empty():
+			continue          # a faixa saiu do mapa
+		var t_k = game.NAVE_T0 + k * game.NAVE_DT
+		var tem = linha_k.any(func(c): return game.unit_at(c) != null)
+		# uma bomba de verdade no meio da fileira; os lados explodem junto (mais leve no tablet)
+		_cai_projetil(_hex_pos(linha_k[linha_k.size() / 2], 0.0), t_k, tem)
+		for c in linha_k:
+			if c != linha_k[linha_k.size() / 2]:
+				var pc = _hex_pos(c, 0.0)
+				_later(t_k + randf_range(-0.03, 0.05), func(): vfx.play_fx("kri_cmd_explosao_p", pc, null, Color.WHITE))
+		_later(t_k, func():
+			if k % 2 == 0 or tem:
+				sfx.play("impacto", -4.0 if not tem else -1.0, 0.55, 0.05)
+			board.shake = max(board.shake, 0.7 if tem else 0.4))
 
 
 # a nave-mãe Krieg deixa o lugar dela no céu (acelera para longe, para fora da tela)
@@ -6271,7 +6286,9 @@ func _nave_volta(mae: Node3D) -> void:
 
 # só a sombra: a nave-mãe passa bem alto, invisível para a câmera, e o sol joga a sombra dela no chão
 # (o centro da sombra passa sobre "meio" na hora t_meio)
-func _nave_sombra(meio: Vector3, wd: Vector3, t_meio: float, mae: Node3D) -> void:
+func _nave_sombra(ref: Vector3, wd: Vector3, vel: float, chega: float, dur: float, mae: Node3D) -> void:
+	# só a sombra: a nave-mãe passa bem alto, invisível para a câmera, e o sol joga a sombra no chão.
+	# O centro da sombra passa sobre "ref" depois de "chega" segundos, andando "vel" por segundo.
 	if vfx == null or not is_instance_valid(vfx) or not ResourceLoader.exists("res://models/nave_kri.glb"):
 		return
 	var nave: Node3D = load("res://models/nave_kri.glb").instantiate()
@@ -6286,9 +6303,7 @@ func _nave_sombra(meio: Vector3, wd: Vector3, t_meio: float, mae: Node3D) -> voi
 	var luz: Vector3 = -board.sun_light.global_transform.basis.z
 	var alt = 22.0
 	var sobe = luz * (alt / max(0.2, -luz.y))       # do chão até a nave, contra a luz
-	var vel = 26.0
-	var dur = 2.6
-	var c0 = meio - sobe - wd * vel * 1.3
+	var c0 = ref - sobe - wd * vel * chega
 	holder.global_position = c0
 	var tw = holder.create_tween()
 	tw.tween_property(holder, "global_position", c0 + wd * vel * dur, dur)

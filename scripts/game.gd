@@ -3395,20 +3395,38 @@ func stampede_path(u, end: Vector2i) -> Array:
 # ativas sem alvo: não pedem escolha, valem para a própria peça
 const SELF_ULTS = ["berserk", "rodapunk", "quake", "guardfirm"]
 
-# ---- Nave Krieg (Comandante Krieg): a nave-mãe passa e bombardeia 3 casas em linha reta ----
-const NAVE_LEN = 3
-const NAVE_T0 = 2.7        # da ordem no rádio até a 1ª bomba cair (a cena na main usa os mesmos tempos)
-const NAVE_DT = 0.3        # entre uma casa e a seguinte
+# ---- Nave Krieg (Comandante Krieg): a nave-mãe passa e bombardeia uma faixa de 3 casas de
+# largura por 16 de comprimento, em linha reta ----
+const NAVE_LEN = 16
+const NAVE_T0 = 2.7        # da ordem no rádio até a 1ª fileira de bombas (a cena na main usa os mesmos tempos)
+const NAVE_DT = 0.12       # entre uma fileira e a seguinte
 const NAVE_DANO = 5
 var nave_ini: Variant = null
 
 
-func nave_linha(h: Vector2i, d: Vector2i) -> Array:
+# fileiras da faixa: para cada passo k ao longo da direção, a casa do meio e as duas dos lados
+func nave_fileiras(h: Vector2i, d: Vector2i) -> Array:
+	var i = DB.DIRS.find(d)
+	var esq: Vector2i = DB.DIRS[(i + 1) % 6]
+	var dir: Vector2i = DB.DIRS[(i + 5) % 6]
 	var out = []
 	for k in NAVE_LEN:
 		var c = h + d * k
-		if DB.in_board(c):
-			out.append(c)
+		var f = []
+		for x in [c + esq, c, c + dir]:
+			if DB.in_board(x):
+				f.append(x)
+		out.append(f)
+	return out
+
+
+# todas as casas da faixa (3 de largura x 16 de comprimento)
+func nave_linha(h: Vector2i, d: Vector2i) -> Array:
+	var out = []
+	for f in nave_fileiras(h, d):
+		for x in f:
+			if not out.has(x):
+				out.append(x)
 	return out
 
 
@@ -4687,17 +4705,20 @@ func _act_ult_run(u) -> bool:
 		"nave":
 			# 2º toque: a direção da passagem (16 casas em linha reta a partir do início)
 			nave_ini = h
-			var dh: Vector2i = await pick_hex(p, "Nave Krieg: escolha a direção (3 casas em linha reta).", nave_dirs(h), "nave_dir", false)
+			var dh: Vector2i = await pick_hex(p, "Nave Krieg: escolha a direção (faixa de 3 casas de largura por 16 de comprimento).", nave_dirs(h), "nave_dir", false)
 			var dn: Vector2i = dh - h
-			var lin = nave_linha(h, dn)
+			var fil = nave_fileiras(h, dn)
 			emitfx({"t": "abfx", "k": "nave", "h": h, "uid": u.uid, "d": dn})
-			log_msg(p, "A Nave Krieg bombardeia %d casas em linha reta." % lin.size())
+			log_msg(p, "A Nave Krieg bombardeia uma faixa de 3 casas por 16 em linha reta.")
 			await _espera_cena(NAVE_T0)
-			for k in lin.size():
-				var tn = unit_at(lin[k])
-				if tn != null:
-					damage(tn, NAVE_DANO, u)
-				if k < lin.size() - 1:
+			var ja = {}
+			for k in fil.size():
+				for c in fil[k]:
+					var tn = unit_at(c)
+					if tn != null and not ja.has(tn.uid):
+						ja[tn.uid] = true
+						damage(tn, NAVE_DANO, u)
+				if k < fil.size() - 1:
 					await _espera_cena(NAVE_DT)
 			nave_ini = null
 			settle()
