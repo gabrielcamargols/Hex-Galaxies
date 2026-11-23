@@ -429,6 +429,13 @@ var ship_nodes: Array = []
 
 # a nave fica de frente para o jogador: o nariz aponta para a câmera (no plano do chão),
 # e acompanha quando a câmera gira
+func nave_ceu(fac: String) -> Node3D:
+	for sh in ship_nodes:
+		if is_instance_valid(sh) and str(sh.get_meta("fac", "")) == fac:
+			return sh
+	return null
+
+
 func _orient_ship(ship: Node3D) -> void:
 	var toward = Vector2(sin(cam_yaw), cos(cam_yaw))      # direção da câmera no plano do chão
 	var nose = float(ship.get_meta("nose"))
@@ -453,8 +460,9 @@ func _build_ships() -> void:
 		var ship: Node3D = ps.instantiate()
 		var ec = world_xz(DB.entry_c[p])
 		var out = ec.normalized()
-		var len_w = PLAT * 1.0
+		var len_w = PLAT * (1.6 if fac == "KRI" else 1.0)   # a nave-mãe Krieg é a maior do jogo
 		ship.scale = Vector3.ONE * len_w
+		ship.set_meta("fac", fac)
 		var c2 = out * (PLAT + len_w * 2.3)   # bem atrás da borda: não tapa a visão do mapa (cosmético)
 		ship.position = Vector3(c2.x, PLAT * 0.9, c2.y)
 		ship.set_meta("out", out)
@@ -476,6 +484,7 @@ func _build_ships() -> void:
 		var tw = ship.create_tween().set_loops()
 		tw.tween_property(ship, "position:y", base_y + 0.6, 3.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 		tw.tween_property(ship, "position:y", base_y - 0.6, 3.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		ship.set_meta("casa", ship.position)
 		ship_nodes.append(ship)
 
 

@@ -3395,11 +3395,11 @@ func stampede_path(u, end: Vector2i) -> Array:
 # ativas sem alvo: não pedem escolha, valem para a própria peça
 const SELF_ULTS = ["berserk", "rodapunk", "quake", "guardfirm"]
 
-# ---- Nave Krieg (Comandante Krieg): bombardeio em linha reta de 16 casas ----
-const NAVE_LEN = 16
-const NAVE_T0 = 2.17       # da ordem no rádio até a 1ª bomba cair (a cena na main usa os mesmos tempos)
-const NAVE_DT = 0.12       # entre uma casa e a seguinte (velocidade da nave)
-const NAVE_DANO = 2
+# ---- Nave Krieg (Comandante Krieg): a nave-mãe passa e bombardeia 3 casas em linha reta ----
+const NAVE_LEN = 3
+const NAVE_T0 = 2.7        # da ordem no rádio até a 1ª bomba cair (a cena na main usa os mesmos tempos)
+const NAVE_DT = 0.3        # entre uma casa e a seguinte
+const NAVE_DANO = 5
 var nave_ini: Variant = null
 
 
@@ -4477,7 +4477,7 @@ func _act_ult_run(u) -> bool:
 	var kind = ult_kind(u)
 	var ab2 = DB.active_of(ult_cid(u))
 	var uname = ab2.get("name", "Ativa")
-	var texts = {"mend": "escolha o Abyssal a restaurar (até 3 casas)", "plate": "escolha o aliado adjacente a reforçar", "detonate": "escolha a mina a detonar", "barricade": "escolha a casa adjacente da Barricada", "grenade": "escolha o alvo da granada (até 3, passa por cima de obstáculos)", "artillery": "escolha a casa que a artilharia vai atingir no início do próximo round (até 5)", "abyss": "escolha o inimigo a puxar (até 8 casas)", "bombard": "escolha a casa do bombardeio (até 6)", "nave": "escolha onde a Nave Krieg começa a bombardear (até 8 casas)", "prison": "escolha o inimigo a prender (até 4)", "earth": "escolha a 1ª casa a mudar de altura (até 4)", "stampede": "escolha até onde avançar em linha reta", "orbital": "escolha onde pousar (até 5)",
+	var texts = {"mend": "escolha o Abyssal a restaurar (até 3 casas)", "plate": "escolha o aliado adjacente a reforçar", "detonate": "escolha a mina a detonar", "barricade": "escolha a casa adjacente da Barricada", "grenade": "escolha o alvo da granada (até 3, passa por cima de obstáculos)", "artillery": "escolha a casa que a artilharia vai atingir no início do próximo round (até 5)", "abyss": "escolha o inimigo a puxar (até 8 casas)", "bombard": "escolha a casa do bombardeio (até 6)", "nave": "escolha onde começa o bombardeio da Nave Krieg (até 8 casas)", "prison": "escolha o inimigo a prender (até 4)", "earth": "escolha a 1ª casa a mudar de altura (até 4)", "stampede": "escolha até onde avançar em linha reta", "orbital": "escolha onde pousar (até 5)",
 		"burrow": "escolha onde emergir (até 2 casas)", "bwall": "escolha a casa adjacente da muralha", "rootweb": "escolha a casa adjacente das raízes",
 		"cartcharge": "escolha até onde avançar (até 2 casas, qualquer direção) ou o alvo do impacto", "ferram": "escolha até onde avançar em linha reta (até 2) ou o alvo da investida",
 		"coat": "escolha o aliado adjacente a revestir", "rupture": "escolha a barreira adjacente a romper", "timedcharge": "escolha a casa da carga (até 2)",
@@ -4687,7 +4687,7 @@ func _act_ult_run(u) -> bool:
 		"nave":
 			# 2º toque: a direção da passagem (16 casas em linha reta a partir do início)
 			nave_ini = h
-			var dh: Vector2i = await pick_hex(p, "Nave Krieg: escolha a direção da passagem (16 casas em linha reta).", nave_dirs(h), "nave_dir", false)
+			var dh: Vector2i = await pick_hex(p, "Nave Krieg: escolha a direção (3 casas em linha reta).", nave_dirs(h), "nave_dir", false)
 			var dn: Vector2i = dh - h
 			var lin = nave_linha(h, dn)
 			emitfx({"t": "abfx", "k": "nave", "h": h, "uid": u.uid, "d": dn})

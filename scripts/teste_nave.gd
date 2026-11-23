@@ -40,7 +40,7 @@ func run() -> void:
 	var k = 0
 	for e in g.units:
 		if e.owner == 1 and e.st == "field":
-			var hh = ini + dir * (4 + k * 3)
+			var hh = ini + dir * (k * 2)
 			if DB.in_board(hh) and g.unit_at(hh) == null:
 				e.q = hh.x
 				e.r = hh.y
@@ -50,9 +50,10 @@ func run() -> void:
 		await get_tree().process_frame
 	m.board.fit_camera(true)
 	var meio = (m._hex_pos(ini, 0.0) + m._hex_pos(ini + dir * 9, 0.0)) * 0.5
-	m.board.cam_goal = null
-	m.board.cam_target = meio
-	m.board.cam_dist = float(OS.get_environment("DIST")) if OS.get_environment("DIST") != "" else 30.0
+	if OS.get_environment("DIST") != "0":
+		m.board.cam_goal = null
+		m.board.cam_target = meio
+		m.board.cam_dist = float(OS.get_environment("DIST")) if OS.get_environment("DIST") != "" else 30.0
 	for i in 40:
 		await get_tree().process_frame
 	m._cena_nave(cmd, ini, dir)

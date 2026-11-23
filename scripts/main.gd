@@ -6230,75 +6230,69 @@ func _cena_nave(u, h: Vector2i, d: Vector2i) -> void:
 	_later(0.55, func():
 		vfx.play_fx("kri_cmd_marca", ate, null, Color.WHITE)
 		sfx.play("radio_off", -6.0))
-	# trajetória: entra 6 casas antes do início e sai 5 depois do fim, a ~5 de altura
+	# a nave-mãe sai do lugar no céu; só a sombra dela passa cobrindo a área; as bombas caem do alto
+	# casa a casa e, no fim, ela volta para o lugar
+	var mae: Node3D = board.nave_ceu("KRI")
+	var meio = (_hex_pos(lin[0], 0.0) + _hex_pos(lin[lin.size() - 1], 0.0)) * 0.5
 	var p0 = _hex_pos(h, 0.0)
-	var p1 = _hex_pos(h + d, 0.0)
-	var passo = p0.distance_to(p1)
-	var wd = (p1 - p0).normalized()
-	var alt = 6.2
-	var queda = 0.35
-	var t_ini = game.NAVE_T0 - queda - 6.0 * game.NAVE_DT
-	var vel = passo / game.NAVE_DT
-	var a0 = p0 - wd * passo * 6.0 + Vector3(0, alt, 0)
-	var voo = (6.0 + lin.size() + 5.0) * game.NAVE_DT
-	_later(t_ini, func(): _nave_voa(a0, wd, vel, voo))
-	_later(t_ini - 0.3, func(): sfx.play("esp_krieg_nave", 0.0, 1.0, 0.0))
+	var wd = (_hex_pos(h + d, 0.0) - p0).normalized()
+	var t_meio = game.NAVE_T0 + game.NAVE_DT * (lin.size() - 1) * 0.5 - 0.15
+	if mae != null:
+		_later(0.95, func(): _nave_sai(mae))
+		_later(t_meio + 2.2, func(): _nave_volta(mae))
+	_later(t_meio - 1.3, func(): _nave_sombra(meio, wd, t_meio, mae))
+	_later(t_meio - 1.1, func(): sfx.play("esp_krieg_nave", 2.0, 0.65, 0.0))
 	for k in lin.size():
-		var alvo = _hex_pos(lin[k], 0.0)
-		var tem = game.unit_at(lin[k]) != null
-		var t_solta = game.NAVE_T0 + k * game.NAVE_DT - queda
-		var solta = a0 + wd * vel * (t_solta - t_ini)
-		_later(t_solta, func(): _nave_bomba(solta, alvo, queda, tem))
+		_cai_projetil(_hex_pos(lin[k], 0.0), game.NAVE_T0 + k * game.NAVE_DT, true)
+		_later(game.NAVE_T0 + k * game.NAVE_DT, func():
+			sfx.play("impacto", -2.0, 0.55, 0.05)
+			board.shake = max(board.shake, 0.7))
 
 
-func _nave_voa(a0: Vector3, wd: Vector3, vel: float, voo: float) -> void:
+# a nave-mãe Krieg deixa o lugar dela no céu (acelera para longe, para fora da tela)
+func _nave_sai(mae: Node3D) -> void:
+	if not is_instance_valid(mae):
+		return
+	var casa: Vector3 = mae.get_meta("casa", mae.position)
+	var dir2: Vector2 = mae.get_meta("out") if mae.has_meta("out") else Vector2(casa.x, casa.z).normalized()
+	var tw = mae.create_tween().set_parallel(true)
+	tw.tween_property(mae, "position:x", casa.x + dir2.x * 60.0, 0.9).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tw.tween_property(mae, "position:z", casa.z + dir2.y * 60.0, 0.9).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+
+
+func _nave_volta(mae: Node3D) -> void:
+	if not is_instance_valid(mae):
+		return
+	var casa: Vector3 = mae.get_meta("casa", mae.position)
+	var tw = mae.create_tween().set_parallel(true)
+	tw.tween_property(mae, "position:x", casa.x, 1.6).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tw.tween_property(mae, "position:z", casa.z, 1.6).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+
+
+# só a sombra: a nave-mãe passa bem alto, invisível para a câmera, e o sol joga a sombra dela no chão
+# (o centro da sombra passa sobre "meio" na hora t_meio)
+func _nave_sombra(meio: Vector3, wd: Vector3, t_meio: float, mae: Node3D) -> void:
 	if vfx == null or not is_instance_valid(vfx) or not ResourceLoader.exists("res://models/nave_kri.glb"):
 		return
 	var nave: Node3D = load("res://models/nave_kri.glb").instantiate()
-	var caixa = AABB()
-	var primeiro = true
 	for mi in nave.find_children("*", "MeshInstance3D", true, false):
-		var bb = (mi as MeshInstance3D).get_aabb()
-		caixa = bb if primeiro else caixa.merge(bb)
-		primeiro = false
-		(mi as MeshInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
-	var esc = 8.0 / max(0.001, max(caixa.size.x, caixa.size.z))     # nave com ~8 de comprimento (4 a 5 casas)
+		(mi as MeshInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
 	var holder = Node3D.new()
 	vfx.add_child(holder)
 	holder.add_child(nave)
-	nave.scale = Vector3.ONE * esc
-	nave.position = -caixa.get_center() * esc
-	# o nariz do modelo aponta para -X: -X local vai na direção do voo; leve inclinação de mergulho
+	nave.scale = mae.scale if mae != null and is_instance_valid(mae) else Vector3.ONE * board.PLAT * 1.6
 	var x = -wd
-	var b = Basis(x, Vector3.UP, x.cross(Vector3.UP).normalized())
-	holder.global_transform = Transform3D(b.rotated(wd.cross(Vector3.UP).normalized(), -0.06), a0)
+	holder.global_basis = Basis(x, Vector3.UP, x.cross(Vector3.UP).normalized())
+	var luz: Vector3 = -board.sun_light.global_transform.basis.z
+	var alt = 22.0
+	var sobe = luz * (alt / max(0.2, -luz.y))       # do chão até a nave, contra a luz
+	var vel = 26.0
+	var dur = 2.6
+	var c0 = meio - sobe - wd * vel * 1.3
+	holder.global_position = c0
 	var tw = holder.create_tween()
-	tw.tween_property(holder, "global_position", a0 + wd * vel * voo, voo)
+	tw.tween_property(holder, "global_position", c0 + wd * vel * dur, dur)
 	tw.tween_callback(holder.queue_free)
-	# balanço leve das asas durante a passagem
-	var tb = nave.create_tween()
-	tb.tween_property(nave, "rotation:x", 0.08, voo * 0.5).set_trans(Tween.TRANS_SINE)
-	tb.tween_property(nave, "rotation:x", -0.05, voo * 0.5).set_trans(Tween.TRANS_SINE)
-	board.shake = max(board.shake, 0.15)
-
-
-func _nave_bomba(de: Vector3, alvo: Vector3, queda: float, grande: bool) -> void:
-	if vfx == null or not is_instance_valid(vfx):
-		return
-	var pr = _modelo_projetil()
-	pr.scale = Vector3.ONE * (1.8 if grande else 1.3)
-	vfx.add_child(pr)
-	var ini = de + Vector3(0, -0.6, 0)
-	var fim = alvo + Vector3(0, 0.2, 0)
-	pr.global_position = ini
-	pr.global_transform.basis = Basis(Quaternion(Vector3.DOWN, (fim - ini).normalized())).scaled(pr.scale)
-	var tw = pr.create_tween()
-	tw.tween_property(pr, "global_position", fim, queda).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	tw.tween_callback(func():
-		pr.queue_free()
-		vfx.play_fx("kri_cmd_explosao" if grande else "kri_cmd_explosao_p", alvo, null, Color.WHITE)
-		sfx.play("esp_krieg_explosao" if grande else "esp_krieg_explosao_p", -1.0 if grande else -9.0, randf_range(0.92, 1.08), 0.0)
-		board.shake = max(board.shake, 0.35 if grande else 0.12))
 
 
 func _modelo_projetil() -> Node3D:
