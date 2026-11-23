@@ -6050,6 +6050,30 @@ func _ter_load() -> void:
 				ter_fx[k] = d[k]
 
 
+# Sniper Valakiano: como na ilustração, o tiro sai da mão — a bola elétrica condensa entre os dedos
+# e é lançada quando o braço se estende para o alvo
+func _sniper_eletro(fu, tu, ter_id: String, now: int) -> void:
+	var uid: int = fu.uid
+	var alvo = _hex_pos(tu.pos(), 0.0)
+	board.unit_nodes[uid]["lunge"] = 0.0            # o gesto é o golpe (sem o tranco do corpo)
+	board.gesto(uid, "eletro", alvo)
+	var mao = func() -> Vector3: return board.mao_global(uid, "Right", 0.4)
+	var ctx = _ter_ctx(fu.cid)
+	ctx["de_f"] = mao
+	hit_fac[tu.uid] = "@ter"
+	_later(board.ELETRO_CARGA, func():
+		vfx.play_fx("ter_sniper_carga", mao.call() - Vector3(0, 1.0, 0), null, Color.WHITE, null, ctx)
+		sfx.play("tiro_energia", -12.0, 0.55))
+	# voo: mesma conta da vfx.gd (velocidade da receita, sem arco)
+	var de = board.mao_global(uid, "Right", 0.4)
+	var voo = clamp(de.distance_to(alvo + Vector3(0, 0.8, 0)) / (30.0 / vfx.TEMPO), 0.15 * vfx.TEMPO, 0.9 * vfx.TEMPO)
+	_later(board.ELETRO_SOLTA, func():
+		vfx.play_fx(ter_id, alvo, mao.call() - Vector3(0, 1.0, 0), Color.WHITE, null, ctx)
+		sfx.play("tiro_energia", -3.0, 1.1))
+	impact_delay = board.ELETRO_SOLTA + voo
+	impact_until = now + int(impact_delay * 1000.0) + 40
+
+
 # receita de ataque básico do personagem (só Valakianos), ou ""
 func _ter_attack_id(uid: int, ranged: bool = false) -> String:
 	_ter_load()
@@ -6618,6 +6642,9 @@ func _on_fx_real(e: Dictionary) -> void:
 				# Valakianos: ataque pintado pela Forja (golpe/projétil + impacto próprios)
 				var fu: Variant = game.by_uid(e["from"])
 				var tu: Variant = game.by_uid(e["to"])
+				if fu.cid == "t_sniper" and board.tem_fig3d(fu.uid):
+					_sniper_eletro(fu, tu, ter_id, now)
+					return
 				var ht = vfx.play_fx(ter_id, _hex_pos(tu.pos(), 0.0), _hex_pos(fu.pos(), 0.0), Color.WHITE, null, _ter_ctx(fu.cid))
 				impact_delay = max(ht, 0.12)
 				impact_until = now + int(impact_delay * 1000.0) + 40

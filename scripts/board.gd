@@ -3785,6 +3785,8 @@ func _unit_goal(u) -> Vector2i:
 	return u.pos()
 
 
+const ELETRO_CARGA = 0.26     # Sniper Valakiano: a bola começa a condensar na mão
+const ELETRO_SOLTA = 0.74     # ... e sai da mão (braço estendendo)
 const PREPARO_T = 0.2      # antes do 1º passo a peça espera transferindo o peso
 const CHEGADA_T = 0.42     # o último passo absorve o peso e o corpo volta ao repouso
 const APOIO_F = 0.6       # fração do ciclo em que cada pé fica apoiado
@@ -4471,6 +4473,15 @@ const GESTOS = {
 		{"t": 1.8, "Left": [[0.97, 0.08, 0.2], [0.98, 0.05, 0.18], [0.98, 0.05, 0.18]], "Spine1": 0.06},
 		{"t": 2.25, "Left": [[0.97, 0.08, 0.2], [0.98, 0.05, 0.18], [0.98, 0.05, 0.18]], "Spine1": 0.04},
 		{"t": 2.6}]},
+	# Sniper Valakiano: traz a mão direita à frente do peito, condensa a bola elétrica entre os dedos
+	# e estende o braço para o alvo, lançando-a (sai da mão em ELETRO_SOLTA)
+	"eletro": {"dur": 1.45, "keys": [
+		{"t": 0.0},
+		{"t": 0.26, "Right": [[0.45, -0.55, -0.7], [0.82, 0.42, 0.38], [0.85, 0.3, 0.42]], "Spine1": -0.05, "Head": 0.08},
+		{"t": 0.62, "Right": [[0.5, -0.55, -0.66], [0.84, 0.4, 0.36], [0.86, 0.28, 0.42]], "Spine1": -0.07, "Head": 0.1},
+		{"t": 0.78, "Right": [[0.97, -0.12, 0.18], [0.98, -0.05, 0.15], [0.92, 0.0, 0.38]], "Spine1": 0.1, "Head": 0.02},
+		{"t": 1.1, "Right": [[0.96, -0.14, 0.2], [0.97, -0.06, 0.18], [0.92, 0.0, 0.38]], "Spine1": 0.06},
+		{"t": 1.45}]},
 	# Rhazur: abre os braços e ruge para o alto; depois puxa tudo para o peito
 	"rugido": {"dur": 1.5, "keys": [
 		{"t": 0.0},
@@ -4527,7 +4538,8 @@ const GESTOS = {
 
 
 # posição no mundo da mão de um personagem 3D (de onde sai a corrente, o tiro...); "lado" Left/Right
-func mao_global(uid: int, lado: String) -> Vector3:
+# alem > 0: avança além do pulso, na direção do antebraço (fração do antebraço) — o meio dos dedos
+func mao_global(uid: int, lado: String, alem: float = 0.0) -> Vector3:
 	if not unit_nodes.has(uid):
 		return Vector3.ZERO
 	var d = unit_nodes[uid]
@@ -4537,8 +4549,19 @@ func mao_global(uid: int, lado: String) -> Vector3:
 		var bn: Dictionary = fig.get_meta("bones")
 		var i = int(bn.get(lado + "Hand", -1))
 		if i >= 0 and is_instance_valid(sk):
-			return sk.global_transform * sk.get_bone_global_pose(i).origin
+			var pm = sk.global_transform * sk.get_bone_global_pose(i).origin
+			var fa = int(bn.get(lado + "ForeArm", -1))
+			if alem > 0.0 and fa >= 0:
+				pm += (pm - sk.global_transform * sk.get_bone_global_pose(fa).origin) * alem
+			return pm
 	return d["node"].global_position + Vector3(0, 1.1, 0)
+
+
+func tem_fig3d(uid: int) -> bool:
+	if not unit_nodes.has(uid):
+		return false
+	var fig = unit_nodes[uid].get("sprite")
+	return fig != null and is_instance_valid(fig) and fig.has_meta("fig3d")
 
 
 func gesto(uid: int, tipo: String, alvo: Variant = null) -> void:
