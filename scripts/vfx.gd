@@ -449,13 +449,16 @@ func _flip_tex(fname: String) -> Variant:
 
 # toca um efeito pintado: billboard de frente para a câmera, ou deitado no chão (ground)
 var cam_k: float = 1.0          # câmera longe = efeitos maiores (main.gd atualiza)
+# TEMPO: todos os efeitos da Forja rodam mais devagar (câmera lenta uniforme: partículas, atrasos,
+# projéteis, desenhos e luzes), para o jogador conseguir ver o golpe acontecendo.
+const TEMPO = 1.35
 const SIZE_MUL = 1.35           # todos os desenhos de efeito um pouco maiores
 const DUR_MUL = 1.2             # e um pouco mais lentos, para dar tempo de ver
 
 
 func flip(fname: String, pos: Vector3, size: float = 1.8, dur: float = 0.55, tint: Color = Color.WHITE, ground: bool = false, delay: float = 0.0) -> void:
 	size *= SIZE_MUL * cam_k
-	dur *= DUR_MUL
+	dur *= DUR_MUL * TEMPO
 	var tex = _flip_tex(fname)
 	if tex == null:
 		return
@@ -576,7 +579,8 @@ func play_fx(id: String, at: Vector3, from: Variant = null, tint: Color = Color.
 	var r: Dictionary = receitas[id]
 	var hit_t = 0.0
 	if r.has("proj") and from != null:
-		var P = _core_dict(r["proj"], ctx)
+		var P = _core_dict(r["proj"], ctx).duplicate()
+		P["speed"] = float(P.get("speed", 12.0)) / TEMPO
 		# "avanco": o disparo sai à frente do atacante (boca do dragão), não do centro da casa
 		var de: Vector3 = from
 		var dh = (at - from) * Vector3(1, 0, 1)
@@ -585,7 +589,7 @@ func play_fx(id: String, at: Vector3, from: Variant = null, tint: Color = Color.
 		# "mira": efeito no alvo logo no início (holograma travando a mira); "disparo": clarão na saída
 		if r.has("mira"):
 			play_fx(str(r["mira"]), at, from, tint, null, ctx)
-		var atraso = float(r.get("atraso", 0.0))
+		var atraso = float(r.get("atraso", 0.0)) * TEMPO
 		if r.has("disparo"):
 			_fx_after(atraso, func(): play_fx(str(r["disparo"]), de, at, tint, null, ctx))
 		var lanca = func() -> float:
@@ -595,7 +599,7 @@ func play_fx(id: String, at: Vector3, from: Variant = null, tint: Color = Color.
 		if atraso > 0.0:
 			# tempo de voo calculado antes, para devolver o impacto certo
 			var n = int(P.get("rajada", {}).get("n", 1))
-			var base = clamp(de.distance_to(at) / float(P.get("speed", 12.0)), 0.15, 0.9)
+			var base = clamp(de.distance_to(at) / float(P.get("speed", 12.0)), 0.15 * TEMPO, 0.9 * TEMPO)
 			hit_t = atraso + base + (float(P.get("rajada", {}).get("gap", 0.07)) * (n - 1) if n > 1 else 0.0)
 			_fx_after(atraso, func(): lanca.call())
 		else:
@@ -605,7 +609,7 @@ func play_fx(id: String, at: Vector3, from: Variant = null, tint: Color = Color.
 		return hit_t
 	for L0 in r.get("layers", []):
 		var L = _core_dict(L0, ctx)
-		var dl = _rnd(L.get("delay", 0.0))
+		var dl = _rnd(L.get("delay", 0.0)) * TEMPO
 		var at2 = _em(L, at, from)
 		if str(L.get("em", "")) == "extras":
 			for e in ctx.get("extras", []):
@@ -632,8 +636,8 @@ func play_fx(id: String, at: Vector3, from: Variant = null, tint: Color = Color.
 		else:
 			_fx_after(dl, _fx_layer.bind(L, at2, from, tint))
 	if r.has("shake") and board != null:
-		_fx_after(_rnd(r.get("shake_delay", 0.0)), func(): board.shake = max(board.shake, float(r["shake"])))
-	return float(r.get("hit_t", 0.0))
+		_fx_after(_rnd(r.get("shake_delay", 0.0)) * TEMPO, func(): board.shake = max(board.shake, float(r["shake"]) * 0.7))
+	return float(r.get("hit_t", 0.0)) * TEMPO
 
 
 # COR DE NÚCLEO: camadas marcadas com "nucleo": true trocam o topo da rampa (o miolo mais claro)
@@ -724,7 +728,7 @@ func _fx_layer(L: Dictionary, at: Vector3, from: Variant, tint: Color) -> void:
 	if float(L.get("fps", 0.0)) > 0.0:
 		m.set_shader_parameter("loop_fps", float(L["fps"]))
 	add_child(mi)
-	var dur = _rnd(L.get("dur", 0.6), 0.6) * DUR_MUL
+	var dur = _rnd(L.get("dur", 0.6), 0.6) * DUR_MUL * TEMPO
 	var tw = mi.create_tween()
 	tw.tween_method(func(v): m.set_shader_parameter("frame", v), 0.0, float(n) - 0.01, dur)
 	if L.has("grow"):
@@ -757,7 +761,7 @@ func _fx_modelo(L: Dictionary, at: Vector3) -> void:
 	if root == null:
 		return
 	var esc = float(L.get("escala", 0.35)) * cam_k
-	var dur = _rnd(L.get("life", 1.2), 1.2) * (1.0 if L.has("queda") else DUR_MUL)
+	var dur = _rnd(L.get("life", 1.2), 1.2) * (1.0 if L.has("queda") else DUR_MUL) * TEMPO
 	var y0 = at.y + _rnd(L.get("y", 0.0)) * (cam_k if L.has("queda") else 1.0)
 	root.position = Vector3(at.x, y0, at.z)
 	add_child(root)
@@ -773,7 +777,7 @@ func _fx_modelo(L: Dictionary, at: Vector3) -> void:
 		return
 	if L.has("pousa"):
 		# cai girando até o chão em "pousa" segundos, fica parado e encolhe no fim
-		var tp = float(L["pousa"])
+		var tp = float(L["pousa"]) * TEMPO
 		root.scale = Vector3.ONE * esc
 		root.rotation.z = deg_to_rad(float(L.get("giro", 360.0)))
 		tw.set_parallel(true)
@@ -824,7 +828,7 @@ func _fx_drops(L: Dictionary, at: Vector3, from: Variant) -> void:
 			mi.position = p
 			var vel = v + Vector3(0, -g * t, 0)
 			m.set_shader_parameter("roll", atan2(vel.y, Vector2(vel.x, vel.z).length()) - PI * 0.5)
-			mi.scale = Vector3.ONE * size * clamp(1.4 - t / life, 0.0, 1.0), 0.0, life, life)
+			mi.scale = Vector3.ONE * size * clamp(1.4 - t / life, 0.0, 1.0), 0.0, life, life * TEMPO)
 		tw.tween_callback(mi.queue_free)
 
 
@@ -840,7 +844,7 @@ func _fx_proj(P: Dictionary, from: Vector3, to: Vector3) -> float:
 	var a = from + Vector3(0, float(P.get("y", 0.9)), 0)
 	var b = to + Vector3(0, float(P.get("y", 0.9)) * 0.7, 0)
 	var dist = a.distance_to(b)
-	var t = clamp(dist / float(P.get("speed", 12.0)), 0.18, 0.9)
+	var t = clamp(dist / float(P.get("speed", 12.0)), 0.18 * TEMPO, 0.9 * TEMPO)
 	var arc = float(P.get("arc", 1.0)) * clamp(dist / 6.0, 0.3, 1.5)
 	mi.position = a
 	add_child(mi)
@@ -897,6 +901,28 @@ func _curve(pts: Array) -> Curve:
 	return c
 
 
+# contorno mais leve: as cores quase pretas da rampa viram um tom escuro da própria cor do efeito
+# (antes viravam uma borda preta grossa em volta de tudo)
+func _suaviza(cols: Array, ref: Array = []) -> Array:
+	var todas = cols + ref
+	var viva = Color("#7a4aa8")
+	var melhor = -1.0
+	for c in todas:
+		var cc = Color(str(c))
+		var sat = cc.s * cc.v
+		if sat > melhor:
+			melhor = sat
+			viva = cc
+	var out = []
+	for c in cols:
+		var cc = Color(str(c))
+		var l = cc.get_luminance()
+		if l < 0.16:
+			cc = cc.lerp(viva.darkened(0.35), 0.5 * (1.0 - l / 0.16))
+		out.append("#" + cc.to_html(true))
+	return out
+
+
 func _part_shader(blend: String) -> Shader:
 	if not _part_shaders.has(blend):
 		_part_shaders[blend] = load("res://shaders/vfx_part_%s.gdshader" % blend)
@@ -941,14 +967,15 @@ func _part_mat(L: Dictionary, blend: String, mode: int, path: String) -> ShaderM
 	m.shader = _part_shader(blend)
 	m.render_priority = 22 if blend == "add" else (21 if blend == "mix" else 3)
 	m.set_shader_parameter("tex", load(path))
-	m.set_shader_parameter("ramp", _ramp_tex(L.get("ramp", ["#ffffff", "#ffffff"])))
+	var rp = L.get("ramp", ["#ffffff", "#ffffff"])
+	m.set_shader_parameter("ramp", _ramp_tex(_suaviza(rp) if blend == "mix" else rp))
 	m.set_shader_parameter("mode", mode)
 	m.set_shader_parameter("boost", float(L.get("boost", 1.0)))
 	m.set_shader_parameter("erode", float(L.get("erode", 0.0)))
 	m.set_shader_parameter("erode_pow", float(L.get("erode_pow", 1.5)))
 	m.set_shader_parameter("soft", float(L.get("soft", 0.12)))
 	m.set_shader_parameter("cut", float(L.get("cut", 0.12 if mode == 2 else 0.0)))
-	m.set_shader_parameter("halftone", float(L.get("halftone", 0.0)))
+	m.set_shader_parameter("halftone", min(float(L.get("halftone", 0.0)), 0.55))   # retícula presente, sem engolir o efeito
 	m.set_shader_parameter("dot_px", float(L.get("dot", 7.0)))
 	m.set_shader_parameter("stretch", float(L.get("stretch", 1.0)))
 	return m
@@ -960,7 +987,7 @@ func _fx_part_setup(cp: CPUParticles3D, L: Dictionary, mode: int, tint: Color) -
 	cp.one_shot = true
 	cp.explosiveness = float(L.get("explosive", 1.0))
 	cp.local_coords = false
-	cp.speed_scale = float(L.get("speed_scale", 1.0))
+	cp.speed_scale = float(L.get("speed_scale", 1.0)) / TEMPO
 	var sp = L.get("speed", [0.0, 0.0])
 	cp.initial_velocity_min = float(sp[0]) if typeof(sp) == TYPE_ARRAY else float(sp)
 	cp.initial_velocity_max = float(sp[1]) if typeof(sp) == TYPE_ARRAY else float(sp)
@@ -1077,7 +1104,7 @@ func _fx_volley(P: Dictionary, from: Vector3, to: Vector3, tint: Color, ctx: Dic
 		var dl = float(i) * gap + randf() * 0.03
 		last = max(last, dl + 0.0)
 		_fx_after(dl, func(): _fx_proj2(Pi, f, tt, tint, ctx))
-	var base = clamp(from.distance_to(to) / float(P.get("speed", 12.0)), 0.15, 0.9)
+	var base = clamp(from.distance_to(to) / float(P.get("speed", 12.0)), 0.15 * TEMPO, 0.9 * TEMPO)
 	return base + last
 
 
@@ -1086,7 +1113,7 @@ func _fx_proj2(P: Dictionary, from: Vector3, to: Vector3, tint: Color, ctx: Dict
 	var a = from + Vector3(0, float(P.get("y", 0.9)), 0)
 	var b = to + Vector3(0, float(P.get("y_alvo", float(P.get("y", 0.9)) * 0.8)), 0)
 	var dist = a.distance_to(b)
-	var t = clamp(dist / float(P.get("speed", 12.0)), 0.15, 0.9)
+	var t = clamp(dist / float(P.get("speed", 12.0)), 0.15 * TEMPO, 0.9 * TEMPO)
 	var arc = float(P.get("arc", 0.6)) * clamp(dist / 6.0, 0.3, 1.5)
 	var holder = Node3D.new()
 	holder.position = a
@@ -1186,7 +1213,7 @@ func _fx_chain(L: Dictionary, at: Vector3, from: Variant, tint: Color, follow: N
 		return
 	var tex = load(tex_path)
 	var meshes: Array = []
-	for layer in [["mix", L.get("ramp_sombra", ["#12061c", "#301342"]), 1.7, 1.0], ["add", L.get("ramp", ["#a957ec", "#f438a9", "#ffffff"]), 1.0, float(L.get("boost", 1.4))]]:
+	for layer in [["mix", _suaviza(L.get("ramp_sombra", ["#12061c", "#301342"]), L.get("ramp", [])), 1.25, 1.0], ["add", L.get("ramp", ["#a957ec", "#f438a9", "#ffffff"]), 1.0, float(L.get("boost", 1.4))]]:
 		var mi = MeshInstance3D.new()
 		var q = QuadMesh.new()
 		q.size = Vector2(1, 1)
@@ -1304,7 +1331,7 @@ func _fx_light(L: Dictionary, at: Vector3) -> void:
 	li.position = at + Vector3(0, float(L.get("y", 1.0)), 0)
 	add_child(li)
 	var tw = li.create_tween()
-	tw.tween_property(li, "light_energy", 0.0, float(L.get("dur", 0.3))).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_property(li, "light_energy", 0.0, float(L.get("dur", 0.3)) * TEMPO).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tw.tween_callback(li.queue_free)
 
 
@@ -1312,9 +1339,9 @@ func _fx_light(L: Dictionary, at: Vector3) -> void:
 func _beam_pair(B: Dictionary, texname: String, tint: Color) -> Array:
 	var out = []
 	var tex = load("res://vfx/tex/%s.png" % str(B.get("tex", texname)))
-	var dark = B.get("ramp_sombra", ["#12061c", "#301342"])
+	var dark = _suaviza(B.get("ramp_sombra", ["#12061c", "#301342"]), B.get("ramp", []))
 	# topo em "mix" deixa a cor chapada (núcleo legível em qualquer fundo); "add" brilha somando luz
-	for layer in [["mix", dark, float(B.get("sombra", 1.5)), 1.0, 20], [str(B.get("blend_top", "add")), B.get("ramp", ["#a957ec", "#f438a9", "#ffffff"]), 1.0, float(B.get("boost", 1.4)), 23]]:
+	for layer in [["mix", dark, min(float(B.get("sombra", 1.5)), 1.22), 1.0, 20], [str(B.get("blend_top", "add")), B.get("ramp", ["#a957ec", "#f438a9", "#ffffff"]), 1.0, float(B.get("boost", 1.4)), 23]]:
 		var mi = MeshInstance3D.new()
 		var q = QuadMesh.new()
 		mi.mesh = q
@@ -1355,7 +1382,7 @@ func _fx_bolts(L: Dictionary, at: Vector3, from: Variant, tint: Color, ctx: Dict
 				var a = randf() * TAU
 				var r = _rnd(L.get("raio_len", [0.8, 1.5])) * cam_k
 				alvos.append(src + Vector3(cos(a) * r, randf_range(-0.5, 0.9), sin(a) * r))
-	var dur = float(L.get("dur", 0.35))
+	var dur = float(L.get("dur", 0.35)) * TEMPO
 	var flick = float(L.get("flick", 0.05))
 	for b in alvos:
 		var pair = _beam_pair(L, "raio", tint)

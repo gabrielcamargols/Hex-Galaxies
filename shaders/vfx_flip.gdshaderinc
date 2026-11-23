@@ -9,6 +9,7 @@ uniform int mode = 0;                // 0 de frente p/ câmera, 1 de pé (eixo Y
 uniform vec4 tint : source_color = vec4(1.0);
 uniform float base_lift = 0.0;       // sobe o quad metade da altura (âncora na base)
 uniform float fade = 1.0;
+uniform float ink_leve = 0.45;       // afina o contorno de tinta pintado no desenho (0 = como foi pintado)
 varying float vframe;
 
 void vertex() {
@@ -41,6 +42,9 @@ void fragment() {
 	if (flip_x > 0.5) { uv.x = 1.0 - uv.x; }
 	uv.x = (uv.x + vframe) / hframes;
 	vec4 t = texture(tex, uv);
-	ALBEDO = t.rgb * tint.rgb;
-	ALPHA = t.a * tint.a * fade;
+	// contorno preto do desenho: fica mais fino e menos pesado (cor escura da própria tinta, meio transparente)
+	float l = dot(t.rgb, vec3(0.299, 0.587, 0.114));
+	float ink = 1.0 - smoothstep(0.06, 0.2, l);
+	ALBEDO = mix(t.rgb, t.rgb + tint.rgb * 0.16, ink * ink_leve) * tint.rgb;
+	ALPHA = t.a * tint.a * fade * (1.0 - ink * ink_leve);
 }
