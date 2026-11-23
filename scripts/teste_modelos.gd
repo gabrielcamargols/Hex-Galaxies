@@ -80,7 +80,12 @@ func run() -> void:
 					b._dragao_tick(fig, 1.0 / 30.0, t, walk, modo == "correndo", lunge, hurt)
 				else:
 					b._fig3d_tick(fig, 1.0 / 30.0, t, false, Color.WHITE, walk, lunge, hurt, modo == "correndo", Vector3.ZERO)
+				if fig.has_meta("folga"):
+					fig.get_meta("folga")._process_modification_with_delta(1.0 / 30.0)   # sem esperar o quadro: roda a folga na mão
 				if k < 45:
+					if fig.has_meta("folga"):
+						fig.get_meta("folga").penetra_max = -1.0
+						fig.get_meta("folga").resto_max = -1.0
 					continue
 				var low = 99.0
 				for p in pes:
@@ -104,6 +109,11 @@ func run() -> void:
 							continue
 						var d = min(_seg(h, _p(fig, sk, cx[0]), _p(fig, sk, cx[1])), _seg(h, _p(fig, sk, cx[1]), _p(fig, sk, cx[2])))
 						maomin = min(maomin, d)
+			var fb = fig.get_meta("folga") if fig.has_meta("folga") else null
+			var pen = fb.penetra_max if fb != null else -1.0
+			if fb != null:
+				fb.penetra_max = -1.0
+			out += "  braço-entrando antes %.2f depois %.2f\n" % [pen, fb.resto_max if fb != null else -1.0]
 			out += "  %-9s pe_mais_baixo(%%altura) med %+.1f min %+.1f max %+.1f | escorrega %.1f%% | mao-perna %.1f%%\n" % [modo, 100.0 * lowsum / nlow / H, 100.0 * lowmin / H, 100.0 * lowmax / H, 100.0 * slide / H, 100.0 * maomin / H if maomin < 90 else -1.0]
 		print(out)
 		holder.queue_free()

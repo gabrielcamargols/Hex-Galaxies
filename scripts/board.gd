@@ -43,6 +43,7 @@ var UNDER = 34.0       # altura da base rochosa por baixo do planetoide
 const ZOOM_MIN = 4.0
 const ZOOM_MAX = 140.0
 # personagens que já têm modelo 3D com esqueleto (Tripo): entram no lugar da arte 2D
+const FOLGA_BRACOS = preload("res://scripts/folga_bracos.gd")
 const FIG3D = {
 	"k_cmd": {"path": "res://models/personagens/k_cmd.glb", "visor": true, "punho": true, "jeito": "militar"},
 	"rhazur": {"path": "res://models/personagens/rhazur.glb", "visor": false, "punho": false, "jeito": "bruto", "giro": 0.0, "cauda": [0.09, 0.32, -0.02]},
@@ -66,7 +67,7 @@ const PADROES = ["reticula", "hachura", "pixel", "entalhe", "poeira", "facetas",
 #   vel: velocidade no tabuleiro, casas por segundo (andar, correr) · tique: gesto de vez em quando parado
 const JEITOS = {
 	"padrao": {"resp": [0.05, 2.2], "olha": [0.2, 0.42], "peso": 0.035, "cad": [7.0, 12.5], "passo": [0.42, 0.78],
-		"joelho": [0.55, 1.15], "bal": [0.32, 0.65], "quica": [0.035, 0.1], "ginga": 0.0, "incl": [0.04, 0.24],
+		"joelho": [0.55, 1.15], "bal": [0.42, 0.62], "quica": [0.035, 0.1], "ginga": 0.0, "incl": [0.04, 0.24],
 		"vel": [2.1, 4.0], "tique": ""},
 	# Krieg: postura de sentido, marcha firme e cadenciada, olhar que varre o campo de tempos em tempos
 	"militar": {"resp": [0.03, 1.8], "olha": [0.1, 0.3], "peso": 0.01, "cad": [6.8, 10.5], "passo": [0.4, 0.62],
@@ -82,7 +83,7 @@ const JEITOS = {
 		"vel": [1.8, 3.4], "tique": "altivo"},
 	# Mamute dos Wächter: colosso, passos pesados e lentos que balançam o corpo todo, respiração funda
 	"mamute": {"resp": [0.06, 1.2], "olha": [0.12, 0.25], "peso": 0.06, "cad": [4.8, 8.0], "passo": [0.3, 0.55],
-		"joelho": [0.35, 0.8], "bal": [0.22, 0.45], "quica": [0.025, 0.05], "ginga": 0.12, "incl": [0.06, 0.18],
+		"joelho": [0.35, 0.8], "bal": [0.34, 0.55], "quica": [0.025, 0.05], "ginga": 0.14, "incl": [0.06, 0.18],
 		"vel": [1.6, 3.0], "tique": ""},
 	# Lithari Líder: leve e cortante, quase flutua, passos longos e precisos, olhar frio
 	"cristal": {"resp": [0.03, 1.4], "olha": [0.14, 0.32], "peso": 0.015, "cad": [6.2, 11.0], "passo": [0.4, 0.8],
@@ -90,7 +91,7 @@ const JEITOS = {
 		"vel": [2.2, 4.4], "tique": "vigia"},
 	# Rhazur: pesado, passada larga e lenta, balança o corpo todo, respiração funda
 	"bruto": {"resp": [0.07, 1.5], "olha": [0.14, 0.3], "peso": 0.05, "cad": [5.4, 9.0], "passo": [0.38, 0.62],
-		"joelho": [0.4, 0.9], "bal": [0.28, 0.5], "quica": [0.03, 0.06], "ginga": 0.1, "incl": [0.08, 0.22],
+		"joelho": [0.4, 0.9], "bal": [0.4, 0.62], "quica": [0.03, 0.06], "ginga": 0.12, "incl": [0.08, 0.22],
 		"vel": [1.7, 3.2], "tique": ""},
 }
 const BIG = ["moby", "balu", "banker", "l_behemot", "l_leviathan", "z_dragao", "w_mamute", "t_feram", "k_tank", "z_tank", "l_tank", "l_colosso", "sismico", "rhombo", "tork", "w_tric", "z_meca", "t_fendas", "t_raiz", "t_basalto", "t_carrinho", "t_sentinela", "t_britadeira", "a_garra", "k_escudeiro", "w_urso", "w_gorila", "w_javali"]
@@ -2912,6 +2913,14 @@ func _figure3d(cid: String, body_h: float) -> Node3D:
 			root.set_meta("skel", sk)
 			root.set_meta("bones", bones)
 			root.set_meta("ax", [fw, left, up])
+			# braços nunca entram no corpo/roupa: corrige depois de qualquer pose (scripts/folga_bracos.gd)
+			var folga = FOLGA_BRACOS.new()
+			folga.name = "folga_bracos"
+			if folga.prepara(sk, inst.find_children("*", "MeshInstance3D", true, false), bones, [fw, left, up], float(cfg.get("folga", 1.0))):
+				sk.add_child(folga)
+				root.set_meta("folga", folga)
+			else:
+				folga.free()
 			if cfg.has("pose_arte"):
 				root.set_meta("pose_arte", cfg["pose_arte"])
 			# mãos fechadas (punho): cada falange dobra em direção à palma; a palma olha para o corpo
@@ -3240,13 +3249,18 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 	# braços: do "A" do modelo para junto do corpo; respiram parado; balançam contra as pernas andando
 	pose["LeftArm"] = [[F, -0.30 - ra * 1.2 * br * idle + 0.04 * sh * idle + 0.08 * rw * ww], [S, arm_a * sw + 0.06 * sin(t * 0.8) * idle]]
 	pose["RightArm"] = [[F, 0.30 + ra * 1.2 * br * idle + 0.04 * sh * idle - 0.08 * rw * ww], [S, -arm_a * sw - 1.35 * k - 0.05 * sin(t * 0.8 + 1.0) * idle]]
-	pose["LeftForeArm"] = [[S, elbow - ra * br * idle]]
-	pose["RightForeArm"] = [[S, elbow - ra * br * idle - 0.35 * k]]
+	# cotovelo dobra mais quando o braço vem para a frente e estica indo para trás (como no andar de verdade)
+	var fl_l = max(0.0, -sw) * arm_a * 0.9
+	var fl_r = max(0.0, sw) * arm_a * 0.9
+	pose["LeftForeArm"] = [[S, elbow - ra * br * idle - fl_l]]
+	pose["RightForeArm"] = [[S, elbow - ra * br * idle - 0.35 * k - fl_r]]
 	# mãos no bolso do casaco (parado e andando; correndo ou golpeando, os braços saem)
 	if fig.get_meta("bracos", "") == "bolso":
 		# mãos enfiadas nos bolsos da frente: braços descem rentes ao corpo e um pouco à frente,
 		# cotovelos levemente dobrados para dentro, ombros um pouco curvados (pose relaxada)
 		var pk = (1.0 - rw * ww) * (1.0 - k)
+		if fig.has_meta("folga"):
+			fig.get_meta("folga").set_active(pk < 0.3)   # mãos no bolso de propósito: a folga só vale com os braços para fora
 		var bp: Array = fig.get_meta("bolso_p", [0.2, -0.2, -0.6, 0.2, 0.06])   # desce, frente, cotovelo, para dentro, ombro
 		pose["LeftArm"] = [[F, -0.30 - bp[0] * pk + 0.02 * br * idle], [S, -bp[1] * pk + (arm_a * sw) * (1.0 - pk)]]
 		pose["RightArm"] = [[F, 0.30 + bp[0] * pk - 0.02 * br * idle], [S, -bp[1] * pk - (arm_a * sw) * (1.0 - pk) - 1.35 * k]]
@@ -3262,7 +3276,9 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 			if bn.has(hn):
 				sk.set_bone_pose_scale(bn[hn], Vector3.ONE * hs)
 	# tronco: respira, balança o peso, ginga, inclina correndo, entra no golpe, recua no dano
-	pose["Spine"] = [[F, J["peso"] * sh * idle + gi * 0.5 * sw], [U, 0.08 * sw * ww]]
+	# quadril rola para o lado da perna de apoio e o tronco compensa (transferência de peso)
+	pose["Hips"] = [[F, 0.045 * sw * ww]]
+	pose["Spine"] = [[F, J["peso"] * sh * idle + gi * 0.5 * sw - 0.03 * sw * ww], [U, 0.08 * sw * ww]]
 	pose["Spine1"] = [[S, ra * br * idle + lean + 0.12 * k - 0.22 * hurt], [U, 0.3 * k + 0.25 * J["olha"][0] * lk * idle - 0.1 * sw * ww - gi * sw]]
 	pose["Spine2"] = [[S, ra * 0.6 * br * idle], [F, -J["peso"] * 0.6 * sh * idle]]
 	pose["Head"] = [[U, J["olha"][0] * lk * idle - 0.15 * k], [S, -ra * 0.8 * br * idle - 0.08 * hurt - lean * 0.6], [F, -J["peso"] * 0.8 * sh * idle + gi * 0.4 * sw]]
