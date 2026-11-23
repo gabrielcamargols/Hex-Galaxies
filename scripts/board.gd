@@ -45,7 +45,7 @@ const ZOOM_MAX = 140.0
 # personagens que já têm modelo 3D com esqueleto (Tripo): entram no lugar da arte 2D
 const FOLGA_BRACOS = preload("res://scripts/folga_bracos.gd")
 const FIG3D = {
-	"k_cmd": {"path": "res://models/personagens/k_cmd.glb", "visor": true, "punho": true, "jeito": "militar"},
+	"k_cmd": {"path": "res://models/personagens/k_cmd.glb", "visor": true, "punho": true, "jeito": "comandante"},
 	"rhazur": {"path": "res://models/personagens/rhazur.glb", "visor": false, "punho": false, "jeito": "bruto", "manopla": "Left", "giro": 0.0, "cauda": [0.09, 0.32, -0.02]},
 	"rei_mina": {"path": "res://models/personagens/rei_mina.glb", "visor": false, "punho": false, "jeito": "rei", "brilho": "rachaduras", "cintila": true, "pegadas": "LeftFoot", "conjura": [0.07, 0.035, 0.032]},
 	"z_dragao": {"path": "res://models/personagens/z_dragao.glb", "corpo": "dragao", "escala": 1.35, "brilho": "gemas"},
@@ -73,6 +73,12 @@ const JEITOS = {
 	"militar": {"resp": [0.03, 1.8], "olha": [0.1, 0.3], "peso": 0.01, "cad": [6.8, 10.5], "passo": [0.4, 0.62],
 		"joelho": [0.45, 0.8], "bal": [0.55, 0.7], "quica": [0.03, 0.06], "ginga": 0.0, "incl": [0.0, 0.06],
 		"vel": [2.0, 3.6], "tique": "vigia", "marcha": true},
+	# Comandante Krieg: postura de comandante atento ao campo. Passo medido e firme, quadril conduz,
+	# tronco acompanha com atraso, cabeça estável, braços contidos. "natural": passada pela distância
+	# percorrida (pé apoiado não desliza), transfere o peso antes de sair e absorve o peso ao chegar.
+	"comandante": {"resp": [0.025, 1.6], "olha": [0.12, 0.28], "peso": 0.012, "cad": [6.8, 10.5], "passo": [0.45, 0.6],
+		"joelho": [0.55, 1.0], "bal": [0.16, 0.42], "quica": [0.012, 0.045], "ginga": 0.0, "incl": [0.03, 0.16],
+		"vel": [1.15, 2.3], "tique": "vigia", "natural": true},
 	# Karo: malandro, mãos no bolso, gingado nos ombros, passada solta e quicada, corre rápido e baixo
 	"malandro": {"resp": [0.05, 2.0], "olha": [0.28, 0.6], "peso": 0.07, "cad": [8.4, 13.5], "passo": [0.46, 0.85],
 		"joelho": [0.6, 1.25], "bal": [0.0, 0.75], "quica": [0.06, 0.13], "ginga": 0.14, "incl": [0.02, 0.34],
@@ -3222,6 +3228,46 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 	fig.set_meta("run_w", rw)
 	# fase da passada acumulada (trocar de andar para correr não dá tranco)
 	var ph: float = fig.get_meta("fase", 0.0) + delta * lerp(J["cad"][0], J["cad"][1], rw) * (1.0 if ww > 0.0 else 0.0)
+	var nat: bool = J.get("natural", false)
+	var w_prep = 0.0      # transferência de peso antes do 1º passo (0..1)
+	var w_cheg = 0.0      # último passo absorvendo o peso (0..1)
+	var lado_apoio = 1.0  # +1: apoio na perna direita (a esquerda sai primeiro)
+	if nat:
+		# a passada anda pela distância percorrida: o pé apoiado fica parado no chão
+		var gp: Vector3 = fig.global_position
+		var ant: Vector3 = fig.get_meta("pos_ant", gp)
+		fig.set_meta("pos_ant", gp)
+		var andou = Vector2(gp.x - ant.x, gp.z - ant.z).length()
+		var esc = sk.global_transform.basis.get_scale().y
+		var perna = float(fig.get_meta("perna", 0.0))
+		if perna <= 0.0 and bn.has("LeftUpLeg") and bn.has("LeftFoot"):
+			perna = sk.get_bone_global_rest(bn["LeftUpLeg"]).origin.distance_to(sk.get_bone_global_rest(bn["LeftFoot"]).origin)
+			fig.set_meta("perna", perna)
+		var amp = lerp(J["passo"][0], J["passo"][1], rw)
+		var k_ph = APOIO_F * PI / max(0.01, perna * esc * sin(amp) * PASSO_K)
+		ph = fig.get_meta("fase", 0.0)
+		if fig.has_meta("parte"):
+			# começo do percurso: escolhe a fase para o último passo terminar com os pés juntos
+			var pt: Dictionary = fig.get_meta("parte")
+			fig.remove_meta("parte")
+			ph = fposmod(-float(pt["dist"]) * k_ph, PI) - PI
+			fig.set_meta("prep_t0", float(pt["t0"]))
+		if walking and andou < 1.0:
+			ph += andou * k_ph
+		if fig.has_meta("prep_t0"):
+			var tp = (relogio - float(fig.get_meta("prep_t0"))) / (PREPARO_T + 0.25)
+			if tp >= 1.0:
+				fig.remove_meta("prep_t0")
+			else:
+				w_prep = sin(clamp(tp, 0.0, 1.0) * PI)
+		lado_apoio = 1.0 if cos(ph) > 0.0 else -1.0
+		if fig.has_meta("chega_t0"):
+			var tc = (relogio - float(fig.get_meta("chega_t0"))) / CHEGADA_T
+			if tc >= 1.0:
+				fig.remove_meta("chega_t0")
+			else:
+				# afunda rápido e volta devagar
+				w_cheg = sin(pow(clamp(tc, 0.0, 1.0), 0.6) * PI)
 	fig.set_meta("fase", fmod(ph, TAU * 100.0))
 	var br = sin(t * J["resp"][1])                          # respiração
 	var sh = sin(t * 0.55)                                  # troca o peso de uma perna para a outra, devagar
@@ -3316,6 +3362,43 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 		pose["Head"][0][1] *= idle
 		# pisada: corpo sobe quando o joelho sobe e desce de uma vez no pé
 		fig.position.y += (abs(sw) * 0.06 - 0.03) * ww
+	if nat:
+		# quadril conduz: gira e rola com a passada; o tronco acompanha com atraso e contido;
+		# a cabeça compensa tudo e fica estável, olhando o campo
+		var atr = sin(ph - 0.55)
+		var rol_q = 0.05 * sw * ww + 0.07 * lado_apoio * w_prep
+		var gir_q = 0.07 * sw * ww
+		pose["Hips"] = [[F, rol_q], [U, gir_q]]
+		pose["Spine"] = [[F, -0.6 * rol_q + J["peso"] * sh * idle], [U, -0.5 * gir_q]]
+		var incl_t = lean + 0.05 * w_prep - 0.03 * ww * (1.0 - min(1.0, ww * 2.0)) + 0.06 * w_cheg
+		pose["Spine1"] = [[S, ra * br * idle + incl_t + 0.12 * k - 0.22 * hurt], [U, 0.3 * k + 0.25 * J["olha"][0] * lk * idle - 0.05 * atr * ww], [F, -0.025 * atr * ww]]
+		pose["Spine2"] = [[S, ra * 0.6 * br * idle], [F, -J["peso"] * 0.6 * sh * idle - 0.015 * atr * ww]]
+		# cabeça estável: desfaz o que quadril e tronco giraram
+		pose["Head"] = [[U, J["olha"][0] * lk * idle - 0.15 * k - 0.4 * (gir_q - 0.5 * gir_q - 0.05 * atr * ww)], [S, -ra * 0.8 * br * idle - 0.08 * hurt - incl_t * 0.7], [F, -0.4 * (rol_q - 0.6 * rol_q - 0.04 * atr * ww)]]
+		# braços contidos, com leve atraso em relação às pernas
+		pose["LeftArm"][1][1] += arm_a * (sin(ph - 0.35) - sw)
+		pose["RightArm"][1][1] -= arm_a * (sin(ph - 0.35) - sw)
+		# pernas: o pé apoiado recua em linha reta na mesma velocidade do corpo (60% do ciclo) e a
+		# perna livre volta para a frente mais depressa, com o joelho subindo só no balanço
+		for lado in [["Left", ph + 1.6 * PI], ["Right", ph + 0.6 * PI]]:
+			var u = fposmod(lado[1], TAU)
+			var x = 0.0
+			var lev = 0.0
+			if u < APOIO_F * TAU:
+				x = 1.0 - 2.0 * u / (APOIO_F * TAU)
+			else:
+				var sb = (u - APOIO_F * TAU) / ((1.0 - APOIO_F) * TAU)
+				x = -1.0 + 2.0 * sb * sb * (3.0 - 2.0 * sb)
+				lev = sin(PI * sb)
+			pose[lado[0] + "UpLeg"] = [[S, -leg_a * x - knee_0 * 0.4 - 0.25 * knee_a * lev]]
+			pose[lado[0] + "Leg"] = [[S, knee_0 + knee_a * lev]]
+		# preparo: joelhos destravam; chegada: o último passo absorve o peso (joelhos dobram e voltam)
+		var dobra = 0.07 * w_prep + 0.2 * w_cheg
+		pose["LeftUpLeg"][0][1] -= dobra
+		pose["RightUpLeg"][0][1] -= dobra
+		pose["LeftLeg"][0][1] += dobra * 2.0
+		pose["RightLeg"][0][1] += dobra * 2.0
+		fig.position.y -= 0.03 * w_cheg + 0.008 * w_prep
 	# conjurar: mãos estendidas para a frente, flutua e os olhos acendem
 	if fig.has_meta("conjura"):
 		var ct: float = max(0.0, fig.get_meta("cj_t", 0.0) - delta)
@@ -3700,6 +3783,10 @@ func _unit_goal(u) -> Vector2i:
 	return u.pos()
 
 
+const PREPARO_T = 0.2      # antes do 1º passo a peça espera transferindo o peso
+const CHEGADA_T = 0.42     # o último passo absorve o peso e o corpo volta ao repouso
+const APOIO_F = 0.6       # fração do ciclo em que cada pé fica apoiado
+const PASSO_K = 1.15        # ajuste fino da passada (calibrado: pé apoiado quase parado no chão)
 var relogio: float = 0.0       # tempo de jogo (gestos andam junto com o jogo, mesmo se o quadro atrasar)
 
 
@@ -3796,6 +3883,19 @@ func _update_units(delta: float) -> void:
 				path = [goal]
 				d["meteoro_t"] = 0.0
 			d["path"] = path
+			d["seg_n"] = path.size()
+			d["seg_i"] = 0
+			var spn = d.get("sprite")
+			if spn != null and spn.has_meta("jeito") and spn.get_meta("jeito").get("natural", false) and not d.get("arrasto_pend", false) and d.get("arrasto_t", -1.0) < 0.0 and d.get("meteoro_t", -1.0) < 0.0:
+				# antes do 1º passo: transfere o peso para a perna de apoio (a peça espera um instante)
+				var dist_t = 0.0
+				var ant = Vector3(node.position.x, 0, node.position.z)
+				for ph2 in path:
+					var w3 = world_xz(ph2)
+					dist_t += ant.distance_to(Vector3(w3.x, 0, w3.y))
+					ant = Vector3(w3.x, 0, w3.y)
+				d["prep"] = PREPARO_T
+				spn.set_meta("parte", {"t0": relogio, "dist": dist_t})
 			d["from"] = Vector3(node.position.x, node.position.y, node.position.z)
 			d["seg_t"] = 0.0
 			d["long"] = path.size() == 1 and DB.dist(d["hex"], goal) > 1
@@ -3820,9 +3920,23 @@ func _update_units(delta: float) -> void:
 			# 3D: passo contínuo (sem pulinho), andando ou correndo; 2D: salta de casa em casa
 			var vl: Array = d["sprite"].get_meta("vel", [2.1, 4.0]) if is3d else [2.1, 4.0]
 			var spd = 1.6 if lng else ((vl[1] if d.get("run", false) else vl[0]) if is3d else 5.0)
-			d["seg_t"] += delta * spd
+			var nat = is3d and not lng and d["sprite"].get_meta("jeito").get("natural", false)
+			if nat and float(d.get("prep", 0.0)) > 0.0:
+				d["prep"] = float(d["prep"]) - delta      # ainda transferindo o peso: não sai do lugar
+			else:
+				d["seg_t"] += delta * spd
 			var t = min(1.0, d["seg_t"])
 			var e2 = t if (is3d and not lng) else (2.0 * t * t if t < 0.5 else 1.0 - pow(-2.0 * t + 2.0, 2.0) / 2.0)
+			if nat:
+				# acelera no 1º trecho e freia no último (velocidade contínua entre as casas)
+				var primeiro = int(d.get("seg_i", 0)) == 0
+				var ultimo = d["path"].size() == 1
+				if primeiro and ultimo:
+					e2 = t * t * (3.0 - 2.0 * t)
+				elif primeiro:
+					e2 = t * t * (2.0 - t)
+				elif ultimo:
+					e2 = t + t * t - t * t * t
 			var p = d["from"].lerp(w, e2)
 			var arc = 1.2 if lng else 0.3
 			if is3d and not lng:
@@ -3838,6 +3952,9 @@ func _update_units(delta: float) -> void:
 				d["from"] = w
 				d["path"].pop_front()
 				d["seg_t"] = 0.0
+				d["seg_i"] = int(d.get("seg_i", 0)) + 1
+				if d["path"].is_empty() and is3d and d["sprite"].has_meta("jeito") and d["sprite"].get_meta("jeito").get("natural", false):
+					d["sprite"].set_meta("chega_t0", relogio)     # último passo: absorve o peso
 		else:
 			var hw = world_xz(d["hex"])
 			node.position = Vector3(hw.x, top_y(d["hex"]), hw.y)
