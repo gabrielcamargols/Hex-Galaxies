@@ -1577,7 +1577,7 @@ func _prop(parent: Node3D, desert: bool, h: Vector2i, pos: Vector3, size: float,
 
 
 # modelos novos (com textura própria) que substituem os antigos de ossada e cacto
-const MODEL_SWAP = {"cen_tarhut_ossada": "tarhut_fossil", "ossada": "tarhut_fossil", "cen_tarhut_cacto": "tarhut_flor", "cen_tarhut_cacto_bola": "tarhut_flor"}
+const MODEL_SWAP = {"tarhut_destroco": "cen_tarhut_rocha", "tarhut_cristal": "cen_tarhut_cristal", "cen_tarhut_ossada": "tarhut_fossil", "ossada": "tarhut_fossil", "cen_tarhut_cacto": "tarhut_flor", "cen_tarhut_cacto_bola": "tarhut_flor"}
 const TEXTURED = ["tarhut_fossil", "tarhut_flor"]
 
 
@@ -1590,7 +1590,10 @@ func _swap_name(mname: String) -> String:
 		return MODEL_SWAP[mname]
 	var cut = mname.rfind("_")
 	if cut > 0 and mname.substr(cut + 1).is_valid_int() and MODEL_SWAP.has(mname.substr(0, cut)):
-		return MODEL_SWAP[mname.substr(0, cut)]
+		var alvo: String = MODEL_SWAP[mname.substr(0, cut)]
+		if alvo.begins_with("cen_"):
+			return "%s_%d" % [alvo, int(mname.substr(cut + 1)) % 3]   # mantém a variação (0..2)
+		return alvo
 	return mname
 
 
@@ -1598,21 +1601,20 @@ func _scene_of(mname: String) -> Variant:
 	mname = _swap_name(mname)
 	if not model_cache.has(mname):
 		var path = "res://models/%s.glb" % mname
-		if not ResourceLoader.exists(path):
-			path = "res://scenes/entornos/arvores/%s.tscn" % mname   # árvores geradas (tools/gerar_arvores.gd)
 		model_cache[mname] = load(path) if ResourceLoader.exists(path) else null
 	return model_cache[mname]
 
 
 # coloca o modelo com a base no chão, cabendo num círculo de "footprint" de diâmetro
 func _model(parent: Node3D, mname: String, pos: Vector3, footprint: float, yaw: float, toon: bool = false) -> bool:
+	if _swap_name(mname).begins_with("arvore_"):
+		# pinheiro de Valak em Abnara/Gor'Aida: vira a árvore arredondada com contorno do planeta
+		return _kenney(parent, ("tree_pine_" if g.map_id == "goraida" else "tree_") + mname, pos, footprint * 1.4, yaw, "snow" if g.map_id == "goraida" else "jungle")
 	var sc = _scene_of(mname)
 	if sc == null:
 		return false
 	var inst: Node3D = sc.instantiate()
 	var meshes = inst.find_children("*", "MeshInstance3D", true, false)
-	if toon and _swap_name(mname).begins_with("arvore_"):
-		toon = false     # as árvores geradas já vêm com as cores chapadas do jogo
 	if toon and TEXTURED.has(_swap_name(mname)):
 		toon = false
 		for mi in meshes:
@@ -5032,10 +5034,23 @@ func _crystal_cluster(parent: Node3D, kind: String, seed_v: int, enfeite: bool =
 
 
 func _rockwall(pos: Vector3, h: float, w: float, col: Color, rng: RandomNumberGenerator) -> void:
+	# pilar de rocha arredondado (tronco de cone liso + topo em cúpula), pintado e com contorno de tinta
+	var topo = w * rng.randf_range(0.45, 0.8)
+	var tmp = Node3D.new()
+	var m = _gouache(col)
+	var corpo = MeshInstance3D.new()
+	corpo.mesh = _cyl(topo, w, h, 12)
+	corpo.material_override = m
+	tmp.add_child(corpo)
+	var cup = MeshInstance3D.new()
+	cup.mesh = _hq_bola(topo, 0.55)
+	cup.material_override = m
+	cup.position = Vector3(0, h * 0.5, 0)
+	tmp.add_child(cup)
 	var r = MeshInstance3D.new()
-	r.mesh = _cyl(w * rng.randf_range(0.45, 0.8), w, h, rng.randi_range(5, 7))
-	r.material_override = _mat(col)
-	r.material_overlay = _ink()
+	r.mesh = _hq_juntar(tmp)
+	tmp.free()
+	r.material_overlay = _outline_thick(0.06)
 	r.position = pos + Vector3(0, h * 0.5, 0)
 	r.rotation = Vector3(rng.randf_range(-0.12, 0.12), rng.randf_range(0, TAU), rng.randf_range(-0.12, 0.12))
 	scenery_root.add_child(r)
@@ -5102,7 +5117,7 @@ func _build_cave() -> void:
 	_build_pit()
 
 
-const CAVE_ADDONS := true    # false volta às rochas antigas (cilindros soltos)
+const CAVE_ADDONS := false   # os blocos facetados do Cyclops destoavam do padrão (arredondado + contorno): ficam as rochas com contorno
 
 
 func _cave_rochas_antigas(far: float, rng: RandomNumberGenerator, wall_cols: Array) -> void:
@@ -5673,6 +5688,133 @@ func _pincel_custom(key: String, dark: Color, mid: Color, light: Color, edge: fl
 	return pincel_mats[key]
 
 
+# ================= cenário no padrão (formas arredondadas, contorno de tinta, cores do planeta) =================
+const HQ_PAL = {
+	"abnara": {"folha": ["#5fbf4a", "#3f9a3e", "#2a7a3a"], "tronco": "#6a4230", "flor": ["#f438a9", "#ffd12e", "#a957ec"]},
+	"goraida": {"folha": ["#4a9a86", "#3c806a", "#2f6a5a"], "tronco": "#5a3d22", "neve": "#f4faff"},
+}
+
+
+func _hq_pal() -> Dictionary:
+	return HQ_PAL.get(g.map_id if g != null else "abnara", HQ_PAL["abnara"])
+
+
+# peça do cenário: pintura de guache da cor pedida + contorno de tinta (o mesmo dos modelos cen_)
+func _hq(root: Node3D, mesh: Mesh, col: Color, pos: Vector3, rot: Vector3 = Vector3.ZERO, contorno: float = 0.035) -> MeshInstance3D:
+	var mi = MeshInstance3D.new()
+	mi.mesh = mesh
+	mi.material_override = _gouache(col)
+	mi.material_overlay = _outline_thick(contorno)
+	mi.position = pos
+	mi.rotation = rot
+	root.add_child(mi)
+	return mi
+
+
+func _hq_bola(r: float, achatada: float = 1.0) -> SphereMesh:
+	var sm = SphereMesh.new()
+	sm.radius = r
+	sm.height = r * 2.0 * achatada
+	sm.radial_segments = 14
+	sm.rings = 8
+	return sm
+
+
+# peça pronta: monta a variante uma vez, junta tudo numa malha só (uma superfície por cor) e reaproveita
+# (cada árvore vira 1 objeto em vez de 6: bem menos trabalho para desenhar)
+var hq_cache: Dictionary = {}
+
+
+func _hq_pronto(root: Node3D, tipo: String, var_i: int, s: float) -> void:
+	var key = "%s_%s_%d" % [g.map_id if g != null else "", tipo, var_i]
+	if not hq_cache.has(key):
+		var tmp = Node3D.new()
+		var hh = Vector2i(var_i * 7 + 3, var_i * 13 + 5)
+		if tipo == "palmeira":
+			_hq_palmeira(tmp, 1.0, hh)
+		else:
+			_hq_arvore(tmp, 1.0, hh, tipo)
+		hq_cache[key] = _hq_juntar(tmp)
+		tmp.free()
+	var mi = MeshInstance3D.new()
+	mi.mesh = hq_cache[key]
+	mi.material_overlay = _outline_thick(0.035)
+	mi.scale = Vector3.ONE * s
+	root.add_child(mi)
+
+
+func _hq_juntar(tmp: Node3D) -> ArrayMesh:
+	var por_mat: Dictionary = {}
+	for mi in tmp.get_children():
+		if not (mi is MeshInstance3D):
+			continue
+		var mat: Material = mi.material_override
+		if not por_mat.has(mat):
+			var st = SurfaceTool.new()
+			st.begin(Mesh.PRIMITIVE_TRIANGLES)
+			por_mat[mat] = st
+		var xf = Transform3D(Basis.from_euler(mi.rotation).scaled(mi.scale), mi.position)
+		por_mat[mat].append_from(mi.mesh, 0, xf)
+	var am = ArrayMesh.new()
+	for mat in por_mat:
+		por_mat[mat].commit(am)
+		am.surface_set_material(am.get_surface_count() - 1, mat)
+	return am
+
+
+# árvore de copa redonda: tronco levemente torto + 3 a 5 bolas de folhagem em tons do planeta
+func _hq_arvore(root: Node3D, s: float, h: Vector2i, tipo: String) -> void:
+	var pal = _hq_pal()
+	var f: Array = pal["folha"]
+	var tronco = Color(pal["tronco"])
+	match tipo:
+		"alta":
+			# copa alongada: bolas empilhadas que afinam para cima
+			_hq(root, _cyl(0.07 * s, 0.12 * s, 0.9 * s, 8), tronco, Vector3(0, 0.45 * s, 0))
+			for k in range(3):
+				var r = (0.42 - k * 0.09) * s
+				_hq(root, _hq_bola(r, 1.1), Color(f[k % 2]), Vector3((_rnd(h, 60 + k) - 0.5) * 0.08 * s, (0.95 + k * 0.42) * s, 0))
+		"guarda_chuva":
+			# copa larga e baixa, como guarda-chuva (acácia)
+			_hq(root, _cyl(0.06 * s, 0.11 * s, 1.1 * s, 8), tronco, Vector3(0, 0.55 * s, 0), Vector3(0.12, 0, 0.08))
+			_hq(root, _hq_bola(0.62 * s, 0.42), Color(f[1]), Vector3(0.06 * s, 1.18 * s, 0.04 * s))
+			_hq(root, _hq_bola(0.4 * s, 0.5), Color(f[0]), Vector3(-0.18 * s, 1.32 * s, -0.1 * s))
+		_:
+			# copa redonda e cheia
+			_hq(root, _cyl(0.07 * s, 0.13 * s, 0.8 * s, 8), tronco, Vector3(0, 0.4 * s, 0))
+			var n = 3 + int(_rnd(h, 61) * 3)
+			_hq(root, _hq_bola(0.5 * s), Color(f[1]), Vector3(0, 1.05 * s, 0))
+			for k in range(n - 1):
+				var a = TAU * k / (n - 1) + _rnd(h, 62) * 2.0
+				_hq(root, _hq_bola((0.3 + _rnd(h, 63 + k) * 0.08) * s), Color(f[k % 2]), Vector3(cos(a) * 0.36 * s, (1.0 + _rnd(h, 70 + k) * 0.35) * s, sin(a) * 0.36 * s))
+	# Abnara: às vezes umas flores redondas na copa
+	if pal.has("flor") and _rnd(h, 80) < 0.35:
+		for k in range(3):
+			var a2 = _rnd(h, 81 + k) * TAU
+			_hq(root, _hq_bola(0.07 * s), Color(pal["flor"][0]), Vector3(cos(a2) * 0.42 * s, (1.15 + k * 0.08) * s, sin(a2) * 0.42 * s), Vector3.ZERO, 0.02)
+
+
+# palmeira: tronco curvo em gomos arredondados e folhas compridas caídas
+func _hq_palmeira(root: Node3D, s: float, h: Vector2i) -> void:
+	var pal = _hq_pal()
+	var tronco = Color(pal["tronco"]).lightened(0.12)
+	var curva = (_rnd(h, 90) - 0.5) * 0.5
+	var topo = Vector3.ZERO
+	for k in range(5):
+		var t = k / 4.0
+		var p = Vector3(curva * t * t * s, (0.15 + k * 0.34) * s, 0)
+		_hq(root, _hq_bola((0.13 - k * 0.012) * s, 1.5), tronco, p)
+		topo = p
+	var f: Array = pal["folha"]
+	for k in range(6):
+		var a = TAU * k / 6.0 + _rnd(h, 91) * 0.6
+		var dirv = Vector3(cos(a), 0, sin(a))
+		var folha = _hq(root, _hq_bola(0.55 * s, 0.16), Color(f[k % 2]), topo + dirv * 0.42 * s + Vector3(0, 0.05 * s, 0))
+		folha.scale = Vector3(1.0, 1.0, 0.26)
+		folha.rotation = Vector3(0, -a, -0.6)     # folha alongada para fora e caindo
+	_hq(root, _hq_bola(0.11 * s), Color("#8a5a2e"), topo + Vector3(0.08 * s, -0.08 * s, 0.05 * s))   # cocos
+
+
 func _jungle_tree(root: Node3D, pos: Vector3, s: float, h: Vector2i, i: int) -> void:
 	# tronco e galhos escuros e finos, como no guache; copa em três manchas sobrepostas
 	_mesh(root, _cyl(0.05 * s, 0.1 * s, 0.7 * s, 6), Color("#2a1a1c"), pos + Vector3(0, 0.35 * s, 0))
@@ -5710,47 +5852,162 @@ func _kmat(pal: String, mname: String, orig: Color) -> Material:
 	return _kmats[key]
 
 
-# coloca o modelo com a base no chão e a altura "alt" (ou a largura, se "por_largura")
+# coloca uma peça do cenário com a base no chão e a altura "alt" (ou a largura, se "por_largura").
+# Os nomes antigos do pacote Kenney agora viram peças no padrão do jogo (formas arredondadas,
+# contorno de tinta, cores do planeta), montadas por código e reaproveitadas (_hq_pronto).
 func _kenney(parent: Node3D, mname: String, pos: Vector3, alt: float, yaw: float, pal: String, por_largura: bool = false) -> bool:
-	var sc = _scene_of("kenney/" + mname)
-	if sc == null:
+	var tipo = _hq_tipo(mname)
+	if tipo == "":
 		return false
-	var inst: Node3D = sc.instantiate()
-	var meshes = inst.find_children("*", "MeshInstance3D", true, false)
-	var box = AABB()
-	var first = true
-	for mi in meshes:
-		var m: Mesh = mi.mesh
-		for si in range(m.get_surface_count()):
-			var sm = m.surface_get_material(si)
-			var nm2 = sm.resource_name if sm != null else "_defaultMat"
-			var oc = sm.albedo_color if sm is BaseMaterial3D else Color.WHITE
-			mi.set_surface_override_material(si, _kmat(pal, nm2, oc))
-		mi.material_overlay = null
-		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
-		var ab = _rel_xf(inst, mi) * mi.get_aabb()
-		box = ab if first else box.merge(ab)
-		first = false
+	var var_i = abs(mname.hash()) % 4
+	var mesh: ArrayMesh = _hq_malha(tipo, var_i, pal)
+	var box = mesh.get_aabb()
 	var ref = max(box.size.x, box.size.z) if por_largura else box.size.y
 	var k = alt / ref if ref > 0.0001 else 1.0
 	var holder = Node3D.new()
 	holder.position = pos
 	holder.rotation = Vector3(0, yaw, 0)
 	parent.add_child(holder)
-	holder.add_child(inst)
-	inst.scale = Vector3.ONE * k
-	inst.position = Vector3(-(box.position.x + box.size.x / 2.0) * k, -box.position.y * k, -(box.position.z + box.size.z / 2.0) * k)
+	var mi = MeshInstance3D.new()
+	mi.mesh = mesh
+	mi.material_overlay = _outline_thick(0.035 / max(k, 0.2))   # contorno com espessura parecida em qualquer tamanho
+	mi.scale = Vector3.ONE * k
+	mi.position = Vector3(-(box.position.x + box.size.x / 2.0) * k, -box.position.y * k, -(box.position.z + box.size.z / 2.0) * k)
+	holder.add_child(mi)
 	return true
 
 
-func _rel_xf(root: Node, n: Node) -> Transform3D:
-	var t = Transform3D.IDENTITY
-	var c = n
-	while c != null and c != root:
-		if c is Node3D:
-			t = (c as Node3D).transform * t
-		c = c.get_parent()
-	return t
+func _hq_tipo(mname: String) -> String:
+	if mname.begins_with("tree_palm"):
+		return "palmeira"
+	if mname.begins_with("tree_pine"):
+		return "pinheiro"
+	if mname.begins_with("tree_"):
+		return ["copa", "alta", "guarda_chuva"][abs(mname.hash()) % 3]
+	if mname.begins_with("plant_bush"):
+		return "moita"
+	if mname.begins_with("grass"):
+		return "tufo"
+	if mname.begins_with("flower_"):
+		return "flor_" + ("roxa" if "purple" in mname else ("vermelha" if "red" in mname else "amarela"))
+	if mname.begins_with("mushroom"):
+		return "cogumelo"
+	if mname.begins_with("statue_"):
+		return "coluna_quebrada" if "Damaged" in mname or "head" in mname else "coluna"
+	if mname.begins_with("rock_") or mname.begins_with("stone_"):
+		return "pedra"
+	if mname.begins_with("stump"):
+		return "toco"
+	if mname.begins_with("log_stack"):
+		return "toras"
+	if mname.begins_with("log"):
+		return "tronco"
+	if mname.begins_with("tent"):
+		return "barraca"
+	if mname.begins_with("campfire"):
+		return "fogueira"
+	return ""
+
+
+func _hq_malha(tipo: String, var_i: int, pal: String) -> ArrayMesh:
+	var key = "%s|%s|%d" % [pal, tipo, var_i]
+	if not hq_cache.has(key):
+		var tmp = Node3D.new()
+		var hh = Vector2i(var_i * 7 + 3, var_i * 13 + 5)
+		_hq_monta(tmp, tipo, hh, pal)
+		hq_cache[key] = _hq_juntar(tmp)
+		tmp.free()
+	return hq_cache[key]
+
+
+# monta a peça em tamanho 1 (cada parte é uma forma simples arredondada, pintada na cor do planeta)
+func _hq_monta(r: Node3D, tipo: String, h: Vector2i, pal: String) -> void:
+	var neve = pal == "snow"
+	var pp = HQ_PAL["goraida" if neve else "abnara"]
+	var f: Array = pp["folha"]
+	var madeira = Color(pp["tronco"])
+	var pedra = Color("#d8ecfa") if neve else Color("#a8a0c8")
+	var branco = Color(HQ_PAL["goraida"]["neve"])
+	match tipo:
+		"palmeira":
+			_hq_palmeira(r, 1.0, h)
+		"copa", "alta", "guarda_chuva":
+			_hq_arvore(r, 1.0, h, tipo)
+		"pinheiro":
+			# camadas de copa em cone arredondado (como o pinheiro de Valak), neve no topo de cada camada
+			_hq(r, _cyl(0.06, 0.1, 0.5, 8), madeira, Vector3(0, 0.25, 0))
+			for k in range(3):
+				var y = 0.45 + k * 0.42
+				var rr = 0.62 - k * 0.15
+				_hq(r, _cyl(0.06, rr, 0.6, 10), Color(f[k % 2]), Vector3(0, y + 0.3, 0))
+				if neve:
+					_hq(r, _hq_bola(rr * 0.55, 0.45), branco, Vector3(0, y + 0.52, 0))
+			_hq(r, _hq_bola(0.12), branco if neve else Color(f[0]), Vector3(0, 1.85, 0))
+		"moita":
+			for k in range(3):
+				var a = TAU * k / 3.0 + _rnd(h, 3) * 2.0
+				_hq(r, _hq_bola(0.32 - k * 0.04, 0.8), Color(f[1]), Vector3(cos(a) * 0.22, 0.24, sin(a) * 0.22))
+			_hq(r, _hq_bola(0.3, 0.85), Color(f[0]), Vector3(0, 0.38, 0))
+		"tufo":
+			# tufo de folhas arredondadas, uma cor só (1 superfície = menos chamadas de desenho)
+			for k in range(4):
+				var a2 = TAU * k / 4.0 + 0.3
+				_hq(r, _hq_bola(0.16, 1.6), Color(f[0]), Vector3(cos(a2) * 0.1, 0.24, sin(a2) * 0.1), Vector3(sin(a2) * 0.4, 0, -cos(a2) * 0.4)).scale = Vector3(0.55, 1.0, 0.55)
+			_hq(r, _hq_bola(0.14, 1.9), Color(f[0]), Vector3(0, 0.3, 0)).scale = Vector3(0.55, 1.0, 0.55)
+		"flor_roxa", "flor_vermelha", "flor_amarela":
+			var cor = {"flor_roxa": "#a957ec", "flor_vermelha": "#f438a9", "flor_amarela": "#ffd12e"}[tipo]
+			_hq(r, _cyl(0.025, 0.03, 0.5, 6), Color(f[1]), Vector3(0, 0.25, 0))
+			_hq(r, _hq_bola(0.12, 0.5), Color(f[0]), Vector3(0.08, 0.18, 0), Vector3(0, 0, 0.6))
+			for k in range(5):
+				var a3 = TAU * k / 5.0
+				_hq(r, _hq_bola(0.09), Color(cor), Vector3(cos(a3) * 0.1, 0.55, sin(a3) * 0.1))
+			_hq(r, _hq_bola(0.07), Color("#fff4c0"), Vector3(0, 0.57, 0))
+		"cogumelo":
+			_hq(r, _cyl(0.08, 0.1, 0.35, 8), Color("#fff0e0"), Vector3(0, 0.17, 0))
+			_hq(r, _hq_bola(0.26, 0.6), Color("#f438a9"), Vector3(0, 0.38, 0))
+			for k in range(4):
+				var a4 = TAU * k / 4.0 + 0.4
+				_hq(r, _hq_bola(0.045), Color("#ffffff"), Vector3(cos(a4) * 0.14, 0.47, sin(a4) * 0.14))
+		"coluna", "coluna_quebrada":
+			var alt = 1.0 if tipo == "coluna" else 0.6
+			_hq(r, _cyl(0.32, 0.36, 0.14, 12), pedra.darkened(0.1), Vector3(0, 0.07, 0))
+			_hq(r, _cyl(0.22, 0.24, alt, 12), pedra, Vector3(0, 0.14 + alt * 0.5, 0))
+			if tipo == "coluna":
+				_hq(r, _cyl(0.32, 0.28, 0.14, 12), pedra.darkened(0.1), Vector3(0, 0.21 + alt, 0))
+			else:
+				_hq(r, _hq_bola(0.16, 0.7), pedra.darkened(0.05), Vector3(0.28, 0.1, 0.1))   # pedaço caído
+			_hq(r, _hq_bola(0.14, 0.5), Color(f[1]), Vector3(-0.15, 0.2, 0.15))              # musgo
+		"pedra":
+			_hq(r, _hq_bola(0.5, 0.62), pedra, Vector3(0, 0.3, 0))
+			_hq(r, _hq_bola(0.3, 0.6), pedra.darkened(0.08), Vector3(0.38, 0.18, 0.12))
+			_hq(r, _hq_bola(0.38, 0.32), branco if neve else Color(f[1]), Vector3(-0.05, 0.55, 0))   # neve ou musgo por cima
+		"toco":
+			_hq(r, _cyl(0.24, 0.3, 0.42, 12), madeira, Vector3(0, 0.21, 0))
+			_hq(r, _cyl(0.22, 0.22, 0.03, 12), Color("#e8c890"), Vector3(0, 0.43, 0))
+			if neve:
+				_hq(r, _hq_bola(0.2, 0.4), branco, Vector3(0, 0.46, 0))
+		"tronco":
+			var t = _hq(r, CapsuleMesh.new(), madeira, Vector3(0, 0.22, 0), Vector3(0, 0, PI / 2))
+			t.mesh.radius = 0.2
+			t.mesh.height = 1.2
+		"toras":
+			for k in range(3):
+				var tt = _hq(r, CapsuleMesh.new(), madeira if k != 1 else madeira.lightened(0.1), Vector3(0, 0.18 + (0.3 if k == 2 else 0.0), -0.2 + k * 0.2 if k < 2 else 0.0), Vector3(0, 0, PI / 2))
+				tt.mesh.radius = 0.16
+				tt.mesh.height = 1.0
+			if neve:
+				_hq(r, _hq_bola(0.3, 0.3), branco, Vector3(0, 0.66, 0))
+		"barraca":
+			_hq(r, _hq_bola(0.6, 0.9), Color("#d87a3a"), Vector3(0, 0.15, 0))
+			_hq(r, _hq_bola(0.18, 1.4), Color("#4a2a1c"), Vector3(0, 0.15, 0.5))
+			if neve:
+				_hq(r, _hq_bola(0.42, 0.35), branco, Vector3(0, 0.62, 0))
+		"fogueira":
+			for k in range(6):
+				var a5 = TAU * k / 6.0
+				_hq(r, _hq_bola(0.12, 0.8), pedra.darkened(0.15), Vector3(cos(a5) * 0.3, 0.07, sin(a5) * 0.3))
+			_hq(r, _cyl(0.0, 0.16, 0.42, 8), Color("#ff9a2e"), Vector3(0, 0.22, 0))
+			_hq(r, _cyl(0.0, 0.08, 0.28, 8), Color("#ffe27a"), Vector3(0, 0.18, 0.02))
 
 
 const K_SELVA = ["tree_detailed", "tree_fat", "tree_blocks", "tree_default", "tree_oak", "tree_tall"]
@@ -5761,6 +6018,49 @@ const K_RUINA = ["statue_columnDamaged", "statue_column", "statue_head", "statue
 const K_PINHO = ["tree_pineTallA_detailed", "tree_pineTallB_detailed", "tree_pineRoundC", "tree_pineSmallB", "tree_pineGroundA", "tree_pineDefaultA"]
 const K_PEDRA_NEVE = ["stone_tallC", "stone_tallF", "stone_largeB", "stone_largeD"]
 
+
+# bloco de pedra com cantos arredondados (superelipsoide), no lugar das caixas retas
+var rbox_cache: Dictionary = {}
+func _rbox(sz: Vector3) -> ArrayMesh:
+	var key = "%.2f_%.2f_%.2f" % [sz.x, sz.y, sz.z]
+	if rbox_cache.has(key):
+		return rbox_cache[key]
+	var sm = SphereMesh.new()
+	sm.radial_segments = 12
+	sm.rings = 6
+	var arr = sm.get_mesh_arrays()
+	var vs: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+	for i in vs.size():
+		var v = vs[i] * 2.0
+		vs[i] = Vector3(signf(v.x) * pow(absf(v.x), 0.45), signf(v.y) * pow(absf(v.y), 0.45), signf(v.z) * pow(absf(v.z), 0.45)) * sz * 0.5
+	arr[Mesh.ARRAY_VERTEX] = vs
+	var st = SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var tmp = ArrayMesh.new()
+	tmp.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
+	st.create_from(tmp, 0)
+	st.set_smooth_group(0)
+	st.generate_normals()
+	var am = st.commit()
+	rbox_cache[key] = am
+	return am
+
+
+# junta os MeshInstance filhos diretos de "node" numa malha só e põe o contorno de tinta por cima
+func _tinta(node: Node3D, grossura: float = 0.03) -> void:
+	var tmp = Node3D.new()
+	for c in node.get_children():
+		if c is MeshInstance3D and c.get_child_count() == 0:
+			node.remove_child(c)
+			tmp.add_child(c)
+	if tmp.get_child_count() == 0:
+		tmp.free()
+		return
+	var mi = MeshInstance3D.new()
+	mi.mesh = _hq_juntar(tmp)
+	mi.material_overlay = _outline_thick(grossura)
+	node.add_child(mi)
+	tmp.free()
 
 func _kpick(list: Array, h: Vector2i, salt: int) -> String:
 	return list[int(_rnd(h, salt) * list.size()) % list.size()]
@@ -5774,16 +6074,28 @@ func _wild_props(root: Node3D, h: Vector2i, k: String) -> bool:
 			var rr0 = 0.6 * HX
 			var a0 = _rnd(h, 2) * TAU
 			var cores_c = [Color("#7ed957"), Color("#5cc04a"), Color("#a8ec6e")]
+			var capim = Node3D.new()
+			root.add_child(capim)
 			for i in range(7):
 				var aa = a0 + TAU / 7.0 * i + (_rnd(h, i + 40) - 0.5) * 0.4
 				var tufo = Vector3(cos(aa) * rr0, 0, sin(aa) * rr0)
-				for j in range(4):
+				for j in range(3):
 					var alt = 0.75 + _rnd(h, i * 7 + j) * 0.55
 					var inc = (_rnd(h, i * 5 + j + 100) - 0.5) * 0.5
 					var ang_l = _rnd(h, i * 3 + j + 200) * TAU
-					var off_l = Vector3(cos(ang_l), 0, sin(ang_l)) * 0.09
-					var lam = _mesh(root, _cyl(0.0, 0.075, alt, 4), cores_c[(i + j) % 3], tufo + off_l + Vector3(0, alt * 0.5, 0), Vector3(inc, ang_l, -inc))
-					lam.material_override = _mat(cores_c[(i + j) % 3])
+					var off_l = Vector3(cos(ang_l), 0, sin(ang_l)) * 0.08
+					var fo = SphereMesh.new()     # folha de capim arredondada (gota alongada)
+					fo.radius = 0.085
+					fo.height = alt
+					fo.radial_segments = 8
+					fo.rings = 5
+					var lam = MeshInstance3D.new()
+					lam.mesh = fo
+					lam.material_override = _gouache(cores_c[(i + j) % 3])
+					lam.position = tufo + off_l + Vector3(0, alt * 0.5, 0)
+					lam.rotation = Vector3(inc, ang_l, -inc)
+					capim.add_child(lam)
+			_tinta(capim, 0.025)
 			_kenney(root, _kpick(K_MOITA, h, 70), Vector3((_rnd(h, 20) - 0.5) * 0.6, 0, (_rnd(h, 21) - 0.5) * 0.6), 0.18, _rnd(h, 23) * TAU, "jungle")
 		"raiz":
 			var holder = Node3D.new()
@@ -5799,6 +6111,7 @@ func _wild_props(root: Node3D, h: Vector2i, k: String) -> bool:
 			var rb = _mesh(holder, _sph(0.3, 0.42), Color.WHITE, Vector3(0, 0.95, 0))
 			rb.material_override = _pincel_custom("raiz", Color("#3a2430"), Color("#6a4a3e"), Color("#a07850"), 0.3, 7.0)
 			_mesh(holder, _sph(0.16, 0.12), Color("#4ea844"), Vector3(0.05, 1.18, 0.02))
+			_tinta(holder)
 		"correnteza":
 			var fd: Variant = _flow_of(h)
 			_water(root, h, 0.03)
@@ -5816,28 +6129,28 @@ func _wild_props(root: Node3D, h: Vector2i, k: String) -> bool:
 			var sh_m = _moss_mat()
 			var parts = []
 			# laje afundada e torta
-			parts.append([_box(Vector3(1.45, 0.12, 1.2)), Vector3(0, 0.04, 0), Vector3(0.03, 0.1, -0.03), st_m])
-			parts.append([_box(Vector3(1.0, 0.1, 0.8)), Vector3(0.1, 0.13, 0.0), Vector3(-0.04, -0.15, 0.05), st_m])
+			parts.append([_rbox(Vector3(1.45, 0.12, 1.2)), Vector3(0, 0.04, 0), Vector3(0.03, 0.1, -0.03), st_m])
+			parts.append([_rbox(Vector3(1.0, 0.1, 0.8)), Vector3(0.1, 0.13, 0.0), Vector3(-0.04, -0.15, 0.05), st_m])
 			# colunas quebradas em alturas diferentes (uma tombada, uma só tocos)
 			parts.append([_cyl(0.15, 0.17, 0.95, 8), Vector3(-0.42, 0.62, -0.15), Vector3(0.06, 0, 0.08), st_m])
-			parts.append([_box(Vector3(0.36, 0.1, 0.36)), Vector3(-0.42, 1.14, -0.15), Vector3(0.1, 0.3, 0.2), st_m])
+			parts.append([_rbox(Vector3(0.36, 0.1, 0.36)), Vector3(-0.42, 1.14, -0.15), Vector3(0.1, 0.3, 0.2), st_m])
 			parts.append([_cyl(0.15, 0.17, 0.42, 8), Vector3(0.42, 0.3, -0.15), Vector3(0, 0, -0.05), st_m])
 			parts.append([_cyl(0.13, 0.15, 0.7, 8), Vector3(0.3, 0.2, 0.42), Vector3(0.0, 0.5, PI / 2.0 - 0.1), st_m])
 			parts.append([_cyl(0.1, 0.13, 0.28, 7), Vector3(-0.15, 0.22, 0.4), Vector3(0.1, 0.0, 0.5), st_m])
 			# verga partida: metade caída no chão, metade ainda apoiada
-			parts.append([_box(Vector3(0.55, 0.18, 0.32)), Vector3(-0.32, 1.28, -0.15), Vector3(0, 0.0, 0.35), st_m])
-			parts.append([_box(Vector3(0.5, 0.18, 0.32)), Vector3(0.2, 0.18, -0.55), Vector3(0.12, 0.6, 0.15), st_m])
+			parts.append([_rbox(Vector3(0.55, 0.18, 0.32)), Vector3(-0.32, 1.28, -0.15), Vector3(0, 0.0, 0.35), st_m])
+			parts.append([_rbox(Vector3(0.5, 0.18, 0.32)), Vector3(0.2, 0.18, -0.55), Vector3(0.12, 0.6, 0.15), st_m])
 			# fragmentos de muro e entulho espalhado
 			for i in range(3):
-				parts.append([_box(Vector3(0.34, 0.2, 0.26)), Vector3(-0.5 + i * 0.38, 0.22, 0.46), Vector3(0, 0.08 * i, 0.04 * i), st_m])
-			parts.append([_box(Vector3(0.34, 0.2, 0.26)), Vector3(-0.3, 0.42, 0.46), Vector3(0.1, 0.15, 0.25), st_m])
+				parts.append([_rbox(Vector3(0.34, 0.2, 0.26)), Vector3(-0.5 + i * 0.38, 0.22, 0.46), Vector3(0, 0.08 * i, 0.04 * i), st_m])
+			parts.append([_rbox(Vector3(0.34, 0.2, 0.26)), Vector3(-0.3, 0.42, 0.46), Vector3(0.1, 0.15, 0.25), st_m])
 			for i in range(4):
 				var rx = (_rnd(h, 40 + i) - 0.5) * 1.5
 				var rz = (_rnd(h, 50 + i) - 0.5) * 1.3
 				var sz = 0.1 + _rnd(h, 60 + i) * 0.16
-				parts.append([_box(Vector3(sz * 1.3, sz, sz)), Vector3(rx, 0.1 + sz * 0.4, rz), Vector3(_rnd(h, 70 + i), _rnd(h, 80 + i) * 3.0, _rnd(h, 90 + i)), st_m])
+				parts.append([_rbox(Vector3(sz * 1.3, sz, sz)), Vector3(rx, 0.1 + sz * 0.4, rz), Vector3(_rnd(h, 70 + i), _rnd(h, 80 + i) * 3.0, _rnd(h, 90 + i)), st_m])
 			# musgo cobrindo o que sobrou
-			parts.append([_box(Vector3(0.6, 0.04, 0.4)), Vector3(0.1, 0.2, 0.02), Vector3(0.03, 0.1, -0.03), sh_m])
+			parts.append([_rbox(Vector3(0.6, 0.04, 0.4)), Vector3(0.1, 0.2, 0.02), Vector3(0.03, 0.1, -0.03), sh_m])
 			parts.append([_cyl(0.17, 0.19, 0.12, 8), Vector3(-0.42, 1.08, -0.15), Vector3(0.06, 0, 0.08), sh_m])
 			parts.append([_cyl(0.17, 0.19, 0.08, 8), Vector3(0.42, 0.52, -0.15), Vector3(0, 0, -0.05), sh_m])
 			parts.append([_cyl(0.025, 0.03, 0.8, 4), Vector3(-0.28, 0.7, -0.02), Vector3(0.1, 0, 0.1), mo_m])
@@ -5845,6 +6158,9 @@ func _wild_props(root: Node3D, h: Vector2i, k: String) -> bool:
 			for pt in parts:
 				var mi = _mesh(hb, pt[0], Color.WHITE, pt[1], pt[2])
 				mi.material_override = pt[3]
+			_tinta(hb)
+			var muros = Node3D.new()
+			root.add_child(muros)
 			# ligação com as ruínas vizinhas: calçada rachada e muro caído até a divisa da casa
 			var c0 = world_xz(h)
 			for di in range(6):
@@ -5857,7 +6173,7 @@ func _wild_props(root: Node3D, h: Vector2i, k: String) -> bool:
 				var yaw = atan2(-d.y, d.x)
 				var half = dist * 0.5 + 0.06
 				var lp = []
-				lp.append([_box(Vector3(half, 0.07, 0.62)), Vector3(d.x * half * 0.5, 0.06, d.y * half * 0.5), Vector3(0, yaw + 0.04, 0.02), st_m])
+				lp.append([_rbox(Vector3(half, 0.07, 0.62)), Vector3(d.x * half * 0.5, 0.06, d.y * half * 0.5), Vector3(0, yaw + 0.04, 0.02), st_m])
 				var nbk = int(half / 0.34)
 				for j in range(nbk + 1):
 					var t = 0.38 + j * 0.34
@@ -5870,12 +6186,13 @@ func _wild_props(root: Node3D, h: Vector2i, k: String) -> bool:
 					var bh = 0.12 + r0 * 0.32
 					var base = Vector3(d.x * t - d.y * side * 0.0, 0.0, d.y * t)
 					var off = Vector3(-d.y, 0, d.x) * side
-					lp.append([_box(Vector3(0.34, bh, 0.24)), base + off + Vector3(0, bh * 0.5 + 0.06, 0), Vector3(r0 * 0.3, yaw + (r0 - 0.5) * 0.8, (r0 - 0.5) * 0.5), st_m])
+					lp.append([_rbox(Vector3(0.34, bh, 0.24)), base + off + Vector3(0, bh * 0.5 + 0.06, 0), Vector3(r0 * 0.3, yaw + (r0 - 0.5) * 0.8, (r0 - 0.5) * 0.5), st_m])
 					if r0 > 0.85:
-						lp.append([_box(Vector3(0.34, 0.04, 0.24)), base + off + Vector3(0, bh + 0.08, 0), Vector3(r0 * 0.3, yaw + (r0 - 0.5) * 0.8, (r0 - 0.5) * 0.5), sh_m])
+						lp.append([_rbox(Vector3(0.34, 0.04, 0.24)), base + off + Vector3(0, bh + 0.08, 0), Vector3(r0 * 0.3, yaw + (r0 - 0.5) * 0.8, (r0 - 0.5) * 0.5), sh_m])
 				for pt in lp:
-					var mi2 = _mesh(root, pt[0], Color.WHITE, pt[1], pt[2])
+					var mi2 = _mesh(muros, pt[0], Color.WHITE, pt[1], pt[2])
 					mi2.material_override = pt[3]
+			_tinta(muros)
 		"planta":
 			for i in range(4):
 				var a2 = TAU / 4.0 * i + _rnd(h, 1)
@@ -5896,6 +6213,8 @@ func _wild_props(root: Node3D, h: Vector2i, k: String) -> bool:
 				_mesh(head, _cyl(0.0, 0.035, 0.12, 4), Color("#fff6e0"), Vector3(0.24, -0.02, tx), Vector3(0, 0, PI))
 			for i in range(5):
 				_mesh(head, _sph(0.035, 0.035), Color("#fff0fa"), Vector3(-0.05 + _rnd(h, i + 30) * 0.2, 0.32, -0.15 + i * 0.07))
+			_tinta(head)
+			_tinta(root)
 		"trilha", "clareira":
 			for i in range(2):
 				_kenney(root, "grass_large" if k == "trilha" else "grass_leafsLarge", Vector3((_rnd(h, i) - 0.5) * 1.0, 0, (_rnd(h, i + 9) - 0.5) * 0.9), 0.14, _rnd(h, i + 4) * TAU, "jungle")
@@ -5972,12 +6291,12 @@ func _build_wild(kind: String) -> void:
 		if kind == "jungle":
 			var yw = _rnd(h, 4) * TAU
 			if roll < 0.62:
-				var lj = K_PALMA if _rnd(h, 14) < 0.3 else K_SELVA
-				# parte das árvores da selva vem do Cosmo Tree Gen (copas frondosas, mais variedade)
-				if lj == K_SELVA and _rnd(h, 44) < 0.45 and _model(holder, "arvore_abnara_%d" % int(_rnd(h, 45) * 3), Vector3.ZERO, 1.7 * s, yw, true):
-					pass
-				elif not _kenney(holder, _kpick(lj, h, 15), Vector3.ZERO, 1.9 * s, yw, "jungle"):
-					_jungle_tree(holder, Vector3.ZERO, s * 1.3, h, int(_rnd(h, 3) * 3))
+				# árvores no padrão do jogo: formas arredondadas, contorno de tinta e cores de Abnara
+				if _rnd(h, 14) < 0.3:
+					_hq_pronto(holder, "palmeira", int(_rnd(h, 15) * 4), s * 1.15)
+				else:
+					_hq_pronto(holder, ["copa", "alta", "guarda_chuva"][int(_rnd(h, 16) * 3) % 3], int(_rnd(h, 15) * 4), s * 1.1)
+				holder.rotation.y = yw
 				if _rnd(h, 16) > 0.6:
 					_kenney(holder, _kpick(K_FLOR, h, 17), Vector3(0.45 * s, 0, 0.2 * s), 0.3 * s, yw, "jungle")
 			elif roll < 0.8:
@@ -6007,8 +6326,6 @@ func _build_wild(kind: String) -> void:
 				var np = 1 + int(_rnd(h, 32) * 3)
 				for i in range(np):
 					var off = Vector3((_rnd(h, i + 33) - 0.5) * 0.9 * s, 0, (_rnd(h, i + 36) - 0.5) * 0.9 * s) if i > 0 else Vector3.ZERO
-					if i == 0 and _rnd(h, 46) < 0.35 and _model(holder, "arvore_goraida_%d" % int(_rnd(h, 47) * 3), off, 1.4 * s, yw2, true):
-						continue     # árvore de copa nevada do Cosmo Tree Gen
 					if not _kenney(holder, _kpick(K_PINHO, h, i + 39), off, (1.5 + _rnd(h, i + 42) * 0.9) * s * (1.0 if i == 0 else 0.7), yw2 + i, "snow"):
 						_mesh(holder, _cyl(0.0, 0.42 * s, 1.2 * s, 8), Color("#2f6a5a"), off + Vector3(0, 0.6 * s, 0))
 			else:

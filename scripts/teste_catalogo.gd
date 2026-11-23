@@ -12,7 +12,7 @@ const LISTAS = {
 		"stone_tallC", "stone_tallF", "stone_largeB", "stone_largeD", "tent_detailedClosed", "log_stackLarge", "campfire_stones", "stump_round"]],
 		["m", "", ["arvore_goraida_0", "arvore_goraida_1", "arvore_goraida_2"]]],
 	"tarhut": [["m", "", ["cen_tarhut_rocha_0", "cen_tarhut_rocha_1", "cen_tarhut_cacto_0", "cen_tarhut_cacto_bola_0", "cen_tarhut_ossada_0", "cen_tarhut_cristal_0", "cen_tarhut_buraco_0",
-		"tarhut_arenito_0", "tarhut_destroco_0", "tarhut_ossos_0", "tarhut_cristal_0", "tarhut_cacto_0", "tarhut_fossil", "tarhut_flor"]]],
+		"tarhut_arenito_0", "tarhut_ossos_0", "tarhut_cacto_0", "tarhut_fossil", "tarhut_flor"]]],
 	"posto": [["m", "", ["cen_valak_pinheiro_0", "cen_valak_rocha_0", "cen_valak_barril_0", "cen_valak_caixa_0", "cen_valak_vagonete_0", "cen_valak_domo_0",
 		"valak_torre_0", "valak_guindaste_0", "valak_tanque_0", "valak_pinheiro_0", "valak_rocha_0"]]],
 }
