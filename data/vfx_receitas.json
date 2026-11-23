@@ -2501,7 +2501,7 @@
     "p": "onda",
     "mode": "chao",
     "amount": 1,
-    "size": 3.0,
+    "size": 1.91,
     "life": 0.9,
     "life_rand": 0,
     "y": 0.0,
@@ -2539,7 +2539,7 @@
     "p": "onda",
     "mode": "chao",
     "amount": 1,
-    "size": 3.0,
+    "size": 1.91,
     "life": 0.9,
     "life_rand": 0,
     "y": 0.0,
@@ -7113,7 +7113,7 @@
     "p": "anel",
     "mode": "chao",
     "amount": 1,
-    "size": 2.8,
+    "size": 2.71,
     "life": 0.5,
     "life_rand": 0,
     "y": 0.0,
@@ -8185,7 +8185,7 @@
     "p": "anel",
     "mode": "chao",
     "amount": 1,
-    "size": 3.78,
+    "size": 3.42,
     "life": 0.5,
     "life_rand": 0,
     "y": 0.0,
@@ -8346,7 +8346,7 @@
     "p": "onda",
     "mode": "chao",
     "amount": 1,
-    "size": 3.0,
+    "size": 1.81,
     "life": 0.9,
     "life_rand": 0,
     "y": 0.0,
@@ -8384,7 +8384,7 @@
     "p": "onda",
     "mode": "chao",
     "amount": 1,
-    "size": 3.0,
+    "size": 1.81,
     "life": 0.9,
     "life_rand": 0,
     "y": 0.0,
@@ -9210,7 +9210,7 @@
     "p": "anel",
     "mode": "chao",
     "amount": 1,
-    "size": 4.050000000000001,
+    "size": 3.82,
     "life": 0.9,
     "life_rand": 0,
     "y": 0.0,
@@ -11805,7 +11805,7 @@
    {
     "p": "fumaca",
     "blend": "mix",
-    "amount": 10,
+    "amount": 6,
     "explosive": 0.3,
     "size": 1.5,
     "radius": 0.3,
@@ -14555,7 +14555,7 @@
     "p": "anel",
     "mode": "chao",
     "amount": 1,
-    "size": 3.0,
+    "size": 2.95,
     "life": 0.55,
     "curve": [
      [
@@ -19249,7 +19249,7 @@
     "p": "anel_serra",
     "mode": "chao",
     "amount": 1,
-    "size": 3.5,
+    "size": 3.42,
     "life": 0.5,
     "life_rand": 0,
     "y": 0.0,
@@ -21975,7 +21975,7 @@
     "p": "anel_serra",
     "mode": "chao",
     "amount": 1,
-    "size": 3.78,
+    "size": 3.42,
     "life": 0.5,
     "life_rand": 0,
     "y": 0.0,
@@ -24884,7 +24884,7 @@
     "p": "anel_serra",
     "mode": "chao",
     "amount": 1,
-    "size": 4.6,
+    "size": 3.42,
     "life": 0.75,
     "life_rand": 0,
     "y": 0.0,
@@ -25708,7 +25708,7 @@
     "p": "anel_serra",
     "mode": "chao",
     "amount": 1,
-    "size": 4.4799999999999995,
+    "size": 3.42,
     "life": 0.5,
     "life_rand": 0,
     "y": 0.0,
@@ -27117,7 +27117,7 @@
     "p": "anel",
     "mode": "chao",
     "amount": 1,
-    "size": 4.2,
+    "size": 3.61,
     "life": 0.9,
     "life_rand": 0,
     "y": 0.0,
@@ -31858,7 +31858,7 @@
     "p": "anel_serra",
     "mode": "chao",
     "amount": 1,
-    "size": 3.6399999999999997,
+    "size": 3.42,
     "life": 0.5,
     "life_rand": 0,
     "y": 0.0,
@@ -32488,7 +32488,7 @@
     "p": "anel_serra",
     "mode": "chao",
     "amount": 1,
-    "size": 3.9199999999999995,
+    "size": 3.42,
     "life": 0.5,
     "life_rand": 0,
     "y": 0.0,
@@ -40260,7 +40260,7 @@
     "p": "anel_serra",
     "mode": "chao",
     "amount": 1,
-    "size": 4.4799999999999995,
+    "size": 3.42,
     "life": 0.5,
     "life_rand": 0,
     "y": 0.0,
@@ -40711,61 +40711,6 @@
     ],
     "y": 0.5,
     "delay": 0.6
-   },
-   {
-    "p": "krieg_simbolo",
-    "blend": "mix",
-    "amount": 1,
-    "size": 1.45,
-    "life": 0.9,
-    "life_rand": 0,
-    "angle": [
-     0,
-     0
-    ],
-    "ramp": [
-     "#0E0F14",
-     "#16181F",
-     "#3A1A0C",
-     "#8A3A12"
-    ],
-    "delay": 0.66,
-    "mode": "chao",
-    "y": 0.02,
-    "curve": [
-     [
-      0,
-      1.35
-     ],
-     [
-      0.18,
-      1.0
-     ],
-     [
-      1,
-      1.0
-     ]
-    ],
-    "erode": 1.0,
-    "erode_pow": 2.2,
-    "alpha": [
-     [
-      0,
-      0
-     ],
-     [
-      0.12,
-      0.5
-     ],
-     [
-      0.75,
-      0.5
-     ],
-     [
-      1,
-      0
-     ]
-    ]
    },
    {
     "p": "fumaca",
@@ -42261,7 +42206,7 @@
     "p": "anel_serra",
     "mode": "chao",
     "amount": 1,
-    "size": 4.2,
+    "size": 3.42,
     "life": 0.45,
     "life_rand": 0,
     "y": 0.0,
@@ -43118,59 +43063,6 @@
     "y": 0.02,
     "mode": "chao",
     "delay": 0.12
-   },
-   {
-    "p": "simbolo_aby",
-    "mode": "chao",
-    "amount": 1,
-    "size": 1.45,
-    "life": 0.9,
-    "life_rand": 0,
-    "angle": [
-     0,
-     0
-    ],
-    "y": 0.02,
-    "curve": [
-     [
-      0,
-      1.3
-     ],
-     [
-      0.2,
-      1.0
-     ],
-     [
-      1,
-      1.0
-     ]
-    ],
-    "erode": 1.0,
-    "erode_pow": 2.2,
-    "ramp": [
-     "#301342",
-     "#A957EC",
-     "#F438A9"
-    ],
-    "alpha": [
-     [
-      0,
-      0
-     ],
-     [
-      0.12,
-      0.5
-     ],
-     [
-      0.7,
-      0.5
-     ],
-     [
-      1,
-      0
-     ]
-    ],
-    "delay": 0.04
    }
   ]
  },
@@ -43242,59 +43134,6 @@
     "y": 0.02,
     "mode": "chao",
     "delay": 0.12
-   },
-   {
-    "p": "simbolo_zuk",
-    "mode": "chao",
-    "amount": 1,
-    "size": 1.45,
-    "life": 0.9,
-    "life_rand": 0,
-    "angle": [
-     0,
-     0
-    ],
-    "y": 0.02,
-    "curve": [
-     [
-      0,
-      1.3
-     ],
-     [
-      0.2,
-      1.0
-     ],
-     [
-      1,
-      1.0
-     ]
-    ],
-    "erode": 1.0,
-    "erode_pow": 2.2,
-    "ramp": [
-     "#222A63",
-     "#5778FF",
-     "#27DDF4"
-    ],
-    "alpha": [
-     [
-      0,
-      0
-     ],
-     [
-      0.12,
-      0.5
-     ],
-     [
-      0.7,
-      0.5
-     ],
-     [
-      1,
-      0
-     ]
-    ],
-    "delay": 0.04
    }
   ]
  },
@@ -43366,59 +43205,6 @@
     "y": 0.02,
     "mode": "chao",
     "delay": 0.12
-   },
-   {
-    "p": "simbolo_fau",
-    "mode": "chao",
-    "amount": 1,
-    "size": 1.45,
-    "life": 0.9,
-    "life_rand": 0,
-    "angle": [
-     0,
-     0
-    ],
-    "y": 0.02,
-    "curve": [
-     [
-      0,
-      1.3
-     ],
-     [
-      0.2,
-      1.0
-     ],
-     [
-      1,
-      1.0
-     ]
-    ],
-    "erode": 1.0,
-    "erode_pow": 2.2,
-    "ramp": [
-     "#263E49",
-     "#9BE348",
-     "#FF8236"
-    ],
-    "alpha": [
-     [
-      0,
-      0
-     ],
-     [
-      0.12,
-      0.5
-     ],
-     [
-      0.7,
-      0.5
-     ],
-     [
-      1,
-      0
-     ]
-    ],
-    "delay": 0.04
    }
   ]
  },
@@ -43490,59 +43276,6 @@
     "y": 0.02,
     "mode": "chao",
     "delay": 0.12
-   },
-   {
-    "p": "simbolo_ter",
-    "mode": "chao",
-    "amount": 1,
-    "size": 1.45,
-    "life": 0.9,
-    "life_rand": 0,
-    "angle": [
-     0,
-     0
-    ],
-    "y": 0.02,
-    "curve": [
-     [
-      0,
-      1.3
-     ],
-     [
-      0.2,
-      1.0
-     ],
-     [
-      1,
-      1.0
-     ]
-    ],
-    "erode": 1.0,
-    "erode_pow": 2.2,
-    "ramp": [
-     "#493D3D",
-     "#4CD4BD",
-     "#FFAC45"
-    ],
-    "alpha": [
-     [
-      0,
-      0
-     ],
-     [
-      0.12,
-      0.5
-     ],
-     [
-      0.7,
-      0.5
-     ],
-     [
-      1,
-      0
-     ]
-    ],
-    "delay": 0.04
    }
   ]
  },
@@ -55156,59 +54889,6 @@
     "y": 0.02,
     "mode": "chao",
     "delay": 0.12
-   },
-   {
-    "p": "simbolo_wac",
-    "mode": "chao",
-    "amount": 1,
-    "size": 1.45,
-    "life": 0.9,
-    "life_rand": 0,
-    "angle": [
-     0,
-     0
-    ],
-    "y": 0.02,
-    "curve": [
-     [
-      0,
-      1.3
-     ],
-     [
-      0.2,
-      1.0
-     ],
-     [
-      1,
-      1.0
-     ]
-    ],
-    "erode": 1.0,
-    "erode_pow": 2.2,
-    "ramp": [
-     "#202B28",
-     "#82B8A1",
-     "#DDA85D"
-    ],
-    "alpha": [
-     [
-      0,
-      0
-     ],
-     [
-      0.12,
-      0.5
-     ],
-     [
-      0.7,
-      0.5
-     ],
-     [
-      1,
-      0
-     ]
-    ],
-    "delay": 0.04
    }
   ]
  },
@@ -55280,59 +54960,6 @@
     "y": 0.02,
     "mode": "chao",
     "delay": 0.12
-   },
-   {
-    "p": "simbolo_lit",
-    "mode": "chao",
-    "amount": 1,
-    "size": 1.45,
-    "life": 0.9,
-    "life_rand": 0,
-    "angle": [
-     0,
-     0
-    ],
-    "y": 0.02,
-    "curve": [
-     [
-      0,
-      1.3
-     ],
-     [
-      0.2,
-      1.0
-     ],
-     [
-      1,
-      1.0
-     ]
-    ],
-    "erode": 1.0,
-    "erode_pow": 2.2,
-    "ramp": [
-     "#29334D",
-     "#B18DFF",
-     "#62E6CF"
-    ],
-    "alpha": [
-     [
-      0,
-      0
-     ],
-     [
-      0.12,
-      0.5
-     ],
-     [
-      0.7,
-      0.5
-     ],
-     [
-      1,
-      0
-     ]
-    ],
-    "delay": 0.04
    }
   ]
  },
@@ -60185,7 +59812,7 @@
      "p": "fumaca",
      "blend": "mix",
      "trail": true,
-     "amount": 26,
+     "amount": 16,
      "size": 0.95,
      "life": 0.5,
      "speed": [
@@ -65690,7 +65317,7 @@
    {
     "p": "fumaca",
     "blend": "mix",
-    "amount": 30,
+    "amount": 18,
     "size": 1.3,
     "life": 0.5,
     "life_rand": 0.3,
@@ -65952,7 +65579,7 @@
     "p": "onda",
     "mode": "chao",
     "amount": 1,
-    "size": 7.5,
+    "size": 5.0,
     "life": 0.6,
     "life_rand": 0,
     "angle": [
@@ -65994,7 +65621,7 @@
     "p": "anel",
     "mode": "chao",
     "amount": 1,
-    "size": 9.0,
+    "size": 5.42,
     "life": 0.75,
     "life_rand": 0,
     "angle": [
@@ -66135,7 +65762,7 @@
    {
     "p": "fumaca",
     "blend": "mix",
-    "amount": 16,
+    "amount": 10,
     "size": 1.8,
     "life": 0.9,
     "life_rand": 0.3,
@@ -66200,7 +65827,7 @@
    {
     "p": "poeira",
     "blend": "mix",
-    "amount": 18,
+    "amount": 11,
     "size": 1.3,
     "life": 1.0,
     "life_rand": 0.3,
@@ -67030,7 +66657,7 @@
    {
     "p": "fumaca",
     "blend": "mix",
-    "amount": 14,
+    "amount": 8,
     "size": 1.7,
     "life": 1.2,
     "life_rand": 0.3,
@@ -67196,7 +66823,7 @@
     "p": "anel",
     "mode": "chao",
     "amount": 1,
-    "size": 7.0,
+    "size": 5.42,
     "life": 0.5,
     "life_rand": 0,
     "angle": [
@@ -68377,7 +68004,7 @@
     "p": "anel",
     "mode": "chao",
     "amount": 1,
-    "size": 6.0,
+    "size": 5.42,
     "life": 0.55,
     "life_rand": 0,
     "angle": [
@@ -68508,7 +68135,7 @@
    {
     "p": "poeira",
     "blend": "mix",
-    "amount": 16,
+    "amount": 10,
     "size": 1.4,
     "life": 1.0,
     "life_rand": 0.3,
@@ -68641,7 +68268,7 @@
    {
     "p": "poeira",
     "blend": "mix",
-    "amount": 30,
+    "amount": 18,
     "size": 1.3,
     "life": 0.9,
     "life_rand": 0.3,
@@ -69117,7 +68744,7 @@
     "p": "anel",
     "mode": "chao",
     "amount": 1,
-    "size": 5.5,
+    "size": 5.42,
     "life": 0.7,
     "life_rand": 0,
     "angle": [
