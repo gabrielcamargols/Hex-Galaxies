@@ -14,6 +14,10 @@ uniform float tail_amp = 0.35;
 uniform float tail_spd = 2.2;
 uniform float tail_t = 0.0;
 
+// recorte: some tudo abaixo desta altura do mundo (o Verme saindo da areia sem aparecer por baixo do mapa)
+uniform float clip_y = -100000.0;
+varying float mundo_y;
+
 vec3 roda(vec3 v, vec3 c, vec3 ax, float a) {
 	vec3 p = v - c;
 	float cs = cos(a), sn = sin(a);
@@ -31,6 +35,7 @@ void vertex() {
 		vx = roda(roda(vx, tail_base, vec3(0.0, 1.0, 0.0), a1), tail_base, vec3(0.0, 0.0, 1.0), a2);
 		nr = roda(nr, vec3(0.0), vec3(0.0, 1.0, 0.0), a1);
 	}
+	mundo_y = (MODEL_MATRIX * vec4(vx, 1.0)).y;
 	vec4 clip = PROJECTION_MATRIX * MODELVIEW_MATRIX * vec4(vx, 1.0);
 	vec3 vn = normalize((MODELVIEW_MATRIX * vec4(nr, 0.0)).xyz);
 	vec2 off = normalize((PROJECTION_MATRIX * vec4(vn, 0.0)).xy + vec2(1e-5));
@@ -39,5 +44,8 @@ void vertex() {
 }
 
 void fragment() {
+	if (mundo_y < clip_y) {
+		discard;
+	}
 	ALBEDO = ink.rgb * mod_col.rgb;
 }

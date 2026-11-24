@@ -37,6 +37,10 @@ uniform float tail_amp = 0.35;       // abertura do balanço (radianos na ponta)
 uniform float tail_spd = 2.2;        // velocidade
 uniform float tail_t = 0.0;          // relógio do personagem (cada um balança no seu tempo)
 
+// recorte: some tudo abaixo desta altura do mundo (o Verme saindo da areia sem aparecer por baixo do mapa)
+uniform float clip_y = -100000.0;
+varying float mundo_y;
+
 vec3 roda(vec3 v, vec3 c, vec3 ax, float a) {
 	vec3 p = v - c;
 	float cs = cos(a), sn = sin(a);
@@ -57,6 +61,7 @@ void vertex() {
 			VERTEX = v;
 		}
 	}
+	mundo_y = (MODEL_MATRIX * vec4(VERTEX, 1.0)).y;
 }
 
 float h21(vec2 q) {
@@ -108,6 +113,9 @@ float padrao(vec2 p, float need) {
 }
 
 void fragment() {
+	if (mundo_y < clip_y) {
+		discard;
+	}
 	vec3 c0 = texture(tex, UV).rgb;
 	// máscara do visor: vermelho puro (no laranja das faixas o verde passa de ~45% do vermelho e fica de fora)
 	float gr = c0.g / max(c0.r, 0.01);

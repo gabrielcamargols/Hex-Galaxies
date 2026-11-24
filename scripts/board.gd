@@ -5070,7 +5070,8 @@ func lunge(uid: int) -> void:
 # Verme Gigante: sai de cada buraco (um depois do outro), ruge lá do alto e mergulha de volta
 
 func worm_emerge(hexes: Array) -> void:
-	var sc = _scene_of("verme_gigante")
+	# o modelo do Gabriel (com esqueleto); o verme de partes antigo fica de reserva
+	var sc = load("res://models/vermes.glb") if ResourceLoader.exists("res://models/vermes.glb") else _scene_of("verme_gigante")
 	if sc == null:
 		return
 	var i = 0
