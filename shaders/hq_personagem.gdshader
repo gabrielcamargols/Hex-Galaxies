@@ -1,8 +1,8 @@
 // Personagem 3D com cara de quadrinho: a textura do modelo em 2 tons chapados,
 // sombra, padrão de tinta, brilho e contraluz nas cores da facção (data/vfx_paletas.json,
 // Manual de VFX e Sombras) e luzes próprias (visor, rachaduras) que acendem e pulsam.
-// Padrão de tinta por facção (pat): 0 retícula hexagonal (Abyssais) · 1 hachura (Krieg)
-// 2 pixel (Zukunft) · 3 entalhe (Wächter) · 4 poeira (Valakianos) · 5 facetas (Lithari) · 6 pop (Faurianos)
+// Padrão de tinta: todos os personagens usam a retícula hexagonal (pat 0) na cor da facção, nas sombras
+// e nas luzes; os outros padrões (1 hachura · 2 pixel · 3 entalhe · 4 poeira · 5 facetas · 6 pop) ficam guardados
 shader_type spatial;
 #include "res://shaders/hexdots.gdshaderinc"
 render_mode unshaded;   // como a arte 2D: as cores do personagem não mudam com a luz de cada planeta
@@ -11,6 +11,8 @@ uniform sampler2D tex : source_color, filter_linear_mipmap;
 uniform vec4 mod_col : source_color = vec4(1.0);        // escurece (já agiu) / avermelha (dano)
 uniform vec3 shadow_tint : source_color = vec3(0.34, 0.30, 0.55);   // cor de sombra da facção
 uniform vec3 hi_col : source_color = vec3(1.0, 0.9, 0.7);           // cor de brilho da facção
+uniform vec3 fac_col : source_color = vec3(0.55, 0.5, 0.9);         // cor da facção: tinge os pontos da retícula
+uniform float hi_dots = 0.5;                                        // força dos pontos claros nas luzes
 uniform int pat = 0;
 uniform float shadow_level = 0.72;
 uniform float dot_px = 6.0;
@@ -128,16 +130,21 @@ void fragment() {
 	vec3 dark = clamp(shadow_tint / sl * 0.42, 0.0, 1.0) * shadow_level;
 	vec2 p = FRAGCOORD.xy;
 	float need = clamp((0.9 - l) / 0.9, 0.0, 1.0);
+	// retícula hexagonal na cor da facção: nas sombras, pontos escuros com o matiz da facção
+	float fl = max(dot(fac_col, vec3(0.299, 0.587, 0.114)), 0.02);
+	vec3 dot_dark = mix(clamp(fac_col / fl * 0.36, 0.0, 1.0), dark, 0.35) * shadow_level;
 	float dotm = padrao(p, need);
-	vec3 shade = mix(vec3(1.0), dark, dotm * 0.85);
-	// sombra funda: chapada na cor de sombra, com o padrão mais denso por cima
+	vec3 shade = mix(vec3(1.0), dot_dark, dotm * 0.85);
+	// sombra funda: chapada na cor de sombra, com os pontos da facção por cima
 	float deep = smoothstep(0.22, 0.0, l);
 	shade = mix(shade, dark, deep * 0.8);
-	shade *= 1.0 - padrao(p + 2.5, 1.0) * deep * 0.3;
-	// brilho: o mesmo padrão, pequeno e claro, na cor de brilho da facção
-	float hi = smoothstep(0.78, 0.95, nd);
-	float hdot = padrao(p + vec2(3.1, 1.7), 0.22);
-	vec3 col = c * shade + hi_col * 0.32 * hi * hdot;
+	shade = mix(shade, dot_dark * 0.75, padrao(p + 2.5, 1.0) * deep * 0.35);
+	// nas luzes, a mesma retícula clara na cor da facção (cresce onde a luz bate mais)
+	float hi = smoothstep(0.35, 0.95, nd);
+	float hdot = padrao(p + vec2(3.1, 1.7), 0.08 + hi * 0.4);
+	vec3 dot_light = mix(fac_col, mix(hi_col, vec3(1.0), 0.4), 0.45);
+	vec3 col = c * shade;
+	col = mix(col, max(col, dot_light), hdot * hi * hi_dots);
 	// contraluz fininha na cor de brilho (separa o boneco do chão)
 	float fr = pow(1.0 - clamp(dot(nrm, VIEW), 0.0, 1.0), 3.0);
 	col += mix(c, hi_col, 0.5) * fr * rim_amt;

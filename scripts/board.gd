@@ -2839,7 +2839,9 @@ func _figure3d(cid: String, body_h: float) -> Node3D:
 			var fac3: String = DB.cards[cid]["f"] if DB.cards.has(cid) else ""
 			m.set_shader_parameter("shadow_tint", DB.pal(fac3, "shadow", Color(0.34, 0.30, 0.55)))
 			m.set_shader_parameter("hi_col", DB.pal(fac3, "highlight", Color(1.0, 0.9, 0.7)))
-			m.set_shader_parameter("pat", PADROES.find(String(DB.vfx_pal.get(fac3, {}).get("pattern", "reticula"))) if PADROES.has(String(DB.vfx_pal.get(fac3, {}).get("pattern", "reticula"))) else 0)
+			# retícula hexagonal em todos, tingida com a cor principal da facção (sombras e luzes)
+			m.set_shader_parameter("pat", 0)
+			m.set_shader_parameter("fac_col", DB.pal(fac3, "primary", Color(0.55, 0.5, 0.9)))
 			if cfg.get("cintila", false):
 				m.set_shader_parameter("cintila", 1.0)
 			if fac3 == "LIT":
