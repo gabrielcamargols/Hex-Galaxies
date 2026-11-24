@@ -60,6 +60,7 @@ const FIG3D = {
 	# Perfurador (Valakianos): rig feito aqui (o modelo veio sem esqueleto) e a broca nas duas mãos —
 	# presa ao tronco, mão direita na pega de trás, esquerda na pega de cima (scripts/empunhar.gd)
 	"perfurador": {"path": "res://models/personagens/perfurador.glb", "visor": false, "punho": false, "giro": 0.0, "jeito": "perfurador",
+		"lanterna": {"pos": [0.0, 0.942, 0.128], "cor": "#ffdc8a", "inclina": -34.0},
 		"arma": {"path": "res://models/armas/broca_perfurador.glb", "osso": "Hip", "escala": 0.95, "yaw": 60.0, "pitch": -10.0,
 			"pega_R": [0.0, -0.075, -0.483], "pega_L": [0.0, 0.165, -0.085], "eixo": [0, 1, 0], "mao_R": [-0.2, 0.42, 0.08],
 			"palma": [0.05, 0.02]}},
@@ -3047,9 +3048,104 @@ func _figure3d(cid: String, body_h: float) -> Node3D:
 				lamp.position = hp
 				att.add_child(lamp)
 				root.set_meta("lamp", lamp)
+	if cfg.has("lanterna") and root.has_meta("skel"):
+		_lanterna(root, cfg["lanterna"])
 	if cfg.has("conjura") and root.has_meta("skel"):
 		_olhos_conjura(root, cfg["conjura"])
 	return root
+
+
+# lanterna do capacete (Perfurador): lente acesa com halo, feixe de luz em cone que some ao longe e uma luz
+# de verdade (SpotLight) iluminando o chão à frente; presa ao osso da cabeça, pisca de leve como lâmpada velha
+func _lanterna(root: Node3D, lc: Dictionary) -> void:
+	var sk: Skeleton3D = root.get_meta("skel")
+	var bones: Dictionary = root.get_meta("bones")
+	if not bones.has("Head"):
+		return
+	var hb: int = bones["Head"]
+	var att = BoneAttachment3D.new()
+	att.bone_idx = hb
+	sk.add_child(att)
+	var hg = sk.get_bone_global_rest(hb)
+	var cor = Color(str(lc.get("cor", "#ffdc8a")))
+	var piv = Node3D.new()
+	piv.name = "lanterna"
+	# lente na frente do capacete, apontando para a frente e um pouco para baixo
+	piv.transform = hg.affine_inverse() * Transform3D(Basis(Vector3.RIGHT, deg_to_rad(-float(lc.get("inclina", -14.0)))), Vector3(lc["pos"][0], lc["pos"][1], lc["pos"][2]))
+	att.add_child(piv)
+	if _fig3d_glow_tex == null:
+		_fig3d_glow_tex = GradientTexture2D.new()
+		var gr = Gradient.new()
+		gr.set_color(0, Color(1, 1, 1, 1))
+		gr.set_color(1, Color(1, 1, 1, 0))
+		gr.add_point(0.35, Color(1, 1, 1, 0.45))
+		_fig3d_glow_tex.gradient = gr
+		_fig3d_glow_tex.fill = GradientTexture2D.FILL_RADIAL
+		_fig3d_glow_tex.fill_from = Vector2(0.5, 0.5)
+		_fig3d_glow_tex.fill_to = Vector2(1.0, 0.5)
+		_fig3d_glow_tex.width = 64
+		_fig3d_glow_tex.height = 64
+	var halos = []
+	for spec in [[0.0018, 1.0, 1.0], [0.0008, 0.55, 1.6]]:
+		var halo = Sprite3D.new()
+		halo.texture = _fig3d_glow_tex
+		halo.pixel_size = spec[0]
+		halo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		halo.position = Vector3(0, 0, 0.006)
+		piv.add_child(halo)
+		var am = StandardMaterial3D.new()
+		am.albedo_texture = _fig3d_glow_tex
+		am.albedo_color = cor.lerp(Color.WHITE, 1.0 - spec[1]) * Color(1, 1, 1, 1.0)
+		am.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+		am.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		am.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		am.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+		am.billboard_keep_scale = true
+		am.render_priority = 3
+		halo.material_override = am
+		halos.append([am, spec[2]])
+	var comp = 1.35
+	var cone = MeshInstance3D.new()
+	var cm = CylinderMesh.new()
+	cm.height = comp
+	cm.top_radius = 0.42           # ponta larga, longe da lente
+	cm.bottom_radius = 0.018
+	cm.radial_segments = 24
+	cm.rings = 6
+	cm.cap_top = false
+	cm.cap_bottom = false
+	cone.mesh = cm
+	cone.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	cone.rotation.x = PI / 2.0      # eixo do cilindro (Y) vira a frente (Z)
+	cone.position = Vector3(0, 0, comp * 0.5 + 0.01)
+	var fm = ShaderMaterial.new()
+	fm.shader = load("res://shaders/feixe_luz.gdshader")
+	fm.set_shader_parameter("cor", cor)
+	fm.set_shader_parameter("comp", comp)
+	cone.material_override = fm
+	piv.add_child(cone)
+	var luz = SpotLight3D.new()
+	luz.light_color = cor
+	luz.light_energy = 2.2
+	luz.spot_range = 3.2
+	luz.spot_angle = 24.0
+	luz.spot_attenuation = 0.8
+	luz.shadow_enabled = false
+	luz.rotation.y = PI            # a SpotLight aponta para -Z; a lente olha para +Z
+	piv.add_child(luz)
+	root.set_meta("lanterna", [halos, fm, luz])
+
+
+func _lanterna_tick(fig: Node3D, t: float, mod: Color) -> void:
+	var L: Array = fig.get_meta("lanterna")
+	# lâmpada velha de mineiro: quase firme, com uma tremida de vez em quando
+	var tremida = 1.0 - 0.25 * pow(max(0.0, sin(t * 1.7) * sin(t * 13.0)), 6.0)
+	var a = (0.93 + 0.07 * sin(t * 9.0)) * tremida
+	for h in L[0]:
+		var am: StandardMaterial3D = h[0]
+		am.albedo_color.a = clamp(a * h[1], 0.0, 1.0)
+	L[1].set_shader_parameter("pisca", a * mod.r)
+	L[2].light_energy = 2.2 * a * mod.r
 
 
 # dois brilhos presos à cabeça, na altura dos olhos: acendem quando o personagem conjura
@@ -3186,6 +3282,8 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 		o.set_shader_parameter("tail_t", tt)
 		o.set_shader_parameter("tail_amp", 0.3 + 0.12 * tw + 0.1 * tr)
 	var pulse = 0.82 + 0.18 * sin(t * 3.2)
+	if fig.has_meta("lanterna"):
+		_lanterna_tick(fig, t, mod)
 	if fig.has_meta("halos"):
 		var hs: Array = fig.get_meta("halos")
 		var flick = 0.94 + 0.06 * sin(t * 23.0) * sin(t * 7.3)     # tremidinha de luz viva
