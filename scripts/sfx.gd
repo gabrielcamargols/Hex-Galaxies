@@ -124,6 +124,8 @@ func _vozes_web() -> void:
 	var base = str(JavaScriptBridge.eval("location.href.split('?')[0].split('#')[0]", true))
 	base = base.substr(0, base.rfind("/") + 1)
 	_vozes_http = HTTPRequest.new()
+	# No navegador, a API Fetch já descompacta a resposta HTTP.
+	_vozes_http.accept_gzip = false
 	_vozes_http.body_size_limit = -1
 	add_child(_vozes_http)
 	# no navegador o HTTPRequest não grava direto em arquivo: recebe na memória e guarda depois
