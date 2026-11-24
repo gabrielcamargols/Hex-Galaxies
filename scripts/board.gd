@@ -60,8 +60,8 @@ const FIG3D = {
 	# Perfurador (Valakianos): rig feito aqui (o modelo veio sem esqueleto) e a broca nas duas mãos —
 	# presa ao tronco, mão direita na pega de trás, esquerda na pega de cima (scripts/empunhar.gd)
 	"perfurador": {"path": "res://models/personagens/perfurador.glb", "visor": false, "punho": false, "giro": 0.0, "jeito": "perfurador",
-		"arma": {"path": "res://models/armas/broca_perfurador.glb", "osso": "Hip", "escala": 1.05, "yaw": 90.0, "pitch": -25.0,
-			"pega_R": [0.0, -0.075, -0.483], "pega_L": [0.0, 0.165, -0.085], "eixo": [0, 1, 0], "mao_R": [-0.2, 0.48, 0.2],
+		"arma": {"path": "res://models/armas/broca_perfurador.glb", "osso": "Hip", "escala": 0.95, "yaw": 60.0, "pitch": -10.0,
+			"pega_R": [0.0, -0.075, -0.483], "pega_L": [0.0, 0.165, -0.085], "eixo": [0, 1, 0], "mao_R": [-0.2, 0.42, 0.08],
 			"palma": [0.05, 0.02]}},
 	# Sniper Valakiano: o mais sério do grupo, meticuloso; anda medido e atento (passada natural, sem deslize)
 	"t_sniper": {"path": "res://models/personagens/t_sniper.glb", "visor": false, "punho": false, "jeito": "comandante", "giro": 0.0,
