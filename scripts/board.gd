@@ -44,6 +44,7 @@ const ZOOM_MIN = 4.0
 const ZOOM_MAX = 140.0
 # personagens que já têm modelo 3D com esqueleto (Tripo): entram no lugar da arte 2D
 const FOLGA_BRACOS = preload("res://scripts/folga_bracos.gd")
+const EMPUNHAR = preload("res://scripts/empunhar.gd")
 const FIG3D = {
 	"k_cmd": {"path": "res://models/personagens/k_cmd.glb", "visor": true, "punho": true, "jeito": "comandante"},
 	"rhazur": {"path": "res://models/personagens/rhazur.glb", "visor": false, "punho": false, "jeito": "bruto", "manopla": "Left", "giro": 0.0, "cauda": [0.09, 0.32, -0.02]},
@@ -56,6 +57,12 @@ const FIG3D = {
 		"dedos": {"Left": 1.0, "Right": 0.22}, "pose_arte": {
 			"Right": [[0.05, -0.7, -0.7], [0.25, -0.55, 0.8], [0.25, -0.45, 0.85]],
 			"Left": [[0.0, 0.5, -0.85], [0.1, 0.45, -0.88], [0.05, 0.35, -0.93]]}},
+	# Perfurador (Valakianos): rig feito aqui (o modelo veio sem esqueleto) e a broca nas duas mãos —
+	# presa ao tronco, mão direita na pega de trás, esquerda na pega de cima (scripts/empunhar.gd)
+	"perfurador": {"path": "res://models/personagens/perfurador.glb", "visor": false, "punho": false, "giro": 0.0,
+		"arma": {"path": "res://models/armas/broca_perfurador.glb", "osso": "Spine01", "escala": 0.55, "yaw": 85.0, "pitch": -25.0,
+			"pega_R": [0.0, -0.075, -0.483], "pega_L": [0.0, 0.165, -0.085], "eixo": [0, 1, 0], "mao_R": [-0.12, 0.52, 0.16],
+			"palma": [0.05, 0.02]}},
 	# Sniper Valakiano: o mais sério do grupo, meticuloso; anda medido e atento (passada natural, sem deslize)
 	"t_sniper": {"path": "res://models/personagens/t_sniper.glb", "visor": false, "punho": false, "jeito": "comandante", "giro": 0.0,
 		"olho_e": [0.03, 0.884, 0.06], "pele": "#c9e0f3", "olho_giro": 0.55},
@@ -2945,6 +2952,8 @@ func _figure3d(cid: String, body_h: float) -> Node3D:
 				folga.free()
 			if cfg.has("pose_arte"):
 				root.set_meta("pose_arte", cfg["pose_arte"])
+			if cfg.has("arma"):
+				_arma3d(root, sk, cfg["arma"], cid)
 			# mãos fechadas (punho): cada falange dobra em direção à palma; a palma olha para o corpo
 			# "dedos": quanto cada mão fecha (1 = punho, pouco = mão aberta e relaxada)
 			var dedos: Dictionary = cfg.get("dedos", {"Left": 1.0, "Right": 1.0} if cfg.get("punho", false) else {})
@@ -4670,6 +4679,46 @@ func _palpebra(fig: Node3D, sk: Skeleton3D, bn: Dictionary) -> Node3D:
 	lid.set_meta("traco", traco)
 	fig.set_meta("palpebra", piv)
 	return piv
+
+
+# arma de duas mãos (a broca do Perfurador): o modelo com o mesmo sombreado de quadrinho do boneco, filho do
+# esqueleto; o modificador EMPUNHAR põe a arma no tronco e fecha as mãos nas pegas a cada quadro
+func _arma3d(root: Node3D, sk: Skeleton3D, acfg: Dictionary, cid: String) -> void:
+	if not ResourceLoader.exists(str(acfg["path"])):
+		return
+	var arma: Node3D = load(str(acfg["path"])).instantiate()
+	var fac3: String = DB.cards[cid]["f"] if DB.cards.has(cid) else ""
+	var mats: Array = root.get_meta("mats", [])
+	var outl: Array = root.get_meta("outl", [])
+	for mi in arma.find_children("*", "MeshInstance3D", true, false):
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+		for si in range(mi.mesh.get_surface_count()):
+			var src = mi.mesh.surface_get_material(si)
+			var m = ShaderMaterial.new()
+			m.shader = load("res://shaders/hq_personagem.gdshader")
+			if src is BaseMaterial3D and src.albedo_texture != null:
+				m.set_shader_parameter("tex", src.albedo_texture)
+			m.set_shader_parameter("glow_on", 0.0)
+			m.set_shader_parameter("shadow_tint", DB.pal(fac3, "shadow", Color(0.34, 0.30, 0.55)))
+			m.set_shader_parameter("hi_col", DB.pal(fac3, "highlight", Color(1.0, 0.9, 0.7)))
+			m.set_shader_parameter("pat", 0)
+			m.set_shader_parameter("fac_col", DB.pal(fac3, "primary", Color(0.55, 0.5, 0.9)))
+			var o = ShaderMaterial.new()
+			o.shader = load("res://shaders/hq_contorno3d.gdshader")
+			o.set_shader_parameter("ink", DB.pal(fac3, "outline", Color(0.04, 0.016, 0.063)).darkened(0.45))
+			m.next_pass = o
+			mi.set_surface_override_material(si, m)
+			mats.append(m)
+			outl.append(o)
+	arma.name = "arma"
+	sk.add_child(arma)
+	var emp = EMPUNHAR.new()
+	emp.name = "empunhar"
+	if emp.prepara(sk, arma, acfg):
+		sk.add_child(emp)
+		root.set_meta("empunha", emp)
+	else:
+		emp.free()
 
 
 # choque elétrico: espasmos por "dur" segundos

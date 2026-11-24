@@ -34,6 +34,10 @@ func run() -> void:
 	w.add_child(cam)
 	cam.current = true
 	cam.look_at_from_position(Vector3(0, 1.4, 4.6), Vector3(0, 0.95, 0), Vector3.UP)
+	if OS.get_environment("PERTO") != "":
+		# de perto, 3/4: confere mãos e arma
+		var ang = float(OS.get_environment("PERTO"))
+		cam.look_at_from_position(Vector3(sin(ang) * 1.9, 1.25, cos(ang) * 1.9), Vector3(0, 0.95, 0), Vector3.UP)
 	var hr = Node3D.new()
 	w.add_child(hr)
 	var fr: Node3D = b._figure3d(OS.get_environment("CID"), 2.0)
@@ -55,3 +59,5 @@ func run() -> void:
 		t += dt
 		await RenderingServer.frame_post_draw
 		sv.get_texture().get_image().save_png("%s/f%03d.png" % [o, k])
+	if fr.has_meta("empunha"):
+		print("ALCANCE falta=%.4f" % fr.get_meta("empunha").alcance_falta)
