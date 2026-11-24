@@ -68458,5 +68458,273 @@
     "delay": 0.1
    }
   ]
+ },
+ "tarhut_areia_bote": {
+  "nome": "TARHUT · o Verme mergulha: a areia explode para cima e cai (sem fogo)",
+  "shake": 0.6,
+  "layers": [
+   {
+    "malha": "anel",
+    "r": [
+     0.6,
+     3.4
+    ],
+    "largura": 0.35,
+    "dur": 0.6,
+    "ramp": [
+     "#8a5430",
+     "#b06e38",
+     "#dc9a58"
+    ],
+    "erode_pow": 2.2,
+    "ruido": 0.7,
+    "degraus": 4,
+    "chao": true,
+    "blend": "mix"
+   },
+   {
+    "p": "@fumaca",
+    "mode": "vel",
+    "amount": 26,
+    "size": [
+     0.8,
+     2.2
+    ],
+    "speed": [
+     3,
+     8
+    ],
+    "spread": 28,
+    "grav": -6,
+    "damp": [
+     1.5,
+     3
+    ],
+    "life": 1.1,
+    "ramp": [
+     "#e8a860",
+     "#d08a48",
+     "#b06e38",
+     "#8a5430"
+    ],
+    "alpha": [
+     [
+      0,
+      0.95
+     ],
+     [
+      0.6,
+      0.7
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.2,
+    "blend": "mix"
+   },
+   {
+    "p": "@ponto",
+    "mode": "vel",
+    "amount": 70,
+    "size": [
+     0.06,
+     0.16
+    ],
+    "speed": [
+     5,
+     12
+    ],
+    "spread": 40,
+    "grav": -16,
+    "damp": [
+     0.3,
+     0.8
+    ],
+    "life": 1.2,
+    "ramp": [
+     "#8a5430",
+     "#b06e38",
+     "#d08a48"
+    ],
+    "y": 0.3
+   },
+   {
+    "p": "@lasca",
+    "mode": "vel",
+    "amount": 14,
+    "size": [
+     0.12,
+     0.3
+    ],
+    "speed": [
+     4,
+     8
+    ],
+    "spread": 55,
+    "grav": -18,
+    "damp": [
+     0.2,
+     0.5
+    ],
+    "life": 1.0,
+    "ramp": [
+     "#8a5c34",
+     "#b07a48"
+    ],
+    "y": 0.3
+   },
+   {
+    "p": "@fumaca",
+    "mode": "vel",
+    "amount": 18,
+    "size": [
+     1.0,
+     2.6
+    ],
+    "speed": [
+     1.5,
+     3.5
+    ],
+    "spread": 85,
+    "grav": 0.2,
+    "damp": [
+     2,
+     3.5
+    ],
+    "life": 1.6,
+    "ramp": [
+     "#dc9a58",
+     "#c98a50",
+     "#b67c48"
+    ],
+    "alpha": [
+     [
+      0,
+      0.0
+     ],
+     [
+      0.15,
+      0.7
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.3,
+    "delay": 0.15,
+    "blend": "mix"
+   },
+   {
+    "p": "@ponto",
+    "mode": "vel",
+    "amount": 40,
+    "size": [
+     0.04,
+     0.1
+    ],
+    "speed": [
+     0.5,
+     2
+    ],
+    "spread": 180,
+    "grav": -9,
+    "life": 0.9,
+    "radius": 2.2,
+    "ramp": [
+     "#b06e38",
+     "#d08a48"
+    ],
+    "y": 1.2,
+    "delay": 0.45
+   }
+  ]
+ },
+ "tarhut_areia_sai": {
+  "nome": "TARHUT · o Verme rompe a areia ao sair",
+  "shake": 0.4,
+  "layers": [
+   {
+    "malha": "anel",
+    "r": [
+     0.4,
+     2.4
+    ],
+    "largura": 0.4,
+    "dur": 0.5,
+    "ramp": [
+     "#8a5430",
+     "#b06e38",
+     "#dc9a58"
+    ],
+    "erode_pow": 2.2,
+    "ruido": 0.7,
+    "degraus": 4,
+    "chao": true,
+    "blend": "mix"
+   },
+   {
+    "p": "@fumaca",
+    "mode": "vel",
+    "amount": 16,
+    "size": [
+     0.6,
+     1.8
+    ],
+    "speed": [
+     2,
+     5
+    ],
+    "spread": 40,
+    "grav": -4,
+    "damp": [
+     1.5,
+     3
+    ],
+    "life": 1.0,
+    "ramp": [
+     "#e8a860",
+     "#d08a48",
+     "#b06e38",
+     "#8a5430"
+    ],
+    "alpha": [
+     [
+      0,
+      0.9
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.2,
+    "blend": "mix"
+   },
+   {
+    "p": "@ponto",
+    "mode": "vel",
+    "amount": 40,
+    "size": [
+     0.05,
+     0.13
+    ],
+    "speed": [
+     3,
+     8
+    ],
+    "spread": 50,
+    "grav": -14,
+    "life": 1.0,
+    "ramp": [
+     "#8a5430",
+     "#b06e38",
+     "#d08a48"
+    ],
+    "y": 0.2
+   }
+  ]
  }
 }

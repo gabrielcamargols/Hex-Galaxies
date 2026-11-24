@@ -150,6 +150,7 @@ func _ready() -> void:
 	board.unit_drag_started.connect(_on_unit_drag_started)
 	board.worm_roar.connect(_on_worm_roar)
 	board.worm_bite.connect(_on_worm_bite)
+	board.worm_rise.connect(_on_worm_rise)
 	vfx = Node3D.new()
 	vfx.set_script(load("res://scripts/vfx.gd"))
 	board.add_child(vfx)
@@ -8299,12 +8300,17 @@ func _on_worm_roar(pos: Vector3) -> void:
 	_flash_screen(Color(0.6, 0.02, 0.0, 0.35), 0.6)
 
 
+# o Verme não explode nada: rompe e revira a areia (jato de areia, grãos caindo, poeira baixa)
+func _on_worm_rise(pos: Vector3) -> void:
+	sfx.play("areia_rompe", -2.0, randf_range(0.9, 1.05))
+	vfx.play_fx("tarhut_areia_sai", pos, null, Color.WHITE)
+
+
 func _on_worm_bite(pos: Vector3) -> void:
 	board.shake = max(board.shake, 1.0)
-	sfx.play("explosao", 0.0, 0.6)
-	vfx.dust_burst(pos, true)
-	vfx.flip("boom", pos, 5.0, 0.8, Color(1, 0.8, 0.6))
-	vfx.flip("rock", pos, 4.0, 0.7)
+	sfx.play("areia_impacto", 0.0, randf_range(0.9, 1.05))
+	sfx.play("verme_rumor", -4.0, 0.45)
+	vfx.play_fx("tarhut_areia_bote", pos, null, Color.WHITE)
 
 
 func _flash_screen(col: Color, dur: float) -> void:

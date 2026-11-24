@@ -7,6 +7,7 @@ extends Node3D
 
 signal roared      # boca escancarada: rugido, tremor forte
 signal bit         # cabeça volta para o buraco: impacto
+signal saiu        # começou a romper a areia
 
 const DUR = 4.8
 const TOP = 11.0              # altura máxima da cabeça (os personagens têm ~1,8)
@@ -123,6 +124,8 @@ func _process(delta: float) -> void:
 	if delay > 0.0:
 		delay -= delta
 		return
+	if t == 0.0:
+		saiu.emit()
 	t += delta
 	_apply(delta)
 	if t >= 0.95 and not fired_roar:

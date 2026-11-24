@@ -7,6 +7,7 @@ signal unit_dropped(uid, h)          # soltou uma peça arrastada (h pode ser nu
 signal unit_drag_started(uid)
 signal worm_roar(pos)                 # o verme rugiu lá do alto (posição do buraco)
 signal worm_bite(pos)                 # o verme mergulhou de volta
+signal worm_rise(pos)                 # o verme rompeu a areia
 
 const S3 = 1.7320508
 const HS = 0.55          # altura de cada nível
@@ -5084,6 +5085,7 @@ func worm_emerge(hexes: Array) -> void:
 		w.setup(sc, hp, Vector3(0, 0, 0) if hp.length() > 2.0 else Vector3(3, 0, 0), outline_mat, i * 0.45)
 		w.roared.connect(func(): worm_roar.emit(hp))
 		w.bit.connect(func(): worm_bite.emit(hp))
+		w.saiu.connect(func(): worm_rise.emit(hp))
 		i += 1
 
 
