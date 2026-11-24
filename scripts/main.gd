@@ -151,6 +151,9 @@ func _ready() -> void:
 	board.worm_roar.connect(_on_worm_roar)
 	board.worm_bite.connect(_on_worm_bite)
 	board.worm_rise.connect(_on_worm_rise)
+	board.peca_erguida.connect(_on_peca_erguida)
+	board.peca_pousou.connect(_on_peca_pousou)
+	board.peca_tombou.connect(_on_peca_tombou)
 	vfx = Node3D.new()
 	vfx.set_script(load("res://scripts/vfx.gd"))
 	board.add_child(vfx)
@@ -1199,6 +1202,50 @@ func _dica_casa(h) -> void:
 		var mp = get_viewport().get_mouse_position()
 		var vs = get_viewport().get_visible_rect().size
 		dica_casa_ui.position = Vector2(clamp(mp.x + 18, 4, vs.x - dica_casa_ui.size.x - 4), clamp(mp.y + 22, 4, vs.y - dica_casa_ui.size.y - 4))
+
+
+# ================= tabuleiro vivo: sons e poeira das miniaturas =================
+var voz_pronto_ms: Dictionary = {}    # uid -> última fala de prontidão (não repete a cada clique)
+
+
+func _on_peca_erguida(uid: int) -> void:
+	if game == null or autotest:
+		return
+	var u = game.by_uid(uid)
+	if u == null or u.barrier:
+		return
+	sfx.play("miniatura_ergue", -9.0, randf_range(0.95, 1.08), 0.0)
+	# fala curta de prontidão, se o personagem tiver uma gravada (v_<id>_pronto); com intervalo
+	var agora = Time.get_ticks_msec()
+	if sfx.has_sound("v_%s_pronto" % u.cid) and agora - int(voz_pronto_ms.get(uid, -99999)) > 12000:
+		voz_pronto_ms[uid] = agora
+		_voice(uid, "pronto", -2.0, 0.15)
+
+
+func _cor_poeira(h: Vector2i) -> Color:
+	var k = str(game.terr(h)["k"]) if game != null else ""
+	if k.contains("duna") or k.contains("areia") or k.contains("deserto"):
+		return Color(0.93, 0.72, 0.42, 0.85)
+	if k.contains("neve") or k.contains("gelo"):
+		return Color(0.92, 0.96, 1.0, 0.85)
+	if k.contains("mata") or k.contains("grama") or k.contains("floresta") or k.contains("selva"):
+		return Color(0.55, 0.62, 0.35, 0.8)
+	if k.contains("cristal"):
+		return Color(0.6, 0.92, 1.0, 0.8)
+	return Color(0.72, 0.62, 0.52, 0.8)
+
+
+func _on_peca_pousou(uid: int, h) -> void:
+	if game == null or h == null:
+		return
+	sfx.play("miniatura_toc", -5.0, randf_range(0.93, 1.07), 0.0)
+	var p = _hex_pos(h, 0.05)
+	vfx.burst(p, _cor_poeira(h), 12, 1.3, 0.55, 0.16, false, Vector3.UP, 85.0, -2.0, 0.45)
+
+
+func _on_peca_tombou(uid: int, pos: Vector3, h) -> void:
+	sfx.play("miniatura_tomba", -4.0, randf_range(0.95, 1.05), 0.0)
+	vfx.burst(pos, _cor_poeira(h) if h != null else Color(0.72, 0.62, 0.52, 0.8), 16, 1.6, 0.6, 0.18, false, Vector3.UP, 80.0, -2.0, 0.5)
 
 
 # ================= tutorial =================
@@ -3503,6 +3550,12 @@ func _turn_sound() -> void:
 	turn_seen = game.cur
 	if game.cur == me:
 		sfx.play("vez_sua", -4.0, 1.0, 0.0)
+		# as peças que ainda podem agir olham para você, esperando a ordem
+		var prontas = []
+		for pu in game.field():
+			if pu.owner == me and not pu.barrier and pu.crystal == "" and game.can_start(pu):
+				prontas.append(pu.uid)
+		board.atencao_turno(prontas)
 	else:
 		sfx.play("vez_rival", -9.0, 1.0, 0.0)
 

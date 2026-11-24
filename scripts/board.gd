@@ -8,6 +8,10 @@ signal unit_drag_started(uid)
 signal worm_roar(pos)                 # o verme rugiu lá do alto (posição do buraco)
 signal worm_bite(pos)                 # o verme mergulhou de volta
 signal worm_rise(pos)                 # o verme rompeu a areia
+# tabuleiro vivo: a peça foi erguida (selecionada), pousou na mesa (fim do arrasto) ou tombou (derrota)
+signal peca_erguida(uid)
+signal peca_pousou(uid, h)
+signal peca_tombou(uid, pos, h)
 
 const S3 = 1.7320508
 const HS = 0.55          # altura de cada nível
@@ -2611,8 +2615,15 @@ func sync_units() -> void:
 	for uid in unit_nodes.keys():
 		if not seen.has(uid):
 			var n = unit_nodes[uid]
-			n["node"].queue_free()
+			var du = g.by_uid(uid)
 			unit_nodes.erase(uid)
+			atencao.erase(uid)
+			if du != null and du.st == "dead" and not du.barrier and du.crystal == "" and is_instance_valid(n["node"]) and n["node"].visible:
+				_tomba(n, uid)
+			else:
+				if n.has("sombra_mao") and is_instance_valid(n["sombra_mao"]):
+					n["sombra_mao"].queue_free()
+				n["node"].queue_free()
 
 
 func _unit_fac_col(u) -> Color:
@@ -4114,8 +4125,138 @@ func _process(delta: float) -> void:
 	_update_units(delta)
 
 
+# ================= tabuleiro vivo =================
+# As peças são miniaturas que percebem o jogador: mouse em cima -> olham para a câmera e respondem com um
+# gesto da facção; selecionada -> sobe da mesa como se estivesse na mão; arrastada -> inclina com o
+# movimento e projeta sombra; solta -> cai e faz "toc"; derrotada -> tomba e sai do tabuleiro.
+const PRONTO_FAC = {"KRI": "continencia", "WAC": "punho", "FAU": "punho", "ZUK": "aceno", "TER": "aceno", "ABY": "guarda", "LIT": "mostra_palma"}
+const PRONTO_CD = 4.0          # segundos até a mesma peça responder de novo ao mouse
+const ERGUE_ALT = 0.16         # quanto a peça selecionada sobe da mesa
+const ARRASTO_ALT = 0.6        # altura da peça na mão durante o arrasto
+const POUSO_T = 0.2            # queda ao soltar
+var atencao: Dictionary = {}   # uid -> até quando (relogio) olha para a câmera
+var pronto_cd: Dictionary = {} # uid -> último gesto de prontidão (relogio)
+var _hov_uid_ant: int = -1
+var _sel_uid_ant: int = -1
+var tombando: Array = []       # miniaturas derrotadas caindo (já fora de unit_nodes)
+
+
+func _fac_de(u) -> String:
+	return str(DB.cards[u.cid].get("f", "")) if DB.cards.has(u.cid) else ""
+
+
+# a peça percebe o mouse: vira para a câmera e responde com o gesto da facção (com intervalo)
+func _peca_atende(uid: int) -> void:
+	var u = g.by_uid(uid)
+	if u == null or u.barrier or u.crystal != "" or not unit_nodes.has(uid):
+		return
+	atencao[uid] = max(float(atencao.get(uid, -1.0)), relogio + 1.4)
+	if not tem_fig3d(uid) or not unit_nodes[uid]["path"].is_empty():
+		return
+	var fig: Node3D = unit_nodes[uid]["sprite"]
+	if fig.has_meta("gesto") or relogio - float(pronto_cd.get(uid, -99.0)) < PRONTO_CD:
+		return
+	pronto_cd[uid] = relogio
+	var nome = "acena_cabeca" if fig.has_meta("mira_yaw") else str(PRONTO_FAC.get(_fac_de(u), "acena_cabeca"))
+	gesto(uid, nome)
+
+
+# começo da sua vez: as peças que ainda podem agir olham para você, uma depois da outra
+func atencao_turno(uids: Array) -> void:
+	var i = 0
+	for uid in uids:
+		if unit_nodes.has(uid):
+			var ini = relogio + 0.12 * i
+			atencao[uid] = ini + 1.5
+			unit_nodes[uid]["atencao_ini"] = ini
+			i += 1
+
+
+func _sombra_mao(d: Dictionary, node: Node3D, altura: float, chao_y: float) -> void:
+	var sm: MeshInstance3D = d.get("sombra_mao", null)
+	if altura < 0.02:
+		if sm != null:
+			sm.visible = false
+		return
+	if sm == null:
+		sm = MeshInstance3D.new()
+		sm.mesh = _disc(INNER * 0.8 * HX, 20)
+		var mt = StandardMaterial3D.new()
+		mt.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mt.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mt.albedo_color = Color(0.03, 0.0, 0.06, 0.4)
+		mt.cull_mode = BaseMaterial3D.CULL_DISABLED
+		sm.material_override = mt
+		sm.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(sm)
+		d["sombra_mao"] = sm
+	sm.visible = true
+	# quanto mais alto, menor e mais clara (como luz de mesa vinda de cima)
+	sm.position = Vector3(node.position.x, chao_y + 0.05, node.position.z)
+	sm.scale = Vector3.ONE * clamp(1.0 - altura * 0.45, 0.55, 1.0)
+	sm.material_override.albedo_color.a = clamp(0.42 - altura * 0.25, 0.12, 0.42)
+
+
+# derrota: a miniatura tomba para trás (girando pela base), quica, fica deitada um instante e afunda
+func _tomba(n: Dictionary, uid: int) -> void:
+	var node: Node3D = n["node"]
+	for k in ["hp", "heart", "flags", "tag", "beam"]:
+		var c = n.get(k, null)
+		if c != null and is_instance_valid(c):
+			c.visible = false
+	for k in ["sombra_mao"]:
+		var c2 = n.get(k, null)
+		if c2 != null and is_instance_valid(c2):
+			c2.queue_free()
+	if n.has("est_row") and is_instance_valid(n["est_row"]):
+		n["est_row"].visible = false
+	# cai para longe da câmera (a gente vê o tombo de frente) com um pouco de sorteio
+	var dir = Vector3(0, 0, -1)
+	if cam != null and is_instance_valid(cam):
+		dir = node.global_position - cam.global_position
+	dir.y = 0.0
+	dir = dir.normalized().rotated(Vector3.UP, randf_range(-0.6, 0.6)) if dir.length() > 0.01 else Vector3(0, 0, -1)
+	var eixo = Vector3.UP.cross(dir).normalized()
+	var b0 = node.transform.basis
+	var p0 = node.position
+	tombando.append(node)
+	var tw = node.create_tween()
+	var gira = func(a: float):
+		node.transform.basis = Basis(eixo, a) * b0
+	# inclina devagar (a base ainda segura), depois cai acelerando
+	tw.tween_method(gira, 0.0, 0.18, 0.22).set_trans(Tween.TRANS_SINE)
+	tw.tween_method(gira, 0.18, PI * 0.5, 0.2).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+	var h_t = n.get("hex", null)
+	tw.tween_callback(func(): peca_tombou.emit(uid, node.global_position + dir * 0.6, h_t))
+	tw.tween_method(gira, PI * 0.5, PI * 0.42, 0.07).set_ease(Tween.EASE_OUT)
+	tw.tween_method(gira, PI * 0.42, PI * 0.5, 0.09).set_ease(Tween.EASE_IN)
+	tw.tween_interval(0.7)
+	# sai do tabuleiro: afunda na casa e some
+	tw.tween_property(node, "position:y", p0.y - 0.9, 0.55).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+	tw.parallel().tween_property(node, "scale", node.scale * 0.6, 0.55)
+	tw.tween_callback(func():
+		tombando.erase(node)
+		node.queue_free())
+
+
 func _update_units(delta: float) -> void:
 	var t_now = Time.get_ticks_msec() / 1000.0
+	# quem está sob o mouse (sem arrastar nada) e quem acabou de ser erguido
+	var arrastando_algo = drag != null and drag["on"]
+	var hov_uid = -1
+	if hover_seen != null and not arrastando_algo and g != null:
+		var hu = g.unit_at(hover_seen)
+		if hu != null and unit_nodes.has(hu.uid):
+			hov_uid = hu.uid
+	if hov_uid != _hov_uid_ant:
+		_hov_uid_ant = hov_uid
+		if hov_uid >= 0:
+			_peca_atende(hov_uid)
+	var sel_agora = int(state.get("sel_uid", -1))
+	if sel_agora != _sel_uid_ant:
+		_sel_uid_ant = sel_agora
+		if sel_agora >= 0 and unit_nodes.has(sel_agora):
+			peca_erguida.emit(sel_agora)
 	for u in g.units:
 		if u.st != "field" or not unit_nodes.has(u.uid):
 			continue
@@ -4129,6 +4270,24 @@ func _update_units(delta: float) -> void:
 			continue
 		node.visible = true
 		var goal = _unit_goal(u)
+		# acabou de ser solta da mão: cai direto na casa (sem andar), acelerando, e faz "toc"
+		var na_mao = drag != null and drag["on"] and drag["uid"] == u.uid and drag.has("world")
+		if d.get("na_mao", false) and not na_mao:
+			d["pousa_t"] = 0.0
+			d["pousa_de"] = node.position
+		d["na_mao"] = na_mao
+		var pousando = d.has("pousa_t")
+		if pousando:
+			d["hex"] = goal
+			d["path"] = []
+			d["pousa_t"] = float(d["pousa_t"]) + delta / POUSO_T
+			var tp = min(1.0, float(d["pousa_t"]))
+			var hwp = world_xz(goal)
+			node.position = Vector3(d["pousa_de"]).lerp(Vector3(hwp.x, top_y(goal), hwp.y), tp * tp)
+			if tp >= 1.0:
+				d.erase("pousa_t")
+				d["quica_t"] = 0.0
+				peca_pousou.emit(u.uid, goal)
 		if goal != d["hex"]:
 			var path = walk_path(d["hex"], goal)
 			path.pop_front()
@@ -4215,7 +4374,7 @@ func _update_units(delta: float) -> void:
 				d["seg_i"] = int(d.get("seg_i", 0)) + 1
 				if d["path"].is_empty() and is3d and d["sprite"].has_meta("jeito") and d["sprite"].get_meta("jeito").get("natural", false):
 					d["sprite"].set_meta("chega_t0", relogio)     # último passo: absorve o peso
-		else:
+		elif not pousando:
 			var hw = world_xz(d["hex"])
 			node.position = Vector3(hw.x, top_y(d["hex"]), hw.y)
 			if d.has("brota"):
@@ -4228,8 +4387,32 @@ func _update_units(delta: float) -> void:
 				if bt >= 1.0:
 					d.erase("brota")
 		_jaula(u, d, delta)
-		if drag != null and drag["on"] and drag["uid"] == u.uid and drag.has("world"):
-			node.position = drag["world"] + Vector3(0, 0.6, 0)
+		# na mão: segue o cursor no alto e inclina com o movimento (o topo atrasa, como peça segurada)
+		var incl: Vector2 = d.get("incl", Vector2.ZERO)
+		if na_mao:
+			var alvo_m: Vector3 = drag["world"] + Vector3(0, ARRASTO_ALT, 0)
+			var ant_m: Vector3 = d.get("mao_ant", alvo_m)
+			d["mao_ant"] = alvo_m
+			var vel_m = (alvo_m - ant_m) / max(delta, 0.001)
+			var quer = Vector2(-vel_m.z, vel_m.x) * 0.05
+			incl = incl.lerp(quer.limit_length(0.42), min(1.0, delta * 9.0))
+			var mp: Vector3 = d.get("mao_pos", alvo_m)
+			mp = mp.lerp(alvo_m, min(1.0, delta * 22.0))
+			d["mao_pos"] = mp
+			node.position = mp
+		else:
+			d.erase("mao_ant")
+			d.erase("mao_pos")
+			# solta: balança de volta para o prumo (passa um pouco e assenta)
+			var vi: Vector2 = d.get("incl_v", Vector2.ZERO)
+			vi += (-incl * 140.0 - vi * 14.0) * delta
+			d["incl_v"] = vi
+			incl += vi * delta
+		d["incl"] = incl
+		if incl.length() > 0.0005 or na_mao:
+			node.rotation = Vector3(incl.x, 0.0, incl.y)
+		elif node.rotation != Vector3.ZERO:
+			node.rotation = Vector3.ZERO
 		# vida e marcas
 		d["hp"].text = str(u.hp)
 		d["heart"].modulate = (Color("#ff2a2a") if u.hp <= u.maxhp / 3 else (Color("#3d8bff") if u.owner == me else Color("#ff7a2f")))
@@ -4256,10 +4439,22 @@ func _update_units(delta: float) -> void:
 			if d["lunge"] > 0.0:
 				d["lunge"] = max(0.0, d["lunge"] - delta * 1.6)
 			var pos3 = Vector3.ZERO
-			if selected:
-				pos3.y += 0.06 + 0.05 * sin(t_now * 6.0)
+			# selecionada: sobe da mesa como se estivesse na mão e fica flutuando de leve
+			var eg = move_toward(float(d.get("ergue", 0.0)), 1.0 if (selected and not na_mao) else 0.0, delta * (5.0 if selected else 3.5))
+			d["ergue"] = eg
+			var eg_s = eg * eg * (3.0 - 2.0 * eg)
+			pos3.y += eg_s * (ERGUE_ALT + 0.025 * sin(t_now * 2.4))
+			# pousou: um quiquezinho
+			if d.has("quica_t"):
+				d["quica_t"] = float(d["quica_t"]) + delta
+				var qt = float(d["quica_t"])
+				pos3.y += 0.05 * max(0.0, sin(qt * 18.0)) * exp(-qt * 9.0)
+				if qt > 0.5:
+					d.erase("quica_t")
 			sprite.position = pos3
-			sprite.set_meta("olha", _olhar_de(u, node))
+			# olha para a câmera: mouse em cima, selecionada, ou o começo da sua vez
+			var olha_cam = cam != null and is_instance_valid(cam) and not walking and (hov_uid == u.uid or selected or (relogio < float(atencao.get(u.uid, -1.0)) and relogio >= float(d.get("atencao_ini", -1.0))))
+			sprite.set_meta("olha", (cam.global_position - node.global_position) if olha_cam else _olhar_de(u, node))
 			_fig3d_tick(sprite, delta, t_now + d["bob"], d["flip"], mod3, walking and not d.get("long", false), d["lunge"], d["hurt"], d.get("run", false), d.get("mdir", Vector3.ZERO))
 			_fig3d_select(sprite, selected, d["ring"].get_meta("fcol", Color.WHITE))
 		elif sprite != null:
@@ -4273,13 +4468,21 @@ func _update_units(delta: float) -> void:
 			var pos = Vector3.ZERO
 			if walking:
 				pos.y += abs(sin(t_now * 15.0)) * 0.08
-			if selected:
-				pos.y += 0.08 + 0.06 * sin(t_now * 6.0)
+			var eg2 = move_toward(float(d.get("ergue", 0.0)), 1.0 if (selected and not na_mao) else 0.0, delta * (5.0 if selected else 3.5))
+			d["ergue"] = eg2
+			pos.y += eg2 * eg2 * (3.0 - 2.0 * eg2) * (ERGUE_ALT + 0.025 * sin(t_now * 2.4))
 			sprite.position = pos
 			if d["lunge"] > 0.0:
 				d["lunge"] = max(0.0, d["lunge"] - delta * 3.0)
 				sy *= 1.0 + 0.15 * sin(d["lunge"] * PI)
 			sprite.scale = Vector3(1.0, sy, 1.0)
+		# sombra na mesa enquanto a peça está no alto (na mão, erguida ou caindo)
+		var h_baixo = d["hex"]
+		if na_mao and hover != null:
+			h_baixo = hover
+		var chao_y = top_y(h_baixo)
+		var alt_peca = node.position.y - chao_y + (sprite.position.y if sprite != null else 0.0)
+		_sombra_mao(d, node, alt_peca, chao_y)
 		var fc: Color = d["ring"].get_meta("fcol", Color.WHITE)
 		var pul = 0.5 + 0.5 * sin(t_now * 5.0)
 		# selecionado: base acende e pulsa, contorno da arte na cor da facção, coluna de luz
@@ -4741,6 +4944,51 @@ func _manada_tick(delta: float) -> void:
 # ---- gestos dos líderes nos especiais: quadros-chave de braços (direção em frente, lado, cima),
 # inclinação do tronco (Spine1), cabeça e altura do corpo; entre os quadros a pose desliza suave ----
 const GESTOS = {
+	# ---- prontidão (mouse em cima da peça): cada facção responde do seu jeito, curto ----
+	# Krieg: continência (mão direita na testa), corpo empertigado
+	"continencia": {"dur": 1.3, "keys": [
+		{"t": 0.0},
+		{"t": 0.25, "Right": [[0.35, -0.8, 0.45], [0.3, 0.7, 0.62], [0.25, 0.6, 0.75]], "Spine1": -0.06, "Head": -0.06},
+		{"t": 0.9, "Right": [[0.35, -0.8, 0.45], [0.3, 0.7, 0.62], [0.25, 0.6, 0.75]], "Spine1": -0.06, "Head": -0.06},
+		{"t": 1.3}]},
+	# punho erguido (Wächter, Faurianos)
+	"punho": {"dur": 1.2, "keys": [
+		{"t": 0.0},
+		{"t": 0.22, "Right": [[0.25, -0.35, 0.9], [0.15, -0.15, 0.98], [0.1, -0.1, 0.99]], "Spine1": -0.1, "Head": -0.12, "y": 0.04},
+		{"t": 0.45, "Right": [[0.25, -0.35, 0.9], [0.15, -0.15, 0.98], [0.1, -0.1, 0.99]], "Spine1": -0.08, "Head": -0.1},
+		{"t": 0.8, "Right": [[0.25, -0.35, 0.9], [0.15, -0.15, 0.98], [0.1, -0.1, 0.99]], "Spine1": -0.08},
+		{"t": 1.2}]},
+	# aceno (Zukunft, Valakianos): braço para cima e a mão balança duas vezes
+	"aceno": {"dur": 1.4, "keys": [
+		{"t": 0.0},
+		{"t": 0.25, "Right": [[0.3, -0.6, 0.75], [0.15, -0.55, 0.82], [0.1, -0.5, 0.86]], "Head": -0.05},
+		{"t": 0.45, "Right": [[0.3, -0.6, 0.75], [0.15, -0.05, 0.99], [0.1, 0.05, 0.99]], "Head": -0.05},
+		{"t": 0.65, "Right": [[0.3, -0.6, 0.75], [0.15, -0.55, 0.82], [0.1, -0.5, 0.86]], "Head": -0.05},
+		{"t": 0.85, "Right": [[0.3, -0.6, 0.75], [0.15, -0.05, 0.99], [0.1, 0.05, 0.99]], "Head": -0.05},
+		{"t": 1.4}]},
+	# guarda (Abyssais): agacha um pouco e traz os dois braços à frente, pronto para o bote
+	"guarda": {"dur": 1.3, "keys": [
+		{"t": 0.0},
+		{"t": 0.3, "agacha": 0.35, "Spine1": 0.18, "Head": -0.18,
+			"Left": [[0.6, 0.45, -0.6], [0.85, -0.25, 0.45], [0.9, -0.2, 0.3]],
+			"Right": [[0.6, -0.45, -0.6], [0.85, 0.25, 0.45], [0.9, 0.2, 0.3]]},
+		{"t": 0.9, "agacha": 0.35, "Spine1": 0.18, "Head": -0.18,
+			"Left": [[0.6, 0.45, -0.6], [0.85, -0.25, 0.45], [0.9, -0.2, 0.3]],
+			"Right": [[0.6, -0.45, -0.6], [0.85, 0.25, 0.45], [0.9, 0.2, 0.3]]},
+		{"t": 1.3}]},
+	# mão aberta à frente, como quem mostra energia na palma (Lithari)
+	"mostra_palma": {"dur": 1.3, "keys": [
+		{"t": 0.0},
+		{"t": 0.3, "Right": [[0.75, -0.45, 0.1], [0.85, -0.1, 0.5], [0.6, 0.0, 0.8]], "Head": 0.08},
+		{"t": 0.95, "Right": [[0.75, -0.45, 0.1], [0.85, -0.1, 0.5], [0.6, 0.0, 0.8]], "Head": 0.08},
+		{"t": 1.3}]},
+	# arma pesada nas duas mãos (Perfurador): só acena com a cabeça e firma o corpo
+	"acena_cabeca": {"dur": 0.9, "keys": [
+		{"t": 0.0},
+		{"t": 0.2, "Head": 0.22, "Spine1": 0.05},
+		{"t": 0.4, "Head": -0.05},
+		{"t": 0.6, "Head": 0.15, "y": -0.02},
+		{"t": 0.9}]},
 	# Comandante Krieg: mão no rádio pedindo o fogo, depois aponta o braço para o alvo
 	"radio": {"dur": 2.6, "keys": [
 		{"t": 0.0},
