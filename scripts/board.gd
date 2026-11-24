@@ -3206,10 +3206,20 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 			od = Vector3(fig.get_meta("gesto_alvo")) - fig.global_position   # vira para o alvo do especial
 		if od.length() < 0.01 and cam != null and is_instance_valid(cam):
 			od = cam.global_position - fig.global_position
+		# arma de duas mãos apontada em diagonal (broca): o corpo gira para a ponta mirar o inimigo — de leve
+		# parado (guarda) e por inteiro no golpe
+		var desvio = 0.0
+		var vel_vira = 6.0
+		if fig.has_meta("mira_yaw") and od.length() > 0.01:
+			desvio = float(fig.get_meta("mira_yaw")) * 0.5
+			if relogio < float(fig.get_meta("golpe_ate", -1.0)):
+				od = Vector3(fig.get_meta("golpe_alvo")) - fig.global_position
+				desvio = float(fig.get_meta("mira_yaw"))
+				vel_vira = 14.0
 		od.y = 0.0
 		if od.length() > 0.01:
-			var yaw = atan2(od.x, od.z) - fig.get_parent().global_rotation.y
-			giro.rotation.y = lerp_angle(giro.rotation.y, yaw, min(1.0, delta * 6.0))
+			var yaw = atan2(od.x, od.z) - fig.get_parent().global_rotation.y - desvio
+			giro.rotation.y = lerp_angle(giro.rotation.y, yaw, min(1.0, delta * vel_vira))
 	if fig.has_meta("dragao"):
 		_dragao_tick(fig, delta, t, walking, run, lunge, hurt)
 		return
@@ -4702,13 +4712,16 @@ func _palpebra(fig: Node3D, sk: Skeleton3D, bn: Dictionary) -> Node3D:
 
 
 # golpe com a arma empunhada (Perfurador: estocada com a broca girando)
-func arma_ataque(uid: int) -> bool:
+func arma_ataque(uid: int, alvo: Variant = null) -> bool:
 	if not tem_fig3d(uid):
 		return false
 	var fig = unit_nodes[uid]["sprite"]
 	if not fig.has_meta("empunha"):
 		return false
 	fig.get_meta("empunha").ataque()
+	if alvo != null:
+		fig.set_meta("golpe_alvo", alvo)          # vira o corpo para a ponta da broca mirar o alvo
+		fig.set_meta("golpe_ate", relogio + 1.1)
 	return true
 
 
@@ -4743,6 +4756,7 @@ func _arma3d(root: Node3D, sk: Skeleton3D, acfg: Dictionary, cid: String) -> voi
 			outl.append(o)
 	arma.name = "arma"
 	sk.add_child(arma)
+	root.set_meta("mira_yaw", deg_to_rad(float(acfg.get("yaw", 0.0))))
 	var emp = EMPUNHAR.new()
 	emp.name = "empunhar"
 	if emp.prepara(sk, arma, acfg):
