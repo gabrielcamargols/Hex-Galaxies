@@ -1631,7 +1631,7 @@ func _prop(parent: Node3D, desert: bool, h: Vector2i, pos: Vector3, size: float,
 
 # modelos novos (com textura própria) que substituem os antigos de ossada e cacto
 const MODEL_SWAP = {"tarhut_destroco": "cen_tarhut_rocha", "tarhut_cristal": "cen_tarhut_cristal", "cen_tarhut_ossada": "tarhut_fossil", "ossada": "tarhut_fossil", "cen_tarhut_cacto": "tarhut_flor", "cen_tarhut_cacto_bola": "tarhut_flor"}
-const TEXTURED = ["tarhut_fossil", "tarhut_flor"]
+const TEXTURED = ["tarhut_fossil", "tarhut_flor", "cen_carrinho_mina"]
 
 
 func _swap_name(mname: String) -> String:
@@ -6347,26 +6347,78 @@ func sync_carts(cs: Array) -> void:
 		var goal = Vector3(wp.x, top_y(h), wp.y)
 		if not cart_nodes[i].has_meta("moving"):
 			cart_nodes[i].position = goal
+			cart_nodes[i].get_node("gira").rotation.y = _cart_yaw(i, h)
 
 
 func _make_cart(i: int) -> Node3D:
 	var root = Node3D.new()
 	add_child(root)
-	var body = _mesh(root, _box(Vector3(0.8, 0.45, 0.6)), Color("#c8642a"), Vector3(0, 0.42, 0))
-	body.material_overlay = _ink()
-	var rim = _mesh(root, _box(Vector3(0.9, 0.08, 0.7)), Color("#7a3a18"), Vector3(0, 0.66, 0))
-	rim.material_overlay = _ink()
+	# carrinho de mina (Meshy, pintado à mão) + carga de cristais facetados na cor do carrinho
+	var gira = Node3D.new()
+	gira.name = "gira"
+	root.add_child(gira)
+	var ok = _model(gira, "cen_carrinho_mina", Vector3.ZERO, 0.95, 0.0, true)
+	if not ok:
+		var body = _mesh(gira, _box(Vector3(0.8, 0.45, 0.6)), Color("#c8642a"), Vector3(0, 0.42, 0))
+		body.material_overlay = _ink()
 	var kinds = ["roxo", "azul", "verde"]
 	var cc = CRYSTAL_COL[kinds[i % 3]]
-	for k in range(4):
-		var ore = _mesh(root, SphereMesh.new(), Color(cc[k % 2]), Vector3(-0.22 + k * 0.15, 0.72, (k % 2) * 0.12 - 0.06))
-		ore.scale = Vector3.ONE * 0.24
-		ore.material_override = _glow_mat(Color(cc[k % 2]), 0.6)
-	for x in [-0.28, 0.28]:
-		for z in [-0.32, 0.32]:
-			var wh = _mesh(root, _cyl(0.13, 0.13, 0.08, 10), Color("#2a2030"), Vector3(x, 0.14, z), Vector3(PI / 2, 0, 0))
-			wh.material_overlay = _ink()
+	var rng = RandomNumberGenerator.new()
+	rng.seed = 7331 + i
+	var carga = [[-0.22, 0.0, 0.17, 0.2], [0.0, 0.05, 0.22, -0.25], [0.2, -0.04, 0.16, 0.35], [-0.08, -0.12, 0.13, -0.5], [0.12, 0.13, 0.12, 0.6]]
+	for k in carga.size():
+		var e = carga[k]
+		var cr = MeshInstance3D.new()
+		cr.mesh = _cristal_ponta(float(e[2]))
+		cr.material_override = _glow_mat(Color(cc[k % 2]), 0.55)
+		cr.material_overlay = _ink()
+		cr.position = Vector3(float(e[0]), 0.5, float(e[1]))
+		cr.rotation = Vector3(rng.randf_range(-0.35, 0.35), rng.randf_range(0, TAU), float(e[3]))
+		gira.add_child(cr)
 	return root
+
+
+# ponta de cristal facetada (prisma hexagonal com ponta), base no y=0
+func _cristal_ponta(r: float) -> ArrayMesh:
+	var st = SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var n = 6
+	var alto = r * 1.6
+	var ponta = r * 2.5
+	var base: Array = []
+	var topo: Array = []
+	for j in n:
+		var a = TAU * j / n
+		base.append(Vector3(cos(a) * r, -r * 0.6, sin(a) * r))
+		topo.append(Vector3(cos(a) * r * 0.92, alto, sin(a) * r * 0.92))
+	var cume = Vector3(0, ponta, 0)
+	for j in n:
+		var j2 = (j + 1) % n
+		for t in [[base[j], topo[j], topo[j2]], [base[j], topo[j2], base[j2]], [topo[j], cume, topo[j2]]]:
+			var nr = (t[1] - t[0]).cross(t[2] - t[0]).normalized()
+			if nr.dot(t[0]) < 0:
+				t = [t[0], t[2], t[1]]
+				nr = -nr
+			for v in t:
+				st.set_normal(nr)
+				st.add_vertex(v)
+	return st.commit()
+
+
+# o carrinho fica alinhado com o trilho em que está
+func _cart_yaw(i: int, h: Vector2i) -> float:
+	if g == null or i >= g.carts.size():
+		return 0.0
+	var ti = int(g.carts[i].get("track", -1))
+	if ti < 0 or ti >= g.tracks.size():
+		return 0.0
+	var tr: Array = g.tracks[ti]
+	var k = tr.find(h)
+	if k < 0 or tr.size() < 2:
+		return 0.0
+	var vz = tr[k + 1] if k + 1 < tr.size() else tr[k - 1]
+	var dv = world_xz(vz) - world_xz(h)
+	return atan2(-dv.y, dv.x)
 
 
 func move_cart(i: int, to: Vector2i) -> void:
@@ -6378,6 +6430,12 @@ func move_cart(i: int, to: Vector2i) -> void:
 	var goal = Vector3(wp.x, top_y(to), wp.y)
 	var tw = create_tween()
 	tw.tween_property(n, "position", goal, 0.22)
+	# vira junto nas curvas do trilho (pelo menor ângulo: o carrinho é igual dos dois lados)
+	var gr: Node3D = n.get_node("gira")
+	var y1 = _cart_yaw(i, to)
+	var y0 = gr.rotation.y
+	var dy = wrapf(y1 - y0, -PI * 0.5, PI * 0.5)
+	tw.parallel().tween_property(gr, "rotation:y", y0 + dy, 0.22)
 	tw.tween_callback(func(): n.remove_meta("moving"))
 
 
