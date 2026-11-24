@@ -12,6 +12,11 @@ var arma_rest := Transform3D()     # onde a arma fica, no repouso, no espaço do
 var lados: Array = []              # um por mão: {up, fore, hand, pega, eixo, dedos, polegar, d, p, z, h, a, b, palma, polo}
 var fecha := 1.0                   # 0..1 quanto os dedos fecham
 var solta := 0.0                   # 0..1 solta a pega (gesto que precisa dos braços livres)
+var ponta: Node3D = null           # parte da arma que gira (a broca), em torno do Z da arma
+var giro := 0.0
+var vel_giro := 0.0
+var ataque_t0 := -99.0             # golpe: estocada para a frente com a broca girando
+var _ms := -1
 var alcance_falta := -1.0          # teste: quanto faltou de braço para a mão chegar na pega (<= 0: chegou)
 
 
@@ -23,6 +28,9 @@ static func _rest_dir(sk: Skeleton3D, a: int, b: int) -> Vector3:
 # repouso, espaço do esqueleto), "eixo" (eixo das pegas na arma), "palma": [ao longo, para dentro]}
 func prepara(sk: Skeleton3D, no_arma: Node3D, cfg: Dictionary) -> bool:
 	arma = no_arma
+	var pn = arma.find_child("eixo_ponta", true, false)
+	if pn is Node3D:
+		ponta = pn
 	osso_base = sk.find_bone(str(cfg.get("osso", "Spine01")))
 	if osso_base < 0:
 		return false
@@ -71,11 +79,26 @@ func prepara(sk: Skeleton3D, no_arma: Node3D, cfg: Dictionary) -> bool:
 			var bi = sk.find_bone("%sThumb%d" % [pre, k])
 			if bi >= 0:
 				pol.append(bi)
-		lados.append({"up": up, "fore": fo, "hand": ha, "pega": lado[1], "eixo": eixo, "dedos": dedos, "polegar": pol,
+		lados.append({"up": up, "fore": fo, "hand": ha, "clav": sk.find_bone(pre + "Clavicle"), "pega": lado[1], "eixo": eixo, "dedos": dedos, "polegar": pol,
 			"d": d, "p": p, "z": z, "h": h, "lado": lado[2],
 			"a": _rest_dir(sk, up, fo).length(), "b": _rest_dir(sk, fo, ha).length(),
 			"palma": d * float(palma[0]) + p * float(palma[1])})
 	return true
+
+
+# a palma encosta na pega do lado de onde o braço vem; eixo da pega pelo meio dos dedos (indicador em cima)
+func alvo_mao_rot(L: Dictionary, G: Vector3, S: Vector3, A: Vector3) -> Basis:
+	var ida = G - S
+	var Pw = (ida - A * ida.dot(A)).normalized()
+	var Zw = A
+	var Dw = (Zw.cross(Pw) if L["h"] > 0.0 else Pw.cross(Zw)).normalized()
+	var rest_m = Basis(L["d"], L["p"], L["z"])
+	var alvo_m = Basis(Dw, Pw, Zw)
+	return (alvo_m * rest_m.inverse()).orthonormalized()
+
+
+func ataque() -> void:
+	ataque_t0 = Time.get_ticks_msec() / 1000.0
 
 
 static func _v3(a) -> Vector3:
@@ -86,9 +109,27 @@ func _process_modification() -> void:
 	var sk: Skeleton3D = get_skeleton()
 	if sk == null or arma == null or not is_instance_valid(arma):
 		return
-	# a arma acompanha o tronco
+	var agora_ms = Time.get_ticks_msec()
+	var dt = 0.0 if _ms < 0 else clamp((agora_ms - _ms) / 1000.0, 0.0, 0.1)
+	_ms = agora_ms
+	# golpe: estica para a frente rápido, segura girando e volta; a broca acelera e vai parando
+	var ta = agora_ms / 1000.0 - ataque_t0
+	var est = 0.0
+	if ta >= 0.0 and ta < 1.0:
+		est = smoothstep(0.0, 0.16, ta) * (1.0 - smoothstep(0.55, 1.0, ta))
+		vel_giro = 32.0
+	else:
+		vel_giro = move_toward(vel_giro, 0.0, dt * 40.0)
+	giro = fmod(giro + vel_giro * dt, TAU)
+	if ponta != null:
+		ponta.rotation.z = giro
+	# a arma acompanha o tronco (e avança na estocada)
 	var base_agora = sk.get_bone_global_pose(osso_base)
 	var D: Transform3D = base_agora * base_rest.affine_inverse() * arma_rest
+	if est > 0.0:
+		var frente = (base_agora.basis * Vector3(0, 0, 1)).normalized()
+		var eixo_arma = D.basis.z.normalized()
+		D.origin += (frente * 0.6 + eixo_arma * 0.4).normalized() * 0.03 * est   # o corpo já avança no golpe (lunge do tabuleiro)
 	arma.transform = D
 	if solta >= 0.999:
 		return
@@ -98,14 +139,17 @@ func _process_modification() -> void:
 		var G: Vector3 = D * (L["pega"] as Vector3)
 		var A: Vector3 = (D.basis * (L["eixo"] as Vector3)).normalized()
 		var S: Vector3 = sk.get_bone_global_pose(L["up"]).origin
-		# a palma encosta na pega do lado de onde o braço vem; eixo da pega pelo meio dos dedos (indicador em cima)
-		var ida = G - S
-		var Pw = (ida - A * ida.dot(A)).normalized()
-		var Zw = A
-		var Dw = (Zw.cross(Pw) if L["h"] > 0.0 else Pw.cross(Zw)).normalized()
-		var rest_m = Basis(L["d"], L["p"], L["z"])
-		var alvo_m = Basis(Dw, Pw, Zw)
-		var Rh: Basis = (alvo_m * rest_m.inverse()).orthonormalized()
+		# ombro vai à frente (clavícula) quando o braço não alcança: até ~8 cm, como quem estica para pegar
+		if L["clav"] >= 0:
+			var Wp = G - (alvo_mao_rot(L, G, S, A) * (L["palma"] as Vector3))
+			var falta = (Wp - S).length() - (L["a"] + L["b"]) * 0.96
+			if falta > 0.0:
+				var cg = sk.get_bone_global_pose(L["clav"])
+				var s2 = S + (Wp - S).normalized() * min(falta, 0.08)
+				var qc = Quaternion((S - cg.origin).normalized(), (s2 - cg.origin).normalized())
+				sk.set_bone_global_pose(L["clav"], Transform3D(Basis(qc) * cg.basis, cg.origin))
+				S = sk.get_bone_global_pose(L["up"]).origin
+		var Rh: Basis = alvo_mao_rot(L, G, S, A)
 		var W: Vector3 = G - Rh * (L["palma"] as Vector3)
 		# IK de dois ossos
 		var a: float = L["a"]

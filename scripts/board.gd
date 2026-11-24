@@ -59,9 +59,9 @@ const FIG3D = {
 			"Left": [[0.0, 0.5, -0.85], [0.1, 0.45, -0.88], [0.05, 0.35, -0.93]]}},
 	# Perfurador (Valakianos): rig feito aqui (o modelo veio sem esqueleto) e a broca nas duas mãos —
 	# presa ao tronco, mão direita na pega de trás, esquerda na pega de cima (scripts/empunhar.gd)
-	"perfurador": {"path": "res://models/personagens/perfurador.glb", "visor": false, "punho": false, "giro": 0.0,
-		"arma": {"path": "res://models/armas/broca_perfurador.glb", "osso": "Spine01", "escala": 0.55, "yaw": 85.0, "pitch": -25.0,
-			"pega_R": [0.0, -0.075, -0.483], "pega_L": [0.0, 0.165, -0.085], "eixo": [0, 1, 0], "mao_R": [-0.12, 0.52, 0.16],
+	"perfurador": {"path": "res://models/personagens/perfurador.glb", "visor": false, "punho": false, "giro": 0.0, "jeito": "perfurador",
+		"arma": {"path": "res://models/armas/broca_perfurador.glb", "osso": "Hip", "escala": 1.05, "yaw": 90.0, "pitch": -25.0,
+			"pega_R": [0.0, -0.075, -0.483], "pega_L": [0.0, 0.165, -0.085], "eixo": [0, 1, 0], "mao_R": [-0.2, 0.48, 0.2],
 			"palma": [0.05, 0.02]}},
 	# Sniper Valakiano: o mais sério do grupo, meticuloso; anda medido e atento (passada natural, sem deslize)
 	"t_sniper": {"path": "res://models/personagens/t_sniper.glb", "visor": false, "punho": false, "jeito": "comandante", "giro": 0.0,
@@ -79,6 +79,10 @@ const JEITOS = {
 	"padrao": {"resp": [0.05, 2.2], "olha": [0.2, 0.42], "peso": 0.035, "cad": [7.0, 12.5], "passo": [0.42, 0.78],
 		"joelho": [0.55, 1.15], "bal": [0.42, 0.62], "quica": [0.035, 0.1], "ginga": 0.0, "incl": [0.04, 0.24],
 		"vel": [2.1, 4.0], "tique": ""},
+	# Perfurador: carrega a broca enorme — corcunda pelo peso (curva), joelhos um pouco dobrados, passo curto e pesado
+	"perfurador": {"resp": [0.05, 2.0], "olha": [0.15, 0.3], "peso": 0.03, "cad": [6.2, 10.0], "passo": [0.32, 0.55],
+		"joelho": [0.5, 0.95], "bal": [0.3, 0.45], "quica": [0.02, 0.06], "ginga": 0.0, "incl": [0.03, 0.1],
+		"vel": [1.9, 3.5], "tique": "", "curva": 0.38, "dobra": 0.1},
 	# Krieg: postura de sentido, marcha firme e cadenciada, olhar que varre o campo de tempos em tempos
 	"militar": {"resp": [0.03, 1.8], "olha": [0.1, 0.3], "peso": 0.01, "cad": [6.8, 10.5], "passo": [0.4, 0.62],
 		"joelho": [0.45, 0.8], "bal": [0.55, 0.7], "quica": [0.03, 0.06], "ginga": 0.0, "incl": [0.0, 0.06],
@@ -3459,6 +3463,20 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 		for hn in ["LeftHand", "RightHand"]:
 			if not pose.has(hn):
 				pose[hn] = []   # o pulso volta ao repouso antes de a pose da ilustração mirar a mão
+	# corcunda pelo peso do que carrega (Perfurador e a broca): o tronco curva para a frente, a cabeça
+	# compensa para olhar o campo e os joelhos dobram um pouco (os pés seguem no chão: _assenta)
+	var curva = float(J.get("curva", 0.0))
+	if curva > 0.0:
+		for nm in ["Spine1", "Spine2", "Head", "LeftUpLeg", "RightUpLeg", "LeftLeg", "RightLeg"]:
+			if not pose.has(nm):
+				pose[nm] = []
+		pose["Spine1"].append([S, curva])
+		pose["Spine2"].append([S, curva * 0.45])      # costas arredondadas
+		pose["Head"].append([S, -curva * 1.35])
+		var db = float(J.get("dobra", 0.0))
+		for lado in ["Left", "Right"]:
+			pose[lado + "UpLeg"].append([S, -db])
+			pose[lado + "Leg"].append([S, db * 2.0])
 	var gk: Dictionary = _gesto_quadro(fig)
 	if not gk.is_empty():
 		var gw: float = gk["w"]
@@ -3559,6 +3577,8 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 	# pés no chão andando e correndo: o corpo desce o quanto o pé mais baixo ficou acima do chão
 	# (o joelho dobrado e o quique deixavam todo mundo flutuando); correndo sobra um voo curtinho
 	var ag2 = float(gk.get("agacha", 0.0)) * float(gk.get("w", 0.0)) if not gk.is_empty() else 0.0
+	if float(J.get("dobra", 0.0)) > 0.0 and ag2 < 0.001:
+		ag2 = 1.0 if ww < 0.001 else 0.0     # joelhos dobrados parado: assenta os pés no chão
 	if ag2 > 0.001:
 		_assenta(fig, sk, ["LeftToeBase", "RightToeBase", "LeftFoot", "RightFoot"], max(ag2, ww), 0.0)
 	elif ww > 0.001 and cjw < 0.999:
@@ -4679,6 +4699,17 @@ func _palpebra(fig: Node3D, sk: Skeleton3D, bn: Dictionary) -> Node3D:
 	lid.set_meta("traco", traco)
 	fig.set_meta("palpebra", piv)
 	return piv
+
+
+# golpe com a arma empunhada (Perfurador: estocada com a broca girando)
+func arma_ataque(uid: int) -> bool:
+	if not tem_fig3d(uid):
+		return false
+	var fig = unit_nodes[uid]["sprite"]
+	if not fig.has_meta("empunha"):
+		return false
+	fig.get_meta("empunha").ataque()
+	return true
 
 
 # arma de duas mãos (a broca do Perfurador): o modelo com o mesmo sombreado de quadrinho do boneco, filho do

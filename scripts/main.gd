@@ -6664,6 +6664,7 @@ func _on_fx_real(e: Dictionary) -> void:
 				# Valakianos: ataque pintado pela Forja (golpe/projétil + impacto próprios)
 				var fu: Variant = game.by_uid(e["from"])
 				var tu: Variant = game.by_uid(e["to"])
+				board.arma_ataque(fu.uid)      # Perfurador: a broca avança girando
 				if fu.cid == "t_sniper" and board.tem_fig3d(fu.uid):
 					_sniper_eletro(fu, tu, ter_id, now)
 					return

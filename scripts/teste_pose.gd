@@ -48,6 +48,8 @@ func run() -> void:
 	var dt = 1.0 / 30.0
 	for k in 150:
 		var anda = k >= 80
+		if OS.get_environment("ATAQUE") != "" and (k == 25 or k == 60) and fr.has_meta("empunha"):
+			fr.get_meta("empunha").ataque()
 		if k < 40:
 			fr.set_meta("olha", Vector3(0, 0, 10))           # de frente para a câmera
 		elif k < 80:
@@ -59,5 +61,10 @@ func run() -> void:
 		t += dt
 		await RenderingServer.frame_post_draw
 		sv.get_texture().get_image().save_png("%s/f%03d.png" % [o, k])
+	var sk3: Skeleton3D = fr.get_meta("skel")
+	var bn3: Dictionary = fr.get_meta("bones")
+	var hd = sk3.get_bone_global_pose(bn3["Head"]).origin
+	var hp = sk3.get_bone_global_pose(bn3["Hips"]).origin
+	print("CORCUNDA cabeça-quadril (frente, cima): %.3f %.3f" % [hd.z - hp.z, hd.y - hp.y])
 	if fr.has_meta("empunha"):
 		print("ALCANCE falta=%.4f" % fr.get_meta("empunha").alcance_falta)
