@@ -1141,10 +1141,13 @@ func _check_tension() -> void:
 
 
 # modo rápido: apontar um inimigo mostra a prévia do dano (o clique ataca direto)
+var dicas_casa: Dictionary = {}   # casa -> dica (mouse em cima)
+var dica_casa_ui: PanelContainer = null
 var nave_hover: Variant = null     # Nave Krieg: direção com o mouse em cima (mostra a linha inteira)
 
 
 func _on_hex_hover(h) -> void:
+	_dica_casa(h)
 	if asking != null and asking["q"].get("kind", "") == "nave_dir":
 		var nh = h if (h != null and asking["q"]["opts"].has(h)) else null
 		if nh != nave_hover:
@@ -1167,6 +1170,35 @@ func _on_hex_hover(h) -> void:
 		pend = null
 		pend_hover = false
 		refresh()
+
+
+# dica da casa: plaquinha no estilo da HUD perto do mouse; some ao sair da casa
+func _dica_casa(h) -> void:
+	var txt = dicas_casa.get(h, "") if h != null else ""
+	if dica_casa_ui == null:
+		var lay = CanvasLayer.new()
+		lay.layer = 60
+		add_child(lay)
+		dica_casa_ui = PanelContainer.new()
+		dica_casa_ui.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var bx = _hq_box(C_SPACE.darkened(0.25), Color("#262c86"), 4)
+		bx.set_content_margin_all(8)
+		bx.content_margin_left = 16
+		bx.content_margin_right = 16
+		dica_casa_ui.add_theme_stylebox_override("panel", bx)
+		var l = Label.new()
+		l.name = "t"
+		l.add_theme_font_size_override("font_size", 17)
+		l.add_theme_color_override("font_color", Color.WHITE)
+		dica_casa_ui.add_child(l)
+		lay.add_child(dica_casa_ui)
+	dica_casa_ui.visible = txt != ""
+	if txt != "":
+		dica_casa_ui.get_node("t").text = txt
+		dica_casa_ui.reset_size()
+		var mp = get_viewport().get_mouse_position()
+		var vs = get_viewport().get_visible_rect().size
+		dica_casa_ui.position = Vector2(clamp(mp.x + 18, 4, vs.x - dica_casa_ui.size.x - 4), clamp(mp.y + 22, 4, vs.y - dica_casa_ui.size.y - 4))
 
 
 # ================= tutorial =================
@@ -3233,6 +3265,7 @@ func refresh() -> void:
 	_turn_sound()
 	var H = highlights()
 	var st = {"hl": {}, "lit": null, "labels": {}, "label_colors": {}, "tags": {}, "sel_uid": -1, "ghost": null}
+	dicas_casa = {}     # texto que aparece só passando o mouse/tocando na casa (o tabuleiro fica sem palavras)
 	# áreas de entrada só aparecem quando dá para colocar peças (o resto do tempo o chão fica limpo)
 	var colocando = can_deploy_now() or dsel >= 0 or (res_drag != null and res_drag.get("on", false))
 	if colocando:
@@ -3244,8 +3277,8 @@ func refresh() -> void:
 		for h in game.deploy_hexes(me):
 			st["hl"][h] = "deploy"
 			if show_lbl:
-				st["labels"][h] = "+ ENTRAR"
-				st["label_colors"][h] = C_DEPLOY.lightened(0.4)
+				st["labels"][h] = "@entrar"
+				dicas_casa[h] = "Colocar a reserva aqui"
 	# bombas escondidas do Rappy: só o dono vê
 	# minas da Sapturne e cargas do Dinamitador ficam flutuando na casa (modelo 3D, os dois lados veem)
 	var traps = []
@@ -3254,17 +3287,17 @@ func refresh() -> void:
 		if not mn.get("hidden", false) and su0 != null and su0.cid == "sapturne":
 			traps.append({"k": "m%d_%d_%d" % [int(mn["src"]), mn["h"].x, mn["h"].y], "h": mn["h"], "m": "mina"})
 		elif mn["owner"] == me:
-			st["labels"][mn["h"]] = "BOMBA" if mn.get("hidden", false) else "MINA"
-			st["label_colors"][mn["h"]] = Color("#ff9a3a")
+			st["labels"][mn["h"]] = "@bomba" if mn.get("hidden", false) else "@mina"
+			dicas_casa[mn["h"]] = "Sua bomba escondida (só você vê)" if mn.get("hidden", false) else "Sua mina"
 	for fr in game.fires:
-		st["labels"][fr["h"]] = "FOGO"
-		st["label_colors"][fr["h"]] = Color("#ff6a2a")
+		st["labels"][fr["h"]] = "@fogo"
+		dicas_casa[fr["h"]] = "Chão em chamas: quem entra ou fica aqui perde 1 de Vida"
 	for sh in game.shells:
 		if sh.get("kind", "") == "charge":
 			traps.append({"k": "c%d_%d_%d" % [int(sh["src"]), sh["h"].x, sh["h"].y], "h": sh["h"], "m": "dinamite"})
 			continue
-		st["labels"][sh["h"]] = "ARTILHARIA"
-		st["label_colors"][sh["h"]] = Color("#ffcc55")
+		st["labels"][sh["h"]] = "@mira"
+		dicas_casa[sh["h"]] = "Artilharia: o disparo cai nesta casa"
 	board.sync_traps(traps)
 	# Sangramento do Comandante Krieg: símbolo vermelho girando sob o alvo
 	var bleeds = []
@@ -3281,13 +3314,14 @@ func refresh() -> void:
 	board.sync_inks(game.inks.map(func(ik): return {"k": "%d" % int(ik["src"]), "hexes": ik["hexes"]}))
 	board.sync_stars(game.stars.map(func(st): return {"k": "%d_%d_%d" % [int(st["src"]), st["c"].x, st["c"].y], "hexes": st["hexes"], "c": st["c"], "resta": int(st["till"]) - game.round_no + 1}))
 	board.sync_bananas(game.bananas, me)
-	board.sync_core(game.core, game.core_next if game.core == null or game.core_next != game.core else null)
+	var core_prox = game.core_next if game.core == null or game.core_next != game.core else null
+	board.sync_core(game.core, core_prox, max(1, int(game.core_next_round) - game.round_no) if core_prox != null else 3)
+	# a Hex Energy ativa já se explica pela coluna de luz; a que vai surgir ganha a ficha com o round
 	if game.core != null:
-		st["labels"][game.core] = "HEX ENERGY"
-		st["label_colors"][game.core] = Color("#7ff0ff")
-	if game.core_next != null and game.core_next != game.core:
-		st["labels"][game.core_next] = "Hex Energy · R%d" % game.core_next_round
-		st["label_colors"][game.core_next] = Color("#9fd8e8")
+		dicas_casa[game.core] = "Hex Energy: leve uma peça até aqui para capturar"
+	if core_prox != null:
+		st["labels"][core_prox] = "@hex#%d" % game.core_next_round
+		dicas_casa[core_prox] = "A Hex Energy surge aqui no round %d" % game.core_next_round
 	_check_tension()
 	# Valak: área de perigo da garra (mais forte quando a vibração está alta)
 	if not game.hole.is_empty() and game.vib >= int(game.vrule("vib_max", 5)) - 2:

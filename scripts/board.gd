@@ -2019,7 +2019,10 @@ func _hex_energy_node(h: Vector2i) -> Node3D:
 	return n
 
 
-func sync_core(c: Variant, nxt: Variant) -> void:
+var core_next_falta: int = 3      # rounds até a Hex Energy surgir (1 = no próximo): o aviso pulsa mais forte
+
+
+func sync_core(c: Variant, nxt: Variant, falta: int = 3) -> void:
 	if c != core_at:
 		if core_node != null:
 			core_node.queue_free()
@@ -2046,6 +2049,44 @@ func sync_core(c: Variant, nxt: Variant) -> void:
 			gm.mesh = _disc(TILE * 0.82, 6)
 			gm.material_override = _neon(HEX_ROXO_ESCURO, 0.25, 0.6)
 			core_next_node.add_child(gm)
+			# faíscas roxas subindo da casa: dizem "algo vai sair daqui" sem nenhuma palavra
+			var fa = CPUParticles3D.new()
+			fa.name = "faiscas"
+			fa.emission_shape = CPUParticles3D.EMISSION_SHAPE_RING
+			fa.emission_ring_axis = Vector3.UP
+			fa.emission_ring_radius = TILE * 0.8
+			fa.emission_ring_inner_radius = TILE * 0.2
+			fa.emission_ring_height = 0.0
+			fa.direction = Vector3.UP
+			fa.spread = 8.0
+			fa.gravity = Vector3.ZERO
+			fa.initial_velocity_min = 0.35
+			fa.initial_velocity_max = 0.7
+			fa.lifetime = 1.4
+			fa.scale_amount_min = 0.6
+			fa.scale_amount_max = 1.0
+			var cv = Curve.new()
+			cv.add_point(Vector2(0, 0))
+			cv.add_point(Vector2(0.2, 1))
+			cv.add_point(Vector2(1, 0))
+			fa.scale_amount_curve = cv
+			var qm = QuadMesh.new()
+			qm.size = Vector2(0.05, 0.05)
+			var fm = StandardMaterial3D.new()
+			fm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+			fm.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+			fm.billboard_keep_scale = true
+			fm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+			fm.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+			fm.albedo_color = Color(HEX_ROXO.lightened(0.35), 0.95)
+			qm.material = fm
+			fa.mesh = qm
+			core_next_node.add_child(fa)
+			core_next_falta = -1
+	if core_next_node != null and falta != core_next_falta:
+		core_next_falta = falta
+		var fa2: CPUParticles3D = core_next_node.get_node("faiscas")
+		fa2.amount = [0, 22, 12, 6][clampi(falta, 1, 3)]
 
 
 func _pulse_hex_energy() -> void:
@@ -2065,8 +2106,12 @@ func _pulse_hex_energy() -> void:
 		onda.scale = Vector3.ONE * (0.6 + 1.5 * fase)
 		onda.material_override.albedo_color.a = 0.8 * (1.0 - fase)
 	if core_next_node != null and is_instance_valid(core_next_node):
-		var q = 0.5 + 0.5 * sin(t * 2.4)
-		core_next_node.get_node("aro").material_override.albedo_color.a = 0.25 + 0.4 * q
+		# perto de surgir: pulsa mais rápido e mais forte
+		var k = [0.0, 1.0, 0.6, 0.3][clampi(core_next_falta, 1, 3)]
+		var q = 0.5 + 0.5 * sin(t * (2.0 + 3.0 * k))
+		var aro = core_next_node.get_node("aro").material_override
+		aro.albedo_color.a = 0.25 + (0.3 + 0.45 * k) * q
+		aro.emission_energy_multiplier = 1.0 + 2.5 * k * q
 
 
 var banana_origem: Variant = null    # Banquete dos Clãs: de onde o Karo arremessa (a próxima leva voa até as casas)
@@ -4426,16 +4471,38 @@ func _apply_overlay(h: Vector2i) -> void:
 	# casa de escolha: hexágono roxo com um X preto no meio (fácil de achar)
 	var is_pick = hl == "pk" and lab_txt == "" and hover != h
 	# etiqueta em ícone ("@nome" = ui/hud/nome.svg), ex.: seta de duna subindo/descendo
+	# "@nome#n": ficha com um número no canto (ex.: "@hex#3" = Hex Energy surge no round 3)
 	var ic_nome = lab_txt.substr(1) if lab_txt.begins_with("@") else ""
+	var ic_num = ""
+	if ic_nome.contains("#"):
+		ic_num = ic_nome.get_slice("#", 1)
+		ic_nome = ic_nome.get_slice("#", 0)
 	if ic_nome != "" and not tile.has("ico"):
-		var sp = icone3d(ic_nome, 0.5)
+		var sp = icone3d(ic_nome, 0.85)
 		sp.position = tile["label"].position
 		tile["label"].get_parent().add_child(sp)
 		tile["ico"] = sp
+		var nl = Label3D.new()
+		nl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		nl.no_depth_test = true
+		nl.render_priority = 4
+		nl.font_size = 96
+		nl.outline_size = 30
+		nl.outline_modulate = Color("#120a1e")
+		nl.pixel_size = 0.0052
+		# o Sprite3D gira só no shader (billboard): o número usa o "offset" do Label3D, que fica no plano da tela
+		nl.offset = Vector2(0.34, -0.26) / nl.pixel_size
+		if tile["label"].font != null:
+			nl.font = tile["label"].font
+		sp.add_child(nl)
+		tile["ico_n"] = nl
 	if tile.has("ico"):
 		tile["ico"].visible = ic_nome != ""
 		if ic_nome != "":
 			tile["ico"].texture = load("res://ui/hud/%s.svg" % ic_nome)
+		var nl2: Label3D = tile["ico_n"]
+		nl2.visible = ic_num != ""
+		nl2.text = ic_num
 	if ic_nome != "":
 		lab_txt = ""
 	var lb = tile["label"]
