@@ -4817,6 +4817,12 @@ func _palpebra(fig: Node3D, sk: Skeleton3D, bn: Dictionary) -> Node3D:
 	return piv
 
 
+# a broca gira sem golpe (cavar)
+func arma_girar(uid: int, dur: float) -> void:
+	if tem_fig3d(uid) and unit_nodes[uid]["sprite"].has_meta("empunha"):
+		unit_nodes[uid]["sprite"].get_meta("empunha").girar(dur)
+
+
 # golpe com a arma empunhada (Perfurador: estocada com a broca girando)
 func arma_ataque(uid: int, alvo: Variant = null) -> bool:
 	if not tem_fig3d(uid):

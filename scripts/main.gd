@@ -6064,8 +6064,15 @@ func _broca_golpe(uid: int, tuid: int, now: int) -> void:
 	var alvo = _hex_pos(tu.pos(), 0.0)
 	board.arma_ataque(uid, alvo)
 	hit_fac[tuid] = "@ter"
-	sfx.play("perfurador_broca", -3.0, randf_range(0.95, 1.05), 0.0)
+	sfx.play("perfurador_motor", -4.0, randf_range(0.96, 1.04), 0.0)
+	# o que a broca morde: cristal estilhaça, pedra/bloco racha, inimigo rangendo na armadura
+	var som_alvo = "perfurador_acerta"
+	if tu.crystal != "":
+		som_alvo = "perfurador_cristal"
+	elif tu.barrier or tu.block:
+		som_alvo = "perfurador_pedra"
 	_later(BROCA_CONTATO, func():
+		sfx.play(som_alvo, -2.0, randf_range(0.95, 1.05), 0.0)
 		board.tremer(tuid, BROCA_TREME, 1.25, 0.03)       # o alvo sacode com a broca
 		board.tremer(uid, BROCA_TREME, 0.3, 0.03)         # e ele sente o tranco nos braços
 		vfx.play_fx("ter_perfurador_broca", alvo, _hex_pos(fu.pos(), 0.0), Color.WHITE))
@@ -6152,6 +6159,10 @@ func _ter_abfx(e: Dictionary) -> bool:
 	if str(vfx.receitas[id].get("alvo", "")) == "self":
 		from = null
 	vfx.play_fx(id, at, from, Color.WHITE, null, _ter_ctx(u.cid))
+	if u.cid == "perfurador" and str(e["k"]) == "burrow":
+		# cava: motor forte e terra moída, a broca gira
+		sfx.play("perfurador_cavar", -3.0, randf_range(0.97, 1.03), 0.0)
+		board.arma_girar(u.uid, 1.5)
 	return true
 
 

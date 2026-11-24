@@ -15,7 +15,8 @@ var solta := 0.0                   # 0..1 solta a pega (gesto que precisa dos br
 var ponta: Node3D = null           # parte da arma que gira (a broca), em torno do Z da arma
 var giro := 0.0
 var vel_giro := 0.0
-var ataque_t0 := -99.0             # golpe: estocada para a frente com a broca girando
+var ataque_t0 := -99.0
+var gira_ate := -99.0              # broca girando sem golpe (cavar)             # golpe: estocada para a frente com a broca girando
 var _ms := -1
 var alcance_falta := -1.0          # teste: quanto faltou de braço para a mão chegar na pega (<= 0: chegou)
 
@@ -97,6 +98,10 @@ func alvo_mao_rot(L: Dictionary, G: Vector3, S: Vector3, A: Vector3) -> Basis:
 	return (alvo_m * rest_m.inverse()).orthonormalized()
 
 
+func girar(dur: float) -> void:
+	gira_ate = Time.get_ticks_msec() / 1000.0 + dur
+
+
 func ataque() -> void:
 	ataque_t0 = Time.get_ticks_msec() / 1000.0
 
@@ -118,6 +123,8 @@ func _process_modification() -> void:
 	if ta >= 0.0 and ta < 1.0:
 		est = smoothstep(0.0, 0.16, ta) * (1.0 - smoothstep(0.55, 1.0, ta))
 		vel_giro = 32.0
+	elif agora_ms / 1000.0 < gira_ate:
+		vel_giro = move_toward(vel_giro, 34.0, dt * 80.0)
 	else:
 		vel_giro = move_toward(vel_giro, 0.0, dt * 40.0)
 	giro = fmod(giro + vel_giro * dt, TAU)
