@@ -1330,7 +1330,24 @@ func _cen_tile(root: Node3D, h: Vector2i, k: String) -> bool:
 					return true
 				return _model(root, "cen_tarhut_ossada_%d" % v, Vector3.ZERO, 1.7, yaw, true)
 			"buraco":
-				return _model(root, "cen_tarhut_buraco_%d" % v, Vector3(0, -0.05, 0), 1.55, yaw, true)
+				# a cratera ocupa a casa inteira: o modelo foi moldado em hexágono (borda nas arestas da casa);
+				# gira só de 60 em 60 graus para os cantos baterem
+				var yaw6 = int(_rnd(h, 41) * 6.0) * PI / 3.0
+				var ok_b = _model(root, "cen_tarhut_buraco_%d" % v, Vector3(0, -0.05, 0), 1.0, yaw6, true)
+				if ok_b:
+					var hol: Node3D = root.get_child(root.get_child_count() - 1)
+					var inst_b: Node3D = hol.get_child(0)
+					# escala pela largura real (cantos a cantos) para a borda chegar nas arestas
+					var ab_b = AABB()
+					var fst = true
+					for mi in inst_b.find_children("*", "MeshInstance3D", true, false):
+						var bx = mi.transform * mi.get_aabb()
+						ab_b = bx if fst else ab_b.merge(bx)
+						fst = false
+					var kz = (S3 * HX * 0.995) / max(ab_b.size.z, 0.001)
+					inst_b.scale = Vector3.ONE * kz
+					inst_b.position = Vector3(-(ab_b.position.x + ab_b.size.x / 2.0) * kz, -ab_b.position.y * kz, -(ab_b.position.z + ab_b.size.z / 2.0) * kz)
+				return ok_b
 		return false
 	match k:
 		"rocha":
