@@ -67876,5 +67876,227 @@
     "blend": "add"
    }
   ]
+ },
+ "ter_sniper_choque": {
+  "nome": "SNIPER · alvo eletrocutado (luz piscando e faíscas saltando do corpo)",
+  "personagem": "t_sniper",
+  "layers": [
+   {
+    "luz": "#4cd4bd",
+    "energia": 2.4,
+    "alcance": 2.2,
+    "dur": 0.08,
+    "y": 1.0,
+    "delay": 0.03
+   },
+   {
+    "p": "@faisca",
+    "mode": "vel",
+    "amount": 6,
+    "size": [
+     0.03,
+     0.3
+    ],
+    "speed": [
+     2,
+     5
+    ],
+    "spread": 180,
+    "damp": [
+     5,
+     9
+    ],
+    "life": 0.16,
+    "radius": 0.3,
+    "ramp": [
+     "#4CD4BD",
+     "#B8FFDF",
+     "#ffffff"
+    ],
+    "y": 1.0,
+    "delay": 0.05,
+    "blend": "add"
+   },
+   {
+    "luz": "#4cd4bd",
+    "energia": 2.4,
+    "alcance": 2.2,
+    "dur": 0.08,
+    "y": 1.0,
+    "delay": 0.17
+   },
+   {
+    "p": "@faisca",
+    "mode": "vel",
+    "amount": 6,
+    "size": [
+     0.03,
+     0.3
+    ],
+    "speed": [
+     2,
+     5
+    ],
+    "spread": 180,
+    "damp": [
+     5,
+     9
+    ],
+    "life": 0.16,
+    "radius": 0.3,
+    "ramp": [
+     "#4CD4BD",
+     "#B8FFDF",
+     "#ffffff"
+    ],
+    "y": 1.0,
+    "delay": 0.19,
+    "blend": "add"
+   },
+   {
+    "luz": "#4cd4bd",
+    "energia": 2.4,
+    "alcance": 2.2,
+    "dur": 0.08,
+    "y": 1.0,
+    "delay": 0.31000000000000005
+   },
+   {
+    "p": "@faisca",
+    "mode": "vel",
+    "amount": 6,
+    "size": [
+     0.03,
+     0.3
+    ],
+    "speed": [
+     2,
+     5
+    ],
+    "spread": 180,
+    "damp": [
+     5,
+     9
+    ],
+    "life": 0.16,
+    "radius": 0.3,
+    "ramp": [
+     "#4CD4BD",
+     "#B8FFDF",
+     "#ffffff"
+    ],
+    "y": 1.0,
+    "delay": 0.33,
+    "blend": "add"
+   },
+   {
+    "luz": "#4cd4bd",
+    "energia": 2.4,
+    "alcance": 2.2,
+    "dur": 0.08,
+    "y": 1.0,
+    "delay": 0.45000000000000007
+   },
+   {
+    "p": "@faisca",
+    "mode": "vel",
+    "amount": 6,
+    "size": [
+     0.03,
+     0.3
+    ],
+    "speed": [
+     2,
+     5
+    ],
+    "spread": 180,
+    "damp": [
+     5,
+     9
+    ],
+    "life": 0.16,
+    "radius": 0.3,
+    "ramp": [
+     "#4CD4BD",
+     "#B8FFDF",
+     "#ffffff"
+    ],
+    "y": 1.0,
+    "delay": 0.47000000000000003,
+    "blend": "add"
+   },
+   {
+    "luz": "#4cd4bd",
+    "energia": 2.4,
+    "alcance": 2.2,
+    "dur": 0.08,
+    "y": 1.0,
+    "delay": 0.5900000000000001
+   },
+   {
+    "p": "@faisca",
+    "mode": "vel",
+    "amount": 6,
+    "size": [
+     0.03,
+     0.3
+    ],
+    "speed": [
+     2,
+     5
+    ],
+    "spread": 180,
+    "damp": [
+     5,
+     9
+    ],
+    "life": 0.16,
+    "radius": 0.3,
+    "ramp": [
+     "#4CD4BD",
+     "#B8FFDF",
+     "#ffffff"
+    ],
+    "y": 1.0,
+    "delay": 0.6100000000000001,
+    "blend": "add"
+   },
+   {
+    "luz": "#4cd4bd",
+    "energia": 2.4,
+    "alcance": 2.2,
+    "dur": 0.08,
+    "y": 1.0,
+    "delay": 0.7300000000000001
+   },
+   {
+    "p": "@faisca",
+    "mode": "vel",
+    "amount": 6,
+    "size": [
+     0.03,
+     0.3
+    ],
+    "speed": [
+     2,
+     5
+    ],
+    "spread": 180,
+    "damp": [
+     5,
+     9
+    ],
+    "life": 0.16,
+    "radius": 0.3,
+    "ramp": [
+     "#4CD4BD",
+     "#B8FFDF",
+     "#ffffff"
+    ],
+    "y": 1.0,
+    "delay": 0.7500000000000001,
+    "blend": "add"
+   }
+  ]
  }
 }

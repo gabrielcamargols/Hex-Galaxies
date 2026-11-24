@@ -6050,26 +6050,48 @@ func _ter_load() -> void:
 				ter_fx[k] = d[k]
 
 
-# Sniper Valakiano: como na ilustração, o tiro sai da mão — a bola elétrica condensa entre os dedos
-# e é lançada quando o braço se estende para o alvo
+# Sniper Valakiano: como na ilustração — agacha, apoia a mão esquerda no chão, estende a direita para o
+# alvo e fecha um olho para mirar; a bola elétrica condensa nos dedos e sai estalando; no acerto o choque
+# se espalha e o alvo fica eletrocutado (arcos pulando pelo corpo e espasmos)
+const SNIPER_CHOQUE = 1.25
+const SNIPER_RAIO = {"cor": Color("#4cd4bd"), "miolo": Color("#f2fff8"), "largura": 0.045, "tremor": 0.25, "galhos": 1}
+
+
 func _sniper_eletro(fu, tu, ter_id: String, now: int) -> void:
 	var uid: int = fu.uid
+	var tuid: int = tu.uid
 	var alvo = _hex_pos(tu.pos(), 0.0)
 	board.unit_nodes[uid]["lunge"] = 0.0            # o gesto é o golpe (sem o tranco do corpo)
 	board.gesto(uid, "eletro", alvo)
-	var mao = func() -> Vector3: return board.mao_global(uid, "Right", 0.4)
+	var mao = func() -> Vector3: return board.mao_global(uid, "Right", 0.55)
 	var ctx = _ter_ctx(fu.cid)
 	ctx["de_f"] = mao
-	hit_fac[tu.uid] = "@ter"
+	hit_fac[tuid] = "@ter"
+	var R = vfx.raios()
+	var carga = board.ELETRO_SOLTA - board.ELETRO_CARGA
 	_later(board.ELETRO_CARGA, func():
 		vfx.play_fx("ter_sniper_carga", mao.call() - Vector3(0, 1.0, 0), null, Color.WHITE, null, ctx)
+		R.coroa(mao, 0.32, carga + 0.05, SNIPER_RAIO.merged({"n": 2, "largura": 0.03}))
 		sfx.play("tiro_energia", -12.0, 0.55))
 	# voo: mesma conta da vfx.gd (velocidade da receita, sem arco)
-	var de = board.mao_global(uid, "Right", 0.4)
-	var voo = clamp(de.distance_to(alvo + Vector3(0, 0.8, 0)) / (30.0 / vfx.TEMPO), 0.15 * vfx.TEMPO, 0.9 * vfx.TEMPO)
+	var de = board.mao_global(uid, "Right", 0.55)
+	var b = alvo + Vector3(0, 0.8, 0)
+	var voo = clamp(de.distance_to(b) / (30.0 / vfx.TEMPO), 0.15 * vfx.TEMPO, 0.9 * vfx.TEMPO)
 	_later(board.ELETRO_SOLTA, func():
-		vfx.play_fx(ter_id, alvo, mao.call() - Vector3(0, 1.0, 0), Color.WHITE, null, ctx)
+		var a = mao.call()
+		vfx.play_fx(ter_id, alvo, a - Vector3(0, 1.0, 0), Color.WHITE, null, ctx)
+		var t0 = Time.get_ticks_msec()
+		# estalos em volta da bola durante o voo
+		R.coroa(func() -> Vector3: return a.lerp(b, clamp((Time.get_ticks_msec() - t0) / 1000.0 / voo, 0.0, 1.0)), 0.5, voo, SNIPER_RAIO.merged({"n": 4, "largura": 0.055}))
 		sfx.play("tiro_energia", -3.0, 1.1))
+	# acerto: o choque se espalha e o alvo é eletrocutado
+	_later(board.ELETRO_SOLTA + voo, func():
+		var chao = alvo.y
+		R.espalha(alvo + Vector3(0, 0.85, 0), chao, 0.55, SNIPER_RAIO.merged({"n": 8, "alcance": 1.5, "largura": 0.04}))
+		R.eletrocuta(func() -> Array: return board.pontos_corpo(tuid), SNIPER_CHOQUE, SNIPER_RAIO.merged({"n": 5, "largura": 0.045, "flick": 0.06, "frente": true}))
+		vfx.play_fx("ter_sniper_choque", alvo, null, Color.WHITE)
+		board.eletrocutar(tuid, SNIPER_CHOQUE)
+		sfx.play("tiro_energia", -8.0, 1.6))
 	impact_delay = board.ELETRO_SOLTA + voo
 	impact_until = now + int(impact_delay * 1000.0) + 40
 

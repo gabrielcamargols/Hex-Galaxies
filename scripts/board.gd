@@ -57,7 +57,8 @@ const FIG3D = {
 			"Right": [[0.05, -0.7, -0.7], [0.25, -0.55, 0.8], [0.25, -0.45, 0.85]],
 			"Left": [[0.0, 0.5, -0.85], [0.1, 0.45, -0.88], [0.05, 0.35, -0.93]]}},
 	# Sniper Valakiano: o mais sério do grupo, meticuloso; anda medido e atento (passada natural, sem deslize)
-	"t_sniper": {"path": "res://models/personagens/t_sniper.glb", "visor": false, "punho": false, "jeito": "comandante", "giro": 0.0},
+	"t_sniper": {"path": "res://models/personagens/t_sniper.glb", "visor": false, "punho": false, "jeito": "comandante", "giro": 0.0,
+		"olho_e": [0.03, 0.884, 0.06], "pele": "#c9e0f3", "olho_giro": 0.55},
 	"karo": {"path": "res://models/personagens/karo.glb", "visor": false, "punho": true, "jeito": "malandro", "bracos": "bolso", "cauda": [-0.05, 0.45, 0.0]},
 }
 # padrão de tinta de cada facção (data/vfx_paletas.json "pattern") -> pat do hq_personagem
@@ -2906,6 +2907,8 @@ func _figure3d(cid: String, body_h: float) -> Node3D:
 	var jt: Dictionary = JEITOS["padrao"].duplicate()
 	jt.merge(JEITOS.get(cfg.get("jeito", "padrao"), {}), true)
 	root.set_meta("jeito", jt)
+	if cfg.has("olho_e"):
+		root.set_meta("olho_cfg", [Vector3(cfg["olho_e"][0], cfg["olho_e"][1], cfg["olho_e"][2]), Color(str(cfg.get("pele", "#a9c6e4"))), float(cfg.get("olho_giro", 0.0))])
 	root.set_meta("bracos", cfg.get("bracos", ""))
 	root.set_meta("vel", jt["vel"])
 	if sk != null:
@@ -3454,6 +3457,21 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 					pose[parte] = []
 				pose[parte].append([S, float(gk[parte]) * gw])
 		fig.position.y += float(gk.get("y", 0.0)) * gw
+		# agachar (como o Sniper na ilustração): perna da frente dobrada, a de trás estendida e com o joelho
+		# perto do chão; o corpo desce até os pés tocarem o chão (abaixo, _assenta)
+		var ag = float(gk.get("agacha", 0.0)) * gw
+		if ag > 0.001:
+			for par in [["LeftUpLeg", -1.05], ["LeftLeg", 1.75], ["LeftFoot", -0.55], ["RightUpLeg", 0.42], ["RightLeg", 1.15], ["RightFoot", 0.35], ["Hips", 0.0]]:
+				if not pose.has(par[0]):
+					pose[par[0]] = []
+			pose["LeftUpLeg"].append([S, -1.05 * ag])
+			pose["LeftUpLeg"].append([F, 0.18 * ag])
+			pose["LeftLeg"].append([S, 1.75 * ag])
+			pose["LeftFoot"].append([S, -0.55 * ag])
+			pose["RightUpLeg"].append([S, 0.42 * ag])
+			pose["RightUpLeg"].append([F, -0.2 * ag])
+			pose["RightLeg"].append([S, 1.15 * ag])
+			pose["RightFoot"].append([S, 0.35 * ag])
 	for nm in pose.keys():
 		if not bn.has(nm):
 			continue
@@ -3529,8 +3547,36 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 				_aponta_braco(sk, bn, side, gk[side], float(gk["w"]), F, S, U)
 	# pés no chão andando e correndo: o corpo desce o quanto o pé mais baixo ficou acima do chão
 	# (o joelho dobrado e o quique deixavam todo mundo flutuando); correndo sobra um voo curtinho
-	if ww > 0.001 and cjw < 0.999:
+	var ag2 = float(gk.get("agacha", 0.0)) * float(gk.get("w", 0.0)) if not gk.is_empty() else 0.0
+	if ag2 > 0.001:
+		_assenta(fig, sk, ["LeftToeBase", "RightToeBase", "LeftFoot", "RightFoot"], max(ag2, ww), 0.0)
+	elif ww > 0.001 and cjw < 0.999:
 		_assenta(fig, sk, ["LeftToeBase", "RightToeBase", "LeftFoot", "RightFoot"], ww * (1.0 - cjw), 0.022 * rw * abs(sw))
+	# fecha um olho para mirar: a pálpebra (pele + traço de tinta) desce sobre o olho esquerdo
+	if fig.has_meta("olho_cfg"):
+		var pc = float(gk.get("pisca", 0.0)) * float(gk.get("w", 0.0)) if not gk.is_empty() else 0.0
+		var pal: Node3D = fig.get_meta("palpebra", null)
+		if pal == null and pc > 0.0:
+			pal = _palpebra(fig, sk, bn)
+		if pal != null:
+			pal.visible = pc > 0.02
+			pal.scale = Vector3(1.0, max(0.05, pc), 1.0)
+	# levou choque: o corpo treme em espasmos curtos
+	if fig.has_meta("choque_ate"):
+		var falta = float(fig.get_meta("choque_ate")) - relogio
+		if falta <= 0.0:
+			fig.remove_meta("choque_ate")
+		else:
+			var ch = clamp(falta / 0.35, 0.0, 1.0)
+			var rng = RandomNumberGenerator.new()      # espasmo novo a cada 0,05 s (não mexe no sorteio do jogo)
+			rng.seed = int(relogio / 0.05) * 7919 + int(fig.get_instance_id() % 997)
+			for nm2 in ["Spine1", "Head", "LeftArm", "RightArm", "LeftForeArm", "RightForeArm", "Spine2"]:
+				if bn.has(nm2):
+					var b2: int = bn[nm2]
+					var q2 = sk.get_bone_pose_rotation(b2)
+					q2 = q2 * Quaternion(Vector3(rng.randf_range(-1, 1), rng.randf_range(-1, 1), rng.randf_range(-1, 1)).normalized(), rng.randf_range(0.06, 0.16) * ch)
+					sk.set_bone_pose_rotation(b2, q2)
+			fig.position += Vector3(rng.randf_range(-1, 1), 0, rng.randf_range(-1, 1)) * 0.025 * ch
 	if fig.has_meta("garra"):
 		var eg = cjw * cjw * (3.0 - 2.0 * cjw)
 		for gd in fig.get_meta("garra"):
@@ -3785,8 +3831,8 @@ func _unit_goal(u) -> Vector2i:
 	return u.pos()
 
 
-const ELETRO_CARGA = 0.26     # Sniper Valakiano: a bola começa a condensar na mão
-const ELETRO_SOLTA = 0.74     # ... e sai da mão (braço estendendo)
+const ELETRO_CARGA = 0.45     # Sniper Valakiano: agachado e mirando (um olho fechado), a bola condensa nos dedos
+const ELETRO_SOLTA = 0.92     # ... e é disparada (o braço dá o coice)
 const PREPARO_T = 0.2      # antes do 1º passo a peça espera transferindo o peso
 const CHEGADA_T = 0.42     # o último passo absorve o peso e o corpo volta ao repouso
 const APOIO_F = 0.6       # fração do ciclo em que cada pé fica apoiado
@@ -4475,13 +4521,24 @@ const GESTOS = {
 		{"t": 2.6}]},
 	# Sniper Valakiano: traz a mão direita à frente do peito, condensa a bola elétrica entre os dedos
 	# e estende o braço para o alvo, lançando-a (sai da mão em ELETRO_SOLTA)
-	"eletro": {"dur": 1.45, "keys": [
+	"eletro": {"dur": 2.0, "keys": [
 		{"t": 0.0},
-		{"t": 0.26, "Right": [[0.45, -0.55, -0.7], [0.82, 0.42, 0.38], [0.85, 0.3, 0.42]], "Spine1": -0.05, "Head": 0.08},
-		{"t": 0.62, "Right": [[0.5, -0.55, -0.66], [0.84, 0.4, 0.36], [0.86, 0.28, 0.42]], "Spine1": -0.07, "Head": 0.1},
-		{"t": 0.78, "Right": [[0.97, -0.12, 0.18], [0.98, -0.05, 0.15], [0.92, 0.0, 0.38]], "Spine1": 0.1, "Head": 0.02},
-		{"t": 1.1, "Right": [[0.96, -0.14, 0.2], [0.97, -0.06, 0.18], [0.92, 0.0, 0.38]], "Spine1": 0.06},
-		{"t": 1.45}]},
+		{"t": 0.32, "agacha": 1.0, "Spine1": 0.32, "Head": -0.45,
+			"Left": [[0.35, 0.35, -0.87], [0.45, 0.15, -0.88], [0.35, 0.0, -0.94]],
+			"Right": [[0.8, -0.35, 0.1], [0.92, -0.15, 0.12], [0.9, 0.0, 0.3]]},
+		{"t": 0.5, "agacha": 1.0, "Spine1": 0.34, "Head": -0.6, "pisca": 1.0,
+			"Left": [[0.35, 0.35, -0.87], [0.45, 0.15, -0.88], [0.35, 0.0, -0.94]],
+			"Right": [[0.97, -0.12, 0.12], [0.98, -0.05, 0.1], [0.9, 0.0, 0.4]]},
+		{"t": 0.9, "agacha": 1.0, "Spine1": 0.34, "Head": -0.6, "pisca": 1.0,
+			"Left": [[0.35, 0.35, -0.87], [0.45, 0.15, -0.88], [0.35, 0.0, -0.94]],
+			"Right": [[0.97, -0.12, 0.12], [0.98, -0.05, 0.1], [0.9, 0.0, 0.4]]},
+		{"t": 1.0, "agacha": 1.0, "Spine1": 0.24, "Head": -0.5, "pisca": 0.4,
+			"Left": [[0.35, 0.35, -0.87], [0.45, 0.15, -0.88], [0.35, 0.0, -0.94]],
+			"Right": [[0.95, -0.12, 0.25], [0.96, -0.05, 0.25], [0.85, 0.0, 0.5]]},
+		{"t": 1.45, "agacha": 0.9, "Spine1": 0.28, "Head": -0.52,
+			"Left": [[0.35, 0.35, -0.87], [0.45, 0.15, -0.88], [0.35, 0.0, -0.94]],
+			"Right": [[0.96, -0.12, 0.15], [0.97, -0.05, 0.12], [0.9, 0.0, 0.4]]},
+		{"t": 2.0}]},
 	# Rhazur: abre os braços e ruge para o alto; depois puxa tudo para o peito
 	"rugido": {"dur": 1.5, "keys": [
 		{"t": 0.0},
@@ -4557,6 +4614,89 @@ func mao_global(uid: int, lado: String, alem: float = 0.0) -> Vector3:
 	return d["node"].global_position + Vector3(0, 1.1, 0)
 
 
+# pálpebra do olho esquerdo (os olhos são pintados na textura, sem osso): elipsoide da cor da pele com um
+# traço escuro no meio, preso ao osso da cabeça; a escala Y abre (0) e fecha (1)
+func _palpebra(fig: Node3D, sk: Skeleton3D, bn: Dictionary) -> Node3D:
+	var oc: Array = fig.get_meta("olho_cfg")
+	if not bn.has("Head"):
+		fig.set_meta("olho_cfg_falhou", true)
+		fig.remove_meta("olho_cfg")
+		return null
+	var malha: MeshInstance3D = null
+	for mi in sk.get_parent().find_children("*", "MeshInstance3D", true, false):
+		if mi.skin != null or mi.get_parent() == sk or mi.get_parent() == sk.get_parent():
+			malha = mi
+			break
+	var olho_sk: Vector3 = oc[0]
+	if malha != null:
+		olho_sk = sk.global_transform.affine_inverse() * (malha.global_transform * oc[0])
+	var ba = BoneAttachment3D.new()
+	ba.bone_idx = bn["Head"]
+	sk.add_child(ba)
+	var piv = Node3D.new()
+	# a pálpebra acompanha a curva do rosto (o olho fica na lateral da cabeça)
+	var hr = sk.get_bone_global_rest(bn["Head"])
+	piv.transform = Transform3D(hr.basis.inverse() * Basis(Vector3.UP, float(oc[2])), hr.affine_inverse() * olho_sk)
+	ba.add_child(piv)
+	var lid = Node3D.new()
+	piv.add_child(lid)
+	var pele = MeshInstance3D.new()
+	var sm = SphereMesh.new()
+	sm.radius = 0.024
+	sm.height = 0.034
+	sm.radial_segments = 12
+	sm.rings = 6
+	pele.mesh = sm
+	var mp = StandardMaterial3D.new()
+	mp.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mp.albedo_color = oc[1]
+	pele.material_override = mp
+	pele.scale = Vector3(1.0, 1.0, 0.35)
+	pele.position = Vector3(0, 0, 0.004)
+	lid.add_child(pele)
+	var traco = MeshInstance3D.new()
+	var bm = BoxMesh.new()
+	bm.size = Vector3(0.056, 0.0065, 0.004)
+	traco.mesh = bm
+	var mt = StandardMaterial3D.new()
+	mt.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mt.albedo_color = Color("#16203a")
+	traco.material_override = mt
+	traco.position = Vector3(0, -0.003, 0.0115)
+	traco.rotation.z = -0.1
+	piv.add_child(traco)
+	lid.set_meta("traco", traco)
+	fig.set_meta("palpebra", piv)
+	return piv
+
+
+# choque elétrico: espasmos por "dur" segundos
+func eletrocutar(uid: int, dur: float) -> void:
+	if tem_fig3d(uid):
+		unit_nodes[uid]["sprite"].set_meta("choque_ate", relogio + dur)
+
+
+# pontos do corpo no mundo (ossos principais) para os arcos do choque pularem; sem 3D, um cilindro
+func pontos_corpo(uid: int) -> Array:
+	var out: Array = []
+	if not unit_nodes.has(uid):
+		return out
+	var d = unit_nodes[uid]
+	var fig = d.get("sprite")
+	if fig != null and is_instance_valid(fig) and fig.has_meta("skel"):
+		var sk: Skeleton3D = fig.get_meta("skel")
+		var bn: Dictionary = fig.get_meta("bones")
+		for nm in ["Head", "Spine2", "Spine1", "Hips", "LeftArm", "RightArm", "LeftForeArm", "RightForeArm", "LeftHand", "RightHand", "LeftUpLeg", "RightUpLeg", "LeftLeg", "RightLeg", "LeftFoot", "RightFoot"]:
+			if bn.has(nm):
+				out.append(sk.global_transform * sk.get_bone_global_pose(bn[nm]).origin)
+		return out
+	var c: Vector3 = d["node"].global_position
+	for i in 8:
+		var a = TAU * i / 8.0
+		out.append(c + Vector3(cos(a) * 0.35, 0.2 + 0.2 * i, sin(a) * 0.35))
+	return out
+
+
 func tem_fig3d(uid: int) -> bool:
 	if not unit_nodes.has(uid):
 		return false
@@ -4606,7 +4746,7 @@ func _gesto_quadro(fig: Node3D) -> Dictionary:
 	var u = clamp((tt - float(a["t"])) / max(0.001, float(b["t"]) - float(a["t"])), 0.0, 1.0)
 	u = u * u * (3.0 - 2.0 * u)
 	var out = {"w": 1.0}
-	for parte in ["Spine1", "Head", "y"]:
+	for parte in ["Spine1", "Head", "y", "agacha", "pisca"]:
 		var va = float(a.get(parte, 0.0))
 		var vb = float(b.get(parte, 0.0))
 		if va != 0.0 or vb != 0.0:

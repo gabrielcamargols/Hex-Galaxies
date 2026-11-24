@@ -449,6 +449,14 @@ func _flip_tex(fname: String) -> Variant:
 
 # toca um efeito pintado: billboard de frente para a câmera, ou deitado no chão (ground)
 var cam_k: float = 1.0          # câmera longe = efeitos maiores (main.gd atualiza)
+var _raios: RefCounted = null    # raios elétricos em malha (vfx_raios.gd)
+
+
+func raios() -> RefCounted:
+	if _raios == null:
+		_raios = load("res://scripts/vfx_raios.gd").new(self)
+	return _raios
+
 # TEMPO: todos os efeitos da Forja rodam mais devagar (câmera lenta uniforme: partículas, atrasos,
 # projéteis, desenhos e luzes), para o jogador conseguir ver o golpe acontecendo.
 const TEMPO = 1.35
