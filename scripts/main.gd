@@ -6050,6 +6050,29 @@ func _ter_load() -> void:
 				ter_fx[k] = d[k]
 
 
+# Perfurador: vira e estoca com a broca girando; quando a ponta morde, o alvo treme inteiro com o impacto,
+# a broca vibra nas mãos dele (o corpo dele também sente) e saem faíscas, lascas e poeira do ponto de contato
+const BROCA_CONTATO = 0.18
+const BROCA_TREME = 0.55
+
+
+func _broca_golpe(uid: int, tuid: int, now: int) -> void:
+	var tu = game.by_uid(tuid)
+	var fu = game.by_uid(uid)
+	if tu == null or fu == null:
+		return
+	var alvo = _hex_pos(tu.pos(), 0.0)
+	board.arma_ataque(uid, alvo)
+	hit_fac[tuid] = "@ter"
+	sfx.play("perfurador_broca", -3.0, randf_range(0.95, 1.05), 0.0)
+	_later(BROCA_CONTATO, func():
+		board.tremer(tuid, BROCA_TREME, 1.25, 0.03)       # o alvo sacode com a broca
+		board.tremer(uid, BROCA_TREME, 0.3, 0.03)         # e ele sente o tranco nos braços
+		vfx.play_fx("ter_perfurador_broca", alvo, _hex_pos(fu.pos(), 0.0), Color.WHITE))
+	impact_delay = BROCA_CONTATO
+	impact_until = now + int(impact_delay * 1000.0) + 40
+
+
 # Sniper Valakiano: como na ilustração — agacha, apoia a mão esquerda no chão, estende a direita para o
 # alvo e fecha um olho para mirar; a bola elétrica condensa nos dedos e sai estalando; no acerto o choque
 # se espalha e o alvo fica eletrocutado (arcos pulando pelo corpo e espasmos)
@@ -6660,11 +6683,13 @@ func _on_fx_real(e: Dictionary) -> void:
 				_comic_pop(tgt, (["ZAP!", "PEW!", "FZZT!", "VUSH!"] if e["ranged"] else ["POW!", "BAM!", "WHAM!", "SOC!", "TUM!"]).pick_random())
 			_voice(e["from"], "atk", -2.0)
 			var ter_id = _ter_attack_id(e["from"], e["ranged"])
+			if not e["ranged"] and board.tem_fig3d(e["from"]) and board.unit_nodes[e["from"]]["sprite"].has_meta("empunha"):
+				_broca_golpe(e["from"], e["to"], now)
+				return
 			if ter_id != "":
 				# Valakianos: ataque pintado pela Forja (golpe/projétil + impacto próprios)
 				var fu: Variant = game.by_uid(e["from"])
 				var tu: Variant = game.by_uid(e["to"])
-				board.arma_ataque(fu.uid, _hex_pos(tu.pos(), 0.0))      # Perfurador: vira, mira a ponta e a broca avança girando
 				if fu.cid == "t_sniper" and board.tem_fig3d(fu.uid):
 					_sniper_eletro(fu, tu, ter_id, now)
 					return

@@ -3216,6 +3216,12 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 				od = Vector3(fig.get_meta("golpe_alvo")) - fig.global_position
 				desvio = float(fig.get_meta("mira_yaw"))
 				vel_vira = 14.0
+				# dá um passo para a ponta alcançar o alvo e volta
+				var tg = relogio - (float(fig.get_meta("golpe_ate")) - 1.1)
+				var passo_g = smoothstep(0.0, 0.16, tg) * (1.0 - smoothstep(0.6, 1.05, tg))
+				var dir_g = Vector3(od.x, 0.0, od.z)
+				if dir_g.length() > 0.01:
+					fig.position += dir_g.normalized() * GOLPE_PASSO * passo_g
 		od.y = 0.0
 		if od.length() > 0.01:
 			var yaw = atan2(od.x, od.z) - fig.get_parent().global_rotation.y - desvio
@@ -3608,9 +3614,10 @@ func _fig3d_tick(fig: Node3D, delta: float, t: float, flip: bool, mod: Color, wa
 		if falta <= 0.0:
 			fig.remove_meta("choque_ate")
 		else:
-			var ch = clamp(falta / 0.35, 0.0, 1.0)
-			var rng = RandomNumberGenerator.new()      # espasmo novo a cada 0,05 s (não mexe no sorteio do jogo)
-			rng.seed = int(relogio / 0.05) * 7919 + int(fig.get_instance_id() % 997)
+			var ch = clamp(falta / 0.35, 0.0, 1.0) * float(fig.get_meta("choque_amp", 1.0))
+			var passo_t = float(fig.get_meta("choque_passo", 0.05))
+			var rng = RandomNumberGenerator.new()      # espasmo novo a cada passo (não mexe no sorteio do jogo)
+			rng.seed = int(relogio / passo_t) * 7919 + int(fig.get_instance_id() % 997)
 			for nm2 in ["Spine1", "Head", "LeftArm", "RightArm", "LeftForeArm", "RightForeArm", "Spine2"]:
 				if bn.has(nm2):
 					var b2: int = bn[nm2]
@@ -3874,6 +3881,7 @@ func _unit_goal(u) -> Vector2i:
 
 const ELETRO_CARGA = 0.45     # Sniper Valakiano: agachado e mirando (um olho fechado), a bola condensa nos dedos
 const ELETRO_SOLTA = 0.92     # ... e é disparada (o braço dá o coice)
+const GOLPE_PASSO = 0.32       # golpe com arma de duas mãos: passo à frente para a ponta alcançar o alvo
 const PREPARO_T = 0.2      # antes do 1º passo a peça espera transferindo o peso
 const CHEGADA_T = 0.42     # o último passo absorve o peso e o corpo volta ao repouso
 const APOIO_F = 0.6       # fração do ciclo em que cada pé fica apoiado
@@ -4768,8 +4776,16 @@ func _arma3d(root: Node3D, sk: Skeleton3D, acfg: Dictionary, cid: String) -> voi
 
 # choque elétrico: espasmos por "dur" segundos
 func eletrocutar(uid: int, dur: float) -> void:
+	tremer(uid, dur, 1.0, 0.05)
+
+
+# o corpo treme: amp 1 = espasmo forte; passo = de quanto em quanto tempo o tremor muda (curto = vibração)
+func tremer(uid: int, dur: float, amp: float = 1.0, passo: float = 0.05) -> void:
 	if tem_fig3d(uid):
-		unit_nodes[uid]["sprite"].set_meta("choque_ate", relogio + dur)
+		var fig = unit_nodes[uid]["sprite"]
+		fig.set_meta("choque_ate", relogio + dur)
+		fig.set_meta("choque_amp", amp)
+		fig.set_meta("choque_passo", passo)
 
 
 # pontos do corpo no mundo (ossos principais) para os arcos do choque pularem; sem 3D, um cilindro

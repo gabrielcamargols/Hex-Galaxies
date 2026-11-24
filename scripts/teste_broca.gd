@@ -43,8 +43,8 @@ func run() -> void:
 	if OS.get_environment("CAM") == "rosto":
 		cam.look_at_from_position(Vector3(-1.0, 1.4, -0.3), Vector3(-1.75, 1.35, 0), Vector3.UP)
 	# Rhazur à esquerda olhando para a direita; alvo a 3 casas
-	var pr = Vector3(-2.0, 0, 0)
-	var pa = Vector3(2.0, 0, 0)
+	var pr = Vector3(-0.87, 0, 0)
+	var pa = Vector3(0.87, 0, 0)
 	var hr = Node3D.new()
 	hr.position = pr
 	w.add_child(hr)
@@ -73,6 +73,12 @@ func run() -> void:
 			fr.get_meta("empunha").ataque()
 			fr.set_meta("golpe_alvo", pa)
 			fr.set_meta("golpe_ate", b.relogio + 1.1)
+		if k == 30 + int(m.BROCA_CONTATO * 30) or k == 80 + int(m.BROCA_CONTATO * 30):
+			for par in [[fa, 1.25], [fr, 0.3]]:
+				par[0].set_meta("choque_ate", b.relogio + m.BROCA_TREME)
+				par[0].set_meta("choque_amp", par[1])
+				par[0].set_meta("choque_passo", 0.03)
+			vfx.play_fx("ter_perfurador_broca", pa, pr, Color.WHITE)
 		# como no tabuleiro: a posição do boneco volta a zero a cada quadro e cada um olha para o outro
 		fr.position = Vector3.ZERO
 		fa.position = Vector3.ZERO

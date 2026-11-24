@@ -126,6 +126,11 @@ func _process_modification() -> void:
 	# a arma acompanha o tronco (e avança na estocada)
 	var base_agora = sk.get_bone_global_pose(osso_base)
 	var D: Transform3D = base_agora * base_rest.affine_inverse() * arma_rest
+	# a broca morde o alvo: a arma inteira vibra (as mãos vão junto, pelo IK)
+	if ta > 0.16 and ta < 0.72:
+		var vib = 0.009 * (1.0 - smoothstep(0.5, 0.72, ta))
+		D.origin += Vector3(randf_range(-1, 1), randf_range(-1, 1), randf_range(-1, 1)) * vib
+		D.basis = D.basis * Basis(Vector3(randf_range(-1, 1), randf_range(-1, 1), randf_range(-1, 1)).normalized(), randf_range(-0.04, 0.04) * (vib / 0.009))
 	if est > 0.0:
 		var frente = (base_agora.basis * Vector3(0, 0, 1)).normalized()
 		var eixo_arma = D.basis.z.normalized()

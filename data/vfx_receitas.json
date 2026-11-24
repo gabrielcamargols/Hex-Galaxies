@@ -68098,5 +68098,365 @@
     "blend": "add"
    }
   ]
+ },
+ "ter_perfurador_broca": {
+  "nome": "PERFURADOR · a broca morde o alvo (faíscas, lascas e poeira saindo do ponto de contato)",
+  "personagem": "perfurador",
+  "shake": 0.3,
+  "layers": [
+   {
+    "luz": "#ffb347",
+    "energia": 2.6,
+    "alcance": 2.5,
+    "dur": 0.5,
+    "y": 0.72
+   },
+   {
+    "p": "@faisca",
+    "mode": "vel",
+    "amount": 10,
+    "size": [
+     0.04,
+     0.32
+    ],
+    "speed": [
+     3,
+     7
+    ],
+    "spread": 70,
+    "grav": -9,
+    "damp": [
+     3,
+     6
+    ],
+    "life": 0.22,
+    "ramp": [
+     "#ff7a1a",
+     "#ffcf4a",
+     "#fff6d0"
+    ],
+    "y": 0.72,
+    "delay": 0.0,
+    "toward": 0.35,
+    "blend": "add"
+   },
+   {
+    "p": "@lasca",
+    "mode": "vel",
+    "amount": 5,
+    "size": [
+     0.05,
+     0.11
+    ],
+    "speed": [
+     2,
+     4.5
+    ],
+    "spread": 80,
+    "grav": -12,
+    "damp": [
+     1,
+     2
+    ],
+    "life": 0.5,
+    "ramp": [
+     "#5a4636",
+     "#8a6a4e",
+     "#b39a7c"
+    ],
+    "y": 0.72,
+    "delay": 0.0,
+    "toward": 0.35
+   },
+   {
+    "p": "@faisca",
+    "mode": "vel",
+    "amount": 10,
+    "size": [
+     0.04,
+     0.32
+    ],
+    "speed": [
+     3,
+     7
+    ],
+    "spread": 70,
+    "grav": -9,
+    "damp": [
+     3,
+     6
+    ],
+    "life": 0.22,
+    "ramp": [
+     "#ff7a1a",
+     "#ffcf4a",
+     "#fff6d0"
+    ],
+    "y": 0.72,
+    "delay": 0.06,
+    "toward": 0.35,
+    "blend": "add"
+   },
+   {
+    "p": "@faisca",
+    "mode": "vel",
+    "amount": 10,
+    "size": [
+     0.04,
+     0.32
+    ],
+    "speed": [
+     3,
+     7
+    ],
+    "spread": 70,
+    "grav": -9,
+    "damp": [
+     3,
+     6
+    ],
+    "life": 0.22,
+    "ramp": [
+     "#ff7a1a",
+     "#ffcf4a",
+     "#fff6d0"
+    ],
+    "y": 0.72,
+    "delay": 0.12,
+    "toward": 0.35,
+    "blend": "add"
+   },
+   {
+    "p": "@lasca",
+    "mode": "vel",
+    "amount": 5,
+    "size": [
+     0.05,
+     0.11
+    ],
+    "speed": [
+     2,
+     4.5
+    ],
+    "spread": 80,
+    "grav": -12,
+    "damp": [
+     1,
+     2
+    ],
+    "life": 0.5,
+    "ramp": [
+     "#5a4636",
+     "#8a6a4e",
+     "#b39a7c"
+    ],
+    "y": 0.72,
+    "delay": 0.12,
+    "toward": 0.35
+   },
+   {
+    "p": "@faisca",
+    "mode": "vel",
+    "amount": 10,
+    "size": [
+     0.04,
+     0.32
+    ],
+    "speed": [
+     3,
+     7
+    ],
+    "spread": 70,
+    "grav": -9,
+    "damp": [
+     3,
+     6
+    ],
+    "life": 0.22,
+    "ramp": [
+     "#ff7a1a",
+     "#ffcf4a",
+     "#fff6d0"
+    ],
+    "y": 0.72,
+    "delay": 0.18,
+    "toward": 0.35,
+    "blend": "add"
+   },
+   {
+    "p": "@faisca",
+    "mode": "vel",
+    "amount": 10,
+    "size": [
+     0.04,
+     0.32
+    ],
+    "speed": [
+     3,
+     7
+    ],
+    "spread": 70,
+    "grav": -9,
+    "damp": [
+     3,
+     6
+    ],
+    "life": 0.22,
+    "ramp": [
+     "#ff7a1a",
+     "#ffcf4a",
+     "#fff6d0"
+    ],
+    "y": 0.72,
+    "delay": 0.24,
+    "toward": 0.35,
+    "blend": "add"
+   },
+   {
+    "p": "@lasca",
+    "mode": "vel",
+    "amount": 5,
+    "size": [
+     0.05,
+     0.11
+    ],
+    "speed": [
+     2,
+     4.5
+    ],
+    "spread": 80,
+    "grav": -12,
+    "damp": [
+     1,
+     2
+    ],
+    "life": 0.5,
+    "ramp": [
+     "#5a4636",
+     "#8a6a4e",
+     "#b39a7c"
+    ],
+    "y": 0.72,
+    "delay": 0.24,
+    "toward": 0.35
+   },
+   {
+    "p": "@faisca",
+    "mode": "vel",
+    "amount": 10,
+    "size": [
+     0.04,
+     0.32
+    ],
+    "speed": [
+     3,
+     7
+    ],
+    "spread": 70,
+    "grav": -9,
+    "damp": [
+     3,
+     6
+    ],
+    "life": 0.22,
+    "ramp": [
+     "#ff7a1a",
+     "#ffcf4a",
+     "#fff6d0"
+    ],
+    "y": 0.72,
+    "delay": 0.3,
+    "toward": 0.35,
+    "blend": "add"
+   },
+   {
+    "p": "@faisca",
+    "mode": "vel",
+    "amount": 10,
+    "size": [
+     0.04,
+     0.32
+    ],
+    "speed": [
+     3,
+     7
+    ],
+    "spread": 70,
+    "grav": -9,
+    "damp": [
+     3,
+     6
+    ],
+    "life": 0.22,
+    "ramp": [
+     "#ff7a1a",
+     "#ffcf4a",
+     "#fff6d0"
+    ],
+    "y": 0.72,
+    "delay": 0.36,
+    "toward": 0.35,
+    "blend": "add"
+   },
+   {
+    "p": "@lasca",
+    "mode": "vel",
+    "amount": 5,
+    "size": [
+     0.05,
+     0.11
+    ],
+    "speed": [
+     2,
+     4.5
+    ],
+    "spread": 80,
+    "grav": -12,
+    "damp": [
+     1,
+     2
+    ],
+    "life": 0.5,
+    "ramp": [
+     "#5a4636",
+     "#8a6a4e",
+     "#b39a7c"
+    ],
+    "y": 0.72,
+    "delay": 0.36,
+    "toward": 0.35
+   },
+   {
+    "p": "@fumaca",
+    "mode": "vel",
+    "amount": 6,
+    "size": [
+     0.25,
+     0.6
+    ],
+    "speed": [
+     0.3,
+     1.0
+    ],
+    "spread": 180,
+    "life": 0.7,
+    "ramp": [
+     "#8a7a6a",
+     "#b8a890"
+    ],
+    "alpha": [
+     [
+      0,
+      0.5
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "y": 0.7,
+    "delay": 0.1
+   }
+  ]
  }
 }
